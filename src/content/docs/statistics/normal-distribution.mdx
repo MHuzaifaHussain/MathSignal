@@ -1,0 +1,181 @@
+---
+title: "Normal Distribution"
+description: "Understanding the Gaussian distribution — the most important distribution in statistics and machine learning. Interactive visualization with intuition, math, and code."
+sidebar:
+  order: 1
+---
+
+import ConceptHeader from "../../../components/ConceptHeader.astro";
+import WhyThisMatters from "../../../components/WhyThisMatters.astro";
+import FormalDefinition from "../../../components/FormalDefinition.astro";
+import CommonMistakes from "../../../components/CommonMistakes.astro";
+import NextTopics from "../../../components/NextTopics.astro";
+import NormalDistribution from "../../../components/react/NormalDistribution.tsx";
+
+<ConceptHeader
+  title="Normal Distribution"
+  oneLiner="A symmetric, bell-shaped probability distribution defined by its mean (μ) and standard deviation (σ), where ~68% of data falls within one σ of the mean."
+  difficulty="beginner"
+  prerequisites={[]}
+/>
+
+<WhyThisMatters>
+The normal distribution is the single most important distribution in machine learning. Neural network weights are initialized by sampling from Gaussian distributions (He, Xavier). Diffusion models like Stable Diffusion start from pure Gaussian noise and learn to reverse the process. Most classical statistical tests — t-tests, ANOVA, linear regression — assume normally distributed errors. And thanks to the Central Limit Theorem, averages of almost *any* random process converge to a normal distribution, which is why it shows up even when the underlying data isn't Gaussian.
+</WhyThisMatters>
+
+## Interactive Visualization
+
+Explore how the mean and standard deviation shape the distribution. The curve always integrates to 1 — as you increase σ, the peak drops to compensate for the wider spread.
+
+<div class="not-content">
+  <NormalDistribution client:visible />
+</div>
+
+*Drag the orange point to change the mean (μ). Drag the green point to adjust the standard deviation (σ).*
+
+## What Is the Normal Distribution?
+
+Take any measurement that results from many small, independent factors adding together — human heights, manufacturing tolerances, exam scores, measurement errors — and plot a histogram. As your sample grows, that histogram almost always converges to the same shape: a symmetric bell curve peaked at the average, tapering smoothly in both directions. That shape is the normal distribution.
+
+Two numbers define it completely. The **mean** (μ) tells you where the bell is centered. The **standard deviation** (σ) tells you how wide it is. A small σ produces a tall, narrow peak — data tightly clustered around the mean. A large σ produces a flat, wide curve — data spread out.
+
+### The 68-95-99.7 Rule
+
+This is worth memorizing. For any normal distribution:
+
+- **68%** of data falls within 1σ of the mean
+- **95%** of data falls within 2σ of the mean
+- **99.7%** of data falls within 3σ of the mean
+
+This is why "three sigma" is often treated as a practical boundary. If a data point is more than 3σ from the mean, it's either extremely rare or something interesting is happening.
+
+### Why Does It Appear Everywhere?
+
+The **Central Limit Theorem** (CLT) is the deep reason. It states that when you add up many independent random variables — regardless of their individual distributions — the sum converges to a normal distribution. Human height isn't determined by a single gene; it's the sum of many genetic and environmental factors. A measurement error isn't caused by one thing going wrong; it's the accumulation of many tiny imprecisions. The CLT is why the normal distribution emerges from complexity.
+
+This doesn't mean all data is normally distributed. Income, city populations, earthquake magnitudes, and neural network activations (before normalization) are all decidedly non-Gaussian. The normal distribution dominates where **additive** effects are at play. When **multiplicative** effects dominate, you tend to see log-normal or power-law distributions instead.
+
+<FormalDefinition>
+The **probability density function** (PDF) of the normal distribution is:
+
+$$
+f(x) = \frac{1}{\sigma\sqrt{2\pi}} \, e^{-\frac{(x - \mu)^2}{2\sigma^2}}
+$$
+
+where:
+- $\mu$ is the **mean** (center of the distribution)
+- $\sigma$ is the **standard deviation** (spread), with $\sigma > 0$
+- $\sigma^2$ is the **variance**
+
+The **standard normal distribution** is the special case where $\mu = 0$ and $\sigma = 1$. Any normal random variable $X \sim \mathcal{N}(\mu, \sigma^2)$ can be standardized:
+
+$$
+Z = \frac{X - \mu}{\sigma} \sim \mathcal{N}(0, 1)
+$$
+
+This transformation is called the **z-score** and converts any normal distribution to the standard form, making it possible to use a single reference table (or `scipy.stats.norm`) for all normal distributions.
+
+The **moment generating function** (MGF) is:
+
+$$
+M_X(t) = e^{\mu t + \frac{\sigma^2 t^2}{2}}
+$$
+
+which can be used to derive all moments of the distribution. The $n$-th moment about the mean is zero for odd $n$ (by symmetry) and $\sigma^n (n-1)!!$ for even $n$.
+</FormalDefinition>
+
+## In Practice: Machine Learning Applications
+
+### Weight Initialization
+
+Neural networks are sensitive to how weights are initialized. Both **He initialization** ($W \sim \mathcal{N}(0, \sqrt{2/n_{\text{in}}})$) and **Xavier/Glorot initialization** ($W \sim \mathcal{N}(0, \sqrt{2/(n_{\text{in}} + n_{\text{out}})})$) sample from normal distributions with carefully chosen variances to keep activations and gradients at reasonable scales during training.
+
+### Batch Normalization
+
+Batch normalization explicitly forces each layer's activations to approximate a standard normal distribution (zero mean, unit variance) within each mini-batch. This stabilizes training, allows higher learning rates, and reduces sensitivity to initialization — all by leveraging the properties of the normal distribution.
+
+### Gaussian Naive Bayes
+
+This classifier assumes each feature follows a normal distribution within each class. Despite the strong independence assumption, it works surprisingly well for text classification and spam filtering. The model stores just $\mu$ and $\sigma$ per feature per class — extremely lightweight.
+
+### VAE Latent Spaces
+
+Variational autoencoders impose a $\mathcal{N}(0, I)$ prior on the latent space. The encoder outputs $\mu$ and $\sigma$ parameters, and the reparameterization trick ($z = \mu + \sigma \odot \epsilon$, where $\epsilon \sim \mathcal{N}(0, I)$) enables backpropagation through the sampling step.
+
+### Gaussian Processes
+
+A Gaussian process is a distribution over *functions*, where any finite subset of function values is jointly normally distributed. GPs provide not just predictions but calibrated uncertainty estimates, making them valuable for Bayesian optimization and active learning.
+
+## Code Implementation
+
+```python title="normal_distribution_numpy.py" {4-5,8-9}
+import numpy as np
+import matplotlib.pyplot as plt
+
+mu, sigma = 0, 1
+samples = np.random.normal(mu, sigma, size=10_000)
+
+x = np.linspace(-4, 4, 200)
+pdf = (1 / (sigma * np.sqrt(2 * np.pi))) * np.exp(
+    -0.5 * ((x - mu) / sigma) ** 2
+)
+
+plt.figure(figsize=(8, 4))
+plt.hist(samples, bins=60, density=True, alpha=0.6, label="Samples")
+plt.plot(x, pdf, "r-", linewidth=2, label="PDF")
+plt.xlabel("x")
+plt.ylabel("Density")
+plt.title(f"Normal Distribution (μ={mu}, σ={sigma})")
+plt.legend()
+plt.show()
+```
+
+```python title="normal_distribution_pytorch.py" {4-5,8-9}
+import torch
+from torch.distributions import Normal
+
+mu, sigma = torch.tensor(0.0), torch.tensor(1.0)
+dist = Normal(mu, sigma)
+
+# Sample and compute log-probability
+samples = dist.sample((10_000,))
+log_probs = dist.log_prob(samples)
+
+print(f"Sample mean:  {samples.mean():.4f}")
+print(f"Sample std:   {samples.std():.4f}")
+print(f"Mean log-prob: {log_probs.mean():.4f}")
+
+# Useful in loss functions: negative log-likelihood
+nll = -dist.log_prob(torch.tensor(1.5))
+print(f"NLL at x=1.5: {nll:.4f}")
+```
+
+<CommonMistakes>
+- **"My data is normally distributed"** — probably not. Most real-world data has skew, heavy tails, or bounded support. Always check with a Q-Q plot or Shapiro-Wilk test before assuming normality. Many ML methods are robust to mild non-normality, but the assumption still matters for classical inference.
+
+- **"Mean equals median for all distributions"** — only for symmetric distributions. The normal distribution happens to be symmetric, so its mean, median, and mode coincide. But don't generalize this to skewed distributions like income or survival times.
+
+- **"Standard deviation and variance are interchangeable"** — they're related ($\text{Var} = \sigma^2$), but they're not the same quantity and have different units. Variance is in squared units; standard deviation is in the original units. Many ML papers and frameworks use one or the other inconsistently — always check which one a function expects.
+
+- **"The curve touches zero at ±3σ"** — it doesn't. The normal distribution has infinite support: it extends from $-\infty$ to $+\infty$. The probability density at $\pm 3\sigma$ is small but nonzero. This matters when working with probabilities of extreme events (tail risk, anomaly detection).
+</CommonMistakes>
+
+<NextTopics
+  topics={[
+    {
+      label: "Central Limit Theorem",
+      href: "/statistics/central-limit-theorem/",
+      description: "Why the normal distribution appears everywhere",
+    },
+    {
+      label: "Standard Deviation",
+      href: "/statistics/standard-deviation/",
+      description: "Deep dive into measuring spread",
+    },
+    {
+      label: "Hypothesis Testing",
+      href: "/statistics/hypothesis-testing/",
+      description: "Using the normal distribution for inference",
+    },
+  ]}
+/>
