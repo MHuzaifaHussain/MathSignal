@@ -1,40 +1,43 @@
 ---
-title: Welcome to Starlight
-description: Get started building your docs site with Starlight.
-template: splash # Remove or comment out this line to display the site sidebar on this page.
+title: MathSignal
+description: "Interactive statistics, probability, and mathematics for AI/ML practitioners. From intuition to implementation."
+template: splash
 hero:
-  tagline: Congrats on setting up a new Starlight project!
-  image:
-    file: ../../assets/houston.webp
+  tagline: "From intuition to implementation — the math behind AI, made interactive."
   actions:
-    - text: Example Guide
-      link: /guides/example/
+    - text: Start with Statistics
+      link: /statistics/descriptive-statistics/
       icon: right-arrow
-    - text: Read the Starlight docs
-      link: https://starlight.astro.build
+    - text: View on GitHub
+      link: https://github.com/mhuzaifahussain/mathsignal
       icon: external
       variant: minimal
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-## Next steps
+## What is MathSignal?
 
-<CardGrid stagger>
-	<Card title="Update content" icon="pencil">
-		Edit `src/content/docs/index.mdx` to see this page change.
+MathSignal is an interactive reference for the mathematics behind AI and machine learning.
+Every concept explained with intuition, visualization, formal math, and runnable code.
+
+## Explore by Topic
+
+<CardGrid>
+	<Card title="Statistics" icon="star">
+		Descriptive statistics, distributions, hypothesis testing, regression, and more.
+		Build the foundation for data-driven reasoning.
 	</Card>
-	<Card title="Change page layout" icon="document">
-		Delete `template: splash` in `src/content/docs/index.mdx` to display a
-		sidebar on this page.
+	<Card title="Probability — Coming Soon" icon="random">
+		Bayes' theorem, conditional probability, random variables, and stochastic processes.
+		The language of uncertainty.
 	</Card>
-	<Card title="Add new content" icon="add-document">
-		Add Markdown or MDX files to `src/content/docs` to create new pages.
+	<Card title="Linear Algebra — Coming Soon" icon="puzzle">
+		Vectors, matrices, eigenvalues, SVD, and transformations.
+		The computational backbone of ML.
 	</Card>
-	<Card title="Configure your site" icon="setting">
-		Edit your `sidebar` and other config in `astro.config.mjs`.
-	</Card>
-	<Card title="Read the docs" icon="open-book">
-		Learn more in [the Starlight Docs](https://starlight.astro.build/).
+	<Card title="Machine Learning — Coming Soon" icon="rocket">
+		Gradient descent, loss functions, backpropagation, and optimization.
+		Where the math meets the model.
 	</Card>
 </CardGrid>

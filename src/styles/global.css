@@ -1,0 +1,14 @@
+@layer theme, base, starlight, components, utilities;
+
+@import '@astrojs/starlight-tailwind';
+@import 'tailwindcss/theme' layer(theme);
+@import 'tailwindcss/utilities' layer(utilities);
+
+.katex {
+	color: var(--sl-color-text);
+}
+
+.not-content {
+	all: initial;
+	display: block;
+}
