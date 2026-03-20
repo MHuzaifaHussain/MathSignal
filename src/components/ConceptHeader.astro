@@ -1,0 +1,51 @@
+---
+interface Props {
+  title: string;
+  oneLiner: string;
+  prerequisites?: { label: string; href: string }[];
+  difficulty: "beginner" | "intermediate" | "advanced";
+}
+
+const { title, oneLiner, prerequisites = [], difficulty } = Astro.props;
+
+const difficultyConfig = {
+  beginner: { label: "Beginner", bg: "bg-green-100 dark:bg-green-900/40", text: "text-green-800 dark:text-green-300" },
+  intermediate: { label: "Intermediate", bg: "bg-yellow-100 dark:bg-yellow-900/40", text: "text-yellow-800 dark:text-yellow-300" },
+  advanced: { label: "Advanced", bg: "bg-red-100 dark:bg-red-900/40", text: "text-red-800 dark:text-red-300" },
+};
+
+const badge = difficultyConfig[difficulty];
+---
+
+<div class="not-content mb-8">
+  <div class="flex flex-wrap items-center gap-3 mb-2">
+    <h1 class="text-3xl font-bold m-0" style="color: var(--sl-color-white);">
+      {title}
+    </h1>
+    <span class={`inline-block rounded-full px-3 py-0.5 text-xs font-semibold ${badge.bg} ${badge.text}`}>
+      {badge.label}
+    </span>
+  </div>
+
+  <p class="text-lg m-0 mt-1" style="color: var(--sl-color-gray-3);">
+    {oneLiner}
+  </p>
+
+  {prerequisites.length > 0 && (
+    <div class="mt-4 flex flex-wrap items-center gap-2 text-sm" style="color: var(--sl-color-gray-3);">
+      <span class="font-medium">Prerequisites:</span>
+      {prerequisites.map((prereq, i) => (
+        <>
+          <a
+            href={prereq.href}
+            class="underline decoration-dotted underline-offset-2 hover:decoration-solid"
+            style="color: var(--sl-color-text-accent);"
+          >
+            {prereq.label}
+          </a>
+          {i < prerequisites.length - 1 && <span>·</span>}
+        </>
+      ))}
+    </div>
+  )}
+</div>
