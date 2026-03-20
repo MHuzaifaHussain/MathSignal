@@ -14,7 +14,9 @@
       "Bash(rmdir \"D:/My Projects/MathSignal/callous-comet\")",
       "Bash(npm install:*)",
       "Bash(npx astro:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "mcp__plugin_context7_context7__query-docs"
     ]
   }
 }
