@@ -16,6 +16,10 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: 'MathSignal',
+			logo: {
+				src: './src/assets/logo.svg',
+				alt: 'MathSignal',
+			},
 			description:
 				'Interactive statistics, probability, and mathematics for AI/ML practitioners',
 			expressiveCode: {
