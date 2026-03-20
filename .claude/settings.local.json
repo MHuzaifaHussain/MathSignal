@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create:*)",
+      "Bash(nvm list:*)",
+      "Bash(fnm list:*)",
+      "Bash(volta list:*)",
+      "Bash(echo \"PATH: $PATH\")",
+      "Bash(export PATH=\"/c/Users/Hp/AppData/Roaming/nvm/v24.14.0/bin:$PATH\")",
+      "Bash(export PATH=\"/c/Users/Hp/AppData/Roaming/nvm/v24.14.0:$PATH\")",
+      "Bash(npm --version)",
+      "Bash(mv \"D:/My Projects/MathSignal/callous-comet\"/* \"D:/My Projects/MathSignal/\")",
+      "Bash(mv \"D:/My Projects/MathSignal/callous-comet\"/.[!.]* \"D:/My Projects/MathSignal/\")",
+      "Bash(rmdir \"D:/My Projects/MathSignal/callous-comet\")",
+      "Bash(npm install:*)",
+      "Bash(npx astro:*)",
+      "Bash(npm run:*)"
+    ]
+  }
+}

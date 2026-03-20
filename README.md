@@ -1,49 +1,38 @@
-# Starlight Starter Kit: Basics
+# MathSignal
 
-[![Built with Starlight](https://astro.badg.es/v2/built-with-starlight/tiny.svg)](https://starlight.astro.build)
+Interactive statistics, probability, and mathematics for AI/ML practitioners.
 
+## What is this?
+
+MathSignal is a documentation-style interactive reference for the mathematics behind AI and machine learning. Every concept is explained with intuition, visualization, formal math, and runnable code.
+
+Topics covered:
+
+- **Statistics** — descriptive statistics, distributions, hypothesis testing, regression
+- **Probability** — Bayes' theorem, conditional probability, random variables, stochastic processes
+- **Linear Algebra** — vectors, matrices, eigenvalues, SVD, transformations
+- **Machine Learning** — gradient descent, loss functions, backpropagation, optimization
+
+## Tech Stack
+
+- [Astro Starlight](https://starlight.astro.build) — documentation framework
+- [React](https://react.dev) — interactive components
+- [Mafs](https://mafs.dev) — interactive math visualizations
+- [KaTeX](https://katex.org) — math equation rendering
+- [Tailwind CSS](https://tailwindcss.com) — utility-first styling
+- [Marimo](https://marimo.io) — runnable Python notebooks
+
+## Local Development
+
+```bash
+npm install
+npm run dev       # start dev server at localhost:4321
+npm run build     # production build to ./dist/
+npm run preview   # preview production build locally
 ```
-npm create astro@latest -- --template starlight
-```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Requires Node.js v22 or higher.
 
-## 🚀 Project Structure
+## License
 
-Inside of your Astro + Starlight project, you'll see the following folders and files:
-
-```
-.
-├── public/
-├── src/
-│   ├── assets/
-│   ├── content/
-│   │   └── docs/
-│   └── content.config.ts
-├── astro.config.mjs
-├── package.json
-└── tsconfig.json
-```
-
-Starlight looks for `.md` or `.mdx` files in the `src/content/docs/` directory. Each file is exposed as a route based on its file name.
-
-Images can be added to `src/assets/` and embedded in Markdown with a relative link.
-
-Static assets, like favicons, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Check out [Starlight’s docs](https://starlight.astro.build/), read [the Astro documentation](https://docs.astro.build), or jump into the [Astro Discord server](https://astro.build/chat).
+MIT
