@@ -9,6 +9,7 @@
 @import 'tailwindcss/theme' layer(theme);
 @import 'tailwindcss/utilities' layer(utilities);
 @import './tokens.css';
+@import './components.css';
 
 /* ── Starlight mapping ──
  * Unlayered, so it wins over Starlight's layered defaults in both themes.
@@ -147,7 +148,7 @@ mark {
 .ms-board .MafsView {
 	--mafs-bg: var(--ms-board);
 	--mafs-fg: var(--ms-board-ink);
-	--mafs-line-color: var(--ms-board-axis);
+	--mafs-line-color: var(--ms-board-grid);
 	--mafs-origin-color: var(--ms-board-axis);
 	--grid-line-subdivision-color: var(--ms-board-grid);
 	--mafs-pink: var(--ms-mu);

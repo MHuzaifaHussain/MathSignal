@@ -1,0 +1,162 @@
+/*
+ * Styles for React island components (islands drop CSS imports, so they live here).
+ * Tokens only: docs/design-system/foundations.md
+ */
+
+/* ── Board ── */
+.ms-board {
+	margin: 1.5rem 0 2rem;
+	border: 1px solid var(--ms-board-edge);
+	border-radius: 4px;
+	background-color: var(--ms-board);
+	color: var(--ms-board-ink);
+	font-family: var(--ms-font-ui);
+	overflow: hidden;
+}
+
+.ms-board-canvas {
+	position: relative;
+	container-type: inline-size;
+	/* Vertical page scrolling keeps working on touch; dragging only starts on a handle */
+	touch-action: pan-y;
+}
+
+.ms-board-tray {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.75rem 1.5rem;
+	padding: 0.75rem 1rem;
+	background-color: var(--ms-board-tray);
+	border-top: 1px solid var(--ms-board-edge);
+}
+
+.ms-board-button {
+	min-height: 44px;
+	padding-inline: 1rem;
+	border: 1px solid var(--ms-board-edge);
+	border-radius: 4px;
+	background: transparent;
+	color: var(--ms-board-ink);
+	font: 500 0.9375rem var(--ms-font-ui);
+	cursor: pointer;
+}
+
+.ms-board-button:hover {
+	border-color: var(--ms-board-ink);
+}
+
+.ms-board-readout {
+	font-family: var(--ms-font-mono);
+	font-size: 0.9375rem;
+	color: var(--ms-board-ink);
+	font-variant-numeric: tabular-nums;
+}
+
+/* ── Chalk note: Kalam, 20px minimum, short text on narrow boards ── */
+.ms-chalk-note {
+	position: absolute;
+	inset-block-start: 0.75rem;
+	inset-inline-start: 1rem;
+	margin: 0;
+	font-family: var(--ms-font-hand);
+	font-size: clamp(20px, 3.4cqi, 28px);
+	line-height: 1.2;
+	color: var(--ms-board-ink);
+	pointer-events: none;
+}
+
+.ms-chalk-note-short {
+	display: none;
+}
+
+@container (max-width: 559px) {
+	.ms-chalk-note-long {
+		display: none;
+	}
+
+	.ms-chalk-note-short {
+		display: inline;
+	}
+}
+
+/* ── Tray slider ── */
+.ms-slider {
+	--ms-slider-colour: var(--ms-board-ink);
+	display: grid;
+	grid-template-columns: minmax(5.5rem, auto) minmax(8rem, 1fr) auto;
+	align-items: center;
+	gap: 0.75rem;
+	flex: 1 1 18rem;
+	min-height: 44px;
+	font-size: 0.9375rem;
+}
+
+.ms-slider.ms-mu {
+	--ms-slider-colour: var(--ms-mu);
+}
+
+.ms-slider.ms-sigma {
+	--ms-slider-colour: var(--ms-sigma);
+}
+
+.ms-slider-label {
+	color: var(--ms-slider-colour);
+	font-weight: 600;
+}
+
+.ms-slider-control {
+	display: flex;
+	align-items: center;
+	min-height: 44px;
+	touch-action: none;
+}
+
+.ms-slider-track {
+	position: relative;
+	width: 100%;
+	height: 4px;
+	border-radius: 2px;
+	background-color: var(--ms-board-axis);
+}
+
+.ms-slider-indicator {
+	height: 100%;
+	border-radius: 2px;
+	background-color: var(--ms-slider-colour);
+}
+
+.ms-slider-thumb {
+	width: 20px;
+	height: 20px;
+	border-radius: 50%;
+	background-color: var(--ms-slider-colour);
+	border: 2px solid var(--ms-board);
+	box-shadow: 0 0 0 1px var(--ms-slider-colour);
+}
+
+/* Base UI focuses a hidden input inside the thumb */
+.ms-slider-thumb:has(:focus-visible) {
+	outline: 2px solid var(--ms-board-ink);
+	outline-offset: 2px;
+	box-shadow: 0 0 0 6px var(--ms-attention-fill);
+}
+
+.ms-slider-readout {
+	min-width: 6ch;
+	text-align: end;
+	font-family: var(--ms-font-mono);
+	font-variant-numeric: tabular-nums;
+	color: var(--ms-board-ink);
+}
+
+/* Mafs blocks all touch gestures on the whole plot; allow vertical page scrolling.
+   Handles keep Mafs' own touch-action: none, so dragging still works. */
+.ms-board .MafsView {
+	touch-action: pan-y;
+}
+
+/* ── Mafs handles: Mafs draws its own focus ring in the handle's colour; make it the attention colour ── */
+.ms-board .MafsView .mafs-movable-point-focus {
+	stroke: var(--ms-attention);
+}
