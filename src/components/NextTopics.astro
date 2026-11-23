@@ -1,0 +1,29 @@
+---
+interface Props {
+  topics: { label: string; href: string; description: string }[];
+}
+
+const { topics } = Astro.props;
+---
+
+<nav class="not-content my-8">
+  <p class="text-sm font-bold uppercase tracking-wide mb-4" style="color: var(--sl-color-gray-3);">
+    Up Next
+  </p>
+  <div class="grid gap-3 sm:grid-cols-2">
+    {topics.map((topic) => (
+      <a
+        href={topic.href}
+        class="group block rounded-lg border p-4 no-underline transition-colors hover:border-current"
+        style={`border-color: var(--sl-color-gray-5); color: var(--sl-color-white);`}
+      >
+        <span class="font-semibold group-hover:underline">
+          {topic.label}
+        </span>
+        <p class="m-0 mt-1 text-sm" style="color: var(--sl-color-gray-3);">
+          {topic.description}
+        </p>
+      </a>
+    ))}
+  </div>
+</nav>
