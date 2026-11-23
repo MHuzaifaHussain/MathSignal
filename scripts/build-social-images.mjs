@@ -1,0 +1,60 @@
+// Generates the raster brand images from src/design/palette.mjs:
+//   public/og/default.png   1200x630 social card (Open Graph / Twitter), used by every page
+//   public/logo-512.png     square logo for structured data (Google needs a raster logo of at least 112px)
+// Usage: npm run social-images   (rerun after changing the palette or the bell mark)
+import { mkdir } from 'node:fs/promises';
+import { dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import sharp from 'sharp';
+import { palette } from '../src/design/palette.mjs';
+
+const fromRoot = (relativePath) => fileURLToPath(new URL(`../${relativePath}`, import.meta.url));
+
+const CARD = { width: 1200, height: 630 };
+const LOGO_SIZE = 512;
+// Same smooth bell as the favicon (scripts/build-tokens.mjs), drawn in a 32x32 box.
+const BELL_PATH = 'M2 24 C6 24, 8 23, 10 20 C12 17, 13.5 4, 16 4 C18.5 4, 20 17, 22 20 C24 23, 26 24, 30 24';
+// Raster rendering uses system fonts, so the card names a common serif rather than Literata.
+const SERIF = "Georgia, 'Times New Roman', serif";
+
+function socialCardSvg() {
+	const { page, ink, inkMuted, mu, board, boardEdge } = palette.light;
+	return `<svg xmlns="http://www.w3.org/2000/svg" width="${CARD.width}" height="${CARD.height}" viewBox="0 0 ${CARD.width} ${CARD.height}">
+<rect width="100%" height="100%" fill="${page}"/>
+<rect x="720" y="90" width="400" height="450" rx="8" fill="${board}" stroke="${boardEdge}" stroke-width="3"/>
+<g transform="translate(744 170) scale(11)">
+	<path d="${BELL_PATH}" fill="none" stroke="${mu}" stroke-width="0.5" stroke-linecap="round" stroke-linejoin="round"/>
+	<line x1="1" y1="24" x2="31" y2="24" stroke="${boardEdge}" stroke-width="0.2"/>
+	<circle cx="16" cy="24" r="0.9" fill="${mu}"/>
+</g>
+<text x="80" y="270" font-family="${SERIF}" font-size="84" font-weight="600" fill="${ink}">MathSignal</text>
+<text x="80" y="345" font-family="${SERIF}" font-size="36" fill="${inkMuted}">The maths behind machine learning,</text>
+<text x="80" y="395" font-family="${SERIF}" font-size="36" fill="${inkMuted}">from intuition to research.</text>
+</svg>`;
+}
+
+function logoSvg() {
+	const { page, ink, mu } = palette.light;
+	return `<svg xmlns="http://www.w3.org/2000/svg" width="${LOGO_SIZE}" height="${LOGO_SIZE}" viewBox="0 0 32 32">
+<rect width="32" height="32" fill="${page}"/>
+<path d="${BELL_PATH}" fill="none" stroke="${ink}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="16" cy="28" r="2.25" fill="${mu}"/>
+</svg>`;
+}
+
+async function writePng(relativePath, svg) {
+	const outputPath = fromRoot(relativePath);
+	await mkdir(dirname(outputPath), { recursive: true });
+	await sharp(Buffer.from(svg)).png({ compressionLevel: 9 }).toFile(outputPath);
+	console.log(`Wrote ${relativePath}`);
+}
+
+async function main() {
+	await writePng('public/og/default.png', socialCardSvg());
+	await writePng('public/logo-512.png', logoSvg());
+}
+
+main().catch((error) => {
+	console.error('Failed to build social images:', error);
+	process.exit(1);
+});

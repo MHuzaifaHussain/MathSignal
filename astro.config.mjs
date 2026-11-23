@@ -7,10 +7,11 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { katexOptions, rehypeKatexFailOnError } from './src/design/katex.mjs';
 import { DOMAINS } from './src/design/domains.mjs';
+import { SITE_DESCRIPTION, SITE_URL, SOCIAL_CARD } from './src/seo/site.mjs';
 
 // https://astro.build/config
 export default defineConfig({
-	site: 'https://mathsignal.dev',
+	site: SITE_URL,
 	markdown: {
 		// Astro 7 defaults to the Sätteri processor, which renders $$ display maths as a code block.
 		// The unified pipeline keeps remark-math + rehype-katex working.
@@ -22,6 +23,15 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: 'MathSignal',
+			// Social card for every page (Open Graph and Twitter). Pages may override with frontmatter `head`.
+			head: [
+				{ tag: 'meta', attrs: { property: 'og:image', content: SOCIAL_CARD.url } },
+				{ tag: 'meta', attrs: { property: 'og:image:width', content: String(SOCIAL_CARD.width) } },
+				{ tag: 'meta', attrs: { property: 'og:image:height', content: String(SOCIAL_CARD.height) } },
+				{ tag: 'meta', attrs: { property: 'og:image:alt', content: SOCIAL_CARD.alt } },
+				{ tag: 'meta', attrs: { name: 'twitter:image', content: SOCIAL_CARD.url } },
+				{ tag: 'meta', attrs: { name: 'twitter:image:alt', content: SOCIAL_CARD.alt } },
+			],
 			// Generated from the palette by scripts/build-tokens.mjs. Starlight inserts the logo as an <img>,
 			// so it can't inherit currentColor: one file per theme.
 			logo: {
@@ -29,8 +39,7 @@ export default defineConfig({
 				dark: './src/assets/logo-dark.svg',
 				alt: 'MathSignal',
 			},
-			description:
-				'Interactive statistics, probability, and mathematics for AI/ML practitioners',
+			description: SITE_DESCRIPTION,
 			// Keep overrides few: each must be rechecked on every Starlight upgrade.
 			components: {
 				Header: './src/components/overrides/Header.astro',
