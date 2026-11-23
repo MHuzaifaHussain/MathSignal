@@ -84,6 +84,12 @@ export function isLocked(state: EventSpaceState): boolean {
 	return Boolean(setupOf(state).goal) && !state.checked;
 }
 
+/** Why a pour would be refused right now, or null if it would go through. */
+export function pourBlocked(state: EventSpaceState, id: OutcomeId, direction: 1 | -1): Refusal['reason'] | null {
+	const result = pour(state.weights, id, direction);
+	return result.ok ? null : result.reason;
+}
+
 function withEvent(state: EventSpaceState, key: EventKey, members: ReadonlySet<OutcomeId>): EventSpaceState {
 	return { ...state, events: { ...state.events, [key]: members }, feedback: state.checked ? state.feedback : null, refusal: null };
 }

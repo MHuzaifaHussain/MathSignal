@@ -604,6 +604,103 @@
 	margin: 0.15rem 0;
 }
 
+/* ── EventSpace weights mode: six cups of 12 unit slots ── */
+.ms-cup-row {
+	inline-size: 100%;
+	border-collapse: separate;
+	border-spacing: 6px 0;
+	table-layout: fixed;
+}
+
+.ms-cup-row th {
+	padding: 0 0 0.35rem;
+	font-size: 0.8125rem;
+	font-weight: 600;
+	color: var(--ms-board-ink);
+	text-align: center;
+}
+
+.ms-cup-row td {
+	padding: 4px 0;
+	border: 3px solid transparent;
+	border-radius: 4px;
+	vertical-align: top;
+}
+
+/* Cups in event A: the ochre border and the "A" tag, but no fill, so filled slots stay readable. */
+.ms-cup-row td.is-a {
+	border-color: var(--ms-attention);
+}
+
+.ms-cup-tag {
+	font-weight: 600;
+}
+
+.ms-cup {
+	display: grid;
+	grid-template-rows: repeat(12, 8px);
+	gap: 2px;
+	inline-size: min(100%, 36px);
+	margin-inline: auto;
+}
+
+.ms-cup-slot {
+	border: 1px solid var(--ms-board-axis);
+	border-radius: 1px;
+	print-color-adjust: exact;
+}
+
+.ms-cup-slot.is-filled {
+	border-color: var(--ms-board-ink);
+	background-color: var(--ms-board-ink);
+}
+
+.ms-cup-share {
+	margin: 0.35rem 0;
+	font: 500 0.8125rem var(--ms-font-mono);
+	text-align: center;
+}
+
+.ms-cup-buttons {
+	display: grid;
+	gap: 4px;
+	justify-items: center;
+}
+
+.ms-cup-button {
+	inline-size: 44px;
+	max-inline-size: 100%;
+	min-height: 36px;
+	border: 1px solid var(--ms-board-edge);
+	border-radius: 4px;
+	background: transparent;
+	color: var(--ms-board-ink);
+	font: 600 1.125rem var(--ms-font-ui);
+	cursor: pointer;
+}
+
+.ms-cup-button[aria-disabled='true'] {
+	color: var(--ms-board-ink-muted);
+	border-style: dashed;
+	cursor: not-allowed;
+}
+
+@media print {
+	.ms-cup-buttons {
+		display: none;
+	}
+}
+
+@media (forced-colors: active) {
+	.ms-cup-slot.is-filled {
+		background-color: CanvasText;
+	}
+
+	.ms-cup-row td.is-a {
+		border-color: CanvasText;
+	}
+}
+
 @container (max-width: 399px) {
 	.ms-event-grid {
 		--ms-event-header: 24px;

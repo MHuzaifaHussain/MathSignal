@@ -125,4 +125,14 @@ assert.equal(describe.totalLine(eightPoured), "8 of 12 units poured. The cups ad
 assert.equal(describe.jugLine(eightPoured), 'Jug: 4 of 12 units left.');
 assert.equal(describe.additivityLine(pourFresh), 'P(even) = 2/12 + 2/12 + 2/12 = 6/12 = 0.50.');
 
+// Pour buttons know in advance which way is refused, so they can show it before being pressed.
+const { pourBlocked } = await import('../src/components/react/eventSpace/state.ts');
+assert.equal(pourBlocked(pourFresh, '3', 1), 'jug-empty');
+assert.equal(pourBlocked(pourFresh, '3', -1), null);
+assert.equal(pourBlocked(startedOver, '3', -1), 'cup-empty');
+assert.equal(pourBlocked(startedOver, '3', 1), null);
+assert.equal(describe.cupName(pourFresh, die.outcomes[2]), 'Cup 3: 2 of 12 units.');
+// With water left in the jug the cups aren't a probability yet, so the sum isn't written as P(...).
+assert.equal(describe.additivityLine(eightPoured), 'Even holds 1/12 + 1/12 + 2/12 = 4/12 of the jug.');
+
 console.log('Board check passed.');

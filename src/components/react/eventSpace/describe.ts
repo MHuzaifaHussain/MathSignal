@@ -167,6 +167,7 @@ export function additivityLine(state: EventSpaceState): string {
 	const sum = units.reduce((total, value) => total + value, 0);
 	const name = eventText(scenario, state.events.A);
 	const terms = units.map((value) => `${value}/${WEIGHT_TOTAL}`).join(' + ') || '0';
+	if (unitsPoured(state) !== WEIGHT_TOTAL) return `${capitalize(name)} holds ${terms} = ${sum}/${WEIGHT_TOTAL} of the jug.`;
 	return `P(${name}) = ${terms} = ${sum}/${WEIGHT_TOTAL} = ${decimal(sum, WEIGHT_TOTAL)}.`;
 }
 

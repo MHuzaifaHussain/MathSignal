@@ -2,13 +2,15 @@ import { useCallback, useEffect, useId, useReducer, useRef, useState } from "rea
 import Board from "./Board";
 import TrayChoice from "./TrayChoice";
 import { KEYBOARD_COMMIT_DELAY_MS } from "./boardTiming";
+import CupRow from "./eventSpace/CupRow.tsx";
 import OutcomeGrid from "./eventSpace/OutcomeGrid.tsx";
-import { announcementFor, feedbackLine, markedLine, presetLabel, readoutLines, statusLine } from "./eventSpace/describe.ts";
+import { additivityLine, announcementFor, feedbackLine, jugLine, markedLine, presetLabel, readoutLines, statusLine, totalLine } from "./eventSpace/describe.ts";
 import { SCENARIOS } from "./eventSpace/scenarios.ts";
 import { getSetup, type SetupId } from "./eventSpace/setups.ts";
 import { CHECKS_BEFORE_ANSWER, initialState, isLocked, reducer, type Action, type EventKey, type LookAt } from "./eventSpace/state.ts";
 
 const LOCKED_REASON = "Check your answer first";
+const CUPS_NOTE = "The cups are drawn the same size. The water in them is the probability, not the cup.";
 const LOOK_AT_OPTIONS: readonly { value: LookAt; label: string }[] = [
   { value: "everything", label: "Everything" },
   { value: "A and B", label: "A and B" },
@@ -47,7 +49,8 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
     if (!action) return;
     const text = announcementFor(state, action);
     window.clearTimeout(announceTimer.current);
-    if (action.type === "toggle") announceTimer.current = window.setTimeout(() => setAnnouncement(text), KEYBOARD_COMMIT_DELAY_MS);
+    const burst = action.type === "toggle" || (action.type === "pour" && !state.refusal);
+    if (burst) announceTimer.current = window.setTimeout(() => setAnnouncement(text), KEYBOARD_COMMIT_DELAY_MS);
     else setAnnouncement(text);
   }, [state]);
   useEffect(() => () => window.clearTimeout(announceTimer.current), []);
@@ -105,6 +108,24 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
           {LOCKED_REASON}: presets and readouts unlock when your answer is right.
         </p>
       )}
+      {setup.mode === "weights" && (
+        <>
+          <p className="ms-board-readout">{jugLine(state)}</p>
+          <div className="ms-event-presets" role="group" aria-label="Fill the cups">
+            <span className="ms-event-presets-label">Fill:</span>
+            {Object.keys(setup.weightPresets ?? {}).map((name) => (
+              <button key={name} type="button" className="ms-board-button" onClick={() => send({ type: "weight-preset", name })}>
+                {name}
+              </button>
+            ))}
+          </div>
+          <div className="ms-event-readouts">
+            <p className="ms-board-readout">{totalLine(state)}</p>
+            <p className="ms-board-readout">{additivityLine(state)}</p>
+          </div>
+          <p className="ms-event-note-line">{CUPS_NOTE}</p>
+        </>
+      )}
       {readouts.length > 0 && (
         <div className="ms-event-readouts">
           {readouts.map((line) => (
@@ -123,7 +144,11 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
         <p id={statusId} className="ms-event-status">
           {statusLine(state)}
         </p>
-        <OutcomeGrid state={state} scenario={scenario} describedBy={statusId} onToggle={(id) => send({ type: "toggle", id })} />
+        {setup.mode === "weights" ? (
+          <CupRow state={state} scenario={scenario} send={send} />
+        ) : (
+          <OutcomeGrid state={state} scenario={scenario} describedBy={statusId} onToggle={(id) => send({ type: "toggle", id })} />
+        )}
         {marked && <p className="ms-event-status">{marked}</p>}
         {feedback && <p className="ms-event-feedback">{feedback}</p>}
       </div>
