@@ -3,6 +3,7 @@
 //   public/favicon.svg             the bell mark, switching colours with the OS theme
 //   src/assets/logo-light.svg      header logo for light mode
 //   src/assets/logo-dark.svg       header logo for dark mode
+//   public/site.webmanifest        web app manifest (name, colours, icons from build-brand-images.mjs)
 // Usage: node scripts/build-tokens.mjs           write the files
 //        node scripts/build-tokens.mjs --check   exit 1 if any file is out of date
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -80,6 +81,25 @@ circle { fill: ${palette.light.mu}; }
 `;
 }
 
+export function renderWebManifest() {
+	const manifest = {
+		name: 'MathSignal',
+		short_name: 'MathSignal',
+		description: 'Interactive explanations of the maths behind machine learning.',
+		start_url: '/',
+		display: 'standalone',
+		background_color: palette.light.page,
+		theme_color: palette.light.ledge,
+		icons: [
+			{ src: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+			{ src: '/icon-512.png', sizes: '512x512', type: 'image/png' },
+			{ src: '/favicon.svg', sizes: 'any', type: 'image/svg+xml' },
+		],
+	};
+	return `${JSON.stringify(manifest, null, 2)}
+`;
+}
+
 /** Every generated file and its expected contents. */
 export function generatedFiles() {
 	return [
@@ -87,6 +107,7 @@ export function generatedFiles() {
 		{ path: 'public/favicon.svg', content: renderFaviconSvg() },
 		{ path: 'src/assets/logo-light.svg', content: renderBellSvg({ ink: palette.light.ledgeInk, mu: palette.light.mu }) },
 		{ path: 'src/assets/logo-dark.svg', content: renderBellSvg({ ink: palette.dark.ledgeInk, mu: palette.dark.mu }) },
+		{ path: 'public/site.webmanifest', content: renderWebManifest() },
 	];
 }
 

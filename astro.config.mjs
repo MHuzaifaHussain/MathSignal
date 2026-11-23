@@ -7,7 +7,8 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { katexOptions, rehypeKatexFailOnError } from './src/design/katex.mjs';
 import { DOMAINS } from './src/design/domains.mjs';
-import { SITE_DESCRIPTION, SITE_URL, SOCIAL_CARD } from './src/seo/site.mjs';
+import { REPOSITORY_URL, SITE_DESCRIPTION, SITE_URL, SOCIAL_CARD } from './src/seo/site.mjs';
+import { palette } from './src/design/palette.mjs';
 
 // https://astro.build/config
 export default defineConfig({
@@ -33,6 +34,11 @@ export default defineConfig({
 				{ tag: 'meta', attrs: { property: 'og:image:alt', content: SOCIAL_CARD.alt } },
 				{ tag: 'meta', attrs: { name: 'twitter:image', content: SOCIAL_CARD.url } },
 				{ tag: 'meta', attrs: { name: 'twitter:image:alt', content: SOCIAL_CARD.alt } },
+				// App icons and browser UI colour, generated from the palette (scripts/build-brand-images.mjs, build-tokens.mjs)
+				{ tag: 'link', attrs: { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' } },
+				{ tag: 'link', attrs: { rel: 'manifest', href: '/site.webmanifest' } },
+				{ tag: 'meta', attrs: { name: 'theme-color', content: palette.light.ledge, media: '(prefers-color-scheme: light)' } },
+				{ tag: 'meta', attrs: { name: 'theme-color', content: palette.dark.ledge, media: '(prefers-color-scheme: dark)' } },
 			],
 			// Generated from the palette by scripts/build-tokens.mjs. Starlight inserts the logo as an <img>,
 			// so it can't inherit currentColor: one file per theme.
@@ -52,7 +58,7 @@ export default defineConfig({
 				{
 					icon: 'github',
 					label: 'GitHub',
-					href: 'https://github.com/mhuzaifahussain/mathsignal',
+					href: REPOSITORY_URL,
 				},
 			],
 			// Subjects come from src/design/domains.mjs so the header strip and sidebar never drift apart.
