@@ -35,4 +35,4 @@ Write for the learner first. Follow [docs/seo/README.md](docs/seo/README.md): an
 | `npm run check:links` | Internal links, anchors and trailing slashes in `dist/` |
 | `npm run tokens` | Regenerates `src/styles/tokens.css` from the palette |
 
-Node 24 (see `.nvmrc`).
+Node 24 (see `.nvmrc`). GitHub Actions (`.github/workflows/checks.yml`) runs `check`, `build` and `check:code` on every push and pull request.

@@ -54,6 +54,8 @@ Start with [AGENTS.md](AGENTS.md). It links to everything else:
 - [AI assistant skills](docs/tooling/agent-skills.md): recommended skills and tools for coding agents
 - [Deployment](DEPLOY.md): Cloudflare Pages settings
 
+GitHub Actions runs the type-check, the full build with its checks, and the Python examples on every push and pull request.
+
 Found a mistake on a page? Use the "Report an error on this page" link at the bottom of it, or [open an issue](https://github.com/MHuzaifaHussain/MathSignal/issues).
 
 ## Licence

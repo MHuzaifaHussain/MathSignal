@@ -1,0 +1,37 @@
+# Runs every check on each push and pull request, so a broken formula, link, colour or Python example
+# is caught before it reaches main. Deployment stays with Cloudflare (DEPLOY.md).
+name: Checks
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      - name: Type-check
+        run: npm run check
+
+      - name: Build (design and content checks before, link check after)
+        run: npm run build
+
+      - name: Run the runnable Python examples
+        run: npm run check:code
