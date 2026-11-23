@@ -15,7 +15,7 @@ import DomainNav from './DomainNav.astro';
 	<div class="title-wrapper sl-flex"><SiteTitle /></div>
 	<div class="middle sl-flex print:hidden">
 		<DomainNav variant="strip" />
-		<Search />
+		<div class="search-slot"><Search /></div>
 	</div>
 	<div class="sl-hidden md:sl-flex print:hidden right-group">
 		<div class="sl-flex social-icons"><SocialIcons /></div>
@@ -50,6 +50,46 @@ import DomainNav from './DomainNav.astro';
 	.social-icons {
 		gap: 1.5rem;
 		align-items: center;
+	}
+
+	/* The subject strip keeps its natural width; Search takes what is left. */
+	.middle :global(.domain-nav) {
+		flex: none;
+	}
+
+	@media (min-width: 50rem) {
+		/* Search sizes to the space left beside the strip, so it can never run into the icons on the right. */
+		.search-slot {
+			container: header-search / inline-size;
+			flex: 1 1 auto;
+			min-width: 2.75rem;
+		}
+		.search-slot :global(button[data-open-modal]) {
+			min-width: 0;
+			overflow: hidden;
+			white-space: nowrap;
+		}
+	}
+
+	/* Narrow room drops the visible words in two steps: first the "Ctrl K" hint, then the word "Search",
+	 * leaving the magnifier as a 44px square. The button keeps its accessible name and the Ctrl+K shortcut
+	 * throughout. !important beats Starlight's md:sl-flex / md:sl-block utilities, which use it too. */
+	@container header-search (max-width: 11rem) {
+		.search-slot :global(button[data-open-modal] > kbd) {
+			display: none !important;
+		}
+	}
+
+	@container header-search (max-width: 6.5rem) {
+		.search-slot :global(button[data-open-modal]) {
+			justify-content: center;
+			width: 2.75rem;
+			min-height: 2.75rem;
+			padding-inline: 0;
+		}
+		.search-slot :global(button[data-open-modal] > span) {
+			display: none !important;
+		}
 	}
 
 	@media (min-width: 50rem) {
