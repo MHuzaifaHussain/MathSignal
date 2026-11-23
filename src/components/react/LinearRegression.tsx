@@ -1,13 +1,9 @@
-import { useState, useMemo, useCallback } from "react";
-import {
-  Mafs,
-  Coordinates,
-  MovablePoint,
-  Line,
-  Text,
-  Theme,
-} from "mafs";
+import { useCallback, useMemo, useState } from "react";
+import { Coordinates, Line, Mafs, MovablePoint } from "mafs";
 import type { vec } from "mafs";
+import Board from "./Board";
+import ChalkNote from "./ChalkNote";
+import { formatNumber, plotColors } from "./plotColors";
 
 const INITIAL_POINTS: vec.Vector2[] = [
   [1, 2],
@@ -20,100 +16,81 @@ const INITIAL_POINTS: vec.Vector2[] = [
   [8, 8],
   [9, 8.5],
 ];
+const VIEW: vec.Vector2 = [-1, 10];
+const BOARD_HEIGHT = 380;
+/** Below this, the x values are effectively identical and the slope is undefined. */
+const VERTICAL_LINE_EPSILON = 1e-10;
 
-function leastSquares(points: vec.Vector2[]) {
+interface Fit {
+  slope: number;
+  intercept: number;
+  rSquared: number;
+}
+
+/** Ordinary least squares fit; null when every point shares one x value (vertical line). */
+function leastSquares(points: vec.Vector2[]): Fit | null {
   const n = points.length;
-  let sumX = 0;
-  let sumY = 0;
-  let sumXY = 0;
-  let sumXX = 0;
-  let sumYY = 0;
+  const sum = points.reduce(
+    (acc, [x, y]) => ({ x: acc.x + x, y: acc.y + y, xy: acc.xy + x * y, xx: acc.xx + x * x, yy: acc.yy + y * y }),
+    { x: 0, y: 0, xy: 0, xx: 0, yy: 0 },
+  );
+  const denominator = n * sum.xx - sum.x * sum.x;
+  if (Math.abs(denominator) < VERTICAL_LINE_EPSILON) return null;
 
-  for (const [x, y] of points) {
-    sumX += x;
-    sumY += y;
-    sumXY += x * y;
-    sumXX += x * x;
-    sumYY += y * y;
-  }
-
-  const denominator = n * sumXX - sumX * sumX;
-
-  // Vertical line edge case: slope is infinite
-  if (Math.abs(denominator) < 1e-10) {
-    return { slope: Infinity, intercept: 0, rSquared: 0 };
-  }
-
-  const slope = (n * sumXY - sumX * sumY) / denominator;
-  const intercept = (sumY - slope * sumX) / n;
-
-  // R² calculation
-  const meanY = sumY / n;
-  const ssTotal = sumYY - n * meanY * meanY;
-  const ssResidual = points.reduce((sum, [x, y]) => {
-    const predicted = slope * x + intercept;
-    return sum + (y - predicted) ** 2;
-  }, 0);
-
-  const rSquared = ssTotal === 0 ? 1 : 1 - ssResidual / ssTotal;
-
+  const slope = (n * sum.xy - sum.x * sum.y) / denominator;
+  const intercept = (sum.y - slope * sum.x) / n;
+  const meanY = sum.y / n;
+  const totalSquares = sum.yy - n * meanY * meanY;
+  const residualSquares = points.reduce((acc, [x, y]) => acc + (y - (slope * x + intercept)) ** 2, 0);
+  const rSquared = totalSquares === 0 ? 1 : 1 - residualSquares / totalSquares;
   return { slope, intercept, rSquared };
 }
 
+function describeFit(fit: Fit | null): string {
+  if (!fit) return "All points share one x value, so the slope is undefined.";
+  return `Best-fit line: slope ${formatNumber(fit.slope)}, intercept ${formatNumber(fit.intercept)}, R squared ${formatNumber(fit.rSquared, 3)}.`;
+}
+
+/** Linear regression board: drag any point and the least-squares line refits. */
 export default function LinearRegression() {
   const [points, setPoints] = useState<vec.Vector2[]>(INITIAL_POINTS);
+  const [announcement, setAnnouncement] = useState("");
+  const fit = useMemo(() => leastSquares(points), [points]);
 
-  const { slope, intercept, rSquared } = useMemo(
-    () => leastSquares(points),
-    [points],
+  const movePoint = useCallback((index: number, next: vec.Vector2) => {
+    setPoints((previous) => previous.map((point, i) => (i === index ? next : point)));
+  }, []);
+
+  const handleReset = useCallback(() => {
+    setPoints(INITIAL_POINTS);
+    setAnnouncement(describeFit(leastSquares(INITIAL_POINTS)));
+  }, []);
+
+  const tray = fit ? (
+    <p className="ms-board-readout">
+      y = {formatNumber(fit.slope)}x {fit.intercept < 0 ? "−" : "+"} {formatNumber(Math.abs(fit.intercept))}
+      &nbsp;&nbsp; R² = {formatNumber(fit.rSquared, 3)}
+    </p>
+  ) : (
+    <p className="ms-board-readout">Slope undefined: every point has the same x.</p>
   );
-
-  const handlePointMove = useCallback(
-    (index: number, newPoint: vec.Vector2) => {
-      setPoints((prev) => {
-        const next = [...prev];
-        next[index] = newPoint;
-        return next;
-      });
-    },
-    [],
-  );
-
-  const slopeStr = slope.toFixed(2);
-  const interceptStr =
-    intercept >= 0 ? `+ ${intercept.toFixed(2)}` : `- ${Math.abs(intercept).toFixed(2)}`;
 
   return (
-    <Mafs viewBox={{ x: [-1, 10], y: [-1, 10] }}>
-      <Coordinates.Cartesian xAxis={{ lines: 1 }} yAxis={{ lines: 1 }} />
-
-      {/* Best-fit regression line */}
-      {isFinite(slope) && (
-        <Line.PointSlope
-          point={[0, intercept]}
-          slope={slope}
-          color={Theme.blue}
-          weight={2.5}
-        />
-      )}
-
-      {/* Draggable data points */}
-      {points.map((point, i) => (
-        <MovablePoint
-          key={i}
-          point={point}
-          onMove={(p) => handlePointMove(i, p)}
-          color={Theme.orange}
-        />
-      ))}
-
-      {/* Equation and R² display */}
-      <Text x={0.5} y={9.2} size={14} color={Theme.foreground} attach="e">
-        {`y = ${slopeStr}x ${interceptStr}`}
-      </Text>
-      <Text x={0.5} y={8.5} size={14} color={Theme.foreground} attach="e">
-        {`R² = ${rSquared.toFixed(4)}`}
-      </Text>
-    </Mafs>
+    <Board
+      label="Linear regression. Drag any point to see the least-squares line refit."
+      tray={tray}
+      onReset={handleReset}
+      announcement={announcement}
+      onInteractionEnd={() => setAnnouncement(describeFit(fit))}
+    >
+      <Mafs height={BOARD_HEIGHT} viewBox={{ x: VIEW, y: VIEW, padding: 0 }} preserveAspectRatio={false} pan={false} zoom={false}>
+        <Coordinates.Cartesian xAxis={{ lines: 1 }} yAxis={{ lines: 1 }} />
+        {fit && <Line.PointSlope point={[0, fit.intercept]} slope={fit.slope} color={plotColors.ink} weight={2.5} />}
+        {points.map((point, i) => (
+          <MovablePoint key={i} point={point} onMove={(next) => movePoint(i, next)} color={plotColors.attention} />
+        ))}
+      </Mafs>
+      <ChalkNote long="one outlier can tilt the whole line" short="outliers tilt the line" />
+    </Board>
   );
 }
