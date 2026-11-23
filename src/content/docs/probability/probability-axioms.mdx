@@ -118,7 +118,7 @@ The second rule says the sample space, the event "something happens", has probab
 
 ### Events that can't happen together add up
 
-The third rule says that if two events share no outcome, the probability that one or the other happens is the sum of their probabilities. On a die, "at most 2" and "six" can't both happen, so the chance of either is the chance of the first plus the chance of the second. Events with no outcome in common are called disjoint, or mutually exclusive. On a finite space every single outcome is an event, so the rule can be applied one outcome at a time. Then the probability of any event is the sum of its outcomes' probabilities: "even" holds the water in cups 2, 4 and 6. Counting outcomes, as on [sample spaces and events](/probability/sample-spaces-and-events/), is the special case where every outcome gets the same share.
+The third rule says that if two events share no outcome, the probability that one or the other happens is the sum of their probabilities. On a die, "at most 2" and "six" can't both happen, so the chance of either is the chance of the first plus the chance of the second. Events with no outcome in common are called disjoint, or mutually exclusive. On a finite space we usually make every single outcome an event, so the rule can be applied one outcome at a time. Then the probability of any event is the sum of its outcomes' probabilities: "even" holds the water in cups 2, 4 and 6. Counting outcomes, as on [sample spaces and events](/probability/sample-spaces-and-events/), is the special case where every outcome gets the same share.
 
 <Simpler label="the same rules with a class vote">
 
@@ -127,7 +127,7 @@ Thirty students each vote for one of three picnic spots. Share of the vote works
 </Simpler>
 
 <SideNote>
-Kolmogorov's 1933 book, translated into English in 1950, stated five axioms. Two are about the collection of events: it is a field of sets, closed under the union, intersection and difference of two of its sets, and it contains the whole sample space. Three are about the probabilities, and they are the three rules here with additivity for two events. In the next chapter he added a sixth, continuity, which together with additivity for two events is the same as additivity for countably many, and he extended $P$ from the field to the smallest collection closed under countable unions <Cite id="kolmogorov1950" />. The modern form puts everything directly on such a collection, called a σ-algebra (see Notation below), so the rules about events become conditions on $\mathcal{F}$ and the three rules about $P$ are all that is left.
+Kolmogorov's 1933 book, translated into English in 1950, stated five axioms. Two are about the collection of events: it is a field of sets, closed under the union, intersection and difference of two of its sets, and it contains the whole sample space. Three are about the probabilities, and they are the three rules here with additivity for two events. In the next chapter he added a sixth, continuity, which together with additivity for two events is the same as additivity for countably many, and he extended $P$ from the field to the smallest σ-algebra containing it (his Borel field: a field that is also closed under countable unions) <Cite id="kolmogorov1950" />. The modern form puts everything directly on a σ-algebra (see the precise statement below), so the rules about events become conditions on $\mathcal{F}$ and the three rules about $P$ are all that is left.
 </SideNote>
 
 ## Rules that follow from the three
@@ -168,7 +168,7 @@ A probability space is a triple $(\Omega, \mathcal{F}, P)$. Here $\Omega$ is a n
 2. $P(\Omega) = 1$;
 3. if $A_1, A_2, \ldots \in \mathcal{F}$ are pairwise disjoint, meaning $A_i \cap A_j = \emptyset$ whenever $i \ne j$, then $P\big(\bigcup_{i=1}^{\infty} A_i\big) = \sum_{i=1}^{\infty} P(A_i)$.
 
-The third axiom contains the two-event rule from above: for two disjoint events $A$ and $B$, take $A_1 = A$, $A_2 = B$ and every later $A_i$ empty.
+The third axiom contains the two-event rule from above: for two disjoint events $A$ and $B$, take $A_1 = A$, $A_2 = B$ and every later $A_i$ empty, and use $P(\emptyset) = 0$, proved below.
 
 A collection with the closure properties of $\mathcal{F}$ is called a σ-algebra. The σ in that standard name refers to countable unions and has nothing to do with the standard deviation; this site writes the collection itself as $\mathcal{F}$.
 
@@ -281,7 +281,7 @@ Each $e^{z_k}$ is positive, so every $p_k > 0$ and axiom 1 holds; dividing by th
 
 ### One sigmoid per label
 
-A multi-label model, which may tag one image as both "outdoor" and "dog", uses one sigmoid per label instead, $\operatorname{sigmoid}(z_k) = 1/(1 + e^{-z_k})$. Each output lies between 0 and 1 and is the probability of a separate yes-or-no event, "label $k$ applies", on its own two-outcome sample space with $P(\text{yes}) = \operatorname{sigmoid}(z_k)$ and $P(\text{no}) = 1 - \operatorname{sigmoid}(z_k)$. Those are fine probabilities: a sigmoid output unit is how a network gives one binary variable a valid probability <Cite id="goodfellow2016" />. But the labels are not disjoint outcomes of one experiment, so the outputs need not add up to 1: the same logits $(2, 1, 0)$ give $(0.881, 0.731, 0.5)$, which add up to about $2.11$. Reading them as one distribution over the labels breaks axiom 2. Taken together, and assuming the labels are independent given the input, the $K$ sigmoids do define one distribution: over the $2^K$ possible sets of labels, the product space of $K$ yes-or-no experiments from [sample spaces and events](/probability/sample-spaces-and-events/).
+A multi-label model, which may tag one image as both "outdoor" and "dog", uses one sigmoid per label instead, $\operatorname{sigmoid}(z_k) = 1/(1 + e^{-z_k})$. Each output lies between 0 and 1 and is the probability of a separate yes-or-no event, "label $k$ applies", on its own two-outcome sample space with $P(\text{yes}) = \operatorname{sigmoid}(z_k)$ and $P(\text{no}) = 1 - \operatorname{sigmoid}(z_k)$. Those are fine probabilities: a sigmoid output unit is how a network gives one binary variable a valid probability <Cite id="goodfellow2016" />. But the labels are not disjoint outcomes of one experiment, so the outputs need not add up to 1: the same logits $(2, 1, 0)$ give $(0.881, 0.731, 0.5)$, which add up to about $2.11$. Reading them as one distribution over the labels breaks axiom 2. Taken together, the $K$ sigmoids do define one distribution, the product one, which treats the labels as independent given the input: over the $2^K$ possible sets of labels, the product space of $K$ yes-or-no experiments from [sample spaces and events](/probability/sample-spaces-and-events/).
 
 ### Normalizing scores
 
@@ -313,7 +313,7 @@ where $y$ is the one-hot label. Every entry is non-negative, and the total is $(
 
 ## Check the axioms in code
 
-This runs in your browser, uses exact fractions so every equality is exact, and stops with an error if a result is off. It checks the page's numbers, a function `is_distribution` for axioms 1 and 2, and inclusion–exclusion on all 4,096 pairs of events of the loaded die:
+This runs in your browser, uses exact fractions so every equality is exact, and stops with an error if a result is off. It also checks the label-smoothing and cross-entropy numbers from the fold above. It checks the page's numbers, a function `is_distribution` for axioms 1 and 2, and inclusion–exclusion on all 4,096 pairs of events of the loaded die:
 
 <PyRunner
   title="axioms.py"
@@ -455,7 +455,7 @@ The loop over all pairs of events checks inclusion–exclusion on every one of t
 
 <ResearchFrontier reviewed="2026-11-24">
 
-**Why countable additivity became standard.** Kolmogorov adopted continuity, and with it the third axiom ([countable additivity](#countable-additivity)), because it had proved convenient in very different kinds of research <Cite id="kolmogorov1950" />. Measure theory kept it, at the price that on uncountable sample spaces $P$ is defined only on a collection $\mathcal{F}$, because of [subsets of the unit interval that no length can measure](/probability/sample-spaces-and-events/#non-measurable-sets).
+**Why countable additivity became standard.** Kolmogorov adopted continuity, and with it the third axiom ([countable additivity](#countable-additivity)), because it had proved convenient in very different kinds of research <Cite id="kolmogorov1950" />. Measure theory kept it, at the price that on uncountable sample spaces $P$ may have to be defined only on a collection $\mathcal{F}$, because of [subsets of the unit interval that no length can measure](/probability/sample-spaces-and-events/#non-measurable-sets).
 
 **Language models that leak probability.** A language model is meant to be a distribution over finite strings, but a model that writes one token at a time can, for some settings, keep going forever with positive probability, so its probabilities for finite strings add up to less than 1. Du and coauthors make this precise. The set of infinite sequences is uncountable, so they build a σ-algebra on finite and infinite sequences together and rely on countable additivity, and they call a model tight when the infinite sequences get probability 0. They prove that Transformer language models are always tight, while some n-gram models, and a recurrent network with ReLU activations that they construct, are not <Cite id="du2022" />.
 
@@ -492,7 +492,7 @@ Inclusion–exclusion gives $P(A \cap B) = P(A) + P(B) - P(A \cup B)$. Since $A 
     If $A$ and $B$ are disjoint and both have positive probability, they are dependent: learning that $A$ happened tells you $B$ did not. Sum is 7 and a double are disjoint, so $P(A \cap D) = 0$, while $P(A)\,P(D) = 1/6 \times 1/6 = 1/36$. Independence gets its own page later in this subject.
   </Mistake>
   <Mistake wrong="An event with probability 0 is impossible.">
-    On a finite space where every outcome has a positive weight, as with fair dice, yes: only $\emptyset$ has probability 0. In general, no. Even on a finite space a cup can hold 0 units: with cups 3, 3, 3, 3, 0 and 0, "the die shows 6" has probability 0 but is still an outcome of the sample space. And pick a point uniformly from $[0, 1]$: any single point $x$ lies in an interval of length $2\delta$ around it, so monotonicity gives $P(\{x\}) \le 2\delta$ for every $\delta > 0$, and $P(\{x\}) = 0$. Yet some point is always picked. That is no contradiction. Writing $1 = \sum_x P(\{x\}) = 0$ would need additivity over every point, but $[0, 1]$ has uncountably many points and additivity covers only countably many events. This is how densities such as the [normal distribution](/statistics/normal-distribution/) work.
+    On a finite space where every outcome has a positive weight, as with fair dice, yes: only $\emptyset$ has probability 0. In general, no. Even on a finite space a cup can hold 0 units: with cups 3, 3, 3, 3, 0 and 0, face 6 is still an outcome of the sample space, so the event {6} has probability 0 without being empty. And pick a point uniformly from $[0, 1]$: any single point $x$ lies in an interval of length $2\delta$ around it, so monotonicity gives $P(\{x\}) \le 2\delta$ for every $\delta > 0$, and $P(\{x\}) = 0$. Yet some point is always picked. That is no contradiction. Writing $1 = \sum_x P(\{x\}) = 0$ would need additivity over every point, but $[0, 1]$ has uncountably many points and additivity covers only countably many events. This is how densities such as the [normal distribution](/statistics/normal-distribution/) work.
   </Mistake>
 </CommonMistakes>
 

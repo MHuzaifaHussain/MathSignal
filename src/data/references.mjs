@@ -172,7 +172,7 @@ export const REFERENCES = [
 		title: 'A measure-theoretic characterization of tight language models',
 		venue: 'ACL 2023',
 		url: 'https://arxiv.org/abs/2212.10502',
-		note: 'Sections 1–3: probability mass can leak onto the uncountable set of infinite sequences; a σ-algebra and countable additivity make tightness precise. Transformer language models are always tight; some n-gram and RNN models are not.',
+		note: 'Sections 2–5: probability mass can leak onto the uncountable set of infinite sequences; a σ-algebra and countable additivity make tightness precise. Transformer language models are always tight; some n-gram and RNN models are not.',
 		checked: '2026-11-24',
 	},
 ];

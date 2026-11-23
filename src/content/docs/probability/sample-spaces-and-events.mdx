@@ -16,7 +16,7 @@ takeaways:
   - An event is a set of outcomes. A single outcome is one point; an event can hold none, some or all of them.
   - Two coins have four outcomes, HH, HT, TH and TT, so at least one head has probability 3/4, not 2/3.
   - Counting gives a probability, |A| divided by |Ω|, only when every outcome is equally likely.
-  - On a finite or countable sample space every subset can be an event. On an uncountable one, such as the points of [0, 1], probability is defined on a chosen collection of events 𝓕.
+  - On a finite or countable sample space every subset can be an event. On an uncountable one, such as the points of [0, 1), probability may have to be defined on a chosen collection of events 𝓕.
 references:
   - grinstead2003
   - kolmogorov1950
@@ -324,7 +324,7 @@ The simulation's share is within 0.01 of 0.75 and the share of "one of each" is 
 
 **Why probability is defined on a collection of events.** Kolmogorov built probability on a set of outcomes, a collection of events and a probability on those events <Cite id="kolmogorov1950" />, and this framework is the standard one. The middle piece is there because of [non-measurable sets](#non-measurable-sets), a settled result.
 
-**Tokenization is a choice of sample space.** A language model's outcomes are token sequences, and one string can be split into tokens in many ways. So the probability of a string is the probability of an event, the set of all token sequences that spell it, and not of a single outcome. Models are usually scored on one canonical tokenization instead. Cao and Rimell argue for scoring the whole event; summing over every tokenization exactly is intractable, because their number grows exponentially with the length of the text, so they estimate the sum by sampling and find that the two scores can differ markedly, especially on text unlike the training data <Cite id="cao2021" />. Which of the two numbers evaluations should report is the question they leave open.
+**Tokenization is a choice of sample space.** A language model's outcomes are token sequences, and one string can be split into tokens in many ways. So the probability of a string is the probability of an event, the set of all token sequences that spell it, and not of a single outcome. Models are usually scored on one canonical tokenization instead. Cao and Rimell argue for scoring the whole event; summing over every tokenization exactly is intractable, because their number grows exponentially with the length of the text, so they estimate the sum by sampling and find that the two scores can differ markedly, especially on text unlike the training data <Cite id="cao2021" />. They argue that evaluations should report the marginal; computing it cheaply enough to use routinely is what remains unsettled.
 
 </ResearchFrontier>
 
