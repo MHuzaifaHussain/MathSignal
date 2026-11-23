@@ -1,0 +1,500 @@
+---
+title: "Probability axioms"
+description: "Pour one jug of probability into six cups for a die, learn the three rules every probability follows, and see why softmax and cross-entropy rely on them."
+draft: true
+sidebar:
+  order: 2
+topic: probability/probability-axioms
+type: B
+objectives:
+  - State the three probability axioms and check whether a list of weights is a valid probability distribution.
+  - Derive the complement rule, monotonicity and inclusion–exclusion from the axioms, one justified step at a time.
+  - Compute the probability of "not A" and "A or B" on two dice, correcting for the outcomes the two events share.
+  - Explain why softmax outputs form a distribution over classes while one sigmoid per label does not.
+takeaways:
+  - Every probability follows three rules. No event gets a negative probability, the whole sample space gets 1, and the probabilities of disjoint events add.
+  - On a die loaded with 1, 1, 1, 1, 1 and 7 units out of 12, an even number has probability 9/12 = 3/4, against 1/2 on a fair die.
+  - The complement rule, monotonicity, P(A) ≤ 1 and inclusion–exclusion all follow from the three axioms.
+  - For events that overlap, add and then take the overlap off once. With A = sum is 7 and B = first die is 6, P(A or B) = (6 + 6 − 1)/36 = 11/36.
+  - Softmax outputs satisfy the axioms over the classes. One sigmoid per label gives a separate yes-or-no probability for each label, not one distribution over the labels.
+references:
+  - kolmogorov1950
+  - grinstead2003
+  - tao2011
+author: Muhammad Huzaifa Hussain
+reviewedAt: 2026-11-24
+aiAssisted: true
+primaryQuery: probability axioms
+searchIntent: learn
+depthStatus: complete
+---
+
+import Analogy from "../../../components/Analogy.astro";
+import CheckYourself from "../../../components/CheckYourself.astro";
+import Cite from "../../../components/Cite.astro";
+import CommonMistakes from "../../../components/CommonMistakes.astro";
+import ConceptHeader from "../../../components/ConceptHeader.astro";
+import ConceptMap from "../../../components/ConceptMap.astro";
+import FormalDefinition from "../../../components/FormalDefinition.astro";
+import GoDeeper from "../../../components/GoDeeper.astro";
+import Mistake from "../../../components/Mistake.astro";
+import NotationKey from "../../../components/NotationKey.astro";
+import PreciseStatement from "../../../components/PreciseStatement.astro";
+import PyRunner from "../../../components/PyRunner.astro";
+import References from "../../../components/References.astro";
+import ResearchFrontier from "../../../components/ResearchFrontier.astro";
+import SideNote from "../../../components/SideNote.astro";
+import Simpler from "../../../components/Simpler.astro";
+import StepThrough from "../../../components/StepThrough.astro";
+import Takeaways from "../../../components/Takeaways.astro";
+import WhyThisMatters from "../../../components/WhyThisMatters.astro";
+import WorkedExample from "../../../components/WorkedExample.astro";
+import EventSpace from "../../../components/react/EventSpace.tsx";
+
+<ConceptHeader
+  oneLiner="The probability axioms are the rules every probability must follow: no event has a negative probability, the whole sample space has probability 1, and the probabilities of events that can't happen together add up."
+  difficulty="beginner"
+/>
+
+## In everyday terms
+
+<Analogy breaks="Pouring is a choice, but a real die's probabilities come from the die, not from how you like to pour. The picture shows the rules any probability must follow, not how to find the right one for a given die. And for a measurement such as a height there are so many cups that each single one holds no water at all, yet together they still hold the full jug; that case needs the precise statement further down.">
+
+Think of everything you believe about one roll of a die as a single jug of water, and set out six cups, one for each face. Pour the whole jug into the cups, as much into each as you think that face deserves. Only three rules matter. No cup can hold less than nothing. All the water ends up in the cups, so together they hold exactly one jug. And the water for a question such as "is it even?" is the water in cups 2, 4 and 6 added up, because no drop sits in two cups at once.
+
+A fair die gets the same amount in every cup. A die loaded toward six gets most of the jug in cup 6. The rules are the same either way; only the pouring differs.
+
+The jug has a blind spot. Each drop sits in one cup, but questions overlap: "even" and "at most 2" both care about cup 2. So put labels on the cups as well: "even" on cups 2, 4 and 6, "at most 2" on cups 1 and 2. The water for a question is the water in the cups that carry its label. Cup 2 carries both labels, so if you add the water for "even" to the water for "at most 2", cup 2 is counted twice, and you have to take it off once.
+
+</Analogy>
+
+<WhyThisMatters>
+A classifier's output is a probability only if it follows these three rules: no negative numbers, a total of 1 over the labels, and probabilities of separate labels that add. Softmax produces numbers that follow them, cross-entropy training assumes them, and label smoothing keeps them. When a model's numbers break one of the rules, for example one sigmoid per label giving outputs that add up to more than 1, they can still be useful, but they are not a distribution over the labels, and reading them as one gives wrong answers.
+</WhyThisMatters>
+
+## Pour a die from a jug
+
+Before you touch anything: on a die loaded toward six, with 1, 1, 1, 1, 1 and 7 units of a 12-unit jug in the six cups, is "even" more or less likely than on a fair die? By how much? Make a guess, then test it.
+
+<GoDeeper label="a second question before you start">
+
+Could you pour a die so that "even" gets 3/4 of the jug and "odd" gets 1/2? Decide which of the three rules settles it before you look at the board.
+
+</GoDeeper>
+
+The board shows six cups, Cup 1 to Cup 6, each a column of 12 slots with its share written under it, such as 2/12. Under each cup, the + button pours one unit into it and the − button pours one unit out; the tray shows how much is left in the jug. The Fill buttons pour a whole die at once: Fair die, Loaded toward six, or Start over, which empties every cup back into the jug. The A buttons, Even, At most 2 and Six, choose the event the board adds up, and its cups get an "A" tag. As a goal, press Loaded toward six with A on Even and read the bottom line, then press Fair die and compare.
+
+<div class="not-content">
+  <EventSpace client:visible setup="die-pour" />
+</div>
+
+More likely, by a quarter of the jug. With every cup full the board writes the sum out: on the fair die "P(even) = 2/12 + 2/12 + 2/12 = 6/12 = 0.5", and on the loaded die "P(even) = 1/12 + 1/12 + 7/12 = 9/12 = 0.75". So "even" goes from 1/2 to 3/4. The loaded die takes water from cups 2 and 4, but cup 6 gains more than they lose. And the second question has the answer no: "even" and "odd" share no cup and together cover all six, so their water adds up to exactly one jug, and 3/4 + 1/2 is more than one.
+
+### What the board refuses to do
+
+Each of the three rules shows up as something the board won't do or won't call a probability.
+
+- **Never negative.** Press Start over, then press − on any cup. The board refuses: "A cup can't hold less than nothing." No pouring can give a face less than zero.
+- **The whole jug, no more and no less.** The board opens full, so pouring into any cup is refused with "The jug is empty." After Start over, pour 2 units into each of cups 1 to 4 and the board says "8 of 12 units poured. The cups add up to 8/12, not 1, so this isn't a probability yet." The event line changes too: it says "Even holds 2/12 + 2/12 + 0/12 = 4/12 of the jug" instead of giving P(even). Only when all 12 units are poured does it say "All 12 units poured: the cups add up to 1."
+- **Separate cups add.** The event line always writes the sum out, one term per cup in the event. Six and At most 2 share no cup, so on the loaded die their shares, 7/12 and 2/12, add up to the 9/12 of the event made of cups 1, 2 and 6.
+
+Under the cups the board keeps one note: "The cups are drawn the same size. The water in them is the probability, not the cup." The cup is where a face's probability goes; how much water it holds is the probability.
+
+## Three rules for any probability
+
+Every probability, on any sample space, follows the same three rules, called the axioms of probability: no event gets a negative probability, the whole sample space gets probability 1, and the probabilities of events that can't happen together add up. Everything else, from the rule for "not A" to the correction for overlapping events, is derived from these three.
+
+### Never negative
+
+The first rule says a probability is never below 0. A probability of 0 means "no share at all"; there is nothing less than that. A model that outputs −0.1 for a class has not produced a probability, however the rest of its numbers look.
+
+### The whole sample space gets 1
+
+The second rule says the sample space, the event "something happens", has probability 1. Some outcome always occurs, so all the probability is spread over the outcomes and none is left over or missing. This is what makes 1 the top of the scale: it is the probability of the one event that is certain.
+
+### Events that can't happen together add up
+
+The third rule says that if two events share no outcome, the probability that one or the other happens is the sum of their probabilities. On a die, "at most 2" and "six" can't both happen, so the chance of either is the chance of the first plus the chance of the second. Events with no outcome in common are called disjoint, or mutually exclusive. Applied one outcome at a time, the rule says that on a finite sample space the probability of any event is the sum of the probabilities of its outcomes. Counting outcomes, as on the [previous page](/probability/sample-spaces-and-events/), is the special case where every outcome gets the same share.
+
+<Simpler label="the same rules with a class vote">
+
+Thirty students each vote for one of three picnic spots. Share of the vote works like probability. No spot gets a negative share. The three shares add up to the whole class, 30 out of 30. And the share for "the lake or the park" is the lake's share plus the park's, because no student voted for both. If someone reported that the lake got 60% and the park got 50%, you would know at once that something was wrong.
+
+</Simpler>
+
+<SideNote>
+Kolmogorov's 1933 book, translated into English in 1950, stated five axioms, two about the collection of events and three about the probabilities, and later added a sixth, continuity, as the only axiom specific to infinitely many events <Cite id="kolmogorov1950" />. The three rules here are the usual modern way to write the same system.
+</SideNote>
+
+## Rules that follow from the three
+
+The rules you use every day for "not A", for "A or B" and for comparing events are consequences of the three axioms, not extra assumptions. The board below shows them on two fair dice, where each of the 36 ordered outcomes has probability 1/36.
+
+Before you look: roll two dice. Event A is "the sum is 7" and event B is "the first die shows 6". Each holds 6 of the 36 outcomes. Is the probability of "A or B" equal to 6/36 + 6/36 = 12/36? Decide, then check.
+
+The board opens with A and B already marked: A squares have a solid border and an "A" tag, B squares a dashed outline and a "B" tag. "Editing" chooses which event a tap changes, A or B, and the presets set an event in one press: Sum is 7, A double or Clear for A, and First die is 6, Second die is 6 or Clear for B. "Look at" mutes every square outside the set you choose: Everything, A and B, A or B, or Not A. The arrow keys move between squares and Space toggles one. As a goal, set "Look at" to A or B and count the squares still in view.
+
+<div class="not-content">
+  <EventSpace client:visible setup="dice-operations" />
+</div>
+
+No: 11/36, not 12/36. The readout says "A or B: 6 + 6 − 1 = 11 of 36 ≈ 0.31". Adding 6 and 6 counts the square (6,1) twice, because a first die of 6 and a second die of 1 make a sum of 7, so it belongs to both events. Set "Look at" to A and B and that one square is all that stays in view: "A and B = {(6,1)}: 1 of 36". Taking it off once gives 6 + 6 − 1 = 11. Try other presets, such as A double with First die is 6, and watch the − term follow the overlap.
+
+### Not A is one minus A
+
+The probability that A doesn't happen is 1 minus the probability that it does. A and "not A" share no outcome and together cover the sample space, so by the second and third rules their probabilities add up to 1. On the board, "not A: 30 of 36": the sum is not 7 with probability 1 − 6/36 = 30/36. When an event is awkward to count, counting its complement is often easier.
+
+### A or B: add, then take the overlap off once
+
+For any two events, the probability of A or B is the probability of A plus the probability of B minus the probability of both. Adding the two counts the outcomes in both events twice; subtracting their shared part once fixes that. This rule is called inclusion–exclusion. When the events are disjoint, the overlap is empty and the rule becomes the third axiom again.
+
+### A bigger event is never less likely
+
+If every outcome of A is also in B, then B is at least as likely as A. B is A plus some extra outcomes, and the extra outcomes can't have negative probability. On the loaded die, "six" sits inside "even", and 7/12 is less than 9/12. Taking B to be the whole sample space gives the last familiar rule: no probability is above 1.
+
+## Notation
+
+<NotationKey symbols={["sample-space", "outcome", "event", "complement", "intersection", "union", "empty-set", "probability", "cardinality", "event-collection"]} />
+
+<PreciseStatement>
+
+A probability space is a triple $(\Omega, \mathcal{F}, P)$. Here $\Omega$ is a nonempty set of outcomes, and $\mathcal{F}$ is a collection of subsets of $\Omega$, the events, which contains $\Omega$ and is closed under complements and countable unions: if $A \in \mathcal{F}$ then $A^\complement \in \mathcal{F}$, and if $A_1, A_2, \ldots \in \mathcal{F}$ then $\bigcup_{i=1}^{\infty} A_i \in \mathcal{F}$. The probability is a function $P : \mathcal{F} \to \mathbb{R}$ with
+
+1. $P(A) \ge 0$ for every $A \in \mathcal{F}$;
+2. $P(\Omega) = 1$;
+3. if $A_1, A_2, \ldots \in \mathcal{F}$ are pairwise disjoint, meaning $A_i \cap A_j = \emptyset$ whenever $i \ne j$, then $P\big(\bigcup_{i=1}^{\infty} A_i\big) = \sum_{i=1}^{\infty} P(A_i)$.
+
+A collection with the closure properties of $\mathcal{F}$ is called a σ-algebra. The σ in that standard name refers to countable unions and has nothing to do with the standard deviation; this site writes the collection itself as $\mathcal{F}$.
+
+Boundary cases. $P$ gives a value only to events in $\mathcal{F}$. On a finite $\Omega$, a pairwise disjoint sequence has at most $|\Omega|$ nonempty members, so the third axiom reduces to finite additivity, $P(A \cup B) = P(A) + P(B)$ for disjoint $A$ and $B$, and that is all you need. There we usually take $\mathcal{F} = 2^\Omega$, and $P$ is fixed by one weight per outcome, $p(\omega) = P(\{\omega\}) \ge 0$ with $\sum_{\omega \in \Omega} p(\omega) = 1$, through $P(A) = \sum_{\omega \in A} p(\omega)$. Equally likely outcomes are the case $p(\omega) = 1/|\Omega|$, which gives $P(A) = |A|/|\Omega|$.
+
+</PreciseStatement>
+
+<GoDeeper label="why the third axiom is countable, not finite">
+
+Kolmogorov's own fifth axiom was finite additivity: $P(A \cup B) = P(A) + P(B)$ for disjoint $A$ and $B$. For infinite collections of events he added a sixth, continuity: if $A_1 \supseteq A_2 \supseteq \cdots$ and $\bigcap_n A_n = \emptyset$, then $P(A_n) \to 0$. He showed that the two together are equivalent to countable additivity, that continuity follows from the other axioms when there are only finitely many events, and he called infinite probability fields idealized models of real random processes <Cite id="kolmogorov1950" />.
+
+What countable additivity rules out shows up in a natural-sounding experiment: pick a whole number $1, 2, 3, \ldots$ "uniformly at random". Fairness means every number gets the same probability $p$. Countable additivity then gives $P(\Omega) = \sum_{n=1}^{\infty} p$, which is $0$ if $p = 0$ and infinite if $p > 0$, never $1$. So there is no uniform probability on a countably infinite sample space <Cite id="grinstead2003" />. With finite additivity alone the argument stops halfway: $P(\{1, \ldots, n\}) = np \le 1$ for every $n$ forces $p = 0$, but nothing then forces $P(\Omega)$ to be $0$. Finite additivity on its own does not rule out a "fair lottery" on the whole numbers; countable additivity does. In exchange, countable additivity lets probabilities pass to limits, which the standard theory of expectations and of infinite sequences of tosses is built on.
+
+</GoDeeper>
+
+<FormalDefinition>
+
+**Closure first.** From the properties of $\mathcal{F}$: $\emptyset = \Omega^\complement \in \mathcal{F}$; finite unions are in $\mathcal{F}$, by padding a finite list with copies of $\emptyset$; intersections are in $\mathcal{F}$, since $A \cap B = (A^\complement \cup B^\complement)^\complement$; and differences are in $\mathcal{F}$, since $B \setminus A = B \cap A^\complement$. So every set used below is an event and has a probability.
+
+<StepThrough title="The empty event has probability 0, and finite additivity follows" rigor="full">
+
+1. Let $c = P(\emptyset)$, a real number with $c \ge 0$ by axiom 1.
+2. The sets $A_1 = A_2 = \cdots = \emptyset$ are pairwise disjoint, since $\emptyset \cap \emptyset = \emptyset$, and their union is $\emptyset$. Axiom 3 gives $c = \sum_{i=1}^{\infty} c$.
+3. If $c > 0$, the right side is infinite, which no real number equals. So $c = 0$: $P(\emptyset) = 0$.
+4. For pairwise disjoint $A_1, \ldots, A_n$, extend the list with $A_{n+1} = A_{n+2} = \cdots = \emptyset$. The longer sequence is still pairwise disjoint and has the same union, so axiom 3 and step 3 give $P(A_1 \cup \cdots \cup A_n) = \sum_{i=1}^{n} P(A_i) + 0$.
+
+</StepThrough>
+
+<StepThrough title="The complement rule: P(Aᶜ) = 1 − P(A)" rigor="full">
+
+1. $A$ and $A^\complement$ are disjoint, and $A \cup A^\complement = \Omega$.
+2. Finite additivity gives $P(A) + P(A^\complement) = P(\Omega)$.
+3. Axiom 2 gives $P(\Omega) = 1$, so $P(A^\complement) = 1 - P(A)$.
+
+</StepThrough>
+
+<StepThrough title="Monotonicity, and no probability above 1" rigor="full">
+
+1. Suppose $A \subseteq B$. Then $B = A \cup (B \setminus A)$, and the two pieces are disjoint because $B \setminus A$ holds only outcomes outside $A$.
+2. Finite additivity gives $P(B) = P(A) + P(B \setminus A)$.
+3. Axiom 1 gives $P(B \setminus A) \ge 0$, so $P(A) \le P(B)$.
+4. Every event satisfies $A \subseteq \Omega$, so $P(A) \le P(\Omega) = 1$. With axiom 1, $0 \le P(A) \le 1$.
+
+</StepThrough>
+
+<StepThrough title="Inclusion–exclusion: P(A ∪ B) = P(A) + P(B) − P(A ∩ B)" rigor="full">
+
+1. Split the union into disjoint pieces: $A \cup B = A \cup (B \setminus A)$. Finite additivity gives $P(A \cup B) = P(A) + P(B \setminus A)$.
+2. Split $B$ the same way: $B = (A \cap B) \cup (B \setminus A)$, again disjoint, so $P(B) = P(A \cap B) + P(B \setminus A)$.
+3. Solve step 2 for $P(B \setminus A) = P(B) - P(A \cap B)$ and substitute it into step 1: $P(A \cup B) = P(A) + P(B) - P(A \cap B)$.
+4. Since $P(A \cap B) \ge 0$, this also gives the union bound $P(A \cup B) \le P(A) + P(B)$, with equality when $P(A \cap B) = 0$, in particular when $A$ and $B$ are disjoint.
+
+</StepThrough>
+
+Grinstead and Snell prove the same properties for distributions on finite and countable sample spaces: their Theorem 1.1 covers non-negativity, the total of 1, monotonicity, additivity for two disjoint events and the complement rule, Theorem 1.2 extends additivity to any finite number of events, and Theorem 1.4 is inclusion–exclusion <Cite id="grinstead2003" />.
+
+| Rule | Statement | On this page's boards |
+| --- | --- | --- |
+| Empty event | $P(\emptyset) = 0$ | A cleared event holds 0 of 36 outcomes |
+| Finite additivity | $P(A_1 \cup \cdots \cup A_n) = \sum_i P(A_i)$ for pairwise disjoint events | At most 2 and Six on the loaded die: $2/12 + 7/12 = 9/12$ |
+| Complement | $P(A^\complement) = 1 - P(A)$ | Not A: $1 - 6/36 = 30/36$ |
+| Monotonicity | $A \subseteq B \Rightarrow P(A) \le P(B)$ | Six inside Even on the loaded die: $7/12 \le 9/12$ |
+| Bounds | $0 \le P(A) \le 1$ | No cup holds less than 0 or more than the jug |
+| Inclusion–exclusion | $P(A \cup B) = P(A) + P(B) - P(A \cap B)$ | A or B: $(6 + 6 - 1)/36 = 11/36$ |
+| Union bound | $P(A \cup B) \le P(A) + P(B)$ | $11/36 \le 12/36$ |
+
+</FormalDefinition>
+
+## Worked examples
+
+<WorkedExample number={1} title="Two dice that show different faces">
+
+Roll two fair dice. The event "the faces differ" is the complement of "a double", and a double happens in 6 of the 36 outcomes, $(1,1)$ to $(6,6)$. The complement rule gives $P(\text{faces differ}) = 1 - 6/36 = 30/36 = 5/6$, without listing the 30 outcomes.
+
+</WorkedExample>
+
+<WorkedExample number={2} title="Sum is 7 or a double, then sum is 8 or a double">
+
+Let $A$ be "the sum is 7" and $D$ be "a double". A double has an even sum, so no outcome is in both: $A \cap D = \emptyset$. The events are disjoint, and axiom 3 alone gives $P(A \cup D) = 6/36 + 6/36 = 12/36 = 1/3$.
+
+Now let $E$ be "the sum is 8", which happens in 5 outcomes: $(2,6), (3,5), (4,4), (5,3), (6,2)$. This time $E \cap D = \{(4,4)\}$, so inclusion–exclusion is needed: $P(E \cup D) = 5/36 + 6/36 - 1/36 = 10/36 = 5/18$.
+
+</WorkedExample>
+
+<WorkedExample number={3} title="Which outputs are probabilities?" faded>
+
+A model with three classes produces three lists of numbers. Which of them are probability distributions over the classes: $(0.2, 0.3, 0.6)$, $(0.7, 0.4, -0.1)$ and $(0.5, 0.5, 0)$?
+
+<div slot="solution">
+
+Check axioms 1 and 2 on each list; on a finite space with every subset an event, axiom 3 then holds by adding weights. $(0.2, 0.3, 0.6)$ has no negative entry but adds up to $1.1$, so it breaks axiom 2. $(0.7, 0.4, -0.1)$ adds up to $1$ but has a negative entry, so it breaks axiom 1. $(0.5, 0.5, 0)$ is a distribution: a weight of $0$ is allowed, and the total is $1$.
+
+</div>
+
+</WorkedExample>
+
+## Where the probability axioms show up in ML
+
+### Softmax outputs
+
+A softmax layer turns any real scores $z_1, \ldots, z_K$, the logits, into a distribution over $K$ classes:
+
+$$
+p_k = \frac{e^{z_k}}{\sum_{j=1}^{K} e^{z_j}}.
+$$
+
+Each $e^{z_k}$ is positive, so every $p_k > 0$ and axiom 1 holds; dividing by the total makes the $p_k$ add up to 1, so axiom 2 holds; and the probability of a set of classes is the sum of their $p_k$, which is axiom 3. Logits $(2, 1, 0)$ give $p \approx (0.665, 0.245, 0.090)$.
+
+### One sigmoid per label
+
+A multi-label model, which may tag one image as both "outdoor" and "dog", uses one sigmoid per label instead, $\operatorname{sigmoid}(z_k) = 1/(1 + e^{-z_k})$. Each output lies between 0 and 1 and is the probability of a separate yes-or-no event, "label $k$ applies", on its own two-outcome sample space with $P(\text{yes}) = \operatorname{sigmoid}(z_k)$ and $P(\text{no}) = 1 - \operatorname{sigmoid}(z_k)$. Those are fine probabilities. But the labels are not disjoint outcomes of one experiment, so the outputs need not add up to 1: the same logits $(2, 1, 0)$ give $(0.881, 0.731, 0.5)$, which add up to about $2.11$. Reading them as one distribution over the labels breaks axiom 2.
+
+### Normalizing scores
+
+Any list of non-negative scores $s_k$ with a positive total becomes a distribution by dividing by that total, $p_k = s_k / \sum_j s_j$. Scores $(3, 1, 0)$ give $(3/4, 1/4, 0)$. The method needs the scores to be non-negative; dividing raw logits that can be negative by their sum can give negative "probabilities", or divide by 0, which is one reason softmax exponentiates first.
+
+### Label smoothing
+
+Label smoothing trains against a softened target instead of a one-hot one. In the form used here, with $K$ classes and a smoothing amount $\epsilon$ between 0 and 1, the target is
+
+$$
+\tilde{y}_k = (1 - \epsilon)\, y_k + \frac{\epsilon}{K},
+$$
+
+where $y$ is the one-hot label. Every entry is non-negative, and the total is $(1 - \epsilon) \cdot 1 + K \cdot \epsilon / K = 1$, so the target is still a distribution. With $K = 3$ and $\epsilon = 0.1$, the label $(1, 0, 0)$ becomes $(14/15, 1/30, 1/30)$. Another common form spreads $\epsilon$ over the $K - 1$ wrong classes only; it also adds up to 1.
+
+### Why cross-entropy needs outputs that add up to 1
+
+The cross-entropy loss for a target distribution $y$ and a prediction $p$ is
+
+$$
+L = -\sum_{k=1}^{K} y_k \log p_k,
+$$
+
+which for a one-hot label of class $c$ is $-\log p_c$. The loss only rewards the right thing because the $p_k$ must add up to 1: raising the probability of the true class has to take probability away from the others. Without axiom 2, a model that outputs 1 for every class would score a perfect loss of $0$ on every example while having learned nothing. The softmax above gives the label $(1, 0, 0)$ a loss of $-\log 0.665 \approx 0.408$.
+
+## Check the axioms in code
+
+This runs in your browser, uses exact fractions so every equality is exact, and stops with an error if a result is off. It checks every number on this page, a function `is_distribution` for axioms 1 and 2, and inclusion–exclusion on all 4,096 pairs of events of the loaded die:
+
+<PyRunner
+  title="axioms.py"
+  code={`
+import math
+from fractions import Fraction
+from itertools import product
+
+
+def probability(event, weights):
+    """Axiom 3 on a finite space: an event's probability is the sum of its outcomes' weights."""
+    return sum((weights[outcome] for outcome in event), Fraction(0))
+
+
+def is_distribution(weights, tolerance=1e-9):
+    """Axioms 1 and 2 on a finite list: no negative weight, and the weights add up to 1."""
+    weights = list(weights)
+    if not weights:
+        return False
+    if any(weight < 0 for weight in weights):
+        return False
+    return abs(sum(weights) - 1) <= tolerance
+
+
+# The jug board: 12 units poured into six cups, one per face.
+faces = [1, 2, 3, 4, 5, 6]
+fair = {face: Fraction(2, 12) for face in faces}
+loaded = dict(zip(faces, [Fraction(units, 12) for units in (1, 1, 1, 1, 1, 7)]))
+even = [2, 4, 6]
+assert probability(even, fair) == Fraction(6, 12) == Fraction(1, 2)
+assert probability(even, loaded) == Fraction(1 + 1 + 7, 12) == Fraction(9, 12) == Fraction(3, 4)
+assert probability(even, loaded) - probability(even, fair) == Fraction(1, 4)
+print("P(even): fair", probability(even, fair), " loaded", probability(even, loaded))
+
+# The properties table on the loaded die: six is inside even, and at most 2 and six are disjoint.
+assert probability([6], loaded) == Fraction(7, 12) <= probability(even, loaded)
+assert probability([1, 2], loaded) == Fraction(2, 12)
+assert probability([1, 2, 6], loaded) == Fraction(2, 12) + Fraction(7, 12) == Fraction(9, 12)
+
+# Two dice, A = sum is 7, B = first die is 6 (the second board).
+dice = list(product(faces, repeat=2))
+uniform = {roll: Fraction(1, 36) for roll in dice}
+A = {roll for roll in dice if sum(roll) == 7}
+B = {roll for roll in dice if roll[0] == 6}
+not_A = set(dice) - A
+assert len(dice) == 36 and len(A) == 6 and len(B) == 6
+assert probability(not_A, uniform) == Fraction(30, 36) == 1 - probability(A, uniform)
+assert A & B == {(6, 1)} and probability(A & B, uniform) == Fraction(1, 36)
+assert len(A | B) == len(A) + len(B) - len(A & B) == 6 + 6 - 1 == 11
+assert probability(A | B, uniform) == Fraction(11, 36)
+assert round(11 / 36, 2) == 0.31
+print("not A", probability(not_A, uniform), " A and B", probability(A & B, uniform), " A or B", probability(A | B, uniform))
+
+# Worked example 1: the two dice show different faces.
+doubles = {roll for roll in dice if roll[0] == roll[1]}
+assert 1 - probability(doubles, uniform) == Fraction(30, 36) == Fraction(5, 6)
+
+# Worked example 2: sum is 7 or a double (disjoint), then sum is 8 or a double (they overlap in (4,4)).
+assert A & doubles == set()
+assert probability(A | doubles, uniform) == Fraction(6 + 6, 36) == Fraction(12, 36) == Fraction(1, 3)
+# Disjoint is not independent: P(A and double) = 0, while P(A) P(double) = 1/36.
+assert probability(A & doubles, uniform) == 0
+assert probability(A, uniform) * probability(doubles, uniform) == Fraction(1, 36)
+sum_8 = {roll for roll in dice if sum(roll) == 8}
+assert len(sum_8) == 5 and sum_8 & doubles == {(4, 4)}
+assert probability(sum_8 | doubles, uniform) == Fraction(5 + 6 - 1, 36) == Fraction(10, 36) == Fraction(5, 18)
+
+# Worked example 3 and the jug presets: which lists of weights are probabilities?
+assert is_distribution(fair.values()) and is_distribution(loaded.values())
+assert is_distribution([0.5, 0.5, 0.0])
+assert not is_distribution([0.2, 0.3, 0.6])  # adds up to 1.1: breaks axiom 2
+assert math.isclose(0.2 + 0.3 + 0.6, 1.1)
+assert not is_distribution([0.7, 0.4, -0.1])  # adds up to 1 but breaks axiom 1
+assert math.isclose(0.7 + 0.4 - 0.1, 1.0)
+assert not is_distribution([Fraction(8, 12), 0, 0, 0, 0, 0])  # water left in the jug
+assert not is_distribution([])
+
+# Check yourself: cups (3, 3, 3, 3, 0, 0) are a probability; P(A) = 0.5 and P(B) = 0.7 force an overlap of at least 0.2.
+assert is_distribution([Fraction(units, 12) for units in (3, 3, 3, 3, 0, 0)])
+p_a, p_b = Fraction(1, 2), Fraction(7, 10)
+assert p_a + p_b > 1 and p_a + p_b - 1 == Fraction(1, 5)
+
+# Inclusion-exclusion, complement and monotonicity on every pair of events of the loaded die.
+events = [frozenset(face for face, keep in zip(faces, mask) if keep) for mask in product([False, True], repeat=6)]
+assert len(events) == 64
+pairs = 0
+for first, second in product(events, repeat=2):
+    union_side = probability(first | second, loaded)
+    assert union_side == probability(first, loaded) + probability(second, loaded) - probability(first & second, loaded)
+    if first <= second:
+        assert probability(first, loaded) <= probability(second, loaded)
+    pairs += 1
+for event in events:
+    assert probability(set(faces) - event, loaded) == 1 - probability(event, loaded)
+    assert 0 <= probability(event, loaded) <= 1
+assert probability(frozenset(), loaded) == 0
+assert pairs == 4096
+print("inclusion-exclusion holds on all", pairs, "pairs of events")
+
+# Softmax outputs satisfy the axioms; one sigmoid per class does not give a distribution over classes.
+logits = [2.0, 1.0, 0.0]
+exps = [math.exp(z) for z in logits]
+softmax = [value / sum(exps) for value in exps]
+sigmoids = [1 / (1 + math.exp(-z)) for z in logits]
+assert is_distribution(softmax)
+assert [round(p, 3) for p in softmax] == [0.665, 0.245, 0.090]
+assert [round(p, 3) for p in sigmoids] == [0.881, 0.731, 0.5]
+assert round(sum(sigmoids), 2) == 2.11 and not is_distribution(sigmoids)
+for p in sigmoids:
+    assert is_distribution([p, 1 - p])  # each label's own yes/no space is fine
+print("softmax", [round(p, 3) for p in softmax], " sigmoids add up to", round(sum(sigmoids), 2))
+
+# Normalizing non-negative scores.
+scores = [3, 1, 0]
+normalized = [Fraction(score, sum(scores)) for score in scores]
+assert normalized == [Fraction(3, 4), Fraction(1, 4), 0] and is_distribution(normalized)
+
+# Label smoothing, the eps / K form: still sums to 1.
+K, eps = 3, Fraction(1, 10)
+one_hot = [1, 0, 0]
+smoothed = [(1 - eps) * y + eps / K for y in one_hot]
+assert smoothed == [Fraction(14, 15), Fraction(1, 30), Fraction(1, 30)]
+assert sum(smoothed) == 1 and is_distribution(smoothed)
+
+# Cross-entropy: with outputs that need not sum to 1, "1 for every class" scores a perfect loss of 0.
+def cross_entropy(target, predicted):
+    return -sum(y * math.log(p) for y, p in zip(target, predicted) if y > 0)
+
+assert cross_entropy(one_hot, [1.0, 1.0, 1.0]) == 0
+assert math.isclose(cross_entropy(one_hot, softmax), -math.log(softmax[0]))
+assert round(cross_entropy(one_hot, softmax), 3) == 0.408
+print("cross-entropy of the softmax output:", round(cross_entropy(one_hot, softmax), 3))
+`}
+/>
+
+The brute-force loop is the strongest check here: inclusion–exclusion holds for every one of the 64 × 64 = 4,096 pairs of events on the loaded die, not only for the pairs on the boards.
+
+## Research frontier
+
+<ResearchFrontier reviewed="2026-11-24">
+
+**Countable or only finite additivity.** Kolmogorov stated finite additivity as an axiom and added continuity, which together amount to countable additivity, for infinite probability fields. He noted that infinite fields occur only as idealized models and that he limited himself to models satisfying continuity because this had proved convenient in very different kinds of research <Cite id="kolmogorov1950" />. Measure theory, the standard foundation since, takes countable additivity as part of the definition. Its price is that some sets can't be given a probability at all: with the axiom of choice there are subsets of $[0, 1]$ that no countably additive, shift-invariant length can measure <Cite id="tao2011" />, which is why $P$ is defined on a collection $\mathcal{F}$ rather than on every subset. Another line of justification for the rules, from the coherence of betting odds, comes from the philosophy of probability and is not covered here.
+
+**What is settled for this page.** Everything derived above is settled. On finite sample spaces, which cover dice, coins and a classifier's labels, finite and countable additivity coincide, and every rule on this page follows from the three axioms.
+
+</ResearchFrontier>
+
+## Check yourself
+
+<CheckYourself level="intuition" question="A die's cups hold 3, 3, 3, 3, 0 and 0 units of a 12-unit jug. Is that a probability?">
+Yes. No cup is negative, and the cups hold $12/12 = 1$ in total. Faces 5 and 6 get probability 0, which the axioms allow: a weight of 0 is not negative. Whether a real die behaves this way is a different question from whether these numbers are a valid probability.
+</CheckYourself>
+
+<CheckYourself level="standard" question="P(A) = 0.5 and P(B) = 0.7. Can A and B be disjoint?">
+No. If they were, axiom 3 would give $P(A \cup B) = 0.5 + 0.7 = 1.2$, but no probability is above 1. Inclusion–exclusion says more: $P(A \cap B) = P(A) + P(B) - P(A \cup B) \ge 1.2 - 1 = 0.2$, so they share at least 0.2 of the probability.
+</CheckYourself>
+
+<CheckYourself level="standard" question="On two fair dice, what is P(the first die is 6 or the second die is 6)?">
+$11/36$. Each event has 6 outcomes, and they share exactly one, $(6,6)$, so inclusion–exclusion gives $(6 + 6 - 1)/36$. The complement agrees: no six on either die happens in $5 \times 5 = 25$ outcomes, and $1 - 25/36 = 11/36$.
+</CheckYourself>
+
+<CheckYourself level="proof" question="Show from the axioms that P(A ∩ B) ≥ P(A) + P(B) − 1 for any events A and B.">
+Inclusion–exclusion gives $P(A \cap B) = P(A) + P(B) - P(A \cup B)$. Since $A \cup B \subseteq \Omega$, monotonicity and axiom 2 give $P(A \cup B) \le 1$. Subtracting at most 1 leaves $P(A \cap B) \ge P(A) + P(B) - 1$. This is the bound used in the second question.
+</CheckYourself>
+
+## Common mistakes
+
+<CommonMistakes>
+  <Mistake wrong="A probability can come out as 1.2, or as −0.1, when a model is very sure.">
+    It can't. Axiom 1 rules out anything below 0, and axiom 2 with monotonicity rules out anything above 1. A number outside $[0, 1]$ means the calculation or the model's output is not a probability; check for a missing normalization or a sum over overlapping events.
+  </Mistake>
+  <Mistake wrong="P(A or B) = P(A) + P(B).">
+    Only when $A$ and $B$ are disjoint. Otherwise the outcomes in both are counted twice, and you must subtract $P(A \cap B)$ once. For sum is 7 or first die is 6, the answer is $11/36$, not $12/36$; see the second board.
+  </Mistake>
+  <Mistake wrong="Disjoint events are independent.">
+    They are close to the opposite. If $A$ and $B$ are disjoint and both have positive probability, learning that $A$ happened tells you $B$ did not. Sum is 7 and a double are disjoint, so $P(A \cap D) = 0$, while $P(A)\,P(D) = 1/6 \times 1/6 = 1/36$. Independence gets its own page later in this subject.
+  </Mistake>
+  <Mistake wrong="An event with probability 0 is impossible.">
+    On a finite space where every outcome has a positive weight, as with fair dice, yes: only $\emptyset$ has probability 0. In general, no. Pick a point uniformly from $[0, 1]$: any single point $x$ lies in an interval of length $2\epsilon$ around it, so monotonicity gives $P(\{x\}) \le 2\epsilon$ for every $\epsilon > 0$, and $P(\{x\}) = 0$. Yet some point is always picked. This is how densities such as the [normal distribution](/statistics/normal-distribution/) work.
+  </Mistake>
+  <Mistake wrong="A bigger cup, or a bigger square, means a more likely outcome.">
+    The board draws every cup and every square the same size; the size is a picture, not the probability. On the jug board the water in a cup is the probability, and a loaded die puts 7 units in cup 6 and 1 in each of the others, all in cups of the same size.
+  </Mistake>
+</CommonMistakes>
+
+## Key takeaways
+
+<Takeaways />
+
+## How this connects
+
+<ConceptMap />
+
+## References
+
+<References />
