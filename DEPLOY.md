@@ -7,12 +7,23 @@
 | Framework preset     | Astro                                              |
 | Build command        | `npm run build`                                    |
 | Build output dir     | `dist`                                             |
-| Deploy command       | `npx wrangler pages deploy dist --project-name=mathsignal` |
 | Node version (env)   | `NODE_VERSION` = `24.14.0`                         |
 
-The deploy command is only needed with Workers Builds; Pages' Git integration deploys `dist` itself and has no such field.
+The site deploys through **Cloudflare Pages with Git integration**: every push to the production branch (`main`) deploys to mathsignal.dev, and every other branch gets a preview at `<branch>.mathsignal.pages.dev`. There is no deploy command and no wrangler config.
 
 `npm run build` runs the design and content checks before Astro and the link check after it, so a deploy fails rather than publishing a broken page. Response headers (caching for `/_astro/*`, basic security headers) come from `public/_headers`.
+
+## One-time Cloudflare settings (free plan)
+
+Cloudflare moves menus from time to time. If a setting isn't where these steps say, type its name into the search box at the top of the dashboard.
+
+1. **Let AI crawlers in** (the site's crawler policy, `public/robots.txt`, allows them). Open the `mathsignal.dev` domain, then **Security → Bots** (newer dashboards: **AI Crawl Control**). Set "Block AI bots" to **do not block**, and turn **off** Cloudflare's managed robots.txt so ours is served. Leave Bot Fight Mode off. Check: https://mathsignal.dev/robots.txt starts with "# MathSignal is an educational site".
+2. **Web Analytics** (cookieless, so no cookie banner). **Workers & Pages → mathsignal → Metrics → Web Analytics → Enable**, or **Analytics & Logs → Web Analytics → Add a site**. Cloudflare injects the script itself; no repo change.
+3. **Preview deployments.** **Workers & Pages → mathsignal → Settings → Builds → Branch control**: production branch `main`, preview branches "All non-production branches".
+4. **HTTPS.** On the domain: **SSL/TLS → Edge Certificates**: Always Use HTTPS **on**, Automatic HTTPS Rewrites **on**, Minimum TLS Version **1.2**. Enable HSTS (max-age 6 months, include subdomains). `.dev` domains are HTTPS-only in browsers already, so this only tidies redirects.
+5. **www to the bare domain.** **DNS → Records → Add record**: type CNAME, name `www`, target `mathsignal.dev`, proxied. Then **Rules → Redirect Rules → Create rule** from the template "Redirect from WWW to root": 301, keep the query string.
+6. **Email address on the domain.** **Email → Email Routing → Get started**: create `hello@mathsignal.dev`, forward it to your inbox, confirm the verification email. Cloudflare adds the DNS records.
+7. **Speed.** **Network**: HTTP/3 **on**. **Speed → Settings**: Early Hints **on**. Leave **Rocket Loader off**; it rewrites scripts and can break the interactive boards. **Caching → Configuration**: Browser Cache TTL "Respect existing headers", so `public/_headers` decides.
 
 ## DNS Setup
 
