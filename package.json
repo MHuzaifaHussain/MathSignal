@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "prebuild": "npm run check:design && npm run check:content",
+    "prebuild": "npm run check:design && npm run check:content && npm run check:boards",
     "build": "astro build",
     "postbuild": "npm run check:links",
     "tokens": "node scripts/build-tokens.mjs",
@@ -17,7 +17,8 @@
     "brand-images": "node scripts/build-brand-images.mjs",
     "check:content": "node scripts/check-content.mjs",
     "check:code": "node scripts/check-code.mjs",
-    "check:links": "node scripts/check-links.mjs"
+    "check:links": "node scripts/check-links.mjs",
+    "check:boards": "node scripts/check-boards.mjs"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.10",

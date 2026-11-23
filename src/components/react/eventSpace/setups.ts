@@ -1,0 +1,106 @@
+// The board configurations pages pick with <EventSpace setup="…" />. Each one fixes the outcome space,
+// the mode, the opening events and the presets (design doc: "Opening state of each setup").
+import { SCENARIOS, type ScenarioId } from './scenarios.ts';
+
+export type SetupId = 'coins-build' | 'dice-count' | 'dice-operations' | 'die-pour';
+
+/** The built-in preset that empties an event. */
+export const CLEAR_PRESET = 'clear';
+const MAX_PRESETS_PER_EVENT = 4;
+
+export interface EventSetup {
+	editable: boolean;
+	/** A scenario event id, or null for the empty event. */
+	initial: string | null;
+	/** Scenario event ids, or CLEAR_PRESET. */
+	presets: string[];
+}
+
+export interface Setup {
+	id: SetupId;
+	scenario: ScenarioId;
+	mode: 'count' | 'weights';
+	/** The board's accessible name. */
+	label: string;
+	/** On a goal setup the reader marks this event and presses Check before anything else unlocks. */
+	goal?: string;
+	events: { A: EventSetup; B?: EventSetup };
+	lookAt: boolean;
+	/** Weights mode: named starting fills of the six cups, in units out of 12. */
+	weightPresets?: Record<string, number[]>;
+	initialWeights?: string;
+	stages: boolean;
+	toss: boolean;
+	wrongModel: boolean;
+}
+
+const COUNT_DEFAULTS = { mode: 'count', lookAt: false, stages: false, toss: false, wrongModel: false } as const;
+
+const SETUPS: Record<SetupId, Setup> = {
+	'coins-build': {
+		...COUNT_DEFAULTS,
+		id: 'coins-build',
+		scenario: 'two-coins',
+		label: 'The outcomes of tossing two coins. Mark the outcomes in event A, then press Check.',
+		goal: 'at-least-one-head',
+		events: { A: { editable: true, initial: null, presets: ['at-least-one-head', 'exactly-one-head', 'both-same', CLEAR_PRESET] } },
+		stages: true,
+		toss: true,
+		wrongModel: true,
+	},
+	'dice-count': {
+		...COUNT_DEFAULTS,
+		id: 'dice-count',
+		scenario: 'two-dice',
+		label: 'The 36 outcomes of rolling two dice. Mark outcomes to build event A.',
+		events: { A: { editable: true, initial: null, presets: ['sum-7', 'sum-2', CLEAR_PRESET] } },
+	},
+	'dice-operations': {
+		...COUNT_DEFAULTS,
+		id: 'dice-operations',
+		scenario: 'two-dice',
+		label: 'The 36 outcomes of rolling two dice, with two events, A and B.',
+		events: {
+			A: { editable: true, initial: 'sum-7', presets: ['sum-7', 'double', CLEAR_PRESET] },
+			B: { editable: true, initial: 'first-6', presets: ['first-6', 'second-6', CLEAR_PRESET] },
+		},
+		lookAt: true,
+	},
+	'die-pour': {
+		...COUNT_DEFAULTS,
+		id: 'die-pour',
+		scenario: 'one-die',
+		mode: 'weights',
+		label: 'A die as six cups of probability, poured from a jug of 12 units.',
+		events: { A: { editable: false, initial: 'even', presets: ['even', 'at-most-2', 'six'] } },
+		weightPresets: {
+			'Fair die': [2, 2, 2, 2, 2, 2],
+			'Loaded toward six': [1, 1, 1, 1, 1, 7],
+			'Start over': [0, 0, 0, 0, 0, 0],
+		},
+		initialWeights: 'Fair die',
+	},
+};
+
+function assertValid(setup: Setup): Setup {
+	const scenario = SCENARIOS[setup.scenario];
+	for (const [key, event] of Object.entries(setup.events)) {
+		if (!event) continue;
+		if (event.presets.length > MAX_PRESETS_PER_EVENT) {
+			throw new Error(`EventSpace: setup "${setup.id}" gives event ${key} ${event.presets.length} presets; the most is ${MAX_PRESETS_PER_EVENT}.`);
+		}
+		for (const preset of [...event.presets, ...(event.initial ? [event.initial] : [])]) {
+			if (preset !== CLEAR_PRESET && !scenario.events[preset]) {
+				throw new Error(`EventSpace: setup "${setup.id}" uses "${preset}", which scenario "${scenario.id}" doesn't define.`);
+			}
+		}
+	}
+	if (setup.goal && !scenario.events[setup.goal]) throw new Error(`EventSpace: setup "${setup.id}" has an unknown goal "${setup.goal}".`);
+	return setup;
+}
+
+export function getSetup(id: string): Setup {
+	const setup = SETUPS[id as SetupId];
+	if (!setup) throw new Error(`EventSpace: unknown setup "${id}". Known setups: ${Object.keys(SETUPS).join(', ')}.`);
+	return assertValid(setup);
+}
