@@ -9,6 +9,15 @@ import { katexOptions, rehypeKatexFailOnError } from './src/design/katex.mjs';
 import { DOMAINS } from './src/design/domains.mjs';
 import { REPOSITORY_URL, SITE_DESCRIPTION, SITE_URL, SOCIAL_CARD } from './src/seo/site.mjs';
 import { palette } from './src/design/palette.mjs';
+import { fileURLToPath } from 'node:url';
+
+const KATEX_STUB = fileURLToPath(new URL('./src/components/react/katex-stub.ts', import.meta.url));
+
+/**
+ * Mafs imports KaTeX for <LaTeX>, which no board uses. Inside Vite, the bare `katex` import resolves to a stub
+ * that throws if called, keeping KaTeX out of every board's JavaScript (decision 0007). Page formulas are
+ * unaffected: rehype-katex runs in the Markdown pipeline and imports the real package from Node.
+ */
 
 // https://astro.build/config
 export default defineConfig({
@@ -86,6 +95,8 @@ export default defineConfig({
 		react(),
 	],
 	vite: {
+		// Exact match only, so 'katex/dist/katex.min.css' (customCss) still resolves to the real package.
+		resolve: { alias: [{ find: /^katex$/, replacement: KATEX_STUB }] },
 		ssr: {
 			noExternal: ['katex'],
 		},

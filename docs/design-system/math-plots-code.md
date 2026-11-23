@@ -61,6 +61,8 @@ import { plotColors } from './plotColors';
 
 Never use `Theme.blue` or other Mafs defaults for meaning: they are not the design system's colours.
 
+Never use Mafs `<LaTeX>` in a board. KaTeX is kept out of island bundles ([decision 0007](../decisions/0007-no-katex-in-islands.md)); use `<Text>` for labels and put formulas in the page's MDX.
+
 ### Known Mafs issue: `vec.lerp` and identical points
 
 Mafs 0.21's `vec.lerp` (and `vec.midpoint`) return `[NaN, NaN]` when both points are the same ([mafs#188](https://github.com/stevenpetryk/mafs/pull/188), not merged). Current boards can't hit it: `Plot.OfX` and `Plot.Inequality` only interpolate between samples with different x values, and no project code calls `vec.lerp`. If a board starts using `Plot.Parametric` with a curve that can stand still, or calls `vec.lerp`/`vec.midpoint` directly, write the interpolation by hand (`[a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]`) rather than patching Mafs.

@@ -11,3 +11,5 @@ Format: context, decision, consequences, alternatives considered. Number them in
 | [0003](0003-tuned-full-code-highlighting.md) | Tuned full syntax highlighting | Accepted |
 | [0004](0004-stay-on-astro-starlight.md) | Stay on Astro and Starlight, upgrade to Astro 7 | Accepted |
 | [0005](0005-remove-tailwind.md) | Remove Tailwind; tokens and component CSS only | Accepted |
+| [0006](0006-no-decorative-rules-or-shadows.md) | No decorative vertical rules, bars or shadows | Accepted |
+| [0007](0007-no-katex-in-islands.md) | No KaTeX in board islands | Accepted |
