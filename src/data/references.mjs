@@ -155,6 +155,26 @@ export const REFERENCES = [
 		note: 'Section 7: label smoothing.',
 		checked: '2026-11-24',
 	},
+	{
+		id: 'cao2021',
+		authors: ['Kris Cao', 'Laura Rimell'],
+		year: 2021,
+		title: 'You should evaluate your language model on marginal likelihood over tokenisations',
+		venue: 'EMNLP 2021',
+		url: 'https://arxiv.org/abs/2109.02550',
+		note: 'Section 2: a string has many tokenizations, and its probability is the sum over all of them; models are usually scored on one canonical tokenization.',
+		checked: '2026-11-24',
+	},
+	{
+		id: 'du2022',
+		authors: ['Li Du', 'Lucas Torroba Hennigen', 'Tiago Pimentel', 'Clara Meister', 'Jason Eisner', 'Ryan Cotterell'],
+		year: 2022,
+		title: 'A measure-theoretic characterization of tight language models',
+		venue: 'ACL 2023',
+		url: 'https://arxiv.org/abs/2212.10502',
+		note: 'Sections 1–3: probability mass can leak onto the uncountable set of infinite sequences; a σ-algebra and countable additivity make tightness precise. Transformer language models are always tight; some n-gram and RNN models are not.',
+		checked: '2026-11-24',
+	},
 ];
 
 const BY_ID = new Map(REFERENCES.map((reference) => [reference.id, reference]));
