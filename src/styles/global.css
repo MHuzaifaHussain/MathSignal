@@ -181,6 +181,8 @@ header.header {
 
 h1#_top {
 	font-family: var(--ms-font-serif);
+	font-size: 2.25rem;
+	line-height: 1.2;
 	font-weight: 600;
 	color: var(--ms-ink);
 }
