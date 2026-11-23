@@ -26,6 +26,8 @@ export interface Scenario {
 	mirrorOf: (id: OutcomeId) => OutcomeId | undefined;
 	/** A tempting but wrong way to count this space, shown by re-pooling the reader's tosses. */
 	wrongModel?: { switchLabel: string; tiles: WrongModelTile[]; caption: string };
+	/** The faces to draw for an outcome in the Pictures view, e.g. ['H', 'T']; absent when pictures don't fit. */
+	pictureFaces?: (outcome: Outcome) => string[];
 }
 
 const MAX_OUTCOMES = 36;
@@ -60,6 +62,7 @@ function twoCoins(): Scenario {
 			'both-same': { label: 'both the same', members: (outcome) => outcome.id[0] === outcome.id[1] },
 		},
 		mirrorOf: (id) => (id[0] === id[1] ? undefined : `${id[1]}${id[0]}`),
+		pictureFaces: (outcome) => [...outcome.id],
 		wrongModel: {
 			switchLabel: 'Treat HT and TH as the same outcome',
 			tiles: [

@@ -84,7 +84,15 @@ export default function OutcomeGrid({ state, scenario, describedBy, onToggle }: 
                       onClick={() => onToggle(outcome.id)}
                     >
                       {inA && <span className="ms-event-tag ms-event-tag-a" aria-hidden="true">A</span>}
-                      <span className="ms-event-label" aria-hidden="true">{outcome.label}</span>
+                      {state.stage === "picture" && scenario.pictureFaces ? (
+                        <span className="ms-event-faces" aria-hidden="true">
+                          {scenario.pictureFaces(outcome).map((face, index) => (
+                            <span key={index} className="ms-event-face">{face}</span>
+                          ))}
+                        </span>
+                      ) : (
+                        <span className="ms-event-label" aria-hidden="true">{outcome.label}</span>
+                      )}
                       {inB && <span className="ms-event-tag ms-event-tag-b" aria-hidden="true">B</span>}
                       {missed === outcome.id && <span className="ms-event-note" aria-hidden="true">missed</span>}
                       {showTallies && <span className="ms-event-note" aria-hidden="true">{state.tallies[outcome.id] ?? 0}</span>}

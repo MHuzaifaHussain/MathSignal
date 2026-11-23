@@ -6,15 +6,20 @@ import CupRow from "./eventSpace/CupRow.tsx";
 import OutcomeGrid from "./eventSpace/OutcomeGrid.tsx";
 import WrongModelTiles from "./eventSpace/WrongModelTiles.tsx";
 import { simulate } from "./eventSpace/model.ts";
-import { additivityLine, announcementFor, feedbackLine, jugLine, markedLine, presetLabel, readoutLines, statusLine, tossLine, totalLine } from "./eventSpace/describe.ts";
+import { additivityLine, announcementFor, feedbackLine, jugLine, markedLine, presetLabel, readoutLines, setsLine, statusLine, tossLine, totalLine } from "./eventSpace/describe.ts";
 import { SCENARIOS } from "./eventSpace/scenarios.ts";
 import { getSetup, type SetupId } from "./eventSpace/setups.ts";
-import { CHECKS_BEFORE_ANSWER, initialState, isLocked, reducer, type Action, type EventKey, type LookAt } from "./eventSpace/state.ts";
+import { CHECKS_BEFORE_ANSWER, initialState, isLocked, reducer, stageAllowed, type Action, type EventKey, type LookAt, type Stage } from "./eventSpace/state.ts";
 
 const LOCKED_REASON = "Check your answer first";
 /** Tosses per press of "Toss 100". */
 const TOSS_BATCH = 100;
 const CUPS_NOTE = "The cups are drawn the same size. The water in them is the probability, not the cup.";
+const STAGE_OPTIONS: readonly { value: Stage; label: string }[] = [
+  { value: "picture", label: "Pictures" },
+  { value: "letters", label: "Letters" },
+  { value: "sets", label: "Sets" },
+];
 const LOOK_AT_OPTIONS: readonly { value: LookAt; label: string }[] = [
   { value: "everything", label: "Everything" },
   { value: "A and B", label: "A and B" },
@@ -65,6 +70,8 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
   const readouts = readoutLines(state);
   const eventKeys = (Object.keys(setup.events) as EventKey[]).filter((key) => setup.events[key]);
   const tosses = tossLine(state);
+  const sets = setsLine(state);
+  const stageOptions = STAGE_OPTIONS.filter((option) => stageAllowed(state, option.value));
   const showWrongModel = state.wrongModel && Boolean(scenario.wrongModel);
   /** A button that is shown but refused until Check passes on a goal setup. */
   const lockable = (onPress: () => void) => ({
@@ -95,6 +102,9 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
         <button type="button" className="ms-board-button" onClick={() => send({ type: "show-answer" })}>
           Show the answer
         </button>
+      )}
+      {stageOptions.length > 1 && (
+        <TrayChoice legend="Show as" options={stageOptions} value={state.stage} onChange={(stage) => send({ type: "stage", stage })} />
       )}
       {eventKeys.length > 1 && (
         <TrayChoice
@@ -176,6 +186,7 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
             )}
           </>
         )}
+        {sets && <p className="ms-event-sets">{sets}</p>}
         {marked && <p className="ms-event-status">{marked}</p>}
         {feedback && <p className="ms-event-feedback">{feedback}</p>}
       </div>

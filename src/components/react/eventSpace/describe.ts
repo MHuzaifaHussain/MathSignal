@@ -146,6 +146,15 @@ export function presetLabel(scenario: Scenario, preset: string): string {
 	return preset === CLEAR_PRESET ? 'Clear' : capitalize(scenario.events[preset].label);
 }
 
+/** The Sets view's symbolic line; null until Check passes, so the symbolic form still comes last. */
+export function setsLine(state: EventSpaceState): string | null {
+	if (state.stage !== 'sets' || isLocked(state)) return null;
+	const scenario = scenarioOf(state);
+	const all = new Set(scenario.outcomes.map((outcome) => outcome.id));
+	const share = probability(state.events.A, scenario.outcomes);
+	return `Ω = ${setText(scenario, all)}. A = ${setText(scenario, state.events.A)}. P(A) = |A| / |Ω| = ${formatFraction(share)}`;
+}
+
 // ---- Tosses ----
 
 /** How often event A came up in the reader's tosses, beside the exact value, so a small sample can't mislead. */
@@ -234,6 +243,8 @@ export function announcementFor(state: EventSpaceState, action: Action): string 
 			return `Tossed ${state.tossCount} times in all. ${capitalize(name)} ${plural(hits, 'time', 'times')}, ${share}.`;
 		}
 		case 'wrong-model':
-			return state.wrongModel ? scenario.wrongModel?.caption ?? '' : 'Back to the four real outcomes.';
+			return state.wrongModel ? scenario.wrongModel?.caption ?? '' : 'Back to the real outcomes.';
+		case 'stage':
+			return setsLine(state) ?? `Showing ${state.stage}.`;
 	}
 }

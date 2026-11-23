@@ -164,4 +164,18 @@ assert.equal(reducer(initialState('dice-count'), { type: 'wrong-model', on: true
 // Reset clears tosses too.
 assert.equal(reducer(tossedTwice, { type: 'reset' }).tossCount, 0);
 
+// ---- Stages: pictures, letters, sets (v1.1) ----
+const setsView = reducer(passed, { type: 'stage', stage: 'sets' });
+assert.equal(describe.setsLine(setsView), 'Ω = {HH, HT, TH, TT}. A = {HH, HT, TH}. P(A) = |A| / |Ω| = 3/4');
+assert.equal(describe.setsLine(passed), null); // only in the Sets view
+const lockedSets = reducer(fresh, { type: 'stage', stage: 'sets' });
+assert.equal(lockedSets.stage, 'sets'); // the view can be chosen before Check…
+assert.equal(describe.setsLine(lockedSets), null); // …but the symbolic line waits for Check
+assert.equal(reducer(fresh, { type: 'stage', stage: 'picture' }).stage, 'picture');
+const diceFresh = initialState('dice-count');
+assert.equal(reducer(diceFresh, { type: 'stage', stage: 'picture' }), diceFresh); // no stages on dice-count
+const { stageAllowed } = await import('../src/components/react/eventSpace/state.ts');
+assert.equal(stageAllowed(diceFresh, 'picture'), false);
+assert.equal(stageAllowed(fresh, 'picture'), true); // 36 cells are too many for pictures
+
 console.log('Board check passed.');

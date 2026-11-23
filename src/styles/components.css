@@ -604,6 +604,30 @@
 	margin: 0.15rem 0;
 }
 
+/* Pictures view: each coin drawn as an ink circle with its face, CSS only. */
+.ms-event-faces {
+	display: flex;
+	gap: 3px;
+}
+
+.ms-event-face {
+	display: grid;
+	place-items: center;
+	inline-size: 22px;
+	block-size: 22px;
+	border: 1.5px solid var(--ms-board-ink);
+	border-radius: 50%;
+	font: 600 0.75rem var(--ms-font-ui);
+}
+
+/* Sets view: the symbolic line, in plain Unicode. */
+.ms-event-sets {
+	margin: 0.75rem 0 0;
+	font: 500 0.9375rem var(--ms-font-mono);
+	color: var(--ms-board-ink);
+	overflow-wrap: anywhere;
+}
+
 /* The wrong model: dashed ink tiles, so it never reads as one of the real events. */
 .ms-wrong-model {
 	margin: 0;

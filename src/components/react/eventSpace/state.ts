@@ -39,10 +39,13 @@ export type Action =
 	| { type: 'weight-preset'; name: string }
 	/** One batch of tosses; the page runs the random draws so the reducer stays pure. */
 	| { type: 'toss'; results: Readonly<Record<OutcomeId, number>> }
-	| { type: 'wrong-model'; on: boolean };
+	| { type: 'wrong-model'; on: boolean }
+	| { type: 'stage'; stage: Stage };
 
 /** Wrong Checks before the "Show the answer" button appears. */
 export const CHECKS_BEFORE_ANSWER = 2;
+/** Grids up to this size can be drawn as pictures (coin faces); bigger ones stay letters. */
+export const MAX_CELLS_FOR_PICTURES = 12;
 const EMPTY: ReadonlySet<OutcomeId> = new Set();
 
 export function setupOf(state: EventSpaceState): Setup {
@@ -85,6 +88,14 @@ export function initialState(setupId: SetupId): EventSpaceState {
 /** On a goal setup, presets, readouts and tosses stay locked until the reader passes Check. */
 export function isLocked(state: EventSpaceState): boolean {
 	return Boolean(setupOf(state).goal) && !state.checked;
+}
+
+/** Whether this setup offers a view: only setups with stages, and pictures only on small grids. */
+export function stageAllowed(state: EventSpaceState, stage: Stage): boolean {
+	const setup = setupOf(state);
+	if (!setup.stages) return false;
+	const scenario = SCENARIOS[setup.scenario];
+	return stage !== 'picture' || (Boolean(scenario.pictureFaces) && scenario.outcomes.length <= MAX_CELLS_FOR_PICTURES);
 }
 
 /** Why a pour would be refused right now, or null if it would go through. */
@@ -152,6 +163,8 @@ export function reducer(state: EventSpaceState, action: Action): EventSpaceState
 		}
 		case 'wrong-model':
 			return setup.wrongModel && scenario.wrongModel && !isLocked(state) ? { ...state, wrongModel: action.on } : state;
+		case 'stage':
+			return stageAllowed(state, action.stage) ? { ...state, stage: action.stage } : state;
 		case 'weight-preset': {
 			const fills = setup.weightPresets?.[action.name];
 			return fills ? { ...state, weights: weightsFor(scenario, fills), refusal: null } : state;
