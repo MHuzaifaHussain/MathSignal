@@ -12,6 +12,8 @@ import { SITE_DESCRIPTION, SITE_URL, SOCIAL_CARD } from './src/seo/site.mjs';
 // https://astro.build/config
 export default defineConfig({
 	site: SITE_URL,
+	// One canonical form for every URL; content links already end in a slash.
+	trailingSlash: 'always',
 	markdown: {
 		// Astro 7 defaults to the Sätteri processor, which renders $$ display maths as a code block.
 		// The unified pipeline keeps remark-math + rehype-katex working.
