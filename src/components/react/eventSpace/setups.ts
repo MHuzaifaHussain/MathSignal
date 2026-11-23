@@ -120,6 +120,13 @@ export function validateSetup(setup: Setup): Setup {
 			}
 		}
 	}
+	if (setup.mode === 'condition') {
+		// Conditioning needs a B to shrink to. Tosses would need a "keep only tosses where B happened" filter, and
+		// "Look at" would be overridden while shrunk; neither is built, so a setup asking for them fails here.
+		if (!setup.events.B) throw new Error(`EventSpace: condition setup "${setup.id}" needs an event B to shrink to.`);
+		if (setup.toss) throw new Error(`EventSpace: condition setup "${setup.id}" can't toss yet; tosses there would need filtering to B.`);
+		if (setup.lookAt) throw new Error(`EventSpace: condition setup "${setup.id}" can't use "Look at"; shrinking to B replaces it.`);
+	}
 	if (setup.goal && !scenario.events[setup.goal]) throw new Error(`EventSpace: setup "${setup.id}" has an unknown goal "${setup.goal}".`);
 	for (const [name, fills] of Object.entries(setup.weightPresets ?? {})) {
 		if (fills.length !== scenario.outcomes.length) throw new Error(`EventSpace: setup "${setup.id}" weight preset "${name}" has ${fills.length} cups; scenario "${scenario.id}" has ${scenario.outcomes.length}.`);

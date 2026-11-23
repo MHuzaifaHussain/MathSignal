@@ -159,19 +159,32 @@ function wearWords(wear: { hat: boolean; scarf: boolean }): string {
 }
 
 function kids(): Scenario {
-	const outcomes = KIDS_WEAR.map((wear, index) => ({
-		id: `child-${index + 1}`,
-		row: Math.floor(index / KIDS_PER_ROW),
-		col: index % KIDS_PER_ROW,
-		label: String(index + 1),
-		// The label already says the child's number, and the grid's name says these are children.
-		spoken: wearWords(wear),
-	}));
-	const wearOf = (outcome: Outcome) => KIDS_WEAR[Number(outcome.id.slice('child-'.length)) - 1];
-	const rowCount = Math.ceil(KIDS_WEAR.length / KIDS_PER_ROW);
+	if (KIDS_WEAR.length % KIDS_PER_ROW !== 0) {
+		// A short last row would leave grid slots with no cell, and the roving focus could land on one.
+		throw new Error(`EventSpace: the class of ${KIDS_WEAR.length} children doesn't fill rows of ${KIDS_PER_ROW}.`);
+	}
+	const wearById = new Map<OutcomeId, { hat: boolean; scarf: boolean }>();
+	const outcomes = KIDS_WEAR.map((wear, index) => {
+		const id = `child-${index + 1}`;
+		wearById.set(id, wear);
+		return {
+			id,
+			row: Math.floor(index / KIDS_PER_ROW),
+			col: index % KIDS_PER_ROW,
+			label: String(index + 1),
+			// The label already says the child's number, and the grid's name says these are children.
+			spoken: wearWords(wear),
+		};
+	});
+	const wearOf = (outcome: Outcome) => {
+		const wear = wearById.get(outcome.id);
+		if (!wear) throw new Error(`EventSpace: "${outcome.id}" is not a child in the class.`);
+		return wear;
+	};
+	const rowCount = KIDS_WEAR.length / KIDS_PER_ROW;
 	return {
 		id: 'kids',
-		describeSpace: 'a class of 12 children, one picked at random',
+		describeSpace: `a class of ${KIDS_WEAR.length} children, one picked at random`,
 		layout: 'list',
 		rowLabel: 'Row',
 		colLabel: 'Seat',

@@ -136,7 +136,7 @@ export function reducer(state: EventSpaceState, action: Action): EventSpaceState
 	switch (action.type) {
 		case 'toggle': {
 			const event = setup.events[state.editing];
-			if (setup.mode === 'weights' || !event?.editable || !scenario.outcomes.some((outcome) => outcome.id === action.id)) return state;
+			if (!(setup.mode === 'count' || setup.mode === 'condition') || !event?.editable || !scenario.outcomes.some((outcome) => outcome.id === action.id)) return state;
 			return withEvent(state, state.editing, toggled(state.events[state.editing], action.id));
 		}
 		case 'preset': {

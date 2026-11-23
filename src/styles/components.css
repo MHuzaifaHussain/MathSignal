@@ -516,6 +516,10 @@
 	cursor: default;
 }
 
+.ms-event-cell[aria-disabled='true']:hover {
+	border-color: var(--ms-board-axis);
+}
+
 .ms-event-cell.is-a {
 	border: 3px solid var(--ms-attention);
 	background-color: var(--ms-highlight);

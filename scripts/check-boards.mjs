@@ -210,11 +210,25 @@ assert.equal(model.conditionalProbability(ids(dice, 'sum-7'), new Set()), null);
 
 const conditionFresh = initialState('dice-condition');
 assert.equal(describe.statusLine(conditionFresh), '36 equally likely outcomes. Editing A.');
-assert.deepEqual(describe.readoutLines(conditionFresh), ['A = sum is at least 10: 6 of 36', 'B = a double: 6 of 36', 'A and B = {(5,5), (6,6)}: 2 of 36']);
-const shrunk = reducer(conditionFresh, { type: 'shrink', on: true });
-assert.deepEqual(describe.readoutLines(shrunk), [
-	'Inside B: 6 outcomes, 2 of them also in A, {(5,5), (6,6)}. P(A | B) = 2/6 = 1/3 ≈ 0.33, while P(A) = 6/36 = 1/6 ≈ 0.17.',
+assert.deepEqual(describe.readoutLines(conditionFresh), [
+	'A = sum is at least 10: 6 of 36 = 1/6 (≈ 0.17)',
+	'B = a double: 6 of 36 = 1/6 (≈ 0.17)',
+	'A and B = {(5,5), (6,6)}: 2 of 36',
 ]);
+const shrunk = reducer(conditionFresh, { type: 'shrink', on: true });
+const shrunkLine = 'Inside B: 6 outcomes, 2 of them also in A, {(5,5), (6,6)}. P(A | B) = 2/6 = 1/3 ≈ 0.33, while P(A) = 6/36 = 1/6 ≈ 0.17.';
+assert.deepEqual(describe.readoutLines(shrunk), [shrunkLine]);
+assert.equal(describe.statusLine(shrunk), '36 equally likely outcomes. Editing A. Shrunk to B: 6 outcomes left.');
+// Speech matches the screen while shrunk: a change to A or B is announced as the new P(A | B).
+const shrunkToggle = reducer(shrunk, { type: 'toggle', id: '4-4' });
+assert.equal(describe.announcementFor(shrunkToggle, { type: 'toggle', id: '4-4' }), 'Inside B: 6 outcomes, 3 of them also in A, {(4,4), (5,5), (6,6)}. P(A | B) = 3/6 = 1/2 = 0.50, while P(A) = 7/36 ≈ 0.19.');
+const shrunkPreset = reducer(shrunk, { type: 'preset', event: 'A', preset: 'clear' });
+assert.equal(describe.announcementFor(shrunkPreset, { type: 'preset', event: 'A', preset: 'clear' }), 'Inside B: 6 outcomes, none of them also in A. P(A | B) = 0/6 = 0, while P(A) = 0/36 = 0.');
+// A setup that would need unbuilt conditioning features fails loudly.
+const conditionSetup = getSetup('dice-condition');
+assert.throws(() => validateSetup({ ...conditionSetup, events: { A: conditionSetup.events.A } }), /needs an event B/);
+assert.throws(() => validateSetup({ ...conditionSetup, toss: true }), /can't toss yet/);
+assert.throws(() => validateSetup({ ...conditionSetup, lookAt: true }), /can't use "Look at"/);
 assert.equal(describe.cellName(shrunk, dice.outcomes[1]), '1,2. First die 1, second die 2. Ruled out.');
 assert.equal(describe.cellName(shrunk, dice.outcomes[0]), '1,1. First die 1, second die 1. In B.');
 assert.equal(describe.announcementFor(reducer(shrunk, { type: 'shrink', on: false }), { type: 'shrink', on: false }), 'Back to all outcomes.');
