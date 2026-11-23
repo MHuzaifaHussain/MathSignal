@@ -1,0 +1,23 @@
+---
+// A short aside: a clarification, a historical note, "you may have seen this written as".
+// Keep it under about 60 words.
+---
+
+<aside class="side-note"><slot /></aside>
+
+<style>
+	.side-note {
+		margin-block: 1rem 1.5rem;
+		padding-inline-start: 1rem;
+		border-inline-start: 1px solid var(--ms-rule);
+		max-inline-size: 52ch;
+		font-family: var(--ms-font-serif);
+		font-size: 0.9375rem;
+		line-height: 1.5;
+		color: var(--ms-ink-muted);
+	}
+
+	.side-note :global(p) {
+		margin: 0;
+	}
+</style>

@@ -1,16 +1,32 @@
 ---
+// The ML relevance of a concept, straight after ConceptHeader.
 ---
 
-<aside class="not-content my-6 rounded-lg border-l-4 p-4" style="border-color: var(--sl-color-text-accent); background: var(--sl-color-bg-nav);">
-  <div class="flex items-center gap-2 mb-2">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-5 w-5 shrink-0" style="color: var(--sl-color-text-accent);">
-      <path d="M10 1a6 6 0 0 0-3.815 10.631C7.237 12.5 8 13.443 8 14.456v.044a2 2 0 0 0 2 2h0a2 2 0 0 0 2-2v-.044c0-1.013.763-1.955 1.815-2.825A6 6 0 0 0 10 1ZM8.5 18a1.5 1.5 0 0 0 3 0h-3Z" />
-    </svg>
-    <p class="text-sm font-bold m-0 uppercase tracking-wide" style="color: var(--sl-color-text-accent);">
-      Why This Matters in ML/AI
-    </p>
-  </div>
-  <div class="text-sm" style="color: var(--sl-color-gray-2);">
-    <slot />
-  </div>
+<aside class="why-this-matters" aria-label="Why this matters in machine learning">
+	<p class="label">Why this matters in ML</p>
+	<div class="body"><slot /></div>
 </aside>
+
+<style>
+	.why-this-matters {
+		margin-block: 1.5rem 2rem;
+		padding-inline-start: 1.25rem;
+		border-inline-start: 3px solid var(--ms-board-edge);
+	}
+
+	.label {
+		margin: 0 0 0.35rem;
+		font-family: var(--ms-font-ui);
+		font-size: 0.9375rem;
+		font-weight: 600;
+		color: var(--ms-ink);
+	}
+
+	.body :global(p) {
+		margin-block: 0 0.75em;
+	}
+
+	.body :global(p:last-child) {
+		margin-block-end: 0;
+	}
+</style>

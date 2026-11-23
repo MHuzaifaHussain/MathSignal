@@ -1,14 +1,37 @@
 ---
+// The formal maths for a concept, closed by default. Use \vmu and \vsigma inside.
 ---
 
-<details class="not-content my-6 rounded-lg border overflow-hidden group" style="border-color: var(--sl-color-gray-5); background: var(--sl-color-bg-nav);">
-  <summary class="flex cursor-pointer items-center gap-2 px-4 py-3 text-sm font-bold select-none list-none" style="color: var(--sl-color-white);">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4 shrink-0 transition-transform group-open:rotate-90" style="color: var(--sl-color-gray-3);">
-      <path fill-rule="evenodd" d="M7.21 14.77a.75.75 0 0 1 .02-1.06L11.168 10 7.23 6.29a.75.75 0 1 1 1.04-1.08l4.5 4.25a.75.75 0 0 1 0 1.08l-4.5 4.25a.75.75 0 0 1-1.06-.02Z" clip-rule="evenodd" />
-    </svg>
-    Formal Mathematical Definition
-  </summary>
-  <div class="border-t px-4 py-4" style="border-color: var(--sl-color-gray-5);">
-    <slot />
-  </div>
+<details class="formal-definition">
+	<summary>
+		Formal definition
+	</summary>
+	<div class="content"><slot /></div>
 </details>
+
+<style>
+	.formal-definition {
+		margin-block: 2rem;
+		border: 1px solid var(--ms-rule);
+		border-radius: 4px;
+		background-color: var(--ms-surface-sunk);
+	}
+
+	summary {
+		display: flex;
+		align-items: center;
+		gap: 0.5rem;
+		min-height: 44px;
+		padding-inline: 1rem;
+		font-family: var(--ms-font-ui);
+		font-size: 0.9375rem;
+		font-weight: 600;
+		color: var(--ms-ink);
+		cursor: pointer;
+	}
+
+	.content {
+		padding: 0.25rem 1.25rem 1.25rem;
+		border-top: 1px solid var(--ms-rule);
+	}
+</style>

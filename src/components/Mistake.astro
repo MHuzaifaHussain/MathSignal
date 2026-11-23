@@ -1,0 +1,40 @@
+---
+// One misconception inside <CommonMistakes>: the wrong belief as a prop, the correction as the slot.
+interface Props {
+	/** The misconception, as a reader might say it. */
+	wrong: string;
+}
+
+const { wrong } = Astro.props;
+---
+
+<li class="mistake">
+	<p class="wrong"><span class="tag">Not quite:</span> “{wrong}”</p>
+	<div class="instead"><span class="tag">Instead:</span> <slot /></div>
+</li>
+
+<style>
+	.mistake {
+		padding-block: 1rem;
+		border-bottom: 1px solid var(--ms-rule);
+	}
+
+	.wrong {
+		margin: 0 0 0.35rem;
+		color: var(--ms-ink);
+		font-style: italic;
+	}
+
+	.tag {
+		font-family: var(--ms-font-ui);
+		font-size: 0.9375rem;
+		font-style: normal;
+		font-weight: 600;
+		color: var(--ms-ink-muted);
+	}
+
+	.instead :global(p) {
+		display: inline;
+		margin: 0;
+	}
+</style>

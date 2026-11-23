@@ -22,11 +22,13 @@ The ML relevance of the concept, straight after the header. Paper surface with a
 A `<details>` panel on the sunk surface holding the formal maths. Closed by default. Slot: KaTeX and prose.
 
 ### `CommonMistakes` (Astro) and `Mistake` (Astro)
-A list of misconceptions, each as a "Not quite" / "Instead" pair.
+A list of misconceptions, each as a "Not quite" / "Instead" pair. The misconception is the `wrong` prop; the correction is the slot, so it can hold formulas and links.
 
 ```mdx
 <CommonMistakes>
-  <Mistake wrong="σ is the variance." right="σ is the standard deviation; the variance is σ²." />
+  <Mistake wrong="σ is the variance.">
+    σ is the standard deviation; the variance is $\sigma^2$.
+  </Mistake>
 </CommonMistakes>
 ```
 
@@ -43,7 +45,7 @@ A plain list of links at the end of a page. No cards.
 A variable symbol in its meaning colour, for prose. `name`: `'mu' | 'sigma'`. Renders an italic serif symbol with the matching class, so it matches the KaTeX macros.
 
 ### `SideNote` (Astro)
-An aside for the margin: a short clarification, a historical note, a "you may have seen this written as". Inline on narrow screens; in the margin column on wide screens. Smaller serif in muted ink. Keep it under about 60 words.
+A short aside: a clarification, a historical note, a "you may have seen this written as". Smaller serif in muted ink with a hairline on the left, inline in the reading column. (It does not float into the page margin: Starlight's "On this page" column occupies that space.) Keep it under about 60 words.
 
 ## Boards (React)
 

@@ -1,48 +1,61 @@
 ---
 interface Props {
-  title: string;
-  oneLiner: string;
-  prerequisites?: { label: string; href: string }[];
-  difficulty: "beginner" | "intermediate" | "advanced";
+	/** One sentence saying what the concept is. */
+	oneLiner: string;
+	difficulty: 'beginner' | 'intermediate' | 'advanced';
+	prerequisites?: { label: string; href: string }[];
 }
 
-const { title, oneLiner, prerequisites = [], difficulty } = Astro.props;
-
-const difficultyConfig = {
-  beginner: { label: "Beginner", bg: "bg-green-100 dark:bg-green-900/40", text: "text-green-800 dark:text-green-300" },
-  intermediate: { label: "Intermediate", bg: "bg-yellow-100 dark:bg-yellow-900/40", text: "text-yellow-800 dark:text-yellow-300" },
-  advanced: { label: "Advanced", bg: "bg-red-100 dark:bg-red-900/40", text: "text-red-800 dark:text-red-300" },
-};
-
-const badge = difficultyConfig[difficulty];
+const { oneLiner, difficulty, prerequisites = [] } = Astro.props;
 ---
 
-<div class="not-content mb-8">
-  <div class="flex flex-wrap items-center gap-3 mb-2">
-    <span class={`inline-block rounded-full px-3 py-0.5 text-xs font-semibold ${badge.bg} ${badge.text}`}>
-      {badge.label}
-    </span>
-  </div>
-
-  <p class="text-lg m-0 mt-1" style="color: var(--sl-color-gray-3);">
-    {oneLiner}
-  </p>
-
-  {prerequisites.length > 0 && (
-    <div class="mt-4 flex flex-wrap items-center gap-2 text-sm" style="color: var(--sl-color-gray-3);">
-      <span class="font-medium">Prerequisites:</span>
-      {prerequisites.map((prereq, i) => (
-        <>
-          <a
-            href={prereq.href}
-            class="underline decoration-dotted underline-offset-2 hover:decoration-solid"
-            style="color: var(--sl-color-text-accent);"
-          >
-            {prereq.label}
-          </a>
-          {i < prerequisites.length - 1 && <span>·</span>}
-        </>
-      ))}
-    </div>
-  )}
+<div class="not-content concept-header">
+	<p class="one-liner">{oneLiner}</p>
+	<p class="meta">
+		<span>Level: {difficulty}</span>
+		{
+			prerequisites.length > 0 && (
+				<span>
+					Builds on{' '}
+					{prerequisites.map((prerequisite, index) => (
+						<>
+							<a href={prerequisite.href}>{prerequisite.label}</a>
+							{index < prerequisites.length - 2 ? ', ' : index === prerequisites.length - 2 ? ' and ' : ''}
+						</>
+					))}
+				</span>
+			)
+		}
+	</p>
 </div>
+
+<style>
+	.concept-header {
+		margin-block-end: 2rem;
+	}
+
+	.one-liner {
+		margin: 0;
+		max-inline-size: 60ch;
+		font-family: var(--ms-font-serif);
+		font-size: 1.3rem;
+		line-height: 1.5;
+		color: var(--ms-ink);
+	}
+
+	.meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.25rem 1.5rem;
+		margin: 0.75rem 0 0;
+		font-family: var(--ms-font-ui);
+		font-size: 0.9375rem;
+		color: var(--ms-ink-muted);
+	}
+
+	.meta a {
+		color: var(--ms-ink);
+		text-decoration: underline;
+		text-underline-offset: 0.18em;
+	}
+</style>

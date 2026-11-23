@@ -1,29 +1,65 @@
 ---
 interface Props {
-  topics: { label: string; href: string; description: string }[];
+	topics: { label: string; href: string; description: string }[];
 }
 
 const { topics } = Astro.props;
 ---
 
-<nav class="not-content my-8">
-  <p class="text-sm font-bold uppercase tracking-wide mb-4" style="color: var(--sl-color-gray-3);">
-    Up Next
-  </p>
-  <div class="grid gap-3 sm:grid-cols-2">
-    {topics.map((topic) => (
-      <a
-        href={topic.href}
-        class="group block rounded-lg border p-4 no-underline transition-colors hover:border-current"
-        style={`border-color: var(--sl-color-gray-5); color: var(--sl-color-white);`}
-      >
-        <span class="font-semibold group-hover:underline">
-          {topic.label}
-        </span>
-        <p class="m-0 mt-1 text-sm" style="color: var(--sl-color-gray-3);">
-          {topic.description}
-        </p>
-      </a>
-    ))}
-  </div>
+<nav class="next-topics" aria-label="Up next">
+	<p class="label">Up next</p>
+	<ul>
+		{
+			topics.map((topic) => (
+				<li>
+					<a href={topic.href}>{topic.label}</a>
+					<span class="description">{topic.description}</span>
+				</li>
+			))
+		}
+	</ul>
 </nav>
+
+<style>
+	.next-topics {
+		margin-block: 2.5rem 1rem;
+	}
+
+	.label {
+		margin: 0 0 0.5rem;
+		font-family: var(--ms-font-ui);
+		font-size: 0.9375rem;
+		font-weight: 600;
+		color: var(--ms-ink);
+	}
+
+	ul {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	li {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: baseline;
+		gap: 0 0.75rem;
+		padding-block: 0.4rem;
+	}
+
+	a {
+		color: var(--ms-ink);
+		font-weight: 600;
+		text-decoration: underline;
+		text-decoration-color: var(--ms-ink-muted);
+		text-underline-offset: 0.18em;
+	}
+
+	a:hover {
+		text-decoration-color: var(--ms-ink);
+	}
+
+	.description {
+		color: var(--ms-ink-muted);
+	}
+</style>
