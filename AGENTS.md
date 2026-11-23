@@ -9,6 +9,9 @@ Guidance for contributors and coding agents. Keep it short; details live in the 
 ## AI assistant skills
 Before any change, recommend the matching skills from [docs/tooling/agent-skills.md](docs/tooling/agent-skills.md) and ask whether to use them. If a recommended skill or tool isn't installed, suggest installing it with the command listed there. Never install anything without the developer's go-ahead.
 
+## SEO
+Write for the learner first. Follow [docs/seo/README.md](docs/seo/README.md): answer-first definitions, plain titles, human descriptions, descriptive links, no keyword stuffing.
+
 ## Rules that are easy to break
 - Colours come only from `src/design/palette.mjs`. Run `npm run tokens` after changing it; never edit `src/styles/tokens.css` by hand. Components use `var(--ms-*)`, never hex values.
 - Colour means something: pink is μ, blue is σ, yellow/ochre is "look here". Everything else is ink. Use `\vmu`/`\vsigma` in formulas, `<Var>` in prose, `plotColors` in Mafs code.

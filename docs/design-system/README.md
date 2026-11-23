@@ -9,6 +9,7 @@ MathSignal teaches the maths behind machine learning. Chalk Margin is the visual
 | [math-plots-code.md](math-plots-code.md) | KaTeX conventions, μ/σ colouring, Mafs boards, code highlighting |
 | [accessibility.md](accessibility.md) | Contrast rules, colour-blindness rules, keyboard and screen-reader requirements |
 | [writing-a-concept-page.md](writing-a-concept-page.md) | The concept page template and a pre-merge checklist |
+| [../seo/README.md](../seo/README.md) | Balanced SEO principles and the new-page SEO checklist |
 | [../decisions/](../decisions/) | Why the big choices were made (themes, code colours, stack) |
 
 ## The idea in one paragraph

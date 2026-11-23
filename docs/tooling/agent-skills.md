@@ -23,7 +23,7 @@ Skip the recommendation for trivial edits (a typo, one line of copy). Whatever s
 | React island work (boards, runner, sliders) | `react-best-practices`, `composition-patterns` | Hooks, re-renders, composition. Both are Next.js-oriented; apply only the React parts |
 | Speed, bundle size, fonts, Core Web Vitals | `performance`, `core-web-vitals`, Chrome DevTools MCP | Measured with real traces, not guessed |
 | Accessibility review | `accessibility` (web-quality-skills), `web-design-guidelines`, optionally AccessLint | Target is WCAG 2.2 AA ([accessibility.md](../design-system/accessibility.md)) |
-| Titles, descriptions, sitemap, discoverability | `seo` (web-quality-skills) | Search visibility |
+| Titles, descriptions, links, structured data, discoverability | `seo-audit`, `ai-seo`, `programmatic-seo` (marketingskills); `seo` (web-quality-skills) | Balanced SEO that never changes the tone: follow [docs/seo/README.md](../seo/README.md). `programmatic-seo` matters because many pages share one template |
 | A bug or unexpected behaviour | `superpowers` systematic-debugging | Root cause before fixes |
 | Logic that can be unit-tested | `superpowers` test-driven-development | Only once a test setup exists; the repo has none today |
 | Before saying work is done | `superpowers` verification-before-completion | Run `npm run build` and `npm run check`, show the output |
@@ -55,6 +55,7 @@ Run plugin commands inside Claude Code. `/code-review`, `/simplify` and `/securi
 | `react-best-practices`, `composition-patterns`, `web-design-guidelines` (Vercel) | `npx skills add vercel-labs/agent-skills` |
 | `performance`, `core-web-vitals`, `accessibility`, `seo` (Addy Osmani's web-quality-skills) | `/plugin marketplace add addyosmani/web-quality-skills`, then `/plugin install web-quality-skills@addy-web-quality-skills` (or `npx skills add addyosmani/web-quality-skills`) |
 | `humanize-writing` | `npx skills add jpeggdev/humanize-writing` |
+| `seo-audit`, `ai-seo`, `programmatic-seo` (Corey Haines' marketingskills) | `npx skills add coreyhaines31/marketingskills --skill seo-audit ai-seo programmatic-seo`, or as a plugin: `/plugin marketplace add coreyhaines31/marketingskills`, then `/plugin install marketing-skills@marketingskills` |
 
 ### MCP servers and community tools
 
