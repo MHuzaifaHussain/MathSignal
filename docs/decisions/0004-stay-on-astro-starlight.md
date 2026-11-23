@@ -11,7 +11,7 @@ Stay on Astro + Starlight and upgrade to Astro 7, Starlight 0.43 and `@astrojs/r
 Upgrade notes:
 - Astro 7 renders Markdown with Sätteri by default, which turns `$$` display maths into a code block without an error. Use `markdown.processor: unified()` with `remark-math` and `rehype-katex`.
 - Node 22.23.4 or newer.
-- Tailwind moves to `@tailwindcss/vite` (the Vite 7/8 clash that ruled it out is gone), with the CSS layer order `base, starlight, theme, components, utilities`.
+- Tailwind moves to `@tailwindcss/vite` (the Vite 7/8 clash that ruled it out is gone), with the CSS layer order `base, starlight, theme, components, utilities`. (Superseded: Tailwind was later removed, see [0005](0005-remove-tailwind.md).)
 - KaTeX stays on 0.16.x for now; moving to 0.19 is a separate change.
 
 ## Consequences

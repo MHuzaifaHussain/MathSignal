@@ -86,6 +86,20 @@ A runnable Python block. The code is rendered by Starlight's `<Code>` component,
 
 Only standard-library, NumPy and SciPy code can run. Keep PyTorch display-only.
 
+## Embeds
+
+### `MarimoEmbed` (React)
+Embeds a published marimo notebook in an iframe, with a title bar and an "Open in marimo" link. Not used on any page yet.
+
+| Prop | Type | Notes |
+|---|---|---|
+| `src` | `string` | URL of the published notebook |
+| `height` | `string` | CSS height, default `600px` |
+| `mode` | `'edit' \| 'read'` | Default `edit` |
+| `title` | `string` | Optional; shows the title bar |
+
+The iframe sandbox allows scripts and same-origin access, which marimo needs. Only embed notebooks from a host you trust, and never from this site's own origin (same-origin plus scripts would let the frame lift its own sandbox).
+
 ## Site chrome (Starlight overrides)
 
 Overrides live in `src/components/overrides/` and are registered in `astro.config.mjs`. Keep them few; each one is a maintenance cost on every Starlight upgrade.

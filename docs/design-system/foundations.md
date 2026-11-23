@@ -62,7 +62,7 @@ Typographic rules:
 
 ## Spacing
 
-Use Starlight's spacing and Tailwind's 4px scale. Vertical rhythm on paper is based on the body line height: 0.75em between paragraphs, 2.5em above h2.
+Use a 4px scale (0.25rem steps) and Starlight's layout utilities (`sl-flex`, `sl-hidden`, `md:sl-flex`). There is no utility-class framework: component styles live in scoped Astro `<style>` blocks or `src/styles/components.css`. Vertical rhythm on paper is based on the body line height: 0.75em between paragraphs, 2.5em above h2.
 
 ## Focus
 

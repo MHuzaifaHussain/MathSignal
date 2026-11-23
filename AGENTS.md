@@ -13,6 +13,7 @@ Guidance for contributors and coding agents. Keep it short; details live in the 
 - Plots live inside `Board`; every draggable handle needs a keyboard path (a tray slider, or `handleLabels`).
 - Subjects are defined once in `src/design/domains.mjs`.
 - React islands use `client:visible` and sit inside `<div class="not-content">` in MDX. Island CSS goes in `src/styles/components.css` (islands drop CSS imports).
+- There is no Tailwind (decision 0005). Style with tokens in scoped `<style>` blocks or `components.css`; Starlight's own utilities (`sl-flex`, `sr-only`, `print:hidden`) are fine.
 - Don't use `starlight-katex`. Maths runs through `remark-math` + `rehype-katex` on Astro's `unified()` processor; Astro 7's default Sätteri processor breaks `$$` blocks.
 
 ## Commands
