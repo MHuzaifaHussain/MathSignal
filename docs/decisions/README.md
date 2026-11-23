@@ -13,3 +13,5 @@ Format: context, decision, consequences, alternatives considered. Number them in
 | [0005](0005-remove-tailwind.md) | Remove Tailwind; tokens and component CSS only | Accepted |
 | [0006](0006-no-decorative-rules-or-shadows.md) | No decorative vertical rules, bars or shadows | Accepted |
 | [0007](0007-no-katex-in-islands.md) | No KaTeX in board islands | Accepted |
+| [0008](0008-spine-and-folds-article-template.md) | Spine and folds article template | Accepted |
+| [0009](0009-single-sources-of-truth.md) | Single sources of truth for topics, notation and references | Accepted |
