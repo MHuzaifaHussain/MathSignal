@@ -125,6 +125,7 @@ The peak halves, because …
 
 - [ ] Sections are in the order above, with topic-specific headings; no `<h1>` in the page body.
 - [ ] Frontmatter is complete and the topic, symbols and references exist in `src/data/`.
+- [ ] `sidebar.order` puts the page after its prerequisites in its subject (otherwise Starlight sorts alphabetically).
 - [ ] Every fold adds something the spine doesn't say; the page reads fully with every fold closed.
 - [ ] The board is introduced by a prediction question and followed by the answer.
 - [ ] μ and σ use `\vmu` / `\vsigma` in formulas and `<Var>` in prose; nothing else is coloured.
