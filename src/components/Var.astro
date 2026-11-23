@@ -1,0 +1,27 @@
+---
+// A meaning-coloured variable for prose, matching the \vmu / \vsigma KaTeX macros.
+const SYMBOLS = {
+	mu: { symbol: 'μ', name: 'mean' },
+	sigma: { symbol: 'σ', name: 'standard deviation' },
+} as const;
+
+interface Props {
+	name: keyof typeof SYMBOLS;
+}
+
+const { name } = Astro.props;
+const variable = SYMBOLS[name];
+if (!variable) {
+	throw new Error(`<Var name="${name}">: unknown variable. Use one of: ${Object.keys(SYMBOLS).join(', ')}`);
+}
+---
+
+<i class={`ms-var ms-${name}`} title={variable.name}>{variable.symbol}</i>
+
+<style>
+	.ms-var {
+		font-family: var(--ms-font-serif);
+		font-style: italic;
+		font-weight: 600;
+	}
+</style>
