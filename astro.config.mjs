@@ -2,6 +2,8 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
+import { unified } from '@astrojs/markdown-remark';
+import tailwindcss from '@tailwindcss/vite';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 
@@ -9,8 +11,12 @@ import rehypeKatex from 'rehype-katex';
 export default defineConfig({
 	site: 'https://mathsignal.dev',
 	markdown: {
-		remarkPlugins: [remarkMath],
-		rehypePlugins: [rehypeKatex],
+		// Astro 7 defaults to the Sätteri processor, which renders $$ display maths as a code block.
+		// The unified pipeline keeps remark-math + rehype-katex working.
+		processor: unified({
+			remarkPlugins: [remarkMath],
+			rehypePlugins: [rehypeKatex],
+		}),
 	},
 	integrations: [
 		starlight({
@@ -44,19 +50,19 @@ export default defineConfig({
 				},
 				{
 					label: 'Statistics',
-					autogenerate: { directory: 'statistics' },
+					items: [{ autogenerate: { directory: 'statistics' } }],
 				},
 				{
 					label: 'Probability',
-					autogenerate: { directory: 'probability' },
+					items: [{ autogenerate: { directory: 'probability' } }],
 				},
 				{
 					label: 'Linear Algebra',
-					autogenerate: { directory: 'linear-algebra' },
+					items: [{ autogenerate: { directory: 'linear-algebra' } }],
 				},
 				{
 					label: 'Machine Learning',
-					autogenerate: { directory: 'ml' },
+					items: [{ autogenerate: { directory: 'ml' } }],
 				},
 			],
 			customCss: ['katex/dist/katex.min.css', 'mafs/core.css', './src/styles/global.css'],
@@ -64,6 +70,7 @@ export default defineConfig({
 		react(),
 	],
 	vite: {
+		plugins: [tailwindcss()],
 		ssr: {
 			noExternal: ['katex'],
 		},

@@ -8,7 +8,7 @@
 | Build command        | `npm run build`                                    |
 | Build output dir     | `dist`                                             |
 | Deploy command       | `npx wrangler pages deploy dist --project-name=mathsignal` |
-| Node version (env)   | `NODE_VERSION` = `22.12.0`                         |
+| Node version (env)   | `NODE_VERSION` = `24.14.0`                         |
 
 ## DNS Setup
 
