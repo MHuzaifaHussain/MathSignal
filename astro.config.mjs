@@ -52,6 +52,7 @@ export default defineConfig({
 			components: {
 				Header: './src/components/overrides/Header.astro',
 				Sidebar: './src/components/overrides/Sidebar.astro',
+				Footer: './src/components/overrides/Footer.astro',
 			},
 			// Expressive Code is configured in ec.config.mjs.
 			social: [
@@ -63,7 +64,7 @@ export default defineConfig({
 			],
 			// Subjects come from src/design/domains.mjs so the header strip and sidebar never drift apart.
 			sidebar: [
-				{ label: 'Getting started', items: [{ label: 'Introduction', slug: '' }] },
+				{ label: 'Getting started', items: [{ label: 'Introduction', slug: '' }, { label: 'About', slug: 'about' }] },
 				...DOMAINS.map((domain) => ({ label: domain.label, items: [{ autogenerate: { directory: domain.directory } }] })),
 			],
 			// Narrows the sidebar to the active subject: src/routeData.ts

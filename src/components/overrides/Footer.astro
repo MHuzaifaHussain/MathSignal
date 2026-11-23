@@ -1,0 +1,59 @@
+---
+// Starlight Footer override: Starlight's own footer (previous/next, last updated) plus who wrote the
+// page, the licences, and a prefilled "Report an error" link. Recheck on every Starlight upgrade.
+import DefaultFooter from '@astrojs/starlight/components/Footer.astro';
+import { AUTHOR_NAME, REPOSITORY_URL, SITE_URL } from '../../seo/site.mjs';
+
+const { entry, id } = Astro.locals.starlightRoute;
+const pageUrl = `${SITE_URL}/${id ? `${id}/` : ''}`;
+const issueTitle = `Error on "${entry.data.title}"`;
+const issueBody = `Page: ${pageUrl}\n\nWhat is wrong, and what should it say?\n`;
+const reportUrl = `${REPOSITORY_URL}/issues/new?title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}`;
+---
+
+<DefaultFooter />
+
+<div class="page-credits print:hidden">
+	<p>
+		Written by {AUTHOR_NAME}. The text is licensed under
+		<a href="https://creativecommons.org/licenses/by/4.0/" rel="license">CC BY 4.0</a> and the code under MIT.
+	</p>
+	<p>
+		<a href={reportUrl}>Report an error on this page</a>
+		<span class="gap" aria-hidden="true"></span>
+		<a href="/about/">About MathSignal</a>
+	</p>
+</div>
+
+<style>
+	.page-credits {
+		margin-block-start: 2.5rem;
+		font-family: var(--ms-font-ui);
+		font-size: 0.875rem;
+		line-height: 1.5;
+		color: var(--ms-ink-muted);
+	}
+
+	.page-credits p {
+		margin: 0 0 0.35rem;
+	}
+
+	.page-credits a {
+		display: inline-flex;
+		align-items: center;
+		min-block-size: 44px;
+		color: var(--ms-ink);
+		text-decoration: underline;
+		text-decoration-color: var(--ms-ink-muted);
+		text-underline-offset: 0.18em;
+	}
+
+	.page-credits p:first-child a {
+		min-block-size: auto;
+	}
+
+	.gap {
+		display: inline-block;
+		inline-size: 1.5rem;
+	}
+</style>

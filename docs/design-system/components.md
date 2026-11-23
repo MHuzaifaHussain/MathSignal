@@ -108,6 +108,7 @@ Overrides live in `src/components/overrides/` and are registered in `astro.confi
 |---|---|
 | `Header` | Adds the subject strip (from `src/design/domains.mjs`) with an underline on the active subject. Search and the theme toggle stay Starlight's own |
 | `Sidebar` | Wraps Starlight's own sidebar and adds the subject list at the top of the mobile menu |
+| `Footer` | Wraps Starlight's own footer and adds the author, the licences (CC BY 4.0 text, MIT code), a prefilled "Report an error on this page" link and a link to the About page |
 
 The sidebar is narrowed to the active subject by Starlight route middleware (`src/routeData.ts`), not by the override, so Starlight's sidebar markup and state persistence keep working. Subjects are defined once in `src/design/domains.mjs`, which feeds both the sidebar config and the strip; the build fails if they disagree.
 
