@@ -1,13 +1,14 @@
 ---
-import { getDomains } from './domains';
-
 interface Props {
 	/** 'strip' sits in the header on wide screens; 'stacked' sits at the top of the mobile menu. */
 	variant: 'strip' | 'stacked';
 }
 
 const { variant } = Astro.props;
-const domains = getDomains(Astro.locals.starlightRoute.sidebar);
+const domains = Astro.locals.subjects;
+if (!domains) {
+	throw new Error('DomainNav: Astro.locals.subjects is missing. Is src/routeData.ts registered as routeMiddleware?');
+}
 ---
 
 <nav class:list={['domain-nav', variant]} aria-label="Subjects">
@@ -53,7 +54,7 @@ const domains = getDomains(Astro.locals.starlightRoute.sidebar);
 	}
 
 	.domain-nav .upcoming {
-		color: color-mix(in oklab, var(--ms-ledge-ink) 55%, var(--ms-ledge));
+		color: var(--ms-ink-muted);
 		cursor: default;
 	}
 
@@ -62,7 +63,7 @@ const domains = getDomains(Astro.locals.starlightRoute.sidebar);
 		text-underline-offset: 0.3em;
 	}
 
-	/* Active domain: chalk underline, yellow in dark mode, highlighter with an ochre edge in light mode */
+	/* Active domain: chalk underline in the attention colour (yellow in dark mode, ochre in light mode) */
 	.domain-nav a[aria-current='true'] {
 		font-weight: 600;
 		text-decoration: underline;

@@ -7,6 +7,7 @@ import tailwindcss from '@tailwindcss/vite';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { katexOptions, rehypeKatexFailOnError } from './src/design/katex.mjs';
+import { DOMAINS } from './src/design/domains.mjs';
 
 // https://astro.build/config
 export default defineConfig({
@@ -41,28 +42,13 @@ export default defineConfig({
 					href: 'https://github.com/mhuzaifahussain/mathsignal',
 				},
 			],
+			// Subjects come from src/design/domains.mjs so the header strip and sidebar never drift apart.
 			sidebar: [
-				{
-					label: 'Getting Started',
-					items: [{ label: 'Introduction', slug: '' }],
-				},
-				{
-					label: 'Statistics',
-					items: [{ autogenerate: { directory: 'statistics' } }],
-				},
-				{
-					label: 'Probability',
-					items: [{ autogenerate: { directory: 'probability' } }],
-				},
-				{
-					label: 'Linear Algebra',
-					items: [{ autogenerate: { directory: 'linear-algebra' } }],
-				},
-				{
-					label: 'Machine Learning',
-					items: [{ autogenerate: { directory: 'ml' } }],
-				},
+				{ label: 'Getting started', items: [{ label: 'Introduction', slug: '' }] },
+				...DOMAINS.map((domain) => ({ label: domain.label, items: [{ autogenerate: { directory: domain.directory } }] })),
 			],
+			// Narrows the sidebar to the active subject: src/routeData.ts
+			routeMiddleware: './src/routeData.ts',
 			customCss: [
 				// Fonts: @font-face rules only download a file when text actually uses it,
 				// so Kalam is fetched only on pages with a board note.

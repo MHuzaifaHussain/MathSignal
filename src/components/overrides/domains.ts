@@ -1,17 +1,7 @@
 import type { StarlightRouteData } from '@astrojs/starlight/route-data';
+import { DOMAINS } from '../../design/domains.mjs';
 
 type SidebarEntry = StarlightRouteData['sidebar'][number];
-
-/** Top-level sidebar groups that are subject domains, in display order. */
-const DOMAIN_LABELS = ['Statistics', 'Probability', 'Linear Algebra', 'Machine Learning'] as const;
-
-/** Sentence-case names shown in the domain strip (design system: no title case in UI labels). */
-const DISPLAY_NAMES: Record<(typeof DOMAIN_LABELS)[number], string> = {
-	Statistics: 'Statistics',
-	Probability: 'Probability',
-	'Linear Algebra': 'Linear algebra',
-	'Machine Learning': 'Machine learning',
-};
 
 export interface Domain {
 	label: string;
@@ -20,8 +10,10 @@ export interface Domain {
 	isActive: boolean;
 }
 
-function isDomainLabel(label: string): label is (typeof DOMAIN_LABELS)[number] {
-	return (DOMAIN_LABELS as readonly string[]).includes(label);
+const DOMAIN_LABELS = new Set(DOMAINS.map((domain) => domain.label));
+
+function isDomainGroup(entry: SidebarEntry): entry is Extract<SidebarEntry, { type: 'group' }> {
+	return entry.type === 'group' && DOMAIN_LABELS.has(entry.label);
 }
 
 function firstLinkHref(entries: SidebarEntry[]): string | null {
@@ -37,12 +29,17 @@ function containsCurrent(entries: SidebarEntry[]): boolean {
 	return entries.some((entry) => (entry.type === 'link' ? entry.isCurrent : containsCurrent(entry.entries)));
 }
 
-/** Domains for the header strip, with the one holding the current page marked active. */
+/** Domains for the subject strip, with the one holding the current page marked active. */
 export function getDomains(sidebar: SidebarEntry[]): Domain[] {
-	return sidebar.flatMap((entry) => {
-		if (entry.type !== 'group' || !isDomainLabel(entry.label)) return [];
-		return [{ label: DISPLAY_NAMES[entry.label], href: firstLinkHref(entry.entries), isActive: containsCurrent(entry.entries) }];
-	});
+	const groups = sidebar.filter(isDomainGroup);
+	if (groups.length !== DOMAINS.length) {
+		const found = groups.map((group) => group.label).join(', ') || 'none';
+		throw new Error(
+			`Subject strip: expected sidebar groups for ${DOMAINS.map((domain) => domain.label).join(', ')} but found ${found}. ` +
+				'Build the sidebar from src/design/domains.mjs.',
+		);
+	}
+	return groups.map((group) => ({ label: group.label, href: firstLinkHref(group.entries), isActive: containsCurrent(group.entries) }));
 }
 
 /**
@@ -50,8 +47,6 @@ export function getDomains(sidebar: SidebarEntry[]): Domain[] {
  * Pages outside any domain (the home page, the introduction) keep the full sidebar.
  */
 export function filterSidebarToActiveDomain(sidebar: SidebarEntry[]): SidebarEntry[] {
-	const activeDomain = sidebar.find(
-		(entry) => entry.type === 'group' && isDomainLabel(entry.label) && containsCurrent(entry.entries),
-	);
+	const activeDomain = sidebar.find((entry) => isDomainGroup(entry) && containsCurrent(entry.entries));
 	return activeDomain ? [activeDomain] : sidebar;
 }
