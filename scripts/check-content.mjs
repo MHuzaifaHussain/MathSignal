@@ -4,6 +4,7 @@
 //     published = a page that isn't a draft, planned = no page yet or a draft
 //   - notation and references: unique ids; every reference has an https URL and a `checked` date
 //   - pages: every topic, reference, <Cite id> and <NotationKey symbols> id they use exists
+//   - SEO: descriptions 120-160 characters; titles, descriptions and primary queries unique (docs/seo/README.md)
 // Required frontmatter on concept pages is enforced during the build by src/routeData.ts.
 import { readdir, readFile } from 'node:fs/promises';
 import { existsSync, readFileSync } from 'node:fs';
@@ -12,9 +13,14 @@ import { fileURLToPath } from 'node:url';
 import { TOPICS } from '../src/data/topics.mjs';
 import { NOTATION } from '../src/data/notation.mjs';
 import { REFERENCES } from '../src/data/references.mjs';
+import { SITE_NAME } from '../src/seo/site.mjs';
 
 const DOCS_DIR = fileURLToPath(new URL('../src/content/docs/', import.meta.url));
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
+// From docs/seo/README.md. Starlight appends " | MathSignal" to every page title.
+const DESCRIPTION_LENGTH = { min: 120, max: 160 };
+const MAX_FULL_TITLE_LENGTH = 60;
+const TITLE_SUFFIX = ` | ${SITE_NAME}`;
 
 /** @param {{ id?: string, key?: string }[]} items @param {'id' | 'key'} field @param {string} name */
 function duplicateIds(items, field, name) {
@@ -114,14 +120,22 @@ function idsUsedIn(source) {
 	return { topic, frontmatterReferences, cited, symbols };
 }
 
-async function pageProblems() {
+/** Every MDX page once: its path under src/content/docs, its source with LF line endings, and its frontmatter. */
+async function readPages() {
+	return Promise.all(
+		(await mdxFiles(DOCS_DIR)).map(async (file) => {
+			const source = (await readFile(file, 'utf8')).replace(/\r\n/g, '\n');
+			return { name: relative(DOCS_DIR, file).replace(/\\/g, '/'), source, frontmatter: frontmatterOf(source) };
+		}),
+	);
+}
+
+function pageProblems(pages) {
 	const topicIds = new Set(TOPICS.map((topic) => topic.id));
 	const referenceIds = new Set(REFERENCES.map((reference) => reference.id));
 	const notationKeys = new Set(NOTATION.map((entry) => entry.key));
 	const problems = [];
-	for (const file of await mdxFiles(DOCS_DIR)) {
-		const name = relative(DOCS_DIR, file).replace(/\\/g, '/');
-		const source = (await readFile(file, 'utf8')).replace(/\r\n/g, '\n');
+	for (const { name, source } of pages) {
 		const { topic, frontmatterReferences, cited, symbols } = idsUsedIn(source);
 		if (topic && !topicIds.has(topic)) problems.push(`${name}: unknown topic "${topic}"`);
 		for (const id of [...frontmatterReferences, ...cited]) {
@@ -137,19 +151,57 @@ async function pageProblems() {
 	return problems;
 }
 
+/** A single-line frontmatter value, with surrounding quotes removed. */
+function frontmatterValue(frontmatter, field) {
+	const raw = frontmatter.match(new RegExp(`^${field}:[ \t]*(.+?)[ \t]*$`, 'm'))?.[1];
+	return raw?.replace(/^(["'])(.*)\1$/, '$2');
+}
+
+/**
+ * The SEO rules in docs/seo/README.md that a script can check: descriptions are 120-160 characters, and no two
+ * pages share a title, a description or a primary query. The ~60-character <title> limit is a guide, so it warns.
+ */
+function seoProblems(pages) {
+	const problems = [];
+	const warnings = [];
+	const seen = { title: new Map(), description: new Map(), primaryQuery: new Map() };
+	for (const { name, frontmatter } of pages) {
+		const values = Object.fromEntries(Object.keys(seen).map((field) => [field, frontmatterValue(frontmatter, field)]));
+		if (!values.description) problems.push(`${name}: needs a description`);
+		else if (values.description.length < DESCRIPTION_LENGTH.min || values.description.length > DESCRIPTION_LENGTH.max) {
+			problems.push(`${name}: description is ${values.description.length} characters; keep it ${DESCRIPTION_LENGTH.min}-${DESCRIPTION_LENGTH.max}`);
+		}
+		const fullTitle = `${values.title}${TITLE_SUFFIX}`;
+		if (values.title && fullTitle.length > MAX_FULL_TITLE_LENGTH) {
+			warnings.push(`${name}: "${fullTitle}" is ${fullTitle.length} characters; aim for ${MAX_FULL_TITLE_LENGTH} or fewer`);
+		}
+		for (const [field, owners] of Object.entries(seen)) {
+			const value = values[field]?.toLowerCase();
+			if (!value) continue;
+			if (owners.has(value)) problems.push(`${name}: same ${field} as ${owners.get(value)} ("${values[field]}")`);
+			else owners.set(value, name);
+		}
+	}
+	return { problems, warnings };
+}
+
 async function main() {
+	const pages = await readPages();
+	const seo = seoProblems(pages);
 	const problems = [
 		...topicProblems(),
 		...duplicateIds(NOTATION, 'key', 'notation.mjs'),
 		...referenceProblems(),
-		...(await pageProblems()),
+		...pageProblems(pages),
+		...seo.problems,
 	];
+	for (const warning of seo.warnings) console.warn(`  warning: ${warning}`);
 	if (problems.length > 0) {
 		console.error(`Content check failed with ${problems.length} problem(s):`);
 		for (const problem of problems) console.error(`  - ${problem}`);
 		process.exit(1);
 	}
-	console.log(`Content check passed: ${TOPICS.length} topics, ${NOTATION.length} symbols, ${REFERENCES.length} references.`);
+	console.log(`Content check passed: ${pages.length} pages, ${TOPICS.length} topics, ${NOTATION.length} symbols, ${REFERENCES.length} references.`);
 }
 
 main().catch((error) => {
