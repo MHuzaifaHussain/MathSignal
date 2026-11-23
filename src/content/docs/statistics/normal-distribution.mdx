@@ -1,6 +1,6 @@
 ---
 title: "Normal distribution"
-description: "Understanding the Gaussian distribution — the most important distribution in statistics and machine learning. Interactive visualization with intuition, math, and code."
+description: "Drag the mean and standard deviation of a bell curve, then see why the Gaussian shows up in weight initialisation, batch norm and diffusion models."
 sidebar:
   order: 1
 ---
@@ -16,12 +16,12 @@ import NextTopics from "../../../components/NextTopics.astro";
 import NormalDistribution from "../../../components/react/NormalDistribution.tsx";
 
 <ConceptHeader
-  oneLiner="A symmetric, bell-shaped probability distribution defined by its mean (μ) and standard deviation (σ), where ~68% of data falls within one σ of the mean."
+  oneLiner="The normal (Gaussian) distribution is a symmetric, bell-shaped distribution set by two numbers: its mean μ and its standard deviation σ."
   difficulty="beginner"
 />
 
 <WhyThisMatters>
-The normal distribution is the single most important distribution in machine learning. Neural network weights are initialized by sampling from Gaussian distributions (He, Xavier). Diffusion models like Stable Diffusion start from pure Gaussian noise and learn to reverse the process. Most classical statistical tests — t-tests, ANOVA, linear regression — assume normally distributed errors. And thanks to the Central Limit Theorem, averages of almost *any* random process converge to a normal distribution, which is why it shows up even when the underlying data isn't Gaussian.
+The normal distribution is the single most important distribution in machine learning. Neural network weights are initialized by sampling from Gaussian distributions (He, Xavier). Diffusion models like Stable Diffusion start from pure Gaussian noise and learn to reverse the process. Linear regression, t-tests and ANOVA assume normally distributed errors when they report exact p-values and intervals. And the central limit theorem says averages of many independent measurements with finite variance are approximately normal, which is why the bell appears even when the underlying data isn't.
 </WhyThisMatters>
 
 ## Interactive visualization
@@ -44,17 +44,19 @@ Two numbers define it completely. The **mean** (<Var name="mu" />) tells you whe
 
 This is worth memorizing. For any normal distribution:
 
-- **68%** of data falls within 1σ of the mean
-- **95%** of data falls within 2σ of the mean
-- **99.7%** of data falls within 3σ of the mean
+- about **68%** (68.27%) lies within 1σ of the mean
+- about **95%** (95.45%) lies within 2σ
+- about **99.7%** (99.73%) lies within 3σ
+
+The exact band that holds 95% is ±1.96σ.
 
 This is why "three sigma" is often treated as a practical boundary. If a data point is more than 3σ from the mean, it's either extremely rare or something interesting is happening.
 
 ### Why does it appear everywhere?
 
-The **Central Limit Theorem** (CLT) is the deep reason. It states that when you add up many independent random variables — regardless of their individual distributions — the sum converges to a normal distribution. Human height isn't determined by a single gene; it's the sum of many genetic and environmental factors. A measurement error isn't caused by one thing going wrong; it's the accumulation of many tiny imprecisions. The CLT is why the normal distribution emerges from complexity.
+The **central limit theorem** (CLT) is the reason. Add up $n$ independent, identically distributed variables with mean $\vmu$ and finite variance $\vsigma^2$: the standardised sum $(S_n - n\vmu)/(\vsigma\sqrt{n})$ approaches the standard normal distribution, so the average of $n$ draws is approximately normal with spread $\vsigma/\sqrt{n}$. The finite variance matters: averages of Cauchy draws never become normal. Human height isn't determined by a single gene; it's the sum of many genetic and environmental factors. A measurement error isn't caused by one thing going wrong; it's the accumulation of many tiny imprecisions. The CLT is why the normal distribution emerges from complexity.
 
-This doesn't mean all data is normally distributed. Income, city populations, earthquake magnitudes, and neural network activations (before normalization) are all decidedly non-Gaussian. The normal distribution dominates where **additive** effects are at play. When **multiplicative** effects dominate, you tend to see log-normal or power-law distributions instead.
+This doesn't mean all data is normally distributed. Income, city populations, earthquake magnitudes, and post-ReLU activations are all decidedly non-Gaussian. The normal distribution dominates where **additive** effects are at play. When **multiplicative** effects dominate, you tend to see log-normal or power-law distributions instead.
 
 <FormalDefinition>
 The **probability density function** (PDF) of the normal distribution is:
@@ -89,15 +91,15 @@ which can be used to derive all moments of the distribution. The $n$-th moment a
 
 ### Weight initialization
 
-Neural networks are sensitive to how weights are initialized. Both **He initialization** ($W \sim \mathcal{N}(0, \sqrt{2/n_{\text{in}}})$) and **Xavier/Glorot initialization** ($W \sim \mathcal{N}(0, \sqrt{2/(n_{\text{in}} + n_{\text{out}})})$) sample from normal distributions with carefully chosen variances to keep activations and gradients at reasonable scales during training.
+Neural networks are sensitive to how weights are initialized. **He initialization** draws weights from $\mathcal{N}(0,\, 2/n_{\text{in}})$, a standard deviation of $\sqrt{2/n_{\text{in}}}$, and was derived for ReLU layers. **Xavier/Glorot initialization** uses $\mathcal{N}(0,\, 2/(n_{\text{in}} + n_{\text{out}}))$ and was derived for tanh, sigmoid and linear layers; Glorot and Bengio used the uniform version $U(-a, a)$ with $a = \sqrt{6/(n_{\text{in}} + n_{\text{out}})}$, which has the same variance. In both, the second argument is the variance.
 
 ### Batch normalization
 
-Batch normalization explicitly forces each layer's activations to approximate a standard normal distribution (zero mean, unit variance) within each mini-batch. This stabilizes training, allows higher learning rates, and reduces sensitivity to initialization — all by leveraging the properties of the normal distribution.
+Batch normalization standardises each feature over a mini-batch, $\hat{x} = (x - \mu_B)/\sqrt{\sigma_B^2 + \epsilon}$, then rescales it with learned parameters, $y = \gamma\hat{x} + \beta$. That is a z-score: it fixes the mean and variance, not the shape, so activations are not made Gaussian. It still stabilises training and tolerates higher learning rates.
 
 ### Gaussian naive Bayes
 
-This classifier assumes each feature follows a normal distribution within each class. Despite the strong independence assumption, it works surprisingly well for text classification and spam filtering. The model stores just $\mu$ and $\sigma$ per feature per class — extremely lightweight.
+This classifier assumes each feature follows a normal distribution within each class. It stores one mean and one variance per feature per class, plus the class priors, and suits continuous features such as flower measurements or sensor readings. For word counts in text, multinomial or Bernoulli naive Bayes fit better.
 
 ### VAE latent spaces
 
@@ -105,7 +107,7 @@ Variational autoencoders impose a $\mathcal{N}(0, I)$ prior on the latent space.
 
 ### Gaussian processes
 
-A Gaussian process is a distribution over *functions*, where any finite subset of function values is jointly normally distributed. GPs provide not just predictions but calibrated uncertainty estimates, making them valuable for Bayesian optimization and active learning.
+A Gaussian process is a distribution over *functions*, where any finite subset of function values is jointly normally distributed. GPs give predictions with uncertainty attached, well calibrated when the kernel and noise model fit, making them valuable for Bayesian optimization and active learning.
 
 ## Code implementation
 
@@ -117,25 +119,30 @@ Check the 68-95-99.7 rule yourself. This runs in your browser:
 import numpy as np
 
 rng = np.random.default_rng(seed=0)
-mu, sigma = 70.0, 8.0
+mu, sigma = 0.0, 1.0
 samples = rng.normal(loc=mu, scale=sigma, size=100_000)
 
+expected = {1: 0.6827, 2: 0.9545, 3: 0.9973}
 for k in (1, 2, 3):
     inside = np.mean(np.abs(samples - mu) < k * sigma)
-    print(f"within {k} sigma of the mean: {inside:.1%}")
+    print(f"within {k} sigma of the mean: {inside:.2%} (exact {expected[k]:.2%})")
+    assert abs(inside - expected[k]) < 0.005
 
-print(f"sample mean {samples.mean():.2f}, sample std {samples.std():.2f}")
+print(f"sample mean {samples.mean():.3f}, sample std {samples.std():.3f}")
+assert abs(samples.mean() - mu) < 0.01 * sigma
+assert abs(samples.std() - sigma) < 0.01 * sigma
 `}
 />
 
 The same distribution with plotting, and in PyTorch (these two run on your own machine):
 
-```python title="normal_distribution_numpy.py" {4-5,8-9}
+```python title="normal_distribution_numpy.py" {4-6,9-10}
 import numpy as np
 import matplotlib.pyplot as plt
 
-mu, sigma = 0, 1
-samples = np.random.normal(mu, sigma, size=10_000)
+rng = np.random.default_rng(seed=0)
+mu, sigma = 0.0, 1.0
+samples = rng.normal(loc=mu, scale=sigma, size=10_000)
 
 x = np.linspace(-4, 4, 200)
 pdf = (1 / (sigma * np.sqrt(2 * np.pi))) * np.exp(
@@ -152,10 +159,11 @@ plt.legend()
 plt.show()
 ```
 
-```python title="normal_distribution_pytorch.py" {4-5,8-9}
+```python title="normal_distribution_pytorch.py" {4-6}
 import torch
 from torch.distributions import Normal
 
+torch.manual_seed(0)
 mu, sigma = torch.tensor(0.0), torch.tensor(1.0)
 dist = Normal(mu, sigma)
 
@@ -184,6 +192,9 @@ print(f"NLL at x=1.5: {nll:.4f}")
   </Mistake>
   <Mistake wrong="The curve touches zero at ±3σ.">
     It doesn't. The normal distribution extends from $-\infty$ to $+\infty$; the density at $\pm 3\vsigma$ is small but not zero. This matters for tail risk and anomaly detection.
+  </Mistake>
+  <Mistake wrong="Batch normalisation makes activations normally distributed.">
+    It standardises their mean and variance over each batch, which is a z-score, not a change of shape.
   </Mistake>
 </CommonMistakes>
 
