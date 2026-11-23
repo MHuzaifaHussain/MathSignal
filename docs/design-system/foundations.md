@@ -86,3 +86,5 @@ A two-tone focus ring works on every surface: a 2px ink outline plus a 3px yello
 
 - Corner radius 4px for boards, code blocks and controls. No pills.
 - No drop shadows and no gradients.
+- No full-height vertical dividers between columns, and no coloured or hairline bars on the left of content blocks. Use whitespace, a label or the sunk surface instead (decision 0006).
+- Horizontal rules only between list items and under the header ledge.

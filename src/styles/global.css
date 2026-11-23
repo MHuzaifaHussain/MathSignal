@@ -39,6 +39,14 @@
 	--sl-color-hairline: var(--ms-rule);
 	--sl-color-hairline-light: var(--ms-rule);
 	--sl-color-hairline-shade: var(--ms-rule);
+
+	/* No drop shadows anywhere (design-system rule 5) */
+	--sl-shadow-sm: none;
+	--sl-shadow-md: none;
+	--sl-shadow-lg: none;
+
+	/* 44px tap targets (accessibility.md) */
+	--sl-menu-button-size: 2.75rem;
 }
 
 /* ── Header ledge ── */
@@ -48,19 +56,98 @@ header.header {
 	border-bottom: 1px solid var(--ms-ledge-rule);
 }
 
-/* ── Sidebar: solid current item, no gradient or shadow ── */
+/* ── Columns are separated by whitespace, never by full-height vertical rules (decision 0006) ── */
+@media (min-width: 50rem) {
+	.sidebar-pane {
+		border-inline-end: 0;
+	}
+
+	.right-sidebar {
+		border-inline-start: 0;
+	}
+}
+
+/* Nested sidebar items: the indent shows the hierarchy, so no guide line */
+#starlight__sidebar ul ul li {
+	border-inline-start: 0;
+}
+
+/* ── Sidebar: the current page has a solid fill and heavier weight, no accent bar ── */
 #starlight__sidebar a[aria-current='page'],
-#starlight__sidebar a[aria-current='page']:hover,
-#starlight__sidebar a[aria-current='page']:focus {
+#starlight__sidebar a[aria-current='page']:hover {
 	background-color: var(--ms-accent-low);
 	color: var(--ms-ink);
 	font-weight: 600;
-	box-shadow: inset 3px 0 0 var(--ms-accent);
 }
 
-/* ── Buttons: 4px corners like every other control (no pills) ── */
+/* ── Disclosure blocks (<details>): no left bar; the triangle and the label carry the meaning ── */
+.sl-markdown-content details:not(:where(.not-content *)) {
+	border-inline-start: 0;
+	padding-inline-start: 0;
+	margin-block: 0.75rem;
+}
+
+.sl-markdown-content details:not(:where(.not-content *)) > :not(summary) {
+	padding-inline-start: 1.5rem;
+}
+
+.sl-markdown-content summary:not(:where(.not-content *)) {
+	font-family: var(--ms-font-ui);
+	font-size: 1rem;
+	min-block-size: 44px;
+	display: flex;
+	align-items: center;
+}
+
+/* ── Buttons: 4px corners like every other control (no pills), 44px tall ── */
 .sl-link-button {
 	border-radius: 4px;
+	min-block-size: 44px;
+	align-items: center;
+}
+
+/* ── Previous/next: a quiet running footer instead of shadowed cards ── */
+.pagination-links {
+	display: flex;
+	justify-content: space-between;
+	gap: 2rem;
+	border-top: 1px solid var(--ms-rule);
+	padding-top: 1.25rem;
+}
+
+.pagination-links a {
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+	padding: 0;
+	color: var(--ms-ink-muted);
+	text-decoration: none;
+}
+
+.pagination-links a svg {
+	display: none;
+}
+
+.pagination-links .link-title {
+	font-family: var(--ms-font-serif);
+	font-size: var(--sl-text-lg);
+	color: var(--ms-ink);
+	text-decoration: underline;
+	text-decoration-color: var(--ms-ink-muted);
+	text-underline-offset: 0.18em;
+}
+
+.pagination-links [rel='next'] {
+	margin-inline-start: auto;
+	text-align: end;
+}
+
+@media (max-width: 49.99rem) {
+	site-search button[data-open-modal] {
+		min-block-size: 44px;
+		min-inline-size: 44px;
+		justify-content: center;
+	}
 }
 
 /* ── Reading: serif on paper ── */

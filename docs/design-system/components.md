@@ -16,10 +16,10 @@ Opens every concept page, under the title Starlight renders.
 | `prerequisites` | `{ label, href }[]` | Optional. Rendered as a sentence of links |
 
 ### `WhyThisMatters` (Astro)
-The ML relevance of the concept, straight after the header. Paper surface with a rule on the left; label "Why this matters in ML". Slot: one or two short paragraphs.
+The ML relevance of the concept, after the everyday section. Paper surface set apart by its label "Why this matters in ML" and extra spacing, with no bar. Slot: one short paragraph.
 
 ### `FormalDefinition` (Astro)
-A `<details>` panel on the sunk surface holding the formal maths. Closed by default. Slot: KaTeX and prose.
+A `<details>` panel on the sunk surface holding derivations, proof sketches and the properties table. A plain sunk band: no outline, no rounded corners, no inner rule. Closed by default; the precise statement stays outside it, always visible. Slot: KaTeX and prose.
 
 ### `CommonMistakes` (Astro) and `Mistake` (Astro)
 A list of misconceptions, each as a "Not quite" / "Instead" pair. The page puts a `## Common mistakes` heading above it, so it appears in the table of contents. The misconception is the `wrong` prop; the correction is the slot, so it can hold formulas and links.
@@ -45,7 +45,7 @@ A plain list of links at the end of a page, under a `## Where to go next` headin
 A variable symbol in its meaning colour, for prose. `name`: `'mu' | 'sigma'`. Renders an italic serif symbol with the matching class, so it matches the KaTeX macros.
 
 ### `SideNote` (Astro)
-A short aside: a clarification, a historical note, a "you may have seen this written as". Smaller serif in muted ink with a hairline on the left, inline in the reading column. (It does not float into the page margin: Starlight's "On this page" column occupies that space.) Keep it under about 60 words.
+A short aside: a clarification, a historical note, a "you may have seen this written as". Smaller serif in muted ink, indented, with no bar, inline in the reading column. (It does not float into the page margin: Starlight's "On this page" column occupies that space.) Keep it under about 60 words.
 
 ## Boards (React)
 

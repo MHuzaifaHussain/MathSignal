@@ -10,10 +10,10 @@
 </details>
 
 <style>
+	/* A sunk band: no outline, no rounded corners, no inner rule (decision 0006) */
 	.formal-definition {
 		margin-block: 2rem;
-		border: 1px solid var(--ms-rule);
-		border-radius: 4px;
+		padding: 0.25rem 1rem 0.25rem;
 		background-color: var(--ms-surface-sunk);
 	}
 
@@ -22,7 +22,6 @@
 		align-items: center;
 		gap: 0.5rem;
 		min-height: 44px;
-		padding-inline: 1rem;
 		font-family: var(--ms-font-ui);
 		font-size: 0.9375rem;
 		font-weight: 600;
@@ -31,7 +30,6 @@
 	}
 
 	.content {
-		padding: 0.25rem 1.25rem 1.25rem;
-		border-top: 1px solid var(--ms-rule);
+		padding-block: 0.25rem 1rem;
 	}
 </style>

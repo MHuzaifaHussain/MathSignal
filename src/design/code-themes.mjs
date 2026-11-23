@@ -63,7 +63,7 @@ function buildTheme(name, type, colours) {
 			'editorGroupHeader.tabsBorder': colours.codeBorder,
 			'tab.activeBackground': colours.codeBg,
 			'tab.activeForeground': colours.ink,
-			'tab.activeBorderTop': colours.boardEdge,
+			'tab.activeBorderTop': colours.codeBorder,
 			'tab.border': colours.codeBorder,
 			'editorGroup.border': colours.codeBorder,
 			'titleBar.activeBackground': colours.surfaceSunk,

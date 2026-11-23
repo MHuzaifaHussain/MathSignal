@@ -245,12 +245,25 @@
 	color: var(--ms-ink);
 }
 
-/* Errors and stderr keep ink colour (red is not a meaning colour) and carry an attention edge instead */
+/* Errors and stderr keep ink colour (red is not a meaning colour) and say what they are in words */
 .ms-runner-stderr,
 .ms-runner-error {
 	display: block;
-	padding-inline-start: 0.75rem;
-	border-inline-start: 3px solid var(--ms-attention);
+}
+
+.ms-runner-stderr::before,
+.ms-runner-error::before {
+	font-family: var(--ms-font-ui);
+	font-weight: 600;
+	color: var(--ms-ink);
+}
+
+.ms-runner-stderr::before {
+	content: 'Warning output: ';
+}
+
+.ms-runner-error::before {
+	content: 'Error: ';
 }
 
 /* ── Marimo notebook embed (src/components/react/MarimoEmbed.tsx) ── */

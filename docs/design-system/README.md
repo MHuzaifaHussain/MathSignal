@@ -21,7 +21,7 @@ A lecture hall: you **read on paper**, the teacher **draws on the board**, and y
 2. **One job per surface.** Prose on paper, interaction on boards, asides in the margin. Never put long prose on a board or a plot on paper.
 3. **Two complete themes.** Light mode is fully light (pale board, light header). Dark mode is fully dark (slate board). Components never hard-code colours; they read `--ms-*` tokens, which switch with the theme.
 4. **Handwriting is a garnish.** Kalam appears only on boards, at 20px or larger, for short qualitative notes. Never for numbers, labels or anything a reader must parse precisely.
-5. **No decoration without information.** No cards, pills, drop shadows or gradients. Borders, numbering and labels exist only when they encode structure.
+5. **No decoration without information.** No cards, pills, drop shadows, gradients or decorative vertical bars. Columns are separated by whitespace; blocks are set apart by a label, spacing or the sunk surface. Borders, numbering and labels exist only when they encode structure ([decision 0006](../decisions/0006-no-decorative-rules-or-shadows.md)).
 
 ## Where things live
 

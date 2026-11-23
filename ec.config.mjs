@@ -23,14 +23,19 @@ export default defineEcConfig({
 		codeFontSize: '0.9375rem',
 		codeLineHeight: '1.6',
 		uiFontFamily: 'var(--ms-font-ui)',
+		// No vertical rule between line numbers and code (decision 0006)
+		gutterBorderWidth: '0px',
 		frames: {
 			shadowColor: 'transparent',
 			frameBoxShadowCssValue: 'none',
+			terminalTitlebarDotsOpacity: '0',
 		},
-		// Highlighted lines use "look here", never the default blue (blue belongs to sigma)
+		// Highlighted lines use "look here", never the default blue (blue belongs to sigma).
+		// Light mode marks them with a band only. Dark mode keeps a yellow edge because any
+		// visible band pushes dark token colours under 5.5:1: the one functional vertical mark (decision 0006).
 		textMarkers: {
 			markBackground: ({ theme }) => palette[theme.type].codeMarkBg,
-			markBorderColor: ({ theme }) => palette[theme.type].codeMarkEdge,
+			markBorderColor: ({ theme }) => (theme.type === 'light' ? 'transparent' : palette.dark.codeMarkEdge),
 		},
 	},
 });
