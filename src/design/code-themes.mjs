@@ -20,7 +20,7 @@ const SCOPES = {
 		'entity.other.inherited-class',
 		'support.variable',
 		'meta.attribute',
-		// JSON keys would otherwise take the string colour and turn whole blocks green
+		// JSON keys would otherwise take the string color and turn whole blocks green
 		'support.type.property-name.json',
 	],
 	keyword: [
@@ -47,39 +47,39 @@ const SCOPES = {
 /**
  * @param {string} name
  * @param {'light' | 'dark'} type
- * @param {typeof palette.light} colours
+ * @param {typeof palette.light} colors
  */
-function buildTheme(name, type, colours) {
+function buildTheme(name, type, colors) {
 	return new ExpressiveCodeTheme({
 		name,
 		type,
 		colors: {
-			'editor.background': colours.codeBg,
-			'editor.foreground': colours.codeInk,
-			'editorLineNumber.foreground': colours.codeLineNumber,
-			'editorLineNumber.activeForeground': colours.codeInk,
-			'editor.selectionBackground': colours.highlight,
-			'editorGroupHeader.tabsBackground': colours.surfaceSunk,
-			'editorGroupHeader.tabsBorder': colours.codeBorder,
-			'tab.activeBackground': colours.codeBg,
-			'tab.activeForeground': colours.ink,
-			'tab.activeBorderTop': colours.codeBorder,
-			'tab.border': colours.codeBorder,
-			'editorGroup.border': colours.codeBorder,
-			'titleBar.activeBackground': colours.surfaceSunk,
-			'titleBar.activeForeground': colours.inkMuted,
-			'titleBar.border': colours.codeBorder,
-			'terminal.background': colours.codeBg,
-			'terminal.foreground': colours.codeInk,
-			focusBorder: colours.ink,
+			'editor.background': colors.codeBg,
+			'editor.foreground': colors.codeInk,
+			'editorLineNumber.foreground': colors.codeLineNumber,
+			'editorLineNumber.activeForeground': colors.codeInk,
+			'editor.selectionBackground': colors.highlight,
+			'editorGroupHeader.tabsBackground': colors.surfaceSunk,
+			'editorGroupHeader.tabsBorder': colors.codeBorder,
+			'tab.activeBackground': colors.codeBg,
+			'tab.activeForeground': colors.ink,
+			'tab.activeBorderTop': colors.codeBorder,
+			'tab.border': colors.codeBorder,
+			'editorGroup.border': colors.codeBorder,
+			'titleBar.activeBackground': colors.surfaceSunk,
+			'titleBar.activeForeground': colors.inkMuted,
+			'titleBar.border': colors.codeBorder,
+			'terminal.background': colors.codeBg,
+			'terminal.foreground': colors.codeInk,
+			focusBorder: colors.ink,
 		},
 		tokenColors: [
-			{ scope: SCOPES.ink, settings: { foreground: colours.codeInk } },
-			{ scope: SCOPES.keyword, settings: { foreground: colours.codeKeyword } },
-			{ scope: SCOPES.decorator, settings: { foreground: colours.codeKeyword, fontStyle: 'italic' } },
-			{ scope: SCOPES.string, settings: { foreground: colours.codeString } },
-			{ scope: SCOPES.number, settings: { foreground: colours.codeNumber } },
-			{ scope: SCOPES.comment, settings: { foreground: colours.codeComment, fontStyle: 'italic' } },
+			{ scope: SCOPES.ink, settings: { foreground: colors.codeInk } },
+			{ scope: SCOPES.keyword, settings: { foreground: colors.codeKeyword } },
+			{ scope: SCOPES.decorator, settings: { foreground: colors.codeKeyword, fontStyle: 'italic' } },
+			{ scope: SCOPES.string, settings: { foreground: colors.codeString } },
+			{ scope: SCOPES.number, settings: { foreground: colors.codeNumber } },
+			{ scope: SCOPES.comment, settings: { foreground: colors.codeComment, fontStyle: 'italic' } },
 		],
 	});
 }
@@ -89,7 +89,7 @@ export const codeThemes = {
 	light: buildTheme('mathsignal-light', 'light', palette.light),
 };
 
-/** Token colours the meaning markers must not apply inside (strings and comments, both themes). */
-export const nonCodeTokenColours = new Set(
-	[palette.light, palette.dark].flatMap((colours) => [colours.codeString, colours.codeComment]).map((hex) => hex.toLowerCase()),
+/** Token colors the meaning markers must not apply inside (strings and comments, both themes). */
+export const nonCodeTokenColors = new Set(
+	[palette.light, palette.dark].flatMap((colors) => [colors.codeString, colors.codeComment]).map((hex) => hex.toLowerCase()),
 );

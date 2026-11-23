@@ -72,7 +72,7 @@ export function conceptPageGraph({ title, description, path, subjectLabel, autho
 	};
 }
 
-/** Serialise for a <script type="application/ld+json">, escaping "<" so content can't close the tag. */
-export function serialiseJsonLd(data: JsonLd): string {
+/** Serialize for a <script type="application/ld+json">, escaping "<" so content can't close the tag. */
+export function serializeJsonLd(data: JsonLd): string {
 	return JSON.stringify(data).replace(/</g, '\\u003c');
 }

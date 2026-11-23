@@ -39,12 +39,12 @@ function socialCardSvg() {
 	<circle cx="16" cy="24" r="0.9" fill="${mu}"/>
 </g>
 <text x="80" y="270" font-family="${SERIF}" font-size="84" font-weight="600" fill="${ink}">MathSignal</text>
-<text x="80" y="345" font-family="${SERIF}" font-size="36" fill="${inkMuted}">The maths behind machine learning,</text>
+<text x="80" y="345" font-family="${SERIF}" font-size="36" fill="${inkMuted}">The math behind machine learning,</text>
 <text x="80" y="395" font-family="${SERIF}" font-size="36" fill="${inkMuted}">from intuition to research.</text>
 </svg>`;
 }
 
-/** The bell mark on a solid page-coloured square. `padding` is a fraction of the size on each side. */
+/** The bell mark on a solid page-colored square. `padding` is a fraction of the size on each side. */
 function squareMarkSvg(size, padding = 0) {
 	const { page, ink, mu } = palette.light;
 	const inner = 32 / (1 - 2 * padding);

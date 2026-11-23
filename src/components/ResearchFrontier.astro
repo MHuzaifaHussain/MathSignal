@@ -8,7 +8,7 @@ interface Props {
 const { reviewed } = Astro.props;
 const reviewedDate = new Date(reviewed);
 if (Number.isNaN(reviewedDate.getTime())) throw new Error(`<ResearchFrontier>: "${reviewed}" is not a valid date.`);
-const reviewedLabel = reviewedDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+const reviewedLabel = reviewedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 ---
 
 <div class="research-frontier">

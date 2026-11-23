@@ -25,7 +25,7 @@ export default defineConfig({
 	// One canonical form for every URL; content links already end in a slash.
 	trailingSlash: 'always',
 	markdown: {
-		// Astro 7 defaults to the Sätteri processor, which renders $$ display maths as a code block.
+		// Astro 7 defaults to the Sätteri processor, which renders $$ display math as a code block.
 		// The unified pipeline keeps remark-math + rehype-katex working.
 		processor: unified({
 			remarkPlugins: [remarkMath],
@@ -43,7 +43,7 @@ export default defineConfig({
 				{ tag: 'meta', attrs: { property: 'og:image:alt', content: SOCIAL_CARD.alt } },
 				{ tag: 'meta', attrs: { name: 'twitter:image', content: SOCIAL_CARD.url } },
 				{ tag: 'meta', attrs: { name: 'twitter:image:alt', content: SOCIAL_CARD.alt } },
-				// App icons and browser UI colour, generated from the palette (scripts/build-brand-images.mjs, build-tokens.mjs)
+				// App icons and browser UI color, generated from the palette (scripts/build-brand-images.mjs, build-tokens.mjs)
 				{ tag: 'link', attrs: { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' } },
 				{ tag: 'link', attrs: { rel: 'manifest', href: '/site.webmanifest' } },
 				{ tag: 'meta', attrs: { name: 'theme-color', content: palette.light.ledge, media: '(prefers-color-scheme: light)' } },

@@ -1,12 +1,12 @@
 // Every symbol MathSignal uses, with one meaning and one convention each (decision 0009).
 // <NotationKey symbols={['mu', 'sigma']} /> renders rows from here; an unknown key fails the build.
-// `tex` may use the page macros (\vmu, \vsigma) so meaning colours match the formulas.
+// `tex` may use the page macros (\vmu, \vsigma) so meaning colors match the formulas.
 
 /** @typedef {{ key: string, tex: string, say: string, meaning: string, note?: string }} NotationEntry */
 
 /** @type {NotationEntry[]} */
 export const NOTATION = [
-	{ key: 'mu', tex: '\\vmu', say: '"mu"', meaning: 'Mean: the centre of a distribution' },
+	{ key: 'mu', tex: '\\vmu', say: '"mu"', meaning: 'Mean: the center of a distribution' },
 	{ key: 'sigma', tex: '\\vsigma', say: '"sigma"', meaning: 'Standard deviation: the spread, in the data\'s own units' },
 	{ key: 'sigma2', tex: '\\vsigma^2', say: '"sigma squared"', meaning: 'Variance: the spread in squared units' },
 	{

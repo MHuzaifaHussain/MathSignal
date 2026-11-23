@@ -6,6 +6,7 @@
 //   - pages: every topic, reference, <Cite id> and <NotationKey symbols> id they use exists
 //   - SEO: descriptions 120-160 characters; titles, descriptions and primary queries unique (docs/seo/README.md);
 //     searchIntent matches the page type
+//   - spelling: page prose uses American English (decision 0010)
 // Frontmatter is parsed the way Astro parses it (the `yaml` package, core schema), so `draft: True`, comments,
 // quoting and multi-line values mean the same here as in the build.
 // Required frontmatter on concept pages is enforced during the build by src/routeData.ts.
@@ -29,6 +30,10 @@ const MAX_FULL_TITLE_LENGTH = 60;
 const TITLE_SUFFIX = ` | ${SITE_NAME}`;
 // Each page type owns one kind of search intent (docs/design-system/writing-a-concept-page.md).
 const INTENT_FOR_TYPE = { A: 'learn', B: 'learn', C: 'solve', D: 'compare', E: 'apply', F: 'reference' };
+// The site is written in American English (decision 0010). British forms that slip in most often; -ise verbs are
+// listed by stem because many correct words end in -ise (promise, noise, precise, exercise).
+const BRITISH_SPELLING =
+	/\b(maths|colour\w*|centre[sd]?|behaviour\w*|favour\w*|rigour|grey|licence[sd]?|towards|afterwards|whilst|amongst|learnt|spelt|programme[sd]?|catalogue[sd]?|judgement[sd]?|modelling|modelled|labelled|labelling|travelled|cancelled|analys(?:e|ed|ing)|\w+isations?|(?:initial|normal|standard|optim|recogn|summar|organ|visual|real|minim|maxim|emphas|special|general|categor|util|parameter|regular|serial|character|vector|token|random|penal|stabil)is(?:e|ed|es|ing))\b/gi;
 
 /** @param {{ id?: string, key?: string }[]} items @param {'id' | 'key'} field @param {string} name */
 function duplicateIds(items, field, name) {
@@ -202,6 +207,23 @@ function seoProblems(pages) {
 	return { problems, warnings };
 }
 
+/** Page prose without code, URLs and imports, where spelling rules don't apply. */
+function proseOf(source) {
+	return source
+		.replace(/```[\s\S]*?```/g, '')
+		.replace(/code=\{`[\s\S]*?`\}/g, '')
+		.replace(/`[^`\n]*`/g, '')
+		.replace(/https?:\/\/\S+/g, '')
+		.replace(/^import .*$/gm, '');
+}
+
+function spellingProblems(pages) {
+	return pages.flatMap(({ name, source }) => {
+		const found = [...new Set([...proseOf(source).matchAll(BRITISH_SPELLING)].map((match) => match[0]))];
+		return found.length > 0 ? [`${name}: British spelling ${found.map((word) => `"${word}"`).join(', ')}; the site uses American English (decision 0010)`] : [];
+	});
+}
+
 function intentProblems(pages) {
 	return pages.flatMap(({ name, data, error }) => {
 		const type = text(data.type);
@@ -223,6 +245,7 @@ async function main() {
 		...pageProblems(pages),
 		...seo.problems,
 		...intentProblems(pages),
+		...spellingProblems(pages),
 	];
 	for (const warning of seo.warnings) console.warn(`  warning: ${warning}`);
 	if (problems.length > 0) {

@@ -1,5 +1,5 @@
-// Colours for Mafs plots, as CSS variables so they follow the theme.
-// Meaning colours (mu, sigma, attention) are reserved: docs/design-system/math-plots-code.md
+// Colors for Mafs plots, as CSS variables so they follow the theme.
+// Meaning colors (mu, sigma, attention) are reserved: docs/design-system/math-plots-code.md
 export const plotColors = {
 	/** Anything that is the mean: the curve driven by it, its handle, its guide line. */
 	mu: 'var(--ms-mu)',

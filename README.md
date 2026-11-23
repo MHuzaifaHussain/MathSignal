@@ -1,8 +1,8 @@
 # MathSignal
 
-[MathSignal](https://mathsignal.dev/) teaches the maths behind machine learning through interactive pages. Each concept starts with an everyday picture, lets you drag the maths on a plot, then works up to the formal definition, its uses in ML, runnable code and current research.
+[MathSignal](https://mathsignal.dev/) teaches the math behind machine learning through interactive pages. Each concept starts with an everyday picture, lets you drag the math on a plot, then works up to the formal definition, its uses in ML, runnable code and current research.
 
-Pages are written for a complete beginner and a researcher at the same time. The main text reads on its own; "Simpler" and "Go deeper" folds add a gentler route or the full rigour.
+Pages are written for a complete beginner and a researcher at the same time. The main text reads on its own; "Simpler" and "Go deeper" folds add a gentler route or the full rigor.
 
 ## Subjects
 
@@ -36,7 +36,7 @@ npm run preview   # serve the build locally
 | Command | What it does |
 |---|---|
 | `npm run check` | Type-checks `.astro`, `.ts` and `.tsx` files |
-| `npm run check:design` | Contrast and colour-blindness rules; generated tokens, favicon and logos up to date |
+| `npm run check:design` | Contrast and color-blindness rules; generated tokens, favicon and logos up to date |
 | `npm run check:content` | Topic, notation and reference registries, and the ids each page uses |
 | `npm run check:code` | Runs every runnable Python example under Pyodide and checks its assertions |
 | `npm run check:links` | Checks every internal link and anchor in the built site |
@@ -47,7 +47,7 @@ npm run preview   # serve the build locally
 
 Start with [AGENTS.md](AGENTS.md). It links to everything else:
 
-- [Design system](docs/design-system/README.md): colours, type, components, maths, plots and code
+- [Design system](docs/design-system/README.md): colors, type, components, math, plots and code
 - [Writing a concept page](docs/design-system/writing-a-concept-page.md): the page template, frontmatter and checklist
 - [Decision records](docs/decisions/README.md): why the big choices were made
 - [SEO guide](docs/seo/README.md): write for the learner first
@@ -58,6 +58,6 @@ GitHub Actions runs the type-check, the full build with its checks, and the Pyth
 
 Found a mistake on a page? Use the "Report an error on this page" link at the bottom of it, or [open an issue](https://github.com/MHuzaifaHussain/MathSignal/issues).
 
-## Licence
+## License
 
 Written by Muhammad Huzaifa Hussain. The text and documentation are licensed under [CC BY 4.0](LICENSE-CONTENT.md); the code is licensed under [MIT](LICENSE).

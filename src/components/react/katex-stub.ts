@@ -1,5 +1,5 @@
 // Stand-in for KaTeX inside React islands (decision 0007). Mafs imports KaTeX at module level for its
-// <LaTeX> component, which no board uses; replacing it here keeps about 66 KB (gzip) of maths
+// <LaTeX> component, which no board uses; replacing it here keeps about 66 KB (gzip) of math
 // typesetting out of every board's JavaScript. Formulas on the page are still rendered at build time.
 // If a board ever needs <LaTeX>, this throws loudly instead of rendering nothing.
 const DISABLED_MESSAGE =

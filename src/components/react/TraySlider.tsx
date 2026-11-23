@@ -22,14 +22,14 @@ interface TraySliderProps {
   format: (value: number) => string;
   /** Spoken value, e.g. "mean 1.50". */
   describe?: (value: number) => string;
-  /** Colours the label and thumb with a meaning colour. */
+  /** Colors the label and thumb with a meaning color. */
   meaning?: "mu" | "sigma";
 }
 
 const defaultLargeStep = (min: number, max: number, step: number) =>
   step * Math.max(1, Math.round((max - min) / step / LARGE_STEP_FRACTION));
 
-/** A labelled slider for a board's tray: the keyboard and screen-reader alternative to dragging. */
+/** A labeled slider for a board's tray: the keyboard and screen-reader alternative to dragging. */
 export default function TraySlider({
   label,
   value,

@@ -1,6 +1,6 @@
 # Writing a concept page
 
-Every concept page follows the same order, so readers always know where to look. Each page has to work for a curious beginner and for a researcher at once ([decision 0008](../decisions/0008-spine-and-folds-article-template.md)): the **spine** reads completely on its own, `Simpler` folds add a gentler route, and `GoDeeper` folds add rigour. [`src/content/docs/statistics/normal-distribution.mdx`](../../src/content/docs/statistics/normal-distribution.mdx) is the reference page; copy its structure.
+Every concept page follows the same order, so readers always know where to look. Each page has to work for a curious beginner and for a researcher at once ([decision 0008](../decisions/0008-spine-and-folds-article-template.md)): the **spine** reads completely on its own, `Simpler` folds add a gentler route, and `GoDeeper` folds add rigor. [`src/content/docs/statistics/normal-distribution.mdx`](../../src/content/docs/statistics/normal-distribution.mdx) is the reference page; copy its structure.
 
 Headings are **topic-specific** ("Move the bell yourself", "Where the normal distribution shows up in ML"), not generic labels, so the outline tells the reader what they will learn. The order is fixed; the wording is yours. Only "Notation", "Worked examples", "Research frontier", "Check yourself", "Common mistakes", "Key takeaways", "How this connects" and "References" stay as they are, so returning readers can find them.
 
@@ -116,7 +116,7 @@ The peak halves, because …
 
 ## Writing style
 
-- British spelling, sentence case, plain words. No hype ("the single most important", "surprisingly", "extremely").
+- American spelling ([decision 0010](../decisions/0010-american-english.md)): math, initialization, color, center, toward. Sentence case, plain words. No hype ("the single most important", "surprisingly", "extremely").
 - At most one em dash per page.
 - Every claim that could be wrong is checked: run the code, recompute the numbers, open the paper.
 - SEO follows [docs/seo/README.md](../seo/README.md): write for the reader first; the concept's name appears naturally in the title, description, first sentence and at most one heading.
@@ -128,7 +128,7 @@ The peak halves, because …
 - [ ] `sidebar.order` puts the page after its prerequisites in its subject (otherwise Starlight sorts alphabetically).
 - [ ] Every fold adds something the spine doesn't say; the page reads fully with every fold closed.
 - [ ] The board is introduced by a prediction question and followed by the answer.
-- [ ] μ and σ use `\vmu` / `\vsigma` in formulas and `<Var>` in prose; nothing else is coloured.
+- [ ] μ and σ use `\vmu` / `\vsigma` in formulas and `<Var>` in prose; nothing else is colored.
 - [ ] At most two boards; each has a tray alternative for every handle.
 - [ ] Handwritten notes are qualitative, short and don't give away the prediction.
 - [ ] Teaching code names its variables `mu` and `sigma`, sets a seed, and asserts its results.

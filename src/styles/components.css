@@ -82,7 +82,7 @@
 
 /* ── Tray slider ── */
 .ms-slider {
-	--ms-slider-colour: var(--ms-board-ink);
+	--ms-slider-color: var(--ms-board-ink);
 	display: grid;
 	grid-template-columns: minmax(5.5rem, auto) minmax(8rem, 1fr) auto;
 	align-items: center;
@@ -93,15 +93,15 @@
 }
 
 .ms-slider.ms-mu {
-	--ms-slider-colour: var(--ms-mu);
+	--ms-slider-color: var(--ms-mu);
 }
 
 .ms-slider.ms-sigma {
-	--ms-slider-colour: var(--ms-sigma);
+	--ms-slider-color: var(--ms-sigma);
 }
 
 .ms-slider-label {
-	color: var(--ms-slider-colour);
+	color: var(--ms-slider-color);
 	font-weight: 600;
 }
 
@@ -123,16 +123,16 @@
 .ms-slider-indicator {
 	height: 100%;
 	border-radius: 2px;
-	background-color: var(--ms-slider-colour);
+	background-color: var(--ms-slider-color);
 }
 
 .ms-slider-thumb {
 	width: 20px;
 	height: 20px;
 	border-radius: 50%;
-	background-color: var(--ms-slider-colour);
+	background-color: var(--ms-slider-color);
 	border: 2px solid var(--ms-board);
-	box-shadow: 0 0 0 1px var(--ms-slider-colour);
+	box-shadow: 0 0 0 1px var(--ms-slider-color);
 }
 
 /* Base UI focuses a hidden input inside the thumb */
@@ -156,7 +156,7 @@
 	touch-action: pan-y;
 }
 
-/* ── Mafs handles: Mafs draws its own focus ring in the handle's colour; make it the attention colour ── */
+/* ── Mafs handles: Mafs draws its own focus ring in the handle's color; make it the attention color ── */
 .ms-board .MafsView .mafs-movable-point-focus {
 	stroke: var(--ms-attention);
 }
@@ -245,7 +245,7 @@
 	color: var(--ms-ink);
 }
 
-/* Errors and stderr keep ink colour (red is not a meaning colour) and say what they are in words */
+/* Errors and stderr keep ink color (red is not a meaning color) and say what they are in words */
 .ms-runner-stderr,
 .ms-runner-error {
 	display: block;

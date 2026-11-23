@@ -1,10 +1,10 @@
 // Expressive Code plugin: wraps identifiers named mu / sigma (and variants such as mu_hat,
-// sigma_hat, TRUE_MU) in .ms-mu / .ms-sigma spans, so code shares the meaning colours used in
+// sigma_hat, TRUE_MU) in .ms-mu / .ms-sigma spans, so code shares the meaning colors used in
 // prose, formulas and plots. Matches inside strings and comments are left alone.
 // Styles: src/styles/components.css (.ms-code-marker). Rules: docs/design-system/math-plots-code.md
 import { ExpressiveCodeAnnotation, InlineStyleAnnotation } from '@astrojs/starlight/expressive-code';
 import { h } from '@astrojs/starlight/expressive-code/hast';
-import { nonCodeTokenColours } from './code-themes.mjs';
+import { nonCodeTokenColors } from './code-themes.mjs';
 
 /**
  * Whole identifiers such as mu, sigma, mu_hat, sigma2, TRUE_MU, log_sigma, sigma_sq.
@@ -29,13 +29,13 @@ class MeaningMarkerAnnotation extends ExpressiveCodeAnnotation {
 	}
 }
 
-/** True if a syntax-highlighting annotation colours this range as a string or comment. */
+/** True if a syntax-highlighting annotation colors this range as a string or comment. */
 function isInsideStringOrComment(line, columnStart, columnEnd) {
 	return line.getAnnotations().some((annotation) => {
 		if (!(annotation instanceof InlineStyleAnnotation) || !annotation.color || !annotation.inlineRange) return false;
 		const { columnStart: start, columnEnd: end } = annotation.inlineRange;
 		const overlaps = start < columnEnd && end > columnStart;
-		return overlaps && nonCodeTokenColours.has(annotation.color.toLowerCase());
+		return overlaps && nonCodeTokenColors.has(annotation.color.toLowerCase());
 	});
 }
 

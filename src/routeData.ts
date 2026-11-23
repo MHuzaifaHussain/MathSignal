@@ -9,7 +9,7 @@
 import { defineRouteMiddleware } from '@astrojs/starlight/route-data';
 import { DOMAINS } from './design/domains.mjs';
 import { filterSidebarToActiveDomain, getDomains } from './components/overrides/domains';
-import { conceptPageGraph, homeGraph, serialiseJsonLd } from './seo/structuredData';
+import { conceptPageGraph, homeGraph, serializeJsonLd } from './seo/structuredData';
 
 const SUBJECT_DIRECTORIES = new Set(DOMAINS.map((domain) => domain.directory));
 const HOME_ROUTE_ID = '';
@@ -82,7 +82,7 @@ export const onRequest = defineRouteMiddleware((context) => {
 	if (subject) assertConceptFrontmatter(route);
 	const structuredData = structuredDataFor(route, subject);
 	if (structuredData) {
-		route.head.push({ tag: 'script', attrs: { type: 'application/ld+json' }, content: serialiseJsonLd(structuredData) });
+		route.head.push({ tag: 'script', attrs: { type: 'application/ld+json' }, content: serializeJsonLd(structuredData) });
 	}
 
 	if (subject) {

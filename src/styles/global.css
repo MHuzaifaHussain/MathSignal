@@ -1,6 +1,6 @@
 /*
  * Chalk Margin global styles.
- * Colours come only from --ms-* tokens (src/styles/tokens.css, generated from src/design/palette.mjs).
+ * Colors come only from --ms-* tokens (src/styles/tokens.css, generated from src/design/palette.mjs).
  * Rules: docs/design-system/foundations.md
  */
 @import './tokens.css';
@@ -80,8 +80,8 @@ header.header {
 	font-weight: 600;
 }
 
-/* ── "On this page": the current section is heavier and underlined in the attention colour.
- * Starlight marks it with the accent colour alone, which in light mode is almost the same as ink. ── */
+/* ── "On this page": the current section is heavier and underlined in the attention color.
+ * Starlight marks it with the accent color alone, which in light mode is almost the same as ink. ── */
 starlight-toc a[aria-current='true'],
 starlight-toc a[aria-current='true']:hover {
 	color: var(--ms-ink);
@@ -232,7 +232,7 @@ mark {
 	box-shadow: 0 0 0 5px var(--ms-attention-fill);
 }
 
-/* ── Meaning colours: KaTeX macros (\vmu, \vsigma) and the Var component ── */
+/* ── Meaning colors: KaTeX macros (\vmu, \vsigma) and the Var component ── */
 .katex {
 	color: inherit;
 }

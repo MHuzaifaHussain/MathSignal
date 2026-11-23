@@ -12,7 +12,7 @@ export const REFERENCES = [
 		year: 2015,
 		title: 'Delving deep into rectifiers: surpassing human-level performance on ImageNet classification',
 		url: 'https://arxiv.org/abs/1502.01852',
-		note: 'The source of He initialisation.',
+		note: 'The source of He initialization.',
 		checked: '2026-11-23',
 	},
 	{
@@ -22,7 +22,7 @@ export const REFERENCES = [
 		title: 'Understanding the difficulty of training deep feedforward neural networks',
 		venue: 'AISTATS, PMLR 9:249–256',
 		url: 'https://proceedings.mlr.press/v9/glorot10a.html',
-		note: 'The source of Xavier (Glorot) initialisation.',
+		note: 'The source of Xavier (Glorot) initialization.',
 		checked: '2026-11-23',
 	},
 	{
@@ -39,7 +39,7 @@ export const REFERENCES = [
 		year: 2013,
 		title: 'Auto-encoding variational Bayes',
 		url: 'https://arxiv.org/abs/1312.6114',
-		note: 'Introduces the reparameterisation trick.',
+		note: 'Introduces the reparameterization trick.',
 		checked: '2026-11-23',
 	},
 	{

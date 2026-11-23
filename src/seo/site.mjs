@@ -13,7 +13,7 @@ export const SOCIAL_CARD = {
 	url: `${SITE_URL}/og/default.png`,
 	width: 1200,
 	height: 630,
-	alt: 'MathSignal: the maths behind machine learning, from intuition to research',
+	alt: 'MathSignal: the math behind machine learning, from intuition to research',
 };
 
 /** Raster logo for structured data (Google requires at least 112x112). */

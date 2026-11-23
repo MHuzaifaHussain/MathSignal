@@ -10,7 +10,7 @@ Sources: the `seo-audit`, `ai-seo` and `programmatic-seo` skills from [coreyhain
 2. **One page, one question, one intent.** Each page answers one main query. "X vs Y" lives on comparison pages, "how to" on worked examples. Two pages never compete for the same query.
 3. **Answer first.** The page opens with one quotable sentence that names and defines the concept ("The normal distribution is…"). The first sentence under each `##` answers that heading; story and analogy follow. This is what answer engines quote.
 4. **Titles are descriptive, not hyped.** The full `<title>` (page title plus " | MathSignal") stays at or under about 60 characters. Mix plain, question and task titles; use a colon subtitle in at most about one title in three.
-5. **Descriptions are written by a person.** Unique, 120–160 characters, saying what the reader can do on the page. British spelling, no em dash, no list of synonyms.
+5. **Descriptions are written by a person.** Unique, 120–160 characters, saying what the reader can do on the page. American spelling (decision 0010), no em dash, no list of synonyms.
 6. **Show sources and people.** Verified citations with links, a real author and review statement, an honest note on how AI is used, and a date that changes only when the content changes substantively.
 7. **Structured data for clarity, not tricks.** `WebSite` and `Organization` on the home page; `BreadcrumbList` and `TechArticle`/`LearningResource` on concept pages (built in `src/seo/structuredData.ts`). Only fields that are true and on the page. No FAQ markup.
 8. **One page serves people, Google and AI assistants.** Never write separate content for machines. `/llms.txt` is generated from the same pages (`src/pages/llms.txt.ts`).

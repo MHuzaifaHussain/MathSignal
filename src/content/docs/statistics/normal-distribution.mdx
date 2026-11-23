@@ -1,6 +1,6 @@
 ---
 title: "Normal distribution"
-description: "Drag the mean and standard deviation of a bell curve, then see why the Gaussian shows up in weight initialisation, batch norm and diffusion models."
+description: "Drag the mean and standard deviation of a bell curve, then see why the Gaussian shows up in weight initialization, batch norm and diffusion models."
 sidebar:
   order: 1
 topic: statistics/normal-distribution
@@ -8,8 +8,8 @@ type: A
 objectives:
   - Describe a normal distribution by its mean and standard deviation, and say what each one changes.
   - Use the 68-95-99.7 rule and z-scores to judge how unusual a value is.
-  - Explain why sums and averages tend towards a bell, and when they don't.
-  - Recognise the normal distribution in weight initialisation, batch norm, naive Bayes, VAEs and Gaussian processes.
+  - Explain why sums and averages tend toward a bell, and when they don't.
+  - Recognize the normal distribution in weight initialization, batch norm, naive Bayes, VAEs and Gaussian processes.
 takeaways:
   - Two numbers set the whole bell. The mean μ moves it; the standard deviation σ widens it.
   - About 68%, 95% and 99.7% of values lie within one, two and three standard deviations of the mean.
@@ -75,7 +75,7 @@ A peg board shows why it happens. Drop a ball through rows of pegs and it bounce
 </Analogy>
 
 <WhyThisMatters>
-Neural network weights are usually initialised by sampling from a normal distribution, and the scale of that distribution decides whether training gets started at all. Diffusion models generate images by starting from pure Gaussian noise and learning to remove it step by step. Linear regression, t-tests and ANOVA assume normally distributed errors when they report exact p-values and intervals. And the central limit theorem says averages of many independent measurements are approximately normal, which is why the bell appears even when the underlying data isn't.
+Neural network weights are usually initialized by sampling from a normal distribution, and the scale of that distribution decides whether training gets started at all. Diffusion models generate images by starting from pure Gaussian noise and learning to remove it step by step. Linear regression, t-tests and ANOVA assume normally distributed errors when they report exact p-values and intervals. And the central limit theorem says averages of many independent measurements are approximately normal, which is why the bell appears even when the underlying data isn't.
 </WhyThisMatters>
 
 ## Move the bell yourself
@@ -94,7 +94,7 @@ The peak halves. Its height is $1/(\vsigma\sqrt{2\pi})$, so doubling <Var name="
 
 The normal distribution is the shape you get when a measurement is the sum of many small, independent effects. Heights within one sex, small manufacturing errors and repeated lab measurements all come close to it.
 
-Two numbers describe it completely. The **mean** (<Var name="mu" />) is where the bell is centred, and the **standard deviation** (<Var name="sigma" />) is how wide it is. A small <Var name="sigma" /> gives a tall, narrow bell, with values packed close to the mean. A large <Var name="sigma" /> gives a low, wide bell, with values spread out.
+Two numbers describe it completely. The **mean** (<Var name="mu" />) is where the bell is centered, and the **standard deviation** (<Var name="sigma" />) is how wide it is. A small <Var name="sigma" /> gives a tall, narrow bell, with values packed close to the mean. A large <Var name="sigma" /> gives a low, wide bell, with values spread out.
 
 <Simpler label="the same idea with dice">
 
@@ -114,13 +114,13 @@ The exact band that holds 95% is ±1.96σ, which is why 1.96 appears in so many 
 
 <GoDeeper label="where the three numbers come from">
 
-Let $\Phi$ be the cumulative distribution function of the standard normal. The share within $k$ standard deviations is $\Phi(k) - \Phi(-k) = 2\Phi(k) - 1 = \operatorname{erf}(k/\sqrt{2})$. For $k = 1, 2, 3$ this gives 0.6827, 0.9545 and 0.9973. The rule holds for every normal distribution because standardising (see the derivations below) turns any of them into the standard one.
+Let $\Phi$ be the cumulative distribution function of the standard normal. The share within $k$ standard deviations is $\Phi(k) - \Phi(-k) = 2\Phi(k) - 1 = \operatorname{erf}(k/\sqrt{2})$. For $k = 1, 2, 3$ this gives 0.6827, 0.9545 and 0.9973. The rule holds for every normal distribution because standardizing (see the derivations below) turns any of them into the standard one.
 
 </GoDeeper>
 
 ### Why does it appear everywhere?
 
-The central limit theorem is the reason. Add up $n$ independent, identically distributed variables with mean $\vmu$ and finite variance $\vsigma^2$. As $n$ grows, the standardised sum $(S_n - n\vmu)/(\vsigma\sqrt{n})$ approaches the standard normal distribution. Equivalently, the average of $n$ draws is approximately normal, centred on $\vmu$ with spread $\vsigma/\sqrt{n}$.
+The central limit theorem is the reason. Add up $n$ independent, identically distributed variables with mean $\vmu$ and finite variance $\vsigma^2$. As $n$ grows, the standardized sum $(S_n - n\vmu)/(\vsigma\sqrt{n})$ approaches the standard normal distribution. Equivalently, the average of $n$ draws is approximately normal, centered on $\vmu$ with spread $\vsigma/\sqrt{n}$.
 
 <GoDeeper label="why the finite variance condition matters">
 
@@ -152,7 +152,7 @@ with $\mathbb{E}[X] = \vmu$ and $\operatorname{Var}[X] = \vsigma^2$. The case $\
 
 <FormalDefinition>
 
-**Standardising.** Any normal random variable can be turned into a standard normal one by subtracting the mean and dividing by the standard deviation:
+**Standardizing.** Any normal random variable can be turned into a standard normal one by subtracting the mean and dividing by the standard deviation:
 
 $$
 Z = \frac{X - \vmu}{\vsigma} \sim \mathcal{N}(0, 1)
@@ -173,7 +173,7 @@ This is the **z-score**. It lets one reference table, or `scipy.stats.norm`, ser
 
 1. By definition $M_X(t) = \mathbb{E}[e^{tX}] = \int e^{tx} f(x)\,dx$.
 2. Combine the exponents and complete the square in $x$: $tx - \frac{(x - \vmu)^2}{2\vsigma^2} = -\frac{(x - \vmu - \vsigma^2 t)^2}{2\vsigma^2} + \vmu t + \frac{\vsigma^2 t^2}{2}$.
-3. The first term is the exponent of a normal density centred at $\vmu + \vsigma^2 t$, which integrates to 1, leaving $M_X(t) = \exp\!\left(\vmu t + \tfrac{1}{2}\vsigma^2 t^2\right)$.
+3. The first term is the exponent of a normal density centered at $\vmu + \vsigma^2 t$, which integrates to 1, leaving $M_X(t) = \exp\!\left(\vmu t + \tfrac{1}{2}\vsigma^2 t^2\right)$.
 4. Differentiating at $t = 0$ produces the moments. The $n$-th moment about the mean is zero for odd $n$, by symmetry, and $\vsigma^n (n-1)!!$ for even $n$.
 
 </StepThrough>
@@ -203,9 +203,9 @@ The 95th percentile of a standard normal is $z = 1.645$. For the same group, tha
 
 </WorkedExample>
 
-<WorkedExample number={3} title="A weight initialisation" faded>
+<WorkedExample number={3} title="A weight initialization" faded>
 
-He initialisation draws weights from $\mathcal{N}(0, 2/n_{\text{in}})$. For a layer with $n_{\text{in}} = 512$ inputs, what is the standard deviation of the weights?
+He initialization draws weights from $\mathcal{N}(0, 2/n_{\text{in}})$. For a layer with $n_{\text{in}} = 512$ inputs, what is the standard deviation of the weights?
 
 <div slot="solution">
 
@@ -217,13 +217,13 @@ The second argument is the variance: $2/512 \approx 0.0039$. The standard deviat
 
 ## Where the normal distribution shows up in ML
 
-### Weight initialisation
+### Weight initialization
 
-How weights start decides whether signals and gradients survive the trip through a deep network. **He initialisation** <Cite id="he2015" /> draws weights from $\mathcal{N}(0,\, 2/n_{\text{in}})$, giving a standard deviation of $\sqrt{2/n_{\text{in}}}$, and was derived for ReLU layers. **Xavier (Glorot) initialisation** <Cite id="glorot2010" /> uses $\mathcal{N}(0,\, 2/(n_{\text{in}} + n_{\text{out}}))$ and was derived for tanh, sigmoid and linear layers. Glorot and Bengio's paper used the uniform version $U(-a, a)$ with $a = \sqrt{6/(n_{\text{in}} + n_{\text{out}})}$, which has the same variance and is Keras's default. In both cases the second argument is the variance.
+How weights start decides whether signals and gradients survive the trip through a deep network. **He initialization** <Cite id="he2015" /> draws weights from $\mathcal{N}(0,\, 2/n_{\text{in}})$, giving a standard deviation of $\sqrt{2/n_{\text{in}}}$, and was derived for ReLU layers. **Xavier (Glorot) initialization** <Cite id="glorot2010" /> uses $\mathcal{N}(0,\, 2/(n_{\text{in}} + n_{\text{out}}))$ and was derived for tanh, sigmoid and linear layers. Glorot and Bengio's paper used the uniform version $U(-a, a)$ with $a = \sqrt{6/(n_{\text{in}} + n_{\text{out}})}$, which has the same variance and is Keras's default. In both cases the second argument is the variance.
 
-### Batch normalisation
+### Batch normalization
 
-Batch normalisation <Cite id="ioffe2015" /> standardises each feature over a mini-batch and then rescales it with two learned parameters:
+Batch normalization <Cite id="ioffe2015" /> standardizes each feature over a mini-batch and then rescales it with two learned parameters:
 
 $$
 \hat{x} = \frac{x - \mu_B}{\sqrt{\sigma_B^2 + \epsilon}}, \qquad y = \gamma \hat{x} + \beta
@@ -243,11 +243,11 @@ It predicts the class with the largest $P(y = c)\, p(\mathbf{x} \mid y = c)$, so
 
 ### VAE latent spaces
 
-Variational autoencoders place a $\mathcal{N}(0, I)$ prior on the latent space. The encoder outputs $\mu$ and $\sigma$ parameters, and the reparameterisation trick <Cite id="kingma2013" /> ($z = \mu + \sigma \odot \epsilon$, where $\epsilon \sim \mathcal{N}(0, I)$) lets gradients flow through the sampling step.
+Variational autoencoders place a $\mathcal{N}(0, I)$ prior on the latent space. The encoder outputs $\mu$ and $\sigma$ parameters, and the reparameterization trick <Cite id="kingma2013" /> ($z = \mu + \sigma \odot \epsilon$, where $\epsilon \sim \mathcal{N}(0, I)$) lets gradients flow through the sampling step.
 
 ### Gaussian processes
 
-A Gaussian process is a distribution over functions <Cite id="rasmussen2006" />. Writing $f \sim \mathcal{GP}(m, k)$ means that for any inputs $x_1, \dots, x_n$, the values $(f(x_1), \dots, f(x_n))$ are jointly normal with mean vector $m$ and covariance matrix $K_{ij} = k(x_i, x_j)$. Gaussian processes give predictions with uncertainty attached, which is well calibrated when the kernel and noise model fit the data, and makes them useful for Bayesian optimisation and active learning.
+A Gaussian process is a distribution over functions <Cite id="rasmussen2006" />. Writing $f \sim \mathcal{GP}(m, k)$ means that for any inputs $x_1, \dots, x_n$, the values $(f(x_1), \dots, f(x_n))$ are jointly normal with mean vector $m$ and covariance matrix $K_{ij} = k(x_i, x_j)$. Gaussian processes give predictions with uncertainty attached, which is well calibrated when the kernel and noise model fit the data, and makes them useful for Bayesian optimization and active learning.
 
 ## Check the 68-95-99.7 rule in code
 
@@ -324,7 +324,7 @@ print(f"NLL at x=1.5:  {nll:.4f}")
 
 <ResearchFrontier reviewed="2026-11-23">
 
-**Wide neural networks behave like Gaussian processes.** As the layers of a deep network grow infinitely wide, the network at initialisation becomes exactly a Gaussian process, which allows fully Bayesian prediction with deep networks <Cite id="lee2017" />. In the same limit, training by gradient descent is described by a fixed kernel, the neural tangent kernel <Cite id="jacot2018" />. How closely these infinite-width results describe the finite networks used in practice is an active area of research.
+**Wide neural networks behave like Gaussian processes.** As the layers of a deep network grow infinitely wide, the network at initialization becomes exactly a Gaussian process, which allows fully Bayesian prediction with deep networks <Cite id="lee2017" />. In the same limit, training by gradient descent is described by a fixed kernel, the neural tangent kernel <Cite id="jacot2018" />. How closely these infinite-width results describe the finite networks used in practice is an active area of research.
 
 **Generative models built on Gaussian noise.** Diffusion models corrupt data with small amounts of Gaussian noise over many steps and learn to reverse the process <Cite id="ho2020" />. Score-based models describe the same idea as a continuous stochastic differential equation, which links the noising and denoising directions <Cite id="song2020" />.
 
@@ -342,7 +342,7 @@ It falls to one third. The peak is $1/(\vsigma\sqrt{2\pi})$, so it scales with $
 About 82% (81.86%). Half of the 68.27% band lies between μ − σ and μ, and half of the 95.45% band lies between μ and μ + 2σ: 34.13% + 47.72%, or exactly $\Phi(2) - \Phi(-1) = 0.8186$.
 </CheckYourself>
 
-<CheckYourself level="standard" question="Does batch normalisation make a layer's activations normally distributed?">
+<CheckYourself level="standard" question="Does batch normalization make a layer's activations normally distributed?">
 No. It sets each feature's batch mean to 0 and variance to 1 (before $\gamma$ and $\beta$), but a skewed distribution stays skewed.
 </CheckYourself>
 
@@ -365,8 +365,8 @@ Write $\mathbb{E}[X] - \vmu = \int (x - \vmu) f(x)\,dx$ and substitute $y = x - 
   <Mistake wrong="The curve touches zero at ±3σ.">
     It doesn't. The normal distribution extends from $-\infty$ to $+\infty$; the density at $\pm 3\vsigma$ is small but not zero. This matters for tail risk and anomaly detection.
   </Mistake>
-  <Mistake wrong="Batch normalisation makes activations normally distributed.">
-    It standardises their mean and variance over each batch, which is a z-score, not a change of shape. See the batch normalisation section above.
+  <Mistake wrong="Batch normalization makes activations normally distributed.">
+    It standardizes their mean and variance over each batch, which is a z-score, not a change of shape. See the batch normalization section above.
   </Mistake>
 </CommonMistakes>
 

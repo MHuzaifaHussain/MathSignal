@@ -1,11 +1,11 @@
 // Verifies the design system rules before every build:
 //   1. every contrast pair in src/design/palette.mjs meets its minimum, in both themes
-//   2. code colours stay perceptually far from the meaning colours (mu, sigma, attention),
-//      for normal vision and the three common colour-vision deficiencies
+//   2. code colors stay perceptually far from the meaning colors (mu, sigma, attention),
+//      for normal vision and the three common color-vision deficiencies
 //   3. every file generated from the palette (tokens.css, favicon, logos) is up to date
 // Fails loudly with every violation listed, so nothing ships silently off-spec.
 import { contrastRules, meaningSeparation, palette } from '../src/design/palette.mjs';
-import { COLOUR_VISION_TYPES, contrastRatio, perceptualDistance } from './lib/color.mjs';
+import { COLOR_VISION_TYPES, contrastRatio, perceptualDistance } from './lib/color.mjs';
 import { staleGeneratedFiles } from './build-tokens.mjs';
 
 const MINIMUM_CONTRAST = { text: 4.5, large: 3, graphic: 3, code: 5.5 };
@@ -24,15 +24,15 @@ function contrastViolations(themeName, theme) {
 
 /** @param {string} themeName @param {Record<string, string>} theme */
 function separationViolations(themeName, theme) {
-	const { tokens, anchors, minNormal, minColourBlind } = meaningSeparation;
+	const { tokens, anchors, minNormal, minColorBlind } = meaningSeparation;
 	return tokens.flatMap((token) =>
 		anchors.flatMap((anchor) => {
 			const normal = perceptualDistance(theme[token], theme[anchor]);
 			const problems = normal >= minNormal ? [] : [`${themeName}: ${token} is ${normal.toFixed(1)} from ${anchor} (normal vision), needs ${minNormal}`];
-			for (const visionType of COLOUR_VISION_TYPES) {
+			for (const visionType of COLOR_VISION_TYPES) {
 				const distance = perceptualDistance(theme[token], theme[anchor], visionType);
-				if (distance < minColourBlind) {
-					problems.push(`${themeName}: ${token} is ${distance.toFixed(1)} from ${anchor} (${visionType}), needs ${minColourBlind}`);
+				if (distance < minColorBlind) {
+					problems.push(`${themeName}: ${token} is ${distance.toFixed(1)} from ${anchor} (${visionType}), needs ${minColorBlind}`);
 				}
 			}
 			return problems;
@@ -55,7 +55,7 @@ async function main() {
 		for (const violation of violations) console.error(`  - ${violation}`);
 		process.exit(1);
 	}
-	console.log(`Design check passed: ${contrastRules.length} contrast rules and meaning-colour separation in both themes.`);
+	console.log(`Design check passed: ${contrastRules.length} contrast rules and meaning-color separation in both themes.`);
 }
 
 main().catch((error) => {

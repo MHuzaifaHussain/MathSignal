@@ -1,7 +1,7 @@
 {
   "name": "MathSignal",
   "short_name": "MathSignal",
-  "description": "Interactive explanations of the maths behind machine learning.",
+  "description": "Interactive explanations of the math behind machine learning.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#ffffff",

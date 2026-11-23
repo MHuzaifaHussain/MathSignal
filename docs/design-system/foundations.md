@@ -8,21 +8,21 @@ All values below come from `src/design/palette.mjs`. Use the CSS custom property
 |---|---|---|---|
 | Paper (`--ms-page`) | All reading: prose, formulas, code | White | Night `#171b1a` |
 | Ledge (`--ms-ledge`) | Site header with the domain strip | White with a rule below | Slate, same as the board |
-| Board (`--ms-board`) | Every interactive plot | Pale green-grey with a frame | Slate with a brighter frame |
-| Tray (`--ms-board-tray`) | Sliders, readouts and Reset under a board | Slightly darker green-grey | Darker slate |
+| Board (`--ms-board`) | Every interactive plot | Pale green-gray with a frame | Slate with a brighter frame |
+| Tray (`--ms-board-tray`) | Sliders, readouts and Reset under a board | Slightly darker green-gray | Darker slate |
 | Side note | Asides (`SideNote`), inline in the reading column with a hairline on the left (the page margin holds Starlight's "On this page" list) | Paper, smaller serif | Paper, smaller serif |
 | Sunk (`--ms-surface-sunk`) | Quiet backgrounds such as the definition panel | `#f4f6f5` | `#1f2423` |
 
 Board limits: at most two boards per page, each at most about 480px tall. A board always has its frame (`--ms-board-edge`). In dark mode the frame is what separates the board from the page.
 
-## Colour roles
+## Color roles
 
 | Role | Token | Light | Dark | Use |
 |---|---|---|---|---|
 | Ink | `--ms-ink` | `#1e2725` | `#ece8df` | Body text, headings |
 | Muted ink | `--ms-ink-muted` | `#56625e` | `#a9b0ad` | Captions, metadata, side notes |
 | Rule | `--ms-rule` | `#d5dbd9` | `#323a38` | Hairlines and borders (decorative) |
-| Accent | `--ms-accent` | `#2f5048` | `#9fc2b8` | Starlight UI accent (current sidebar item, buttons). Derived from the board's green-grey, never a meaning colour |
+| Accent | `--ms-accent` | `#2f5048` | `#9fc2b8` | Starlight UI accent (current sidebar item, buttons). Derived from the board's green-gray, never a meaning color |
 | μ | `--ms-mu` | `#b0306a` | `#f59ab4` | The mean, everywhere: prose, KaTeX, plots, code |
 | σ | `--ms-sigma` | `#1f5fa8` | `#8dc8f2` | The spread, everywhere |
 | Look here, line | `--ms-attention` | `#8a5a00` ochre | `#f3d36b` yellow | Focus rings on boards, drag highlights, the active domain underline |
@@ -36,11 +36,11 @@ Board limits: at most two boards per page, each at most about 480px tall. A boar
 | Board axis | `--ms-board-axis` | `#677c73` | `#6a8079` | Axes, ticks and slider tracks |
 | Board grid | `--ms-board-grid` | `#c4d0ca` | `#2f403d` | Grid lines (decorative, deliberately faint) |
 
-This table lists the roles you choose between when building. The complete set, including code colours and the muted variants, is in `src/design/palette.mjs`.
+This table lists the roles you choose between when building. The complete set, including code colors and the muted variants, is in `src/design/palette.mjs`.
 
-**Adding a new meaning colour is a design decision**, not a styling choice. It needs a decision record, a contrast rule on every surface, and separation from μ, σ and attention for colour-blind readers.
+**Adding a new meaning color is a design decision**, not a styling choice. It needs a decision record, a contrast rule on every surface, and separation from μ, σ and attention for color-blind readers.
 
-Variables other than μ and σ (for example a slope or a prior) are written in ink. Colour them only when a page is about that variable, and then only after adding a role as above.
+Variables other than μ and σ (for example a slope or a prior) are written in ink. Color them only when a page is about that variable, and then only after adding a role as above.
 
 ## Typography
 
@@ -65,7 +65,7 @@ Fonts are self-hosted from Fontsource packages listed in Starlight's `customCss`
 
 Typographic rules:
 - Sentence case everywhere. No all-caps labels and no tracked-out eyebrows.
-- Never put a single word of a heading in a different colour or style.
+- Never put a single word of a heading in a different color or style.
 - Numbers in readouts use the mono font with `min-width` so they don't jump while dragging, and a real minus sign (−).
 
 ## Spacing
@@ -86,5 +86,5 @@ A two-tone focus ring works on every surface: a 2px ink outline plus a 3px yello
 
 - Corner radius 4px for boards, code blocks and controls. No pills.
 - No drop shadows and no gradients.
-- No full-height vertical dividers between columns, and no coloured or hairline bars on the left of content blocks. Use whitespace, a label or the sunk surface instead (decision 0006).
+- No full-height vertical dividers between columns, and no colored or hairline bars on the left of content blocks. Use whitespace, a label or the sunk surface instead (decision 0006).
 - Horizontal rules only between list items and under the header ledge.

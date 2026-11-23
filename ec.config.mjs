@@ -13,7 +13,7 @@ export default defineEcConfig({
 	useStarlightDarkModeSwitch: true,
 	// Use each theme's own background, which is what every contrast figure was measured against.
 	useStarlightUiThemeColors: false,
-	// Every token colour is at least 5.5:1, so this never alters a colour; `npm run check:design` keeps it that way.
+	// Every token color is at least 5.5:1, so this never alters a color; `npm run check:design` keeps it that way.
 	minSyntaxHighlightingColorContrast: 5.5,
 	plugins: [pluginLineNumbers(), pluginCollapsibleSections(), pluginMeaningMarkers()],
 	// Code wraps instead of scrolling sideways; wrapped lines keep their indentation.
@@ -34,7 +34,7 @@ export default defineEcConfig({
 		},
 		// Highlighted lines use "look here", never the default blue (blue belongs to sigma).
 		// Light mode marks them with a band only. Dark mode keeps a yellow edge because any
-		// visible band pushes dark token colours under 5.5:1: the one functional vertical mark (decision 0006).
+		// visible band pushes dark token colors under 5.5:1: the one functional vertical mark (decision 0006).
 		textMarkers: {
 			markBackground: ({ theme }) => palette[theme.type].codeMarkBg,
 			markBorderColor: ({ theme }) => (theme.type === 'light' ? 'transparent' : palette.dark.codeMarkEdge),

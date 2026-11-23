@@ -15,3 +15,4 @@ Format: context, decision, consequences, alternatives considered. Number them in
 | [0007](0007-no-katex-in-islands.md) | No KaTeX in board islands | Accepted |
 | [0008](0008-spine-and-folds-article-template.md) | Spine and folds article template | Accepted |
 | [0009](0009-single-sources-of-truth.md) | Single sources of truth for topics, notation and references | Accepted |
+| [0010](0010-american-english.md) | American English | Accepted |

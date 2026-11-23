@@ -1,11 +1,11 @@
-// Single source of truth for every colour in MathSignal's "Chalk Margin" design system.
+// Single source of truth for every color in MathSignal's "Chalk Margin" design system.
 //
 // Consumers:
 //   - scripts/build-tokens.mjs   generates src/styles/tokens.css (CSS custom properties)
 //   - src/design/code-themes.mjs builds the Expressive Code light and dark themes
-//   - scripts/check-design.mjs   verifies contrast and colour-vision rules before every build
+//   - scripts/check-design.mjs   verifies contrast and color-vision rules before every build
 //
-// Change a colour here, run `npm run tokens`, then `npm run check:design`.
+// Change a color here, run `npm run tokens`, then `npm run check:design`.
 // Rules and rationale: docs/design-system/foundations.md and docs/design-system/accessibility.md
 
 /** @typedef {'light' | 'dark'} ThemeName */
@@ -35,7 +35,7 @@ export const palette = {
 		boardAxis: '#677c73',
 		boardGrid: '#c4d0ca',
 
-		// Meaning colours: the only saturated colours on a page
+		// Meaning colors: the only saturated colors on a page
 		mu: '#b0306a',
 		sigma: '#1f5fa8',
 		attention: '#8a5a00',
@@ -106,7 +106,7 @@ export const fonts = {
 
 // Contrast pairs the build must keep passing.
 // kind: 'text' needs 4.5:1, 'large' needs 3:1 (18.66px bold / 24px+), 'graphic' needs 3:1,
-// 'code' needs 5.5:1 so Expressive Code never silently adjusts the colour.
+// 'code' needs 5.5:1 so Expressive Code never silently adjusts the color.
 export const contrastRules = [
 	['ink', 'page', 'text'],
 	['inkMuted', 'page', 'text'],
@@ -150,11 +150,11 @@ export const contrastRules = [
 	['codeMarkEdge', 'codeBg', 'graphic'],
 ];
 
-// Code colours must never be mistaken for a meaning colour, including under colour blindness.
+// Code colors must never be mistaken for a meaning color, including under color blindness.
 // Minimum CIEDE2000 distance from mu, sigma and attention.
 export const meaningSeparation = {
 	tokens: ['codeKeyword', 'codeString', 'codeNumber', 'codeComment', 'codeInk'],
 	anchors: ['mu', 'sigma', 'attention'],
 	minNormal: 20,
-	minColourBlind: 12,
+	minColorBlind: 12,
 };

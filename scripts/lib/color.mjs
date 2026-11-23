@@ -1,12 +1,12 @@
-// Colour maths for the design checks: WCAG 2 contrast, CIEDE2000 and colour-blindness simulation.
-// Colour-blindness uses Machado, Oliveira & Fernandes (2009) matrices at severity 1.0, applied in linear RGB.
+// Color math for the design checks: WCAG 2 contrast, CIEDE2000 and color-blindness simulation.
+// Color-blindness uses Machado, Oliveira & Fernandes (2009) matrices at severity 1.0, applied in linear RGB.
 
 const HEX_PATTERN = /^#[0-9a-f]{6}$/i;
 
 /** @param {string} hex */
 export function parseHex(hex) {
 	if (!HEX_PATTERN.test(hex)) {
-		throw new Error(`Expected a 6-digit hex colour like #1e2725, got "${hex}"`);
+		throw new Error(`Expected a 6-digit hex color like #1e2725, got "${hex}"`);
 	}
 	return [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
 }
@@ -21,7 +21,7 @@ function relativeLuminance(rgb) {
 	return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
-/** WCAG 2 contrast ratio between two hex colours. */
+/** WCAG 2 contrast ratio between two hex colors. */
 export function contrastRatio(foregroundHex, backgroundHex) {
 	const a = relativeLuminance(parseHex(foregroundHex));
 	const b = relativeLuminance(parseHex(backgroundHex));
@@ -46,7 +46,7 @@ const MACHADO = {
 	],
 };
 
-export const COLOUR_VISION_TYPES = /** @type {const} */ (['deuteranopia', 'protanopia', 'tritanopia']);
+export const COLOR_VISION_TYPES = /** @type {const} */ (['deuteranopia', 'protanopia', 'tritanopia']);
 
 /** @param {number[]} rgb @param {keyof typeof MACHADO} type */
 function simulate(rgb, type) {
@@ -66,7 +66,7 @@ function toLab(rgb) {
 
 const DEG = Math.PI / 180;
 
-/** CIEDE2000 colour difference between two Lab colours. */
+/** CIEDE2000 color difference between two Lab colors. */
 function ciede2000([l1, a1, b1], [l2, a2, b2]) {
 	const c1 = Math.hypot(a1, b1);
 	const c2 = Math.hypot(a2, b2);
@@ -109,8 +109,8 @@ function ciede2000([l1, a1, b1], [l2, a2, b2]) {
 }
 
 /**
- * Perceptual distance between two hex colours, optionally as seen with a colour-vision deficiency.
- * @param {string} hexA @param {string} hexB @param {(typeof COLOUR_VISION_TYPES)[number]} [visionType]
+ * Perceptual distance between two hex colors, optionally as seen with a color-vision deficiency.
+ * @param {string} hexA @param {string} hexB @param {(typeof COLOR_VISION_TYPES)[number]} [visionType]
  */
 export function perceptualDistance(hexA, hexB, visionType) {
 	const see = (hex) => (visionType ? simulate(parseHex(hex), visionType) : parseHex(hex));

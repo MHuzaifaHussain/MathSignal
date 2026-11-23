@@ -4,19 +4,19 @@ interface Props {
 	/** What is being shown, e.g. "Why the constant is 1/√(2π)". */
 	title: string;
 	/** "sketch" skips routine algebra; "full" shows every step. */
-	rigour?: 'sketch' | 'full';
+	rigor?: 'sketch' | 'full';
 }
 
-const { title, rigour = 'sketch' } = Astro.props;
+const { title, rigor = 'sketch' } = Astro.props;
 ---
 
 <div class="step-through">
-	<p><strong>{title}</strong> <span class="rigour">({rigour === 'sketch' ? 'sketch' : 'full proof'})</span></p>
+	<p><strong>{title}</strong> <span class="rigor">({rigor === 'sketch' ? 'sketch' : 'full proof'})</span></p>
 	<slot />
 </div>
 
 <style>
-	.rigour {
+	.rigor {
 		font-family: var(--ms-font-ui);
 		font-size: 0.875rem;
 		color: var(--ms-ink-muted);

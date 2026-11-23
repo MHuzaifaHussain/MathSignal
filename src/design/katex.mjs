@@ -1,7 +1,7 @@
 // KaTeX options for rehype-katex, plus a guard that fails the build on broken formulas.
 // Rules: docs/design-system/math-plots-code.md
 
-/** Meaning-coloured variables. Write \vmu and \vsigma in formulas, never \color{}. */
+/** Meaning-colored variables. Write \vmu and \vsigma in formulas, never \color{}. */
 export const katexMacros = {
 	'\\vmu': '\\htmlClass{ms-mu}{\\mu}',
 	'\\vsigma': '\\htmlClass{ms-sigma}{\\sigma}',

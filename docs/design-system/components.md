@@ -1,6 +1,6 @@
 # Components
 
-Every component reads colours from `--ms-*` tokens and works in both themes. Layout components are Astro (server-rendered, no JavaScript). Interactive pieces are React islands hydrated with `client:visible`.
+Every component reads colors from `--ms-*` tokens and works in both themes. Layout components are Astro (server-rendered, no JavaScript). Interactive pieces are React islands hydrated with `client:visible`.
 
 In MDX, wrap React islands in `<div class="not-content">` so Starlight's prose styles don't leak in.
 
@@ -12,7 +12,7 @@ Opens every concept page, under the title Starlight renders. Prerequisites and o
 | Prop | Type | Notes |
 |---|---|---|
 | `oneLiner` | `string` | One sentence that names the concept and says what it is |
-| `difficulty` | `'beginner' \| 'intermediate' \| 'advanced'` | Shown as a plain word ("Level: beginner"), not a coloured pill |
+| `difficulty` | `'beginner' \| 'intermediate' \| 'advanced'` | Shown as a plain word ("Level: beginner"), not a colored pill |
 
 It renders, in order: the level, the one-liner, a "Before you start" list (each prerequisite from the topic registry with its one-line recap), "On this page you will" (the frontmatter `objectives`), and a skip line linking to the precise statement, formal definition, research frontier and references for readers who already know the basics.
 
@@ -48,11 +48,11 @@ The components behind the spine-and-folds template ([decision 0008](../decisions
 |---|---|---|
 | `Fold` | `kind` (`simpler` \| `deeper` \| `check` \| `answer`), `label`, `id?`, `open?` | The shared primitive. Pages use the wrappers below |
 | `Simpler` | `label`, `id?` | A new picture, analogy or numbers for a beginner. Never a repeat of the spine |
-| `GoDeeper` | `label`, `id?` | Derivations, edge cases, generalisations |
+| `GoDeeper` | `label`, `id?` | Derivations, edge cases, generalizations |
 | `Analogy` | `breaks` (required) | The everyday section's text, followed by a bold "Where this picture breaks." paragraph from `breaks`. Plain prose, no box |
 | `NotationKey` | `symbols` (ids from `src/data/notation.mjs`) | Symbol / Say it / Meaning table. Unknown ids fail the build |
 | `PreciseStatement` | none | The always-visible exact definition with its conditions (`id="precise-statement"`) |
-| `StepThrough` | `title`, `rigour?` (`sketch` \| `full`) | A numbered derivation, labelled "sketch" unless it is a full proof. Put an ordered list in the slot |
+| `StepThrough` | `title`, `rigor?` (`sketch` \| `full`) | A numbered derivation, labeled "sketch" unless it is a full proof. Put an ordered list in the slot |
 | `WorkedExample` | `number`, `title`, `faded?` | A worked example. With `faded`, the solution goes in `<div slot="solution">` and sits behind an "Answer" fold |
 | `CheckYourself` | `question`, `level` (`intuition` \| `standard` \| `proof`) | A self-test question with its answer in a fold. The answer explains why |
 | `Cite` | `id` | An inline citation linking to `#ref-id`. The id must also be in the frontmatter `references` |
@@ -63,7 +63,7 @@ The components behind the spine-and-folds template ([decision 0008](../decisions
 ## Inline
 
 ### `Var` (Astro)
-A variable symbol in its meaning colour, for prose. `name`: `'mu' | 'sigma'`. Renders an italic serif symbol with the matching class, so it matches the KaTeX macros.
+A variable symbol in its meaning color, for prose. `name`: `'mu' | 'sigma'`. Renders an italic serif symbol with the matching class, so it matches the KaTeX macros.
 
 ### `SideNote` (Astro)
 A short aside: a clarification, a historical note, a "you may have seen this written as". Smaller serif in muted ink, indented, with no bar, inline in the reading column. (It does not float into the page margin: Starlight's "On this page" column occupies that space.) Keep it under about 60 words.
@@ -87,7 +87,7 @@ The frame every interactive plot sits in. It sets Mafs' CSS variables from the t
 A short handwritten note on a board, in Kalam at 20px or larger. Qualitative only ("wider bell, lower peak"), never a number. It takes a `long` and a `short` text and shows the `short` one when the board is under 560px wide.
 
 ### `TraySlider`
-A labelled slider for the tray, built on Base UI's Slider. Props: `label`, `value`, `min`, `max`, `step`, `largeStep` (optional; PageUp/PageDown and Shift+Arrow, defaults to about a tenth of the range), `onValueChange`, `onValueCommitted` (called once per drag, and once after a short pause for keyboard changes, so the board announces once), `format` (readout text, and `aria-valuetext` unless `describe` is given), `describe` (optional spoken value, e.g. "mean 1.50"), `meaning` (`'mu' | 'sigma' | undefined`, which colours the thumb and label).
+A labeled slider for the tray, built on Base UI's Slider. Props: `label`, `value`, `min`, `max`, `step`, `largeStep` (optional; PageUp/PageDown and Shift+Arrow, defaults to about a tenth of the range), `onValueChange`, `onValueCommitted` (called once per drag, and once after a short pause for keyboard changes, so the board announces once), `format` (readout text, and `aria-valuetext` unless `describe` is given), `describe` (optional spoken value, e.g. "mean 1.50"), `meaning` (`'mu' | 'sigma' | undefined`, which colors the thumb and label).
 
 ### `NormalDistribution`, `LinearRegression`, `BayesTheorem`
 Concept boards. Each composes `Board`, Mafs, `plotColors`, and `TraySlider`s.
@@ -129,7 +129,7 @@ Overrides live in `src/components/overrides/` and are registered in `astro.confi
 |---|---|
 | `Header` | Adds the subject strip (from `src/design/domains.mjs`) with an underline on the active subject. Search and the theme toggle stay Starlight's own |
 | `Sidebar` | Wraps Starlight's own sidebar and adds the subject list at the top of the mobile menu |
-| `Footer` | Wraps Starlight's own footer and adds the author, the licences (CC BY 4.0 text, MIT code), a prefilled "Report an error on this page" link and a link to the About page |
+| `Footer` | Wraps Starlight's own footer and adds the author, the licenses (CC BY 4.0 text, MIT code), a prefilled "Report an error on this page" link and a link to the About page |
 
 The sidebar is narrowed to the active subject by Starlight route middleware (`src/routeData.ts`), not by the override, so Starlight's sidebar markup and state persistence keep working. Subjects are defined once in `src/design/domains.mjs`, which feeds both the sidebar config and the strip; the build fails if they disagree.
 

@@ -17,14 +17,14 @@ Skip the recommendation for trivial edits (a typo, one line of copy). Whatever s
 | Change | Recommend | Why |
 |---|---|---|
 | New feature, component or page; anything creative | `superpowers` brainstorming, then writing-plans | Settles what to build before building it |
-| New concept page | MathSignal concept-page skill (when available, see below), plus [writing-a-concept-page.md](../design-system/writing-a-concept-page.md) | Keeps the nine-section template and colour rules |
+| New concept page | MathSignal concept-page skill (when available, see below), plus [writing-a-concept-page.md](../design-system/writing-a-concept-page.md) | Keeps the nine-section template and color rules |
 | Visual or layout change, new UI | `frontend-design`, `web-design-guidelines` | Distinctive design that still follows Chalk Margin |
 | New plot, chart or board | `dataviz` (if your assistant offers it) | Consistent, accessible charts; also follow [math-plots-code.md](../design-system/math-plots-code.md) |
 | React island work (boards, runner, sliders) | `react-best-practices`, `composition-patterns` | Hooks, re-renders, composition. Both are Next.js-oriented; apply only the React parts |
 | Speed, bundle size, fonts, Core Web Vitals | `performance`, `core-web-vitals`, Chrome DevTools MCP | Measured with real traces, not guessed |
 | Accessibility review | `accessibility` (web-quality-skills), `web-design-guidelines`, optionally AccessLint | Target is WCAG 2.2 AA ([accessibility.md](../design-system/accessibility.md)) |
 | Titles, descriptions, links, structured data, discoverability | `seo-audit`, `ai-seo`, `programmatic-seo` (marketingskills); `seo` (web-quality-skills) | Balanced SEO that never changes the tone: follow [docs/seo/README.md](../seo/README.md). `programmatic-seo` matters because many pages share one template |
-| A bug or unexpected behaviour | `superpowers` systematic-debugging | Root cause before fixes |
+| A bug or unexpected behavior | `superpowers` systematic-debugging | Root cause before fixes |
 | Logic that can be unit-tested | `superpowers` test-driven-development | Only once a test setup exists; the repo has none today |
 | Before saying work is done | `superpowers` verification-before-completion | Run `npm run build` and `npm run check`, show the output |
 | Before merging or after a large change | `/code-review`, `/simplify` | Correctness review, then clean-up |
