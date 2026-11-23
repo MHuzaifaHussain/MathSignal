@@ -59,18 +59,18 @@ import EventSpace from "../../../components/react/EventSpace.tsx";
 
 ## In everyday terms
 
-<Analogy breaks="Pouring is a choice, but a real die's probabilities come from the die, not from how you like to pour. The picture shows the rules any probability must follow, not how to find the right one for a given die. And for a measurement such as a height there are so many cups that each single one holds no water at all, yet together they still hold the full jug; the common mistake about probability 0 further down shows how.">
+<Analogy breaks="Pouring is a choice, but a real die's probabilities come from the die, not from how you like to pour. The picture shows the rules any probability must follow; it won't tell you the right pour for a given die. And for a measurement such as a height there are so many cups that each single one holds no water at all, yet together they still hold the full jug; the common mistake about probability 0 further down shows how.">
 
 Think of everything you believe about one roll of a die as a single jug of water, and set out six cups, one for each face. Pour the whole jug into the cups, as much into each as you think that face deserves. Only three rules matter. No cup can hold less than nothing. All the water ends up in the cups, so together they hold exactly one jug. And the water for a question such as "is it even?" is the water in cups 2, 4 and 6 added up, because no drop sits in two cups at once.
 
-A fair die gets the same amount in every cup. A die loaded toward six gets most of the jug in cup 6. The rules are the same either way; only the pouring differs.
+A fair die gets the same amount in every cup. A die loaded toward six gets most of the jug in cup 6.
 
 The jug has a blind spot. Each drop sits in one cup, but questions overlap: "even" and "at most 2" both care about cup 2. So put labels on the cups as well: "even" on cups 2, 4 and 6, "at most 2" on cups 1 and 2. The water for a question is the water in the cups that carry its label. Cup 2 carries both labels, so if you add the water for "even" to the water for "at most 2", cup 2 is counted twice, and you have to take it off once.
 
 </Analogy>
 
 <WhyThisMatters>
-A classifier's output is a probability only if it follows these three rules: no negative numbers, a total of 1 over the labels, and probabilities of separate labels that add. Softmax produces numbers that follow them, cross-entropy training assumes them, and label smoothing keeps them. When a model's numbers break one of the rules, for example one sigmoid per label giving outputs that add up to more than 1, they can still be useful, but they are not a distribution over the labels, and reading them as one gives wrong answers.
+A classifier's output is a probability only if it follows these three rules: no negative numbers, a total of 1 over the labels, and probabilities of separate labels that add. Softmax produces numbers that follow them, and cross-entropy training depends on that. When a model's numbers break one of the rules, for example one sigmoid per label giving outputs that add up to more than 1, they can still be useful, but they are not a distribution over the labels, and reading them as one gives wrong answers.
 </WhyThisMatters>
 
 ## Pour a die from a jug
@@ -101,11 +101,10 @@ Each of the three rules shows up as something the board won't do or won't call a
 - **The whole jug, no more and no less.** The board opens with all 12 units in the cups, so pouring into any cup is refused with "The jug is empty." After Start over, pour 2 units into each of cups 1 to 4 and the board says "8 of 12 units poured. The cups add up to 8/12, not 1, so this isn't a probability yet." The event line changes too: it says "Even holds 2/12 + 2/12 + 0/12 = 4/12 of the jug" instead of giving P(even). Only when all 12 units are poured does it say "All 12 units poured: the cups add up to 1."
 - **Separate cups add.** The event line always writes the sum out, one term per cup in the event. Six and At most 2 share no cup, so on the loaded die their shares, 7/12 and 2/12, add up to 9/12 for the event made of cups 1, 2 and 6. The board has no preset for that event; the 9/12 is computed here from its two lines.
 
-Under the cups the board keeps one note: "The cups are drawn the same size. The water in them is the probability, not the cup." The cup is where a face's probability goes; how much water it holds is the probability.
-
+Under the cups the board keeps one note: "The cups are drawn the same size. The water in them is the probability, not the cup."
 ## Three rules for any probability
 
-Every probability, on any sample space, follows the same three rules, called the axioms of probability: no event gets a negative probability, the whole sample space gets probability 1, and the probabilities of events that can't happen together add up. Everything else, from the rule for "not A" to the correction for overlapping events, is derived from these three.
+Every probability follows three rules, called the axioms of probability. Everything else is derived from them.
 
 ### Never negative
 
@@ -126,12 +125,12 @@ Thirty students each vote for one of three picnic spots. Share of the vote works
 </Simpler>
 
 <SideNote>
-Kolmogorov's 1933 book, translated into English in 1950, stated five axioms, two about the collection of events and three about the probabilities, and added a sixth, continuity, in the next chapter, as the only axiom specific to infinitely many events <Cite id="kolmogorov1950" />. The three rules here are the usual modern way to write the same system.
+Kolmogorov's 1933 book, translated into English in 1950, stated five axioms: two about the collection of events and three about the probabilities. In the next chapter he added a sixth, continuity, the only axiom specific to infinitely many events <Cite id="kolmogorov1950" />. The three rules here are the usual modern way to write the same system.
 </SideNote>
 
 ## Rules that follow from the three
 
-The rules you use every day for "not A", for "A or B" and for comparing events are consequences of the three axioms, not extra assumptions. The board below shows them on two fair dice, where each of the 36 ordered outcomes has probability 1/36.
+The rules you use every day for "not A", for "A or B" and for comparing events all follow from the three axioms. The board below shows them on two fair dice, where each of the 36 ordered outcomes has probability 1/36.
 
 Before you look: roll two dice. Event A is "the sum is 7" and event B is "the first die shows 6". Each holds 6 of the 36 outcomes. Is the probability of "A or B" equal to 6/36 + 6/36 = 12/36? Decide, then check.
 
@@ -177,7 +176,7 @@ Boundary cases. $P$ gives a value only to events in $\mathcal{F}$. On a finite $
 
 Kolmogorov's own fifth axiom was finite additivity: $P(A \cup B) = P(A) + P(B)$ for disjoint $A$ and $B$. For infinite collections of events he added a sixth, continuity: if $A_1 \supseteq A_2 \supseteq \cdots$ and $\bigcap_n A_n = \emptyset$, then $P(A_n) \to 0$. He showed that the two together are equivalent to countable additivity, that continuity follows from the other axioms when there are only finitely many events, and he called infinite probability fields idealized models of real random processes <Cite id="kolmogorov1950" />.
 
-What countable additivity rules out shows up in a natural-sounding experiment: pick a whole number $1, 2, 3, \ldots$ "uniformly at random". Fairness means every number gets the same probability $p$. Countable additivity then gives $P(\Omega) = \sum_{n=1}^{\infty} p$, which is $0$ if $p = 0$ and infinite if $p > 0$, never $1$. So there is no uniform probability on a countably infinite sample space <Cite id="grinstead2003" />. With finite additivity alone the argument stops halfway: $P(\{1, \ldots, n\}) = np \le 1$ for every $n$ forces $p = 0$, but nothing then forces $P(\Omega)$ to be $0$. So this argument does not rule out a "fair lottery" on the whole numbers under finite additivity alone; countable additivity does. In exchange, countable additivity lets probabilities pass to limits, which the standard theory of expectations and of infinite sequences of tosses is built on.
+What countable additivity rules out shows up in a natural-sounding experiment: pick a whole number $1, 2, 3, \ldots$ "uniformly at random". Fairness means every number gets the same probability $p$. Countable additivity then gives $P(\Omega) = \sum_{n=1}^{\infty} p$, which is $0$ if $p = 0$ and infinite if $p > 0$, never $1$. So there is no uniform probability on a countably infinite sample space <Cite id="grinstead2003" />. With finite additivity alone the argument stops halfway: $P(\{1, \ldots, n\}) = np \le 1$ for every $n$ forces $p = 0$, but nothing then forces $P(\Omega)$ to be $0$. So this argument does not rule out a "fair lottery" on the whole numbers under finite additivity alone; countable additivity does.
 
 </GoDeeper>
 
@@ -440,7 +439,7 @@ print("cross-entropy of the softmax output:", round(cross_entropy(one_hot, softm
 `}
 />
 
-The brute-force loop is the strongest check here: inclusion–exclusion holds for every one of the 64 × 64 = 4,096 pairs of events on the loaded die, not only for the pairs on the boards.
+The loop near the end checks inclusion–exclusion on every one of the 64 × 64 = 4,096 pairs of events on the loaded die, including the many pairs the boards never show.
 
 ## Research frontier
 
@@ -480,7 +479,7 @@ Inclusion–exclusion gives $P(A \cap B) = P(A) + P(B) - P(A \cup B)$. Since $A 
     Only when $A$ and $B$ are disjoint. Otherwise the outcomes in both are counted twice, and you must subtract $P(A \cap B)$ once. For sum is 7 or first die is 6, the answer is $11/36$, not $12/36$; see the second board.
   </Mistake>
   <Mistake wrong="Disjoint events are independent.">
-    They are close to the opposite. If $A$ and $B$ are disjoint and both have positive probability, learning that $A$ happened tells you $B$ did not. Sum is 7 and a double are disjoint, so $P(A \cap D) = 0$, while $P(A)\,P(D) = 1/6 \times 1/6 = 1/36$. Independence gets its own page later in this subject.
+    If $A$ and $B$ are disjoint and both have positive probability, they are dependent: learning that $A$ happened tells you $B$ did not. Sum is 7 and a double are disjoint, so $P(A \cap D) = 0$, while $P(A)\,P(D) = 1/6 \times 1/6 = 1/36$. Independence gets its own page later in this subject.
   </Mistake>
   <Mistake wrong="An event with probability 0 is impossible.">
     On a finite space where every outcome has a positive weight, as with fair dice, yes: only $\emptyset$ has probability 0. In general, no. Pick a point uniformly from $[0, 1]$: any single point $x$ lies in an interval of length $2\epsilon$ around it, so monotonicity gives $P(\{x\}) \le 2\epsilon$ for every $\epsilon > 0$, and $P(\{x\}) = 0$. Yet some point is always picked. This is how densities such as the [normal distribution](/statistics/normal-distribution/) work.
