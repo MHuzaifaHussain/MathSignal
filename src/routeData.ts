@@ -4,6 +4,7 @@
 //   persistence and markup working on the list the reader actually sees.
 // - Keeps previous/next links inside the active subject, so a page never "continues" into another subject.
 // - Adds JSON-LD structured data: WebSite + Organization on the home page, breadcrumb + article on concept pages.
+// - Keeps the 404 page out of search results: no canonical URL (it would name /404/, which doesn't exist) and noindex.
 // - Fails the build if a concept page is missing the frontmatter its components and checks rely on (decision 0009).
 import { defineRouteMiddleware } from '@astrojs/starlight/route-data';
 import { DOMAINS } from './design/domains.mjs';
@@ -12,6 +13,7 @@ import { conceptPageGraph, homeGraph, serialiseJsonLd } from './seo/structuredDa
 
 const SUBJECT_DIRECTORIES = new Set(DOMAINS.map((domain) => domain.directory));
 const HOME_ROUTE_ID = '';
+const NOT_FOUND_ROUTE_ID = '404';
 
 /** The subject directory a path or route id belongs to, or null (home, introduction). */
 function subjectOf(pathOrId: string): string | null {
@@ -61,10 +63,20 @@ function structuredDataFor(route: StarlightRoute, subject: string | null) {
 	});
 }
 
+/** Starlight gives every page a canonical link and og:url; for the 404 page those name a URL that doesn't exist. */
+function markNotFoundPage(route: StarlightRoute) {
+	route.head = route.head.filter(
+		(entry) => !(entry.tag === 'link' && entry.attrs?.rel === 'canonical') && !(entry.tag === 'meta' && entry.attrs?.property === 'og:url'),
+	);
+	route.head.push({ tag: 'meta', attrs: { name: 'robots', content: 'noindex' } });
+}
+
 export const onRequest = defineRouteMiddleware((context) => {
 	const route = context.locals.starlightRoute;
 	context.locals.subjects = getDomains(route.sidebar);
 	route.sidebar = filterSidebarToActiveDomain(route.sidebar);
+
+	if (route.id === NOT_FOUND_ROUTE_ID) markNotFoundPage(route);
 
 	const subject = subjectOf(route.id);
 	if (subject) assertConceptFrontmatter(route);
