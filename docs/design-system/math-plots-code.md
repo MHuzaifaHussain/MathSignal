@@ -90,6 +90,7 @@ Code uses the **tuned full** palette: familiar editor-style highlighting with ev
 In dark mode highlighted lines have no visible band, because any band pushes the dark token colours under 5.5:1. Diff markers (`ins`/`del`) still use Expressive Code's defaults; avoid them in teaching code until they get palette colours.
 
 Rules:
+- **Code wraps, never scrolls sideways.** Wrapped lines keep their indentation (`defaultProps: { wrap: true, preserveIndent: true }` in `ec.config.mjs`).
 - **Nothing in a code theme is bold.** Bold is reserved for the μ/σ markers.
 - **No blue and no pink in code themes.** Those hues belong to σ and μ.
 - **Every token colour is at least 5.5:1** against the code background, so Expressive Code's automatic contrast fix never changes it. `npm run check:design` enforces this.

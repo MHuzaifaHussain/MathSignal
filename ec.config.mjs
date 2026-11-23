@@ -16,6 +16,8 @@ export default defineEcConfig({
 	// Every token colour is at least 5.5:1, so this never alters a colour; `npm run check:design` keeps it that way.
 	minSyntaxHighlightingColorContrast: 5.5,
 	plugins: [pluginLineNumbers(), pluginCollapsibleSections(), pluginMeaningMarkers()],
+	// Code wraps instead of scrolling sideways; wrapped lines keep their indentation.
+	defaultProps: { wrap: true, preserveIndent: true },
 	styleOverrides: {
 		borderRadius: '4px',
 		borderColor: 'var(--ms-rule)',
