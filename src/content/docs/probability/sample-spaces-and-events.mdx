@@ -16,7 +16,7 @@ takeaways:
   - An event is a set of outcomes. A single outcome is one point; an event can hold none, some or all of them.
   - Two coins have four outcomes, HH, HT, TH and TT, so at least one head has probability 3/4, not 2/3.
   - Counting gives a probability, |A| divided by |Ω|, only when every outcome is equally likely.
-  - On a finite sample space every subset is an event. On infinite ones, probability is defined on a chosen collection of events 𝓕.
+  - On a finite sample space we can, and usually do, treat every subset as an event. On infinite ones, probability is defined on a chosen collection of events 𝓕.
 references:
   - grinstead2003
   - kolmogorov1950
@@ -90,13 +90,13 @@ The board shows every way two coins can land, one square per outcome, with the f
 
 The answer is 3/4. The two coins can land in four ways, HH, HT, TH and TT, and three of them have at least one head. HT and TH are different outcomes: in HT the first coin shows heads, in TH the second one does. Fair coins make all four equally likely, so the event "at least one head" holds 3 of 4 equally likely outcomes.
 
-Once Check passes, the rest of the board unlocks. Switch "Show as" to Pictures to see the coins drawn as faces, or to Sets for the same answer as sets. Turn on "Treat HT and TH as the same outcome" to see where 2/3 comes from: with three tiles, HH, one of each and TT, two of the three contain a head. That model would be right only if the three tiles were equally likely, and they aren't. Press Toss 100 a few times: the tile "one of each" collects about half of the tosses, not a third, and at least one head comes up close to three quarters of the time.
+Once Check passes, the presets, tosses and switch unlock. Switch "Show as" to Pictures to see the coins drawn as faces, or to Sets for the same answer as sets. Turn on "Treat HT and TH as the same outcome" to see where 2/3 comes from: with three tiles, HH, one of each and TT, two of the three contain a head. That model would be right only if the three tiles were equally likely, and they aren't. Press Toss 100 a few times: the tile "one of each" collects about half of the tosses, not a third, and at least one head comes up close to three quarters of the time.
 
 ## What is a sample space?
 
 A sample space is the list of every possible outcome of an experiment, written so that exactly one outcome happens each time it runs. For one coin it is heads and tails. For one die it is the six faces. For two coins it is the four ordered results HH, HT, TH and TT. For a measurement such as a height it is a whole range of numbers, which is where densities like the [normal distribution](/statistics/normal-distribution/) come in.
 
-Two rules make a list a sample space. The outcomes must not overlap, so no single toss can count as two of them, and they must cover everything, so every toss counts as one of them. "Heads" and "at least one head" can't both be outcomes of the same list, because one includes the other.
+Two rules make a list a sample space. The outcomes must not overlap, so no single toss can count as two of them, and they must cover everything, so every toss counts as one of them. "HH" and "at least one head" can't both be outcomes of the same list, because one includes the other.
 
 There is no single correct sample space for an experiment <Cite id="grinstead2003" />. For two coins you could also record only the number of heads, 0, 1 or 2. That is a legitimate sample space, but its three outcomes are not equally likely, so you can't find probabilities in it by counting.
 
@@ -144,7 +144,7 @@ A loaded die still has the sample space 1 to 6, but now each face gets its own w
 
 <PreciseStatement>
 
-Let $\Omega$ be a finite, nonempty set, the sample space; each $\omega \in \Omega$ is an outcome, and exactly one outcome occurs. On a finite sample space every subset $A \subseteq \Omega$ is an event, so the collection of events is $\mathcal{F} = \{A : A \subseteq \Omega\}$, all subsets of $\Omega$. Events combine by $A^\complement = \Omega \setminus A$, $A \cap B$ and $A \cup B$, and each result is again an event.
+Let $\Omega$ be a finite, nonempty set, the sample space; each $\omega \in \Omega$ is an outcome, and exactly one outcome occurs. On a finite sample space we can, and usually do, take every subset $A \subseteq \Omega$ as an event, so the collection of events is $\mathcal{F} = 2^\Omega$, all subsets of $\Omega$. This is a convention, not a necessity: a smaller collection also works if it contains $\Omega$ and is closed under the operations below. Events combine by $A^\complement = \Omega \setminus A$, $A \cap B$ and $A \cup B$, and each result is again an event.
 
 When every outcome is equally likely, and only then, the probability of every event $A$ is
 
@@ -158,7 +158,7 @@ Boundary cases: the empty set $\emptyset$ and the whole space $\Omega$ are both 
 
 <GoDeeper label="why infinite sample spaces need a collection of events">
 
-Pick a point uniformly at random from $[0, 1]$. The natural probability of an interval is its length, and lengths should add up over countably many disjoint pieces and not change when a set is shifted. Using the axiom of choice, one can build a subset of $[0, 1]$ to which no such length can be given: assigning it any value contradicts countable additivity and shift invariance together <Cite id="tao2011" />. So on infinite spaces, probabilities are assigned only to the sets in a chosen collection $\mathcal{F}$, which contains $\Omega$ and is closed under complements and countable unions. This is the shape of Kolmogorov's axiomatic framework: outcomes, a collection of events, and a probability on those events <Cite id="kolmogorov1950" />. On a finite space none of this bites, and $\mathcal{F}$ is simply every subset.
+Pick a point uniformly at random from $[0, 1]$. The natural probability of an interval is its length, and lengths should add up over countably many disjoint pieces and not change when a set is shifted. Using the axiom of choice, one can build a subset of $[0, 1]$ to which no such length can be given: assigning it any value contradicts countable additivity and shift invariance together <Cite id="tao2011" />. So on infinite spaces, probabilities are assigned only to the sets in a chosen collection $\mathcal{F}$, which contains $\Omega$ and is closed under complements and countable unions. This is the shape of Kolmogorov's axiomatic framework: outcomes, a collection of events, and a probability on those events <Cite id="kolmogorov1950" />. On a finite space none of this bites, and we can take $\mathcal{F}$ to be every subset.
 
 </GoDeeper>
 
@@ -172,14 +172,14 @@ Pick a point uniformly at random from $[0, 1]$. The natural probability of an in
 2. Each of these pieces has exactly $|\Omega_2|$ members, one for each choice of second coordinate.
 3. The pieces don't overlap, because a pair has only one first coordinate, and together they cover every pair.
 4. So $|\Omega_1 \times \Omega_2| = \sum_{\omega_1 \in \Omega_1} |\Omega_2| = |\Omega_1|\,|\Omega_2|$. For two coins, $2 \times 2 = 4$; for two dice, $6 \times 6 = 36$.
-5. The pairs are ordered because $(H, T)$ and $(T, H)$ describe different tosses: which coin showed heads differs. Unordered, the two would merge into one item that can happen in two ways, and the remaining items would no longer be equally likely.
+5. The pairs are ordered because $(H, T)$ and $(T, H)$ describe different tosses: which coin showed heads differs. Unordered, the two would merge into one item that can happen in two ways, and the three items would no longer be equally likely.
 
 </StepThrough>
 
 <StepThrough title="A sample space with n outcomes has 2ⁿ events" rigor="full">
 
 1. An event is fixed by answering, for each outcome, one yes-or-no question: is it in the event?
-2. With $|\Omega| = n$ outcomes there are $n$ independent yes-or-no choices, so by the product rule above there are $2 \times 2 \times \dots \times 2 = 2^n$ ways to answer them.
+2. With $|\Omega| = n$ outcomes there are $n$ separate yes-or-no choices, so by the product rule above there are $2 \times 2 \times \dots \times 2 = 2^n$ ways to answer them.
 3. Different answers give different events, and every event arises this way, so there are exactly $2^n$ events. The all-no answer is $\emptyset$ and the all-yes answer is $\Omega$, so both are counted.
 
 </StepThrough>
@@ -230,7 +230,13 @@ A classifier that sorts images into cat, dog and bird works on the sample space 
 
 ### Next-token prediction
 
-A language model predicts the next token from a vocabulary $V$, which is its sample space: one outcome per token, often tens of thousands of them. Its output is a probability for every $\omega \in V$. Sampling methods work with events. Top-$k$ sampling keeps the event made of the $k$ most likely tokens, divides their probabilities by the probability of that event so they add up to 1 again, and samples from it. Every token outside the event gets probability 0.
+A language model predicts the next token from a vocabulary $V$, which is its sample space: one outcome per token, often tens of thousands of them. Its output is a probability for every $\omega \in V$. Sampling methods work with events. Top-$k$ sampling keeps the event $V_k$ made of the $k$ most likely tokens and samples from it with
+
+$$
+P(\omega \mid V_k) = \frac{P(\omega)}{P(V_k)} \quad \text{for } \omega \in V_k.
+$$
+
+In words: each kept token's probability is divided by the total probability of the kept tokens, so they add up to 1 again, and every token outside $V_k$ gets probability 0.
 
 ### Test-set accuracy
 
@@ -309,9 +315,9 @@ The simulation's share is within 0.01 of 0.75 and the share of "one of each" is 
 
 <ResearchFrontier reviewed="2026-11-24">
 
-**Why probability is defined on a collection of events.** Kolmogorov built probability on a set of outcomes, a collection of events and a probability on those events, and this framework is the standard one <Cite id="kolmogorov1950" />. The reason for the middle piece is a settled result: with the axiom of choice there are subsets of $[0, 1]$ that no length, and so no uniform probability, can measure while staying countably additive and unchanged by shifts <Cite id="tao2011" />. Tao also notes that without the axiom of choice there are models of set theory in which every subset of the line is measurable <Cite id="tao2011" />, so the obstacle comes from that axiom, not from probability itself.
+**Why probability is defined on a collection of events.** Kolmogorov built probability on a set of outcomes, a collection of events and a probability on those events <Cite id="kolmogorov1950" />, and this framework is the standard one. The reason for the middle piece is a settled result: with the axiom of choice there are subsets of $[0, 1]$ that no length, and so no uniform probability, can measure while staying countably additive and unchanged by shifts <Cite id="tao2011" />. Tao also notes that without the axiom of choice there are models of set theory in which every subset of the line is measurable <Cite id="tao2011" />, so the obstacle comes from that axiom, not from probability itself.
 
-**What is settled for this page.** Nothing here is an open problem. For finite sample spaces, every subset is an event and the theory is complete; the subtleties begin only with infinite spaces, and the standard framework above handles the cases machine learning uses.
+**What is settled for this page.** Nothing here is an open problem. For finite sample spaces we can take every subset as an event and nothing goes wrong; the subtleties begin only with infinite spaces, and the standard framework above handles the cases machine learning uses.
 
 </ResearchFrontier>
 
