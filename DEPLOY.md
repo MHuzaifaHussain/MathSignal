@@ -20,7 +20,7 @@
 
 ## Post-Deploy Verification
 
-- [ ] Visit https://mathsignal.dev — landing page loads with hero and topic cards
+- [ ] Visit https://mathsignal.dev — home page loads with the subject list
 - [ ] Visit https://mathsignal.dev/statistics/normal-distribution/ — full page renders
 - [ ] Interactive Mafs visualization loads and responds to dragging
 - [ ] KaTeX math renders correctly (check the formal definition section)

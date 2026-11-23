@@ -1,38 +1,60 @@
 # MathSignal
 
-Interactive statistics, probability, and mathematics for AI/ML practitioners.
+[MathSignal](https://mathsignal.dev/) teaches the maths behind machine learning through interactive pages. Each concept starts with an everyday picture, lets you drag the maths on a plot, then works up to the formal definition, its uses in ML, runnable code and current research.
 
-## What is this?
+Pages are written for a complete beginner and a researcher at the same time. The main text reads on its own; "Simpler" and "Go deeper" folds add a gentler route or the full rigour.
 
-MathSignal is a documentation-style interactive reference for the mathematics behind AI and machine learning. Every concept is explained with intuition, visualization, formal math, and runnable code.
+## Subjects
 
-Topics covered:
+| Subject | Status |
+|---|---|
+| Statistics | Live: [Normal distribution](https://mathsignal.dev/statistics/normal-distribution/) |
+| Probability | Coming soon |
+| Linear algebra | Coming soon |
+| Machine learning | Coming soon |
 
-- **Statistics** — descriptive statistics, distributions, hypothesis testing, regression
-- **Probability** — Bayes' theorem, conditional probability, random variables, stochastic processes
-- **Linear Algebra** — vectors, matrices, eigenvalues, SVD, transformations
-- **Machine Learning** — gradient descent, loss functions, backpropagation, optimization
+## Stack
 
-## Tech Stack
+- [Astro](https://astro.build) 7 and [Starlight](https://starlight.astro.build): static site, sidebar, search (Pagefind)
+- [React](https://react.dev) 19 islands with [Mafs](https://mafs.dev) for draggable plots and [Base UI](https://base-ui.com) sliders
+- [KaTeX](https://katex.org) through `remark-math` and `rehype-katex`, rendered at build time
+- [Expressive Code](https://expressive-code.com) for code blocks, with themes generated from the palette
+- [Pyodide](https://pyodide.org) in a Web Worker for Python that runs in the browser
+- Design tokens generated from one palette file; no CSS framework
 
-- [Astro Starlight](https://starlight.astro.build) — documentation framework
-- [React](https://react.dev) — interactive components
-- [Mafs](https://mafs.dev) — interactive math visualizations
-- [KaTeX](https://katex.org) — math equation rendering
-- [Tailwind CSS](https://tailwindcss.com) — utility-first styling
-- [Marimo](https://marimo.io) — runnable Python notebooks
+## Local development
 
-## Local Development
+Requires Node 24 (see `.nvmrc`).
 
 ```bash
 npm install
-npm run dev       # start dev server at localhost:4321
-npm run build     # production build to ./dist/
-npm run preview   # preview production build locally
+npm run dev       # dev server at http://localhost:4321
+npm run build     # static build to ./dist (runs the design and content checks first)
+npm run preview   # serve the build locally
 ```
 
-Requires Node.js v22 or higher.
+| Command | What it does |
+|---|---|
+| `npm run check` | Type-checks `.astro`, `.ts` and `.tsx` files |
+| `npm run check:design` | Contrast and colour-blindness rules; generated tokens, favicon and logos up to date |
+| `npm run check:content` | Topic, notation and reference registries, and the ids each page uses |
+| `npm run check:code` | Runs every runnable Python example under Pyodide and checks its assertions |
+| `npm run tokens` | Regenerates the CSS tokens, favicon, logos and web manifest from `src/design/palette.mjs` |
+| `npm run brand-images` | Regenerates the social card and app icons (PNG) |
 
-## License
+## Contributing
 
-MIT
+Start with [AGENTS.md](AGENTS.md). It links to everything else:
+
+- [Design system](docs/design-system/README.md): colours, type, components, maths, plots and code
+- [Writing a concept page](docs/design-system/writing-a-concept-page.md): the page template, frontmatter and checklist
+- [Decision records](docs/decisions/README.md): why the big choices were made
+- [SEO guide](docs/seo/README.md): write for the learner first
+- [AI assistant skills](docs/tooling/agent-skills.md): recommended skills and tools for coding agents
+- [Deployment](DEPLOY.md): Cloudflare Pages settings
+
+Found a mistake on a page? Use the "Report an error on this page" link at the bottom of it, or [open an issue](https://github.com/MHuzaifaHussain/MathSignal/issues).
+
+## Licence
+
+Written by Muhammad Huzaifa Hussain. The text and documentation are licensed under [CC BY 4.0](LICENSE-CONTENT.md); the code is licensed under [MIT](LICENSE).
