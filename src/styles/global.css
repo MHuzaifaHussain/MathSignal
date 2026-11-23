@@ -36,14 +36,9 @@
 
 /* ── Mafs / interactive components ── */
 
-.not-content {
-	all: initial;
-	display: block;
-}
-
-/* ── Code block refinements ── */
-
-.expressive-code {
-	border-radius: 0.5rem;
-	overflow: hidden;
+:root[data-theme='light'] .MafsView {
+	--mafs-bg: #f8fafc;
+	--mafs-fg: #1e293b;
+	--mafs-line-color: #cbd5e1;
+	--grid-line-subdivision-color: #e2e8f0;
 }

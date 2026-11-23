@@ -1,4 +1,3 @@
-import "mafs/core.css";
 import { useState, useMemo, useCallback } from "react";
 import {
   Mafs,

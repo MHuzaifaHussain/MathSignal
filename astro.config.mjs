@@ -2,7 +2,6 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
-import tailwindcss from '@tailwindcss/vite';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 
@@ -60,12 +59,11 @@ export default defineConfig({
 					autogenerate: { directory: 'ml' },
 				},
 			],
-			customCss: ['katex/dist/katex.min.css', './src/styles/global.css'],
+			customCss: ['katex/dist/katex.min.css', 'mafs/core.css', './src/styles/global.css'],
 		}),
 		react(),
 	],
 	vite: {
-		plugins: [tailwindcss()],
 		ssr: {
 			noExternal: ['katex'],
 		},
