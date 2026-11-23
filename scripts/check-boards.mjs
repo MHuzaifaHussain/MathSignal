@@ -9,6 +9,7 @@ import { getSetup } from '../src/components/react/eventSpace/setups.ts';
 const coins = SCENARIOS['two-coins'];
 const dice = SCENARIOS['two-dice'];
 const die = SCENARIOS['one-die'];
+const coinsOutcome = (id) => coins.outcomes.find((outcome) => outcome.id === id);
 const ids = (scenario, event) => new Set(scenario.outcomes.filter(scenario.events[event].members).map((outcome) => outcome.id));
 
 // Fractions are reduced and refuse a zero denominator.
@@ -52,5 +53,76 @@ assert.equal(WEIGHT_TOTAL, 12);
 // A typo in a page's setup fails loudly.
 assert.throws(() => getSetup('coins-bild'), /unknown setup "coins-bild"/);
 assert.equal(getSetup('coins-build').goal, 'at-least-one-head');
+
+// ---- State transitions and copy (EventSpace state.ts and describe.ts) ----
+const { initialState, reducer, isLocked } = await import('../src/components/react/eventSpace/state.ts');
+const describe = await import('../src/components/react/eventSpace/describe.ts');
+const run = (setupId, ...actions) => actions.reduce(reducer, initialState(setupId));
+const toggles = (...outcomeIds) => outcomeIds.map((id) => ({ type: 'toggle', id }));
+
+// Status and marked count on the goal setup, before Check: no probability shown.
+const fresh = initialState('coins-build');
+assert.equal(describe.statusLine(fresh), '4 equally likely outcomes. Event A: at least one head. Tap the squares that belong to A.');
+assert.equal(describe.markedLine(run('coins-build', ...toggles('HH', 'HT'))), 'You have marked 2 squares.');
+assert.equal(describe.markedLine(run('coins-build', ...toggles('HH'))), 'You have marked 1 square.');
+assert.deepEqual(describe.readoutLines(run('coins-build', ...toggles('HH', 'HT', 'TH'))), []);
+
+// Check feedback, word for word.
+const passed = run('coins-build', ...toggles('HH', 'HT', 'TH'), { type: 'check' });
+assert.equal(describe.feedbackLine(passed), 'Yes: HH, HT and TH. 3 of 4 squares, so P(A) = 3/4 = 0.75.');
+assert.deepEqual(describe.readoutLines(passed), ['A = {HH, HT, TH}. 3 of 4 outcomes. P(A) = 3/4 = 0.75.']);
+const mirrorMiss = run('coins-build', ...toggles('HH', 'HT'), { type: 'check' });
+assert.equal(describe.feedbackLine(mirrorMiss), 'Not yet. You have HT but not TH. First coin tails, second coin heads is a different way to land from first coin heads, second coin tails.');
+assert.equal(describe.missedOutcome(mirrorMiss), 'TH');
+assert.equal(describe.feedbackLine(run('coins-build', ...toggles('HH', 'HT', 'TH', 'TT'), { type: 'check' })), 'TT has no head; remove it.');
+assert.equal(describe.feedbackLine(run('coins-build', ...toggles('TT'), { type: 'check' })), "You have 0 of the squares A needs, and 1 that don't belong.");
+assert.equal(describe.cellName(passed, coinsOutcome('HT')), 'HT. First coin heads, second coin tails. In A.');
+
+// presets locked before Check: a refused action returns the same state object.
+assert.equal(isLocked(fresh), true);
+assert.equal(reducer(fresh, { type: 'preset', event: 'A', preset: 'at-least-one-head' }), fresh);
+assert.equal(isLocked(passed), false);
+
+// reset relocks a goal setup.
+const afterReset = reducer(passed, { type: 'reset' });
+assert.equal(isLocked(afterReset), true);
+assert.equal(afterReset.feedback, null);
+assert.equal(afterReset.events.A.size, 0);
+
+// show answer needs two failed checks.
+const oneFail = run('coins-build', ...toggles('TT'), { type: 'check' });
+assert.equal(reducer(oneFail, { type: 'show-answer' }), oneFail);
+const shown = run('coins-build', ...toggles('TT'), { type: 'check' }, { type: 'check' }, { type: 'show-answer' });
+assert.equal(shown.checked, true);
+assert.deepEqual([...shown.events.A], ['HH', 'HT', 'TH']);
+
+// editing B leaves A alone.
+const operations = initialState('dice-operations');
+const editedB = run('dice-operations', { type: 'edit', event: 'B' }, { type: 'toggle', id: '1-1' }, { type: 'preset', event: 'B', preset: 'second-6' });
+assert.deepEqual([...editedB.events.A], [...operations.events.A]);
+assert.equal(editedB.events.A.size, 6);
+assert.deepEqual(describe.readoutLines(operations), [
+	'A = sum is 7: 6 of 36 = 1/6 (0.17)',
+	'B = first die is 6: 6 of 36 = 1/6 (0.17)',
+	'not A: 30 of 36',
+	'A and B = {(6,1)}: 1 of 36',
+	'A or B: 6 + 6 − 1 = 11 of 36 = 0.31',
+]);
+assert.equal(describe.statusLine(operations), '36 equally likely outcomes. Editing A.');
+
+// pour refusals keep the weights and say why.
+const pourFresh = initialState('die-pour');
+const refusedIn = reducer(pourFresh, { type: 'pour', id: '3', direction: 1 });
+assert.deepEqual(refusedIn.weights, pourFresh.weights);
+assert.equal(refusedIn.refusal.reason, 'jug-empty');
+assert.equal(describe.refusalText('jug-empty'), 'The jug is empty.');
+assert.equal(describe.refusalText('cup-empty'), "A cup can't hold less than nothing.");
+const startedOver = reducer(pourFresh, { type: 'weight-preset', name: 'Start over' });
+assert.equal(reducer(startedOver, { type: 'pour', id: '3', direction: -1 }).refusal.reason, 'cup-empty');
+assert.equal(describe.totalLine(pourFresh), 'All 12 units poured: the cups add up to 1.');
+const eightPoured = run('die-pour', ...['1', '2', '3', '4'].map((id) => ({ type: 'pour', id, direction: -1 })));
+assert.equal(describe.totalLine(eightPoured), "8 of 12 units poured. The cups add up to 8/12, not 1, so this isn't a probability yet.");
+assert.equal(describe.jugLine(eightPoured), 'Jug: 4 of 12 units left.');
+assert.equal(describe.additivityLine(pourFresh), 'P(even) = 2/12 + 2/12 + 2/12 = 6/12 = 0.50.');
 
 console.log('Board check passed.');
