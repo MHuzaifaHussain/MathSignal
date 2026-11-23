@@ -51,6 +51,9 @@ export const palette = {
 		codeComment: '#464236',
 		codeLineNumber: '#5f6d69',
 		codeBorder: '#d5dbd9',
+		// Highlighted lines ({4-5} in a fence): a pale highlighter band with an ochre edge
+		codeMarkBg: '#f5ebc1',
+		codeMarkEdge: '#8a5a00',
 	},
 	dark: {
 		page: '#171b1a',
@@ -87,6 +90,9 @@ export const palette = {
 		codeComment: '#ac9879',
 		codeLineNumber: '#8b9692',
 		codeBorder: '#323a38',
+		// Dark mode marks lines with the yellow edge only: any visible band pushes dark tokens under 5.5:1
+		codeMarkBg: '#1f2423',
+		codeMarkEdge: '#f3d36b',
 	},
 };
 
@@ -127,6 +133,14 @@ export const contrastRules = [
 	['codeLineNumber', 'codeBg', 'text'],
 	['mu', 'codeBg', 'text'],
 	['sigma', 'codeBg', 'text'],
+	['codeInk', 'codeMarkBg', 'code'],
+	['codeKeyword', 'codeMarkBg', 'code'],
+	['codeString', 'codeMarkBg', 'code'],
+	['codeNumber', 'codeMarkBg', 'code'],
+	['codeComment', 'codeMarkBg', 'code'],
+	['mu', 'codeMarkBg', 'text'],
+	['sigma', 'codeMarkBg', 'text'],
+	['codeMarkEdge', 'codeBg', 'graphic'],
 ];
 
 // Code colours must never be mistaken for a meaning colour, including under colour blindness.

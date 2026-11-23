@@ -33,15 +33,7 @@ export default defineConfig({
 				Header: './src/components/overrides/Header.astro',
 				Sidebar: './src/components/overrides/Sidebar.astro',
 			},
-			expressiveCode: {
-				themes: ['dracula', 'github-light'],
-				useStarlightDarkModeSwitch: true,
-				useStarlightUiThemeColors: true,
-				styleOverrides: {
-					borderRadius: '0.5rem',
-					codeFontSize: '0.875rem',
-				},
-			},
+			// Expressive Code is configured in ec.config.mjs.
 			social: [
 				{
 					icon: 'github',

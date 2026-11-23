@@ -35,6 +35,8 @@
 	--ms-code-comment: #ac9879;
 	--ms-code-line-number: #8b9692;
 	--ms-code-border: #323a38;
+	--ms-code-mark-bg: #1f2423;
+	--ms-code-mark-edge: #f3d36b;
 }
 
 :root[data-theme='light'] {
@@ -68,6 +70,8 @@
 	--ms-code-comment: #464236;
 	--ms-code-line-number: #5f6d69;
 	--ms-code-border: #d5dbd9;
+	--ms-code-mark-bg: #f5ebc1;
+	--ms-code-mark-edge: #8a5a00;
 }
 
 /* Print always uses the light theme: dark boards and pages waste ink and print badly. */
@@ -104,5 +108,7 @@
 		--ms-code-comment: #464236;
 		--ms-code-line-number: #5f6d69;
 		--ms-code-border: #d5dbd9;
+		--ms-code-mark-bg: #f5ebc1;
+		--ms-code-mark-edge: #8a5a00;
 	}
 }

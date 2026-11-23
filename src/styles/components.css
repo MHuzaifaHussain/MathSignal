@@ -160,3 +160,35 @@
 .ms-board .MafsView .mafs-movable-point-focus {
 	stroke: var(--ms-attention);
 }
+
+/* ── Meaning markers in code (src/design/ec-meaning-markers.mjs) ──
+   Bold is reserved for these markers; the ring carries emphasis, the fill stays faint for legibility. */
+.expressive-code .ms-code-marker {
+	--ms-code-marker-fill: 16%;
+	font-weight: 700;
+	border-radius: 3px;
+}
+
+:root[data-theme='light'] .expressive-code .ms-code-marker {
+	--ms-code-marker-fill: 6%;
+}
+
+.expressive-code .ms-code-marker.ms-mu,
+.expressive-code .ec-line .ms-code-marker.ms-mu span {
+	color: var(--ms-mu);
+}
+
+.expressive-code .ms-code-marker.ms-sigma,
+.expressive-code .ec-line .ms-code-marker.ms-sigma span {
+	color: var(--ms-sigma);
+}
+
+.expressive-code .ms-code-marker.ms-mu {
+	background-color: color-mix(in srgb, var(--ms-mu) var(--ms-code-marker-fill), transparent);
+	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ms-mu) 55%, transparent);
+}
+
+.expressive-code .ms-code-marker.ms-sigma {
+	background-color: color-mix(in srgb, var(--ms-sigma) var(--ms-code-marker-fill), transparent);
+	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ms-sigma) 55%, transparent);
+}
