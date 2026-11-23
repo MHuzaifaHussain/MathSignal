@@ -23,6 +23,8 @@ function gaussian(x: number, mu: number, sigma: number): number {
 }
 
 const clamp = (value: number, [min, max]: vec.Vector2) => Math.min(max, Math.max(min, value));
+/** Tick labels at the very edge of the view get cut in half by the plot's frame, so they are left out. */
+const edgeSafeLabel = (x: number) => (Math.abs(x) >= VIEW_X[1] ? "" : formatNumber(x, 0));
 /** The σ handle sits on whichever side of μ has more room, so it never leaves the board. */
 const sigmaSide = (mu: number) => (mu > 0 ? -1 : 1);
 /**
@@ -124,7 +126,7 @@ export default function NormalDistribution() {
         pan={false}
         zoom={false}
       >
-        <Coordinates.Cartesian xAxis={{ lines: 1 }} yAxis={false} />
+        <Coordinates.Cartesian xAxis={{ lines: 1, labels: edgeSafeLabel }} yAxis={false} />
 
         <Plot.Inequality y={{ "<": curve, ">": () => 0 }} color={plotColors.mu} fillOpacity={0.12} strokeOpacity={0} />
         <Plot.OfX y={curve} color={plotColors.mu} weight={2.5} />
