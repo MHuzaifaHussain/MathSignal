@@ -112,6 +112,7 @@ export const REFERENCES = [
 		title: 'Foundations of the theory of probability',
 		venue: 'Chelsea Publishing Company',
 		url: 'https://archive.org/details/foundationsofthe00kolm',
+		note: 'English translation edited by Nathan Morrison. Chapter I, §1: Axioms I–V; Chapter II, §1: Axiom VI (continuity) and its equivalence, given Axioms I–V, to countable (complete) additivity.',
 		checked: '2026-11-24',
 	},
 	{
@@ -149,6 +150,7 @@ export const REFERENCES = [
 		authors: ['Christian Szegedy', 'Vincent Vanhoucke', 'Sergey Ioffe', 'Jonathon Shlens', 'Zbigniew Wojna'],
 		year: 2015,
 		title: 'Rethinking the Inception architecture for computer vision',
+		venue: 'IEEE Conference on Computer Vision and Pattern Recognition (CVPR 2016)',
 		url: 'https://arxiv.org/abs/1512.00567',
 		note: 'Section 7: label smoothing.',
 		checked: '2026-11-24',
