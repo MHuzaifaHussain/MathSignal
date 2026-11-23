@@ -16,7 +16,7 @@ takeaways:
   - An event is a set of outcomes. A single outcome is one point; an event can hold none, some or all of them.
   - Two coins have four outcomes, HH, HT, TH and TT, so at least one head has probability 3/4, not 2/3.
   - Counting gives a probability, |A| divided by |Ω|, only when every outcome is equally likely.
-  - On a finite sample space we can, and usually do, treat every subset as an event. On infinite ones, probability is defined on a chosen collection of events 𝓕.
+  - On a finite or countable sample space every subset can be an event. On an uncountable one, such as the points of [0, 1], probability is defined on a chosen collection of events 𝓕.
 references:
   - grinstead2003
   - kolmogorov1950
@@ -109,7 +109,7 @@ This mistake has a long history. Grinstead and Snell note that d'Alembert, in th
 
 An outcome is one result; an event is a group of outcomes, chosen because it answers a question. "At least one head" is the event made of HH, HT and TH. An event happens when the outcome that actually turns up is one of its members.
 
-The smallest events are the empty event, which holds no outcomes and never happens, and the single outcomes on their own. The largest is the whole sample space, which always happens. With four outcomes there are 16 possible events, from the empty one to all four.
+The smallest event is the empty event, which holds no outcomes and never happens. The smallest nonempty events are the single outcomes on their own. The largest is the whole sample space, which always happens. With four outcomes there are 16 possible events, from the empty one to all four.
 
 <Simpler label="the same idea with one die">
 
@@ -153,13 +153,15 @@ $$
 P(A) = \frac{|A|}{|\Omega|}.
 $$
 
-Boundary cases: the empty set $\emptyset$ and the whole space $\Omega$ are both events, with $P(\emptyset) = 0$ and $P(\Omega) = 1$. An empty sample space is excluded, since some outcome must occur and $|\Omega|$ would be 0. On an infinite sample space $\mathcal{F}$ cannot always be all subsets; see the fold below.
+Boundary cases: the empty set $\emptyset$ and the whole space $\Omega$ are both events, with $P(\emptyset) = 0$ and $P(\Omega) = 1$. An empty sample space is excluded, since some outcome must occur and $|\Omega|$ would be 0. On finite and countable sample spaces every subset can be an event <Cite id="grinstead2003" />. On an uncountable sample space, such as $[0, 1)$, $\mathcal{F}$ cannot always be all subsets; see the fold below.
 
 </PreciseStatement>
 
-<GoDeeper label="why infinite sample spaces need a collection of events" id="non-measurable-sets">
+<GoDeeper label="why uncountable sample spaces need a collection of events" id="non-measurable-sets">
 
-Pick a point uniformly at random from $[0, 1]$. The natural probability of an interval is its length, and lengths should add up over countably many disjoint pieces and not change when a set is shifted. Using the axiom of choice, one can build a subset of $[0, 1]$ to which no such length can be given: assigning it any value contradicts countable additivity and shift invariance together <Cite id="tao2011" />. So on spaces like $[0, 1]$, probabilities are assigned only to the sets in a chosen collection $\mathcal{F}$, which contains $\Omega$ and is closed under complements and countable unions. This is the shape of Kolmogorov's axiomatic framework: outcomes, a collection of events, and a probability on those events <Cite id="kolmogorov1950" />. On a finite space none of this bites, and we can take $\mathcal{F}$ to be every subset.
+Pick a point uniformly at random from $[0, 1)$, and shift sets by wrapping around: shifting $x$ by $t$ gives $x + t$, minus 1 if that reaches 1. We would like a probability on every subset of $[0, 1)$ that gives each interval its length, adds up over countably many disjoint pieces, and doesn't change when a set is shifted. No such probability exists. Using the axiom of choice, one can build a set $V$ whose shifts by the rational numbers in $[0, 1)$ are disjoint and together cover $[0, 1)$, and there are only countably many of those shifts. Every shift would get the same probability as $V$, so countable additivity would make the total 0 if that probability is 0, or infinite if it is positive, and never 1. Tao gives the same argument with ordinary shifts on the line <Cite id="tao2011" />.
+
+So on spaces like $[0, 1)$, probabilities are assigned only to the sets in a chosen collection $\mathcal{F}$, which contains $\Omega$ and is closed under complements and countable unions. This is the shape of Kolmogorov's axiomatic framework: outcomes, a collection of events, and a probability on those events <Cite id="kolmogorov1950" />. On a finite or countable space none of this bites, and we can take $\mathcal{F}$ to be every subset.
 
 </GoDeeper>
 
@@ -173,14 +175,15 @@ Pick a point uniformly at random from $[0, 1]$. The natural probability of an in
 2. Each of these pieces has exactly $|\Omega_2|$ members, one for each choice of second coordinate.
 3. The pieces don't overlap, because a pair has only one first coordinate, and together they cover every pair.
 4. So $|\Omega_1 \times \Omega_2| = \sum_{\omega_1 \in \Omega_1} |\Omega_2| = |\Omega_1|\,|\Omega_2|$. For two coins, $2 \times 2 = 4$; for two dice, $6 \times 6 = 36$.
-5. The pairs are ordered because $(H, T)$ and $(T, H)$ describe different tosses: which coin showed heads differs. Unordered, the two would merge into one item that can happen in two ways, and the three items would no longer be equally likely.
 
 </StepThrough>
+
+The count takes ordered pairs as given. Choosing them is a modeling decision, and it fits two coins because $(H, T)$ and $(T, H)$ describe different tosses: which coin showed heads differs. Unordered, the two would merge into one item that can happen in two ways, and the three items would no longer be equally likely.
 
 <StepThrough title="A sample space with n outcomes has 2ⁿ subsets, so 2ⁿ possible events" rigor="full">
 
 1. A subset is fixed by answering, for each outcome, one yes-or-no question: is it in the subset?
-2. With $|\Omega| = n$ outcomes there are $n$ separate yes-or-no choices, so by the product rule above there are $2 \times 2 \times \dots \times 2 = 2^n$ ways to answer them.
+2. With $|\Omega| = n$ outcomes there are $n$ separate yes-or-no choices, so by the product rule above, applied $n - 1$ times (induction on $n$), there are $2 \times 2 \times \dots \times 2 = 2^n$ ways to answer them.
 3. Different answers give different subsets, and every subset arises this way, so there are exactly $2^n$ subsets. The all-no answer is $\emptyset$ and the all-yes answer is $\Omega$, so both are counted. Taking every subset as an event, as we do on a finite space, gives $2^n$ possible events.
 
 </StepThrough>
@@ -231,13 +234,13 @@ A classifier that sorts images into cat, dog and bird works on the sample space 
 
 ### Next-token prediction
 
-A language model predicts the next token from a vocabulary $V$, which is its sample space: one outcome per token, often tens of thousands of them. Its output is a probability for every $\omega \in V$. Sampling methods work with events. Top-$k$ sampling keeps the event $V_k$ made of the $k$ most likely tokens and samples from it: each kept token $\omega \in V_k$ gets the new probability
+A language model predicts the next token from a vocabulary $V$, which is its sample space: one outcome per token, often tens of thousands of them. Given the text so far, its output $P$ is the model's distribution for the next token, a probability for every $\omega \in V$. Sampling methods work with events. Top-$k$ sampling keeps the event $V_k$ made of the $k$ most likely tokens and samples from it. If several tokens tie at rank $k$, a rule has to decide which of them to keep, and implementations break the tie one way or another. Each kept token $\omega \in V_k$ gets the new probability
 
 $$
 \frac{P(\{\omega\})}{P(V_k)}.
 $$
 
-In words: each kept token's probability is divided by the total probability of the kept tokens, so they add up to 1 again, and every token outside $V_k$ gets probability 0.
+In words: each kept token's probability is divided by the total probability of the kept tokens, so they add up to 1 again, and every token outside $V_k$ gets probability 0. This renormalizing is conditioning on the event $V_k$, which conditional probability, a later topic, makes precise.
 
 ### Test-set accuracy
 
@@ -316,9 +319,9 @@ The simulation's share is within 0.01 of 0.75 and the share of "one of each" is 
 
 <ResearchFrontier reviewed="2026-11-24">
 
-**Why probability is defined on a collection of events.** Kolmogorov built probability on a set of outcomes, a collection of events and a probability on those events <Cite id="kolmogorov1950" />, and this framework is the standard one. The middle piece is there because of [non-measurable sets](#non-measurable-sets), a settled result. Tao notes that without the axiom of choice there are models of set theory in which every subset of the line is measurable <Cite id="tao2011" />, so the construction needs the axiom of choice.
+**Why probability is defined on a collection of events.** Kolmogorov built probability on a set of outcomes, a collection of events and a probability on those events <Cite id="kolmogorov1950" />, and this framework is the standard one. The middle piece is there because of [non-measurable sets](#non-measurable-sets), a settled result.
 
-**Nothing open here.** For finite sample spaces we can take every subset as an event and nothing goes wrong; the subtleties begin only with infinite spaces, such as a point picked from $[0, 1]$, and Kolmogorov's framework above is the standard way to handle them.
+**Nothing open here.** For finite sample spaces we can take every subset as an event and nothing goes wrong; the subtleties begin only with uncountable spaces, such as a point picked from $[0, 1]$, and Kolmogorov's framework above is the standard way to handle them.
 
 </ResearchFrontier>
 

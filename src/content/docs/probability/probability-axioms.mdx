@@ -59,7 +59,7 @@ import EventSpace from "../../../components/react/EventSpace.tsx";
 
 ## In everyday terms
 
-<Analogy breaks="Pouring is a choice, but a real die's probabilities come from the die, not from how you like to pour. The picture shows the rules any probability must follow; it won't tell you the right pour for a given die. And for a measurement such as a height there are so many cups that each single one holds no water at all, yet together they still hold the full jug; the common mistake about probability 0 further down shows how.">
+<Analogy breaks="Pouring is a choice, but a real die's probabilities come from the die, not from how you like to pour. The picture shows the rules any probability must follow; it won't tell you the right pour for a given die. And the cups can't picture a measurement such as a height, where every exact value has probability 0 and only ranges of values, such as 170 to 171 cm, get a positive share.">
 
 Think of everything you believe about one roll of a die as a single jug of water, and set out six cups, one for each face. Pour the whole jug into the cups, as much into each as you think that face deserves. Only three rules matter. No cup can hold less than nothing. All the water ends up in the cups, so together they hold exactly one jug. And the water for a question such as "is it even?" is the water in cups 2, 4 and 6 added up, because no drop sits in two cups at once.
 
@@ -126,7 +126,7 @@ Thirty students each vote for one of three picnic spots. Share of the vote works
 </Simpler>
 
 <SideNote>
-Kolmogorov's 1933 book, translated into English in 1950, stated five axioms: two about the collection of events and three about the probabilities. In the next chapter he added a sixth, continuity, the only axiom specific to infinitely many events <Cite id="kolmogorov1950" />. The three rules here are the usual modern way to write the same system.
+Kolmogorov's 1933 book, translated into English in 1950, stated five axioms. Two are about the collection of events: it is a field of sets, closed under the union, intersection and difference of two of its sets, and it contains the whole sample space. Three are about the probabilities, and they are the three rules here with additivity for two events. In the next chapter he added a sixth, continuity, which together with additivity for two events is the same as additivity for countably many, and he extended $P$ from the field to the smallest collection closed under countable unions <Cite id="kolmogorov1950" />. The modern form puts everything directly on such a collection, called a σ-algebra (see Notation below), so the rules about events become conditions on $\mathcal{F}$ and the three rules about $P$ are all that is left.
 </SideNote>
 
 ## Rules that follow from the three
@@ -169,7 +169,7 @@ A probability space is a triple $(\Omega, \mathcal{F}, P)$. Here $\Omega$ is a n
 
 A collection with the closure properties of $\mathcal{F}$ is called a σ-algebra. The σ in that standard name refers to countable unions and has nothing to do with the standard deviation; this site writes the collection itself as $\mathcal{F}$.
 
-Boundary cases. $P$ gives a value only to events in $\mathcal{F}$. On a finite $\Omega$, a pairwise disjoint sequence has at most $|\Omega|$ nonempty members, so the third axiom reduces to finite additivity, $P(A \cup B) = P(A) + P(B)$ for disjoint $A$ and $B$, and that is all you need. There we usually take $\mathcal{F} = 2^\Omega$, and $P$ is fixed by one weight per outcome, $p(\omega) = P(\{\omega\}) \ge 0$ with $\sum_{\omega \in \Omega} p(\omega) = 1$, through $P(A) = \sum_{\omega \in A} p(\omega)$. Equally likely outcomes are the case $p(\omega) = 1/|\Omega|$, which gives $P(A) = |A|/|\Omega|$.
+Boundary cases. $P$ gives a value only to events in $\mathcal{F}$. On a finite $\Omega$, a pairwise disjoint sequence has at most $|\Omega|$ nonempty members, so the third axiom reduces to finite additivity, $P(A \cup B) = P(A) + P(B)$ for disjoint $A$ and $B$, together with $P(\emptyset) = 0$, proved below. There we usually take $\mathcal{F} = 2^\Omega$, and $P$ is fixed by one weight per outcome, $p(\omega) = P(\{\omega\}) \ge 0$ with $\sum_{\omega \in \Omega} p(\omega) = 1$, through $P(A) = \sum_{\omega \in A} p(\omega)$. Equally likely outcomes are the case $p(\omega) = 1/|\Omega|$, which gives $P(A) = |A|/|\Omega|$.
 
 </PreciseStatement>
 
@@ -177,7 +177,9 @@ Boundary cases. $P$ gives a value only to events in $\mathcal{F}$. On a finite $
 
 Kolmogorov's own fifth axiom was finite additivity: $P(A \cup B) = P(A) + P(B)$ for disjoint $A$ and $B$. For infinite collections of events he added a sixth, continuity: if $A_1 \supseteq A_2 \supseteq \cdots$ and $\bigcap_n A_n = \emptyset$, then $P(A_n) \to 0$. He showed that the two together are equivalent to countable additivity, that continuity follows from the other axioms when there are only finitely many events, and he called infinite probability fields idealized models of real random processes <Cite id="kolmogorov1950" />.
 
-What countable additivity rules out shows up in a natural-sounding experiment: pick a whole number $1, 2, 3, \ldots$ "uniformly at random". Fairness means every number gets the same probability $p$. Countable additivity then gives $P(\Omega) = \sum_{n=1}^{\infty} p$, which is $0$ if $p = 0$ and infinite if $p > 0$, never $1$. So there is no uniform probability on a countably infinite sample space <Cite id="grinstead2003" />. With finite additivity alone the argument stops halfway: $P(\{1, \ldots, n\}) = np \le 1$ for every $n$ forces $p = 0$, but nothing then forces $P(\Omega)$ to be $0$. So this argument does not rule out a "fair lottery" on the whole numbers under finite additivity alone; countable additivity does.
+What countable additivity buys is continuity. If $A_1 \subseteq A_2 \subseteq \cdots$, then $P\big(\bigcup_n A_n\big) = \lim_{n \to \infty} P(A_n)$: the union splits into the disjoint pieces $A_1, A_2 \setminus A_1, A_3 \setminus A_2, \ldots$, and the first $n$ of them add up to $P(A_n)$. For example, toss a fair coin forever. The event "heads within the first $n$ tosses" grows with $n$ and has probability $1 - 2^{-n}$, and the union of these events is "heads eventually". So $P(\text{heads eventually}) = \lim_{n \to \infty} (1 - 2^{-n}) = 1$.
+
+What countable additivity rules out shows up in a natural-sounding experiment: pick a whole number $1, 2, 3, \ldots$ "uniformly at random". Fairness means every number gets the same probability $c$, which needs every single number $\{n\}$ to be an event. Countable additivity then gives $P(\Omega) = \sum_{n=1}^{\infty} c$, which is $0$ if $c = 0$ and infinite if $c > 0$, never $1$. So there is no uniform probability on a countably infinite sample space <Cite id="grinstead2003" />. With finite additivity alone the argument stops halfway: $P(\{1, \ldots, n\}) = nc \le 1$ for every $n$ forces $c = 0$, but nothing then forces $P(\Omega)$ to be $0$. So this argument does not rule out a "fair lottery" on the whole numbers under finite additivity alone; countable additivity does.
 
 </GoDeeper>
 
@@ -276,7 +278,7 @@ Each $e^{z_k}$ is positive, so every $p_k > 0$ and axiom 1 holds; dividing by th
 
 ### One sigmoid per label
 
-A multi-label model, which may tag one image as both "outdoor" and "dog", uses one sigmoid per label instead, $\operatorname{sigmoid}(z_k) = 1/(1 + e^{-z_k})$. Each output lies between 0 and 1 and is the probability of a separate yes-or-no event, "label $k$ applies", on its own two-outcome sample space with $P(\text{yes}) = \operatorname{sigmoid}(z_k)$ and $P(\text{no}) = 1 - \operatorname{sigmoid}(z_k)$. Those are fine probabilities: a sigmoid output unit is how a network gives one binary variable a valid probability <Cite id="goodfellow2016" />. But the labels are not disjoint outcomes of one experiment, so the outputs need not add up to 1: the same logits $(2, 1, 0)$ give $(0.881, 0.731, 0.5)$, which add up to about $2.11$. Reading them as one distribution over the labels breaks axiom 2.
+A multi-label model, which may tag one image as both "outdoor" and "dog", uses one sigmoid per label instead, $\operatorname{sigmoid}(z_k) = 1/(1 + e^{-z_k})$. Each output lies between 0 and 1 and is the probability of a separate yes-or-no event, "label $k$ applies", on its own two-outcome sample space with $P(\text{yes}) = \operatorname{sigmoid}(z_k)$ and $P(\text{no}) = 1 - \operatorname{sigmoid}(z_k)$. Those are fine probabilities: a sigmoid output unit is how a network gives one binary variable a valid probability <Cite id="goodfellow2016" />. But the labels are not disjoint outcomes of one experiment, so the outputs need not add up to 1: the same logits $(2, 1, 0)$ give $(0.881, 0.731, 0.5)$, which add up to about $2.11$. Reading them as one distribution over the labels breaks axiom 2. Taken together, and assuming the labels are independent given the input, the $K$ sigmoids do define one distribution: over the $2^K$ possible sets of labels, the product space of $K$ yes-or-no experiments from [sample spaces and events](/probability/sample-spaces-and-events/).
 
 ### Normalizing scores
 
@@ -290,7 +292,7 @@ $$
 \tilde{y}_k = (1 - \epsilon)\, y_k + \frac{\epsilon}{K},
 $$
 
-where $y$ is the one-hot label. Every entry is non-negative, and the total is $(1 - \epsilon) \cdot 1 + K \cdot \epsilon / K = 1$, so the target is still a distribution. With $K = 3$ and $\epsilon = 0.1$, the label $(1, 0, 0)$ becomes $(14/15, 1/30, 1/30)$. Another common form spreads $\epsilon$ over the $K - 1$ wrong classes only; it also adds up to 1.
+where $y$ is the one-hot label. Every entry is non-negative, and the total is $(1 - \epsilon) \cdot 1 + K \cdot \epsilon / K = 1$, so the target is still a distribution. With $K = 3$ and $\epsilon = 0.1$, the label $(1, 0, 0)$ becomes $(14/15, 1/30, 1/30)$.
 
 ### Why cross-entropy needs outputs that add up to 1
 
@@ -300,7 +302,7 @@ $$
 L = -\sum_{k=1}^{K} y_k \log p_k,
 $$
 
-which for a one-hot label of class $c$ is $-\log p_c$. The loss only rewards the right thing because the $p_k$ must add up to 1: raising the probability of the true class has to take probability away from the others. Without axiom 2, a model that outputs 1 for every class would score a perfect loss of $0$ on every example while having learned nothing. The softmax above gives the label $(1, 0, 0)$ a loss of $-\log 0.665 \approx 0.408$.
+which for a one-hot label of class $c$ is $-\log p_c$. The loss only rewards the right thing because the $p_k$ must add up to 1: raising the probability of the true class has to take probability away from the others. Without axiom 2, a model that outputs 1 for every class would score a perfect loss of $0$ on every example while having learned nothing. With it, if the true label is drawn from a distribution $q$, the expected loss $-\sum_k q_k \log p_k$ is smallest, among all distributions $p$, exactly at $p = q$, so the loss rewards honest probabilities; that guarantee needs the outputs to sum to 1. The softmax above gives the label $(1, 0, 0)$ a loss of $-\log 0.665 \approx 0.408$.
 
 ## Check the axioms in code
 
@@ -446,7 +448,7 @@ The loop over all pairs of events checks inclusion–exclusion on every one of t
 
 <ResearchFrontier reviewed="2026-11-24">
 
-**Why countable additivity became standard.** Kolmogorov adopted continuity, and with it the third axiom ([countable additivity](#countable-additivity)), because it had proved convenient in very different kinds of research <Cite id="kolmogorov1950" />. Measure theory kept it, at the price that $P$ is defined only on a collection $\mathcal{F}$, because of [subsets of the unit interval that no length can measure](/probability/sample-spaces-and-events/#non-measurable-sets).
+**Why countable additivity became standard.** Kolmogorov adopted continuity, and with it the third axiom ([countable additivity](#countable-additivity)), because it had proved convenient in very different kinds of research <Cite id="kolmogorov1950" />. Measure theory kept it, at the price that on uncountable sample spaces $P$ is defined only on a collection $\mathcal{F}$, because of [subsets of the unit interval that no length can measure](/probability/sample-spaces-and-events/#non-measurable-sets).
 
 **Finite spaces.** Everything derived above is settled. On finite sample spaces, which cover dice, coins and a classifier's labels, finite and countable additivity coincide, and every rule on this page follows from the three axioms.
 
@@ -483,7 +485,7 @@ Inclusion–exclusion gives $P(A \cap B) = P(A) + P(B) - P(A \cup B)$. Since $A 
     If $A$ and $B$ are disjoint and both have positive probability, they are dependent: learning that $A$ happened tells you $B$ did not. Sum is 7 and a double are disjoint, so $P(A \cap D) = 0$, while $P(A)\,P(D) = 1/6 \times 1/6 = 1/36$. Independence gets its own page later in this subject.
   </Mistake>
   <Mistake wrong="An event with probability 0 is impossible.">
-    On a finite space where every outcome has a positive weight, as with fair dice, yes: only $\emptyset$ has probability 0. In general, no. Pick a point uniformly from $[0, 1]$: any single point $x$ lies in an interval of length $2\epsilon$ around it, so monotonicity gives $P(\{x\}) \le 2\epsilon$ for every $\epsilon > 0$, and $P(\{x\}) = 0$. Yet some point is always picked. This is how densities such as the [normal distribution](/statistics/normal-distribution/) work.
+    On a finite space where every outcome has a positive weight, as with fair dice, yes: only $\emptyset$ has probability 0. In general, no. Even on a finite space a cup can hold 0 units: with cups 3, 3, 3, 3, 0 and 0, "the die shows 6" has probability 0 but is still an outcome of the sample space. And pick a point uniformly from $[0, 1]$: any single point $x$ lies in an interval of length $2\delta$ around it, so monotonicity gives $P(\{x\}) \le 2\delta$ for every $\delta > 0$, and $P(\{x\}) = 0$. Yet some point is always picked. That is no contradiction. Writing $1 = \sum_x P(\{x\}) = 0$ would need additivity over every point, but $[0, 1]$ has uncountably many points and additivity covers only countably many events. This is how densities such as the [normal distribution](/statistics/normal-distribution/) work.
   </Mistake>
 </CommonMistakes>
 
