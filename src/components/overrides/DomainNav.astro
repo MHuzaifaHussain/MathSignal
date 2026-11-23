@@ -23,6 +23,7 @@ if (!domains) {
 					) : (
 						<span class="upcoming">
 							{domain.label}
+							<span class="soon" aria-hidden="true">soon</span>
 							<span class="sr-only"> (coming soon)</span>
 						</span>
 					)}
@@ -56,6 +57,14 @@ if (!domains) {
 	.domain-nav .upcoming {
 		color: var(--ms-ink-muted);
 		cursor: default;
+	}
+
+	/* Not shown by colour alone (WCAG 1.4.1): an explicit, quiet "soon" */
+	.soon {
+		margin-inline-start: 0.375rem;
+		font-size: 0.75rem;
+		font-style: italic;
+		color: var(--ms-ink-muted);
 	}
 
 	.domain-nav a:hover {
