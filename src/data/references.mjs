@@ -105,6 +105,35 @@ export const REFERENCES = [
 		note: 'Section 6.5, the Gaussian distribution.',
 		checked: '2026-11-23',
 	},
+	{
+		id: 'kolmogorov1950',
+		authors: ['A. N. Kolmogorov'],
+		year: 1950,
+		title: 'Foundations of the theory of probability',
+		venue: 'Chelsea Publishing Company',
+		url: 'https://archive.org/details/foundationsofthe00kolm',
+		checked: '2026-11-24',
+	},
+	{
+		id: 'grinstead2003',
+		authors: ['Charles M. Grinstead', 'J. Laurie Snell'],
+		year: 2003,
+		title: 'Introduction to probability',
+		venue: 'American Mathematical Society, 2nd edition',
+		url: 'https://math.dartmouth.edu/~prob/prob/prob.pdf',
+		note: 'Section 1.2: sample spaces, outcomes, events, set operations and the basic rules of probability. Free version from the Dartmouth Chance Project.',
+		checked: '2026-11-24',
+	},
+	{
+		id: 'tao2011',
+		authors: ['Terence Tao'],
+		year: 2011,
+		title: 'An introduction to measure theory',
+		venue: 'American Mathematical Society',
+		url: 'https://terrytao.wordpress.com/books/an-introduction-to-measure-theory/',
+		note: 'Section 1.2.3: a subset of [0, 1] that is not Lebesgue measurable, built with the axiom of choice.',
+		checked: '2026-11-24',
+	},
 ];
 
 const BY_ID = new Map(REFERENCES.map((reference) => [reference.id, reference]));

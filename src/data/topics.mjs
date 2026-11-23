@@ -7,12 +7,30 @@
 /** @type {Topic[]} */
 export const TOPICS = [
 	{
+		id: 'probability/sample-spaces-and-events',
+		title: 'Sample spaces and events',
+		description: 'Listing everything that could happen, and naming the groups of outcomes we care about.',
+		recap: 'A sample space is the set of all possible outcomes of a random experiment. An event is any group of those outcomes, such as "the die shows an even number".',
+		status: 'planned',
+		prerequisites: [],
+		leadsTo: ['probability/probability-axioms'],
+	},
+	{
+		id: 'probability/probability-axioms',
+		title: 'Probability axioms',
+		description: 'The three rules every probability must obey, and what follows from them.',
+		recap: 'Probabilities are never negative, the whole sample space has probability 1, and the probabilities of events that cannot happen together add up.',
+		status: 'planned',
+		prerequisites: ['probability/sample-spaces-and-events'],
+		leadsTo: ['probability/random-variables-and-distributions'],
+	},
+	{
 		id: 'probability/random-variables-and-distributions',
 		title: 'Random variables and distributions',
 		description: 'Numbers that come out of chance, and the rules that say how likely each value is.',
 		recap: 'A random variable is a number decided by chance, such as a height or a dice roll. Its distribution says how likely each value, or range of values, is.',
 		status: 'planned',
-		prerequisites: [],
+		prerequisites: ['probability/probability-axioms'],
 		leadsTo: ['statistics/normal-distribution'],
 	},
 	{

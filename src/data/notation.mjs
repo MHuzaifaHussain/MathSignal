@@ -20,6 +20,22 @@ export const NOTATION = [
 	{ key: 'z', tex: 'z', say: '"z"', meaning: 'A z-score: how many standard deviations a value sits from the mean' },
 	{ key: 'expectation', tex: '\\mathbb{E}[X]', say: '"the expected value of X"', meaning: 'The long-run average of X' },
 	{ key: 'variance', tex: '\\operatorname{Var}[X]', say: '"the variance of X"', meaning: 'The expected squared distance of X from its mean' },
+	{ key: 'sample-space', tex: '\\Omega', say: '"Omega"', meaning: 'The sample space: the set of all possible outcomes' },
+	{ key: 'outcome', tex: '\\omega', say: '"omega"', meaning: 'An outcome: one single result of the experiment' },
+	{ key: 'event', tex: 'A \\subseteq \\Omega', say: '"A is a subset of Omega"', meaning: 'An event: a group of outcomes we care about' },
+	{ key: 'complement', tex: 'A^\\complement', say: '"A complement" or "not A"', meaning: 'The event that A does not happen' },
+	{ key: 'intersection', tex: 'A \\cap B', say: '"A and B" or "A intersect B"', meaning: 'The event that both A and B happen' },
+	{ key: 'union', tex: 'A \\cup B', say: '"A or B" or "A union B"', meaning: 'The event that A happens, B happens, or both' },
+	{ key: 'empty-set', tex: '\\emptyset', say: '"the empty set"', meaning: 'The event with no outcomes, which can never happen' },
+	{ key: 'probability', tex: 'P(A)', say: '"the probability of A"', meaning: 'How likely the event A is, from 0 to 1' },
+	{ key: 'cardinality', tex: '|A|', say: '"the size of A"', meaning: 'The number of outcomes in A' },
+	{
+		key: 'event-collection',
+		tex: '\\mathcal{F}',
+		say: '"script F"',
+		meaning: 'The collection of events we are allowed to ask about',
+		note: 'Written 𝓕 here, not σ, because σ is the standard deviation on this site.',
+	},
 ];
 
 const BY_KEY = new Map(NOTATION.map((entry) => [entry.key, entry]));
