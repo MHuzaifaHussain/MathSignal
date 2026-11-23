@@ -16,7 +16,10 @@
       "Bash(npx astro:*)",
       "Bash(npm run:*)",
       "mcp__plugin_context7_context7__resolve-library-id",
-      "mcp__plugin_context7_context7__query-docs"
+      "mcp__plugin_context7_context7__query-docs",
+      "Bash(find 'D:/My Projects/MathSignal/node_modules/@astrojs/starlight' -type f -name common.astro -o -name *logo*)",
+      "Bash(grep -E \"\\\\.css$\")",
+      "Bash(xargs grep:*)"
     ]
   }
 }
