@@ -70,7 +70,7 @@ Toss two coins, a penny and a dime, and the pile needs more care. "Penny heads, 
 </Analogy>
 
 <WhyThisMatters>
-Every probability a model reports is a probability of some event in some sample space. A classifier spreads its probability over a fixed set of labels, and a language model spreads it over its whole vocabulary of tokens. Test accuracy is how often the event "the prediction is right" happens. So when a model reports 0.9, ask which sample space and which event the 0.9 belongs to. Get those wrong, for example by merging outcomes that should stay separate, and the model's numbers will look precise while being wrong.
+Every probability a model reports is a probability of some event in some sample space. A classifier spreads its probability over a fixed set of labels, and a language model spreads it over its whole vocabulary of tokens. Test accuracy is how often the event "the prediction is right" happens. So when a model reports 0.9, ask which sample space and which event the 0.9 belongs to. Get those wrong, for example by merging outcomes that should stay separate, and the resulting numbers will look precise while being wrong.
 </WhyThisMatters>
 
 ## Count the ways two coins can land
@@ -316,9 +316,9 @@ The simulation's share is within 0.01 of 0.75 and the share of "one of each" is 
 
 <ResearchFrontier reviewed="2026-11-24">
 
-**Why probability is defined on a collection of events.** Kolmogorov built probability on a set of outcomes, a collection of events and a probability on those events <Cite id="kolmogorov1950" />, and this framework is the standard one. The middle piece is there because of [non-measurable sets](#non-measurable-sets), a settled result. Tao also notes that without the axiom of choice there are models of set theory in which every subset of the line is measurable <Cite id="tao2011" />, so the construction needs the axiom of choice.
+**Why probability is defined on a collection of events.** Kolmogorov built probability on a set of outcomes, a collection of events and a probability on those events <Cite id="kolmogorov1950" />, and this framework is the standard one. The middle piece is there because of [non-measurable sets](#non-measurable-sets), a settled result. Tao notes that without the axiom of choice there are models of set theory in which every subset of the line is measurable <Cite id="tao2011" />, so the construction needs the axiom of choice.
 
-**Nothing open here.** No result on this page is an open problem. For finite sample spaces we can take every subset as an event and nothing goes wrong; the subtleties begin only with infinite spaces, such as a point picked from $[0, 1]$, and Kolmogorov's framework above is the standard way to handle them.
+**Nothing open here.** For finite sample spaces we can take every subset as an event and nothing goes wrong; the subtleties begin only with infinite spaces, such as a point picked from $[0, 1]$, and Kolmogorov's framework above is the standard way to handle them.
 
 </ResearchFrontier>
 

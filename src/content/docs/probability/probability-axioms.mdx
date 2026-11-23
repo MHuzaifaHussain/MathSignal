@@ -102,6 +102,7 @@ Each of the three rules shows up as something the board won't do or won't call a
 - **Separate cups add.** The event line always writes the sum out, one term per cup in the event. Six and At most 2 share no cup, so on the loaded die their shares, 7/12 and 2/12, add up to 9/12 for the event made of cups 1, 2 and 6. The board has no preset for that event; the 9/12 is computed here from its two lines.
 
 Under the cups the board keeps one note: "The cups are drawn the same size. The water in them is the probability, not the cup."
+
 ## Three rules for any probability
 
 Every probability follows three rules, called the axioms of probability. Everything else is derived from them.
@@ -439,7 +440,7 @@ print("cross-entropy of the softmax output:", round(cross_entropy(one_hot, softm
 `}
 />
 
-The loop near the end checks inclusion–exclusion on every one of the 64 × 64 = 4,096 pairs of events on the loaded die, including the many pairs the boards never show.
+The loop over all pairs of events checks inclusion–exclusion on every one of the 64 × 64 = 4,096 pairs of events on the loaded die, including the many pairs the boards never show.
 
 ## Research frontier
 
