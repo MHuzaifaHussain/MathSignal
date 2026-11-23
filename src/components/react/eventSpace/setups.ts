@@ -3,7 +3,7 @@
 import { WEIGHT_TOTAL } from './model.ts';
 import { SCENARIOS, type ScenarioId } from './scenarios.ts';
 
-export type SetupId = 'coins-build' | 'dice-count' | 'dice-operations' | 'die-pour';
+export type SetupId = 'coins-build' | 'dice-count' | 'dice-operations' | 'die-pour' | 'dice-condition' | 'kids-condition';
 
 /** The built-in preset that empties an event. */
 export const CLEAR_PRESET = 'clear';
@@ -20,7 +20,8 @@ export interface EventSetup {
 export interface Setup {
 	id: SetupId;
 	scenario: ScenarioId;
-	mode: 'count' | 'weights';
+	/** count: equally likely outcomes. weights: cups poured from a jug. condition: count, plus shrinking the world to B. */
+	mode: 'count' | 'weights' | 'condition';
 	/** The board's accessible name. */
 	label: string;
 	/** On a goal setup the reader marks this event and presses Check before anything else unlocks. */
@@ -80,6 +81,28 @@ const SETUPS: Record<SetupId, Setup> = {
 			'Start over': [0, 0, 0, 0, 0, 0],
 		},
 		initialWeights: 'Fair die',
+	},
+	'dice-condition': {
+		...COUNT_DEFAULTS,
+		id: 'dice-condition',
+		scenario: 'two-dice',
+		mode: 'condition',
+		label: 'The 36 outcomes of rolling two dice, with event A and the event B you can shrink the world to.',
+		events: {
+			A: { editable: true, initial: 'sum-at-least-10', presets: ['sum-at-least-10', CLEAR_PRESET] },
+			B: { editable: true, initial: 'double', presets: ['double', CLEAR_PRESET] },
+		},
+	},
+	'kids-condition': {
+		...COUNT_DEFAULTS,
+		id: 'kids-condition',
+		scenario: 'kids',
+		mode: 'condition',
+		label: 'A class of 12 children, one picked at random. A: wears a scarf. B: wears a hat.',
+		events: {
+			A: { editable: false, initial: 'scarf', presets: [] },
+			B: { editable: false, initial: 'hat', presets: [] },
+		},
 	},
 };
 

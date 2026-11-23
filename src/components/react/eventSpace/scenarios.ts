@@ -10,12 +10,17 @@ export interface EventDefinition {
 	outsideReason?: string;
 }
 
-export type ScenarioId = 'two-coins' | 'one-die' | 'two-dice';
+export type ScenarioId = 'two-coins' | 'one-die' | 'two-dice' | 'kids';
 
 export interface Scenario {
 	id: ScenarioId;
 	/** Phrase for the grid's accessible name, e.g. "two coin tosses". */
 	describeSpace: string;
+	/**
+	 * 'table' (default): rows and columns are the two parts of an outcome and get headers.
+	 * 'list': outcomes are just laid out in rows (a class of children), so there are no headers to read.
+	 */
+	layout?: 'table' | 'list';
 	rowLabel: string;
 	colLabel: string;
 	rowValues: string[];
@@ -117,6 +122,7 @@ function twoDice(): Scenario {
 		events: {
 			'sum-7': { label: 'sum is 7', members: (outcome) => sum(outcome) === 7 },
 			'sum-2': { label: 'sum is 2', members: (outcome) => sum(outcome) === 2 },
+			'sum-at-least-10': { label: 'sum is at least 10', members: (outcome) => sum(outcome) >= 10 },
 			double: { label: 'a double', members: (outcome) => faces(outcome)[0] === faces(outcome)[1] },
 			'first-6': { label: 'first die is 6', members: (outcome) => faces(outcome)[0] === 6 },
 			'second-6': { label: 'second die is 6', members: (outcome) => faces(outcome)[1] === 6 },
@@ -125,6 +131,58 @@ function twoDice(): Scenario {
 			const [first, second] = id.split('-');
 			return first === second ? undefined : `${second}-${first}`;
 		},
+	};
+}
+
+/** What each child in the class wears: 5 hats, 2 of them with a scarf, and 4 scarves in all. */
+const KIDS_WEAR: readonly { hat: boolean; scarf: boolean }[] = [
+	{ hat: true, scarf: false },
+	{ hat: true, scarf: true },
+	{ hat: false, scarf: false },
+	{ hat: false, scarf: true },
+	{ hat: false, scarf: false },
+	{ hat: true, scarf: false },
+	{ hat: true, scarf: true },
+	{ hat: false, scarf: false },
+	{ hat: false, scarf: false },
+	{ hat: true, scarf: false },
+	{ hat: false, scarf: true },
+	{ hat: false, scarf: false },
+];
+const KIDS_PER_ROW = 4;
+
+function wearWords(wear: { hat: boolean; scarf: boolean }): string {
+	if (wear.hat && wear.scarf) return 'hat and scarf';
+	if (wear.hat) return 'hat';
+	if (wear.scarf) return 'scarf';
+	return 'no hat or scarf';
+}
+
+function kids(): Scenario {
+	const outcomes = KIDS_WEAR.map((wear, index) => ({
+		id: `child-${index + 1}`,
+		row: Math.floor(index / KIDS_PER_ROW),
+		col: index % KIDS_PER_ROW,
+		label: String(index + 1),
+		// The label already says the child's number, and the grid's name says these are children.
+		spoken: wearWords(wear),
+	}));
+	const wearOf = (outcome: Outcome) => KIDS_WEAR[Number(outcome.id.slice('child-'.length)) - 1];
+	const rowCount = Math.ceil(KIDS_WEAR.length / KIDS_PER_ROW);
+	return {
+		id: 'kids',
+		describeSpace: 'a class of 12 children, one picked at random',
+		layout: 'list',
+		rowLabel: 'Row',
+		colLabel: 'Seat',
+		rowValues: Array.from({ length: rowCount }, (_, row) => String(row + 1)),
+		colValues: Array.from({ length: KIDS_PER_ROW }, (_, col) => String(col + 1)),
+		outcomes,
+		events: {
+			scarf: { label: 'wears a scarf', members: (outcome) => wearOf(outcome).scarf },
+			hat: { label: 'wears a hat', members: (outcome) => wearOf(outcome).hat },
+		},
+		mirrorOf: () => undefined,
 	};
 }
 
@@ -139,6 +197,7 @@ export const SCENARIOS: Record<ScenarioId, Scenario> = {
 	'two-coins': checked(twoCoins()),
 	'one-die': checked(oneDie()),
 	'two-dice': checked(twoDice()),
+	kids: checked(kids()),
 };
 
 /** The ids of a scenario's named event, in outcome order. */

@@ -96,7 +96,7 @@ A segmented choice for the tray: a fieldset of native radios styled as buttons, 
 Concept boards. Each composes `Board`, Mafs, `plotColors`, and `TraySlider`s.
 
 ### `EventSpace`
-A sample space as a table of outcomes (decision 0011). One prop: `setup`, the id of a configuration in `src/components/react/eventSpace/setups.ts` (`coins-build`, `dice-count`, `dice-operations`, `die-pour`); an unknown id fails the build.
+A sample space as a table of outcomes (decision 0011). One prop: `setup`, the id of a configuration in `src/components/react/eventSpace/setups.ts` (`coins-build`, `dice-count`, `dice-operations`, `die-pour`, `dice-condition`, `kids-condition`); an unknown id fails the build.
 
 ```mdx
 <div class="not-content">
@@ -107,6 +107,7 @@ A sample space as a table of outcomes (decision 0011). One prop: `setup`, the id
 - **Count mode:** readers tap outcomes to build event A (and B on two-event setups); readouts give exact counts and fractions, plus "not A", "A and B" and "A or B". "Look at" mutes the outcomes outside a chosen set.
 - **Goal setups** (`coins-build`): presets and readouts stay locked until the reader passes **Check**, which names the specific mistake (HT marked without TH). "Show the answer" appears after two wrong Checks.
 - **Weights mode** (`die-pour`): six cups poured from a jug of 12 units, for the probability axioms. Impossible pours are refused with a visible reason.
+- **Condition mode** (`dice-condition`, `kids-condition`): a "Shrink the world to B" switch rules out every outcome outside B (muted, struck through, "Ruled out" in its name), and the readout gives P(A | B) beside P(A). The switch is refused while B is empty, with the visible reason "Undefined: B can't happen (probability 0)." `kids-condition` is fixed data (a class of 12 children in a list layout without headers), so its cells can be read but not toggled.
 - All math and copy live in pure modules (`model.ts`, `describe.ts`, `state.ts`) checked by `npm run check:boards`. Try every setup at `/lab/event-space/` in the dev server.
 
 ## Code

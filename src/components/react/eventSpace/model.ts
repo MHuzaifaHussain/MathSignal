@@ -55,6 +55,15 @@ export function probability(event: ReadonlySet<OutcomeId>, all: readonly Outcome
 	return fraction(units, WEIGHT_TOTAL);
 }
 
+/**
+ * P(A | B) in count mode: the share of B's outcomes that are also in A. Null when B is empty, because
+ * conditioning on an event that can't happen is undefined, not zero.
+ */
+export function conditionalProbability(a: ReadonlySet<OutcomeId>, b: ReadonlySet<OutcomeId>): Fraction | null {
+	if (b.size === 0) return null;
+	return fraction(intersect(a, b).size, b.size);
+}
+
 export type GoalResult =
 	| { kind: 'correct' }
 	| { kind: 'missed-mirror'; have: OutcomeId; missing: OutcomeId }

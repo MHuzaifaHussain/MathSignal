@@ -6,10 +6,10 @@ import CupRow from "./eventSpace/CupRow.tsx";
 import OutcomeGrid from "./eventSpace/OutcomeGrid.tsx";
 import WrongModelTiles from "./eventSpace/WrongModelTiles.tsx";
 import { simulate } from "./eventSpace/model.ts";
-import { additivityLine, announcementFor, feedbackLine, jugLine, markedLine, presetLabel, readoutLines, setsLine, statusLine, tossLine, totalLine } from "./eventSpace/describe.ts";
+import { SHRINK_REFUSAL, additivityLine, announcementFor, feedbackLine, jugLine, markedLine, presetLabel, readoutLines, setsLine, statusLine, tossLine, totalLine } from "./eventSpace/describe.ts";
 import { SCENARIOS } from "./eventSpace/scenarios.ts";
 import { getSetup, type SetupId } from "./eventSpace/setups.ts";
-import { CHECKS_BEFORE_ANSWER, initialState, isLocked, reducer, stageAllowed, type Action, type EventKey, type LookAt, type Stage } from "./eventSpace/state.ts";
+import { CHECKS_BEFORE_ANSWER, initialState, isLocked, reducer, shrinkBlocked, stageAllowed, type Action, type EventKey, type LookAt, type Stage } from "./eventSpace/state.ts";
 
 const LOCKED_REASON = "Check your answer first";
 /** Gap between emptying and refilling the live region, so a repeated message is spoken again. */
@@ -46,6 +46,7 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
   const [announcement, setAnnouncement] = useState("");
   const statusId = useId();
   const lockedReasonId = useId();
+  const shrinkReasonId = useId();
   const lastAction = useRef<Action | null>(null);
   const announceTimer = useRef<number | undefined>(undefined);
   const repeatTimer = useRef<number | undefined>(undefined);
@@ -89,6 +90,9 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
   const marked = markedLine(state);
   const readouts = readoutLines(state);
   const eventKeys = (Object.keys(setup.events) as EventKey[]).filter((key) => setup.events[key]);
+  const editableKeys = eventKeys.filter((key) => setup.events[key]?.editable);
+  const presetKeys = eventKeys.filter((key) => (setup.events[key]?.presets.length ?? 0) > 0);
+  const cannotShrink = setup.mode === "condition" && shrinkBlocked(state);
   const tosses = tossLine(state);
   const sets = setsLine(state);
   const stageOptions = STAGE_OPTIONS.filter((option) => stageAllowed(state, option.value));
@@ -126,18 +130,38 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
       {stageOptions.length > 1 && (
         <TrayChoice legend="Show as" options={stageOptions} value={state.stage} onChange={(stage) => send({ type: "stage", stage })} />
       )}
-      {eventKeys.length > 1 && (
+      {editableKeys.length > 1 && (
         <TrayChoice
           legend="Editing"
-          options={eventKeys.map((key) => ({ value: key, label: key }))}
+          options={editableKeys.map((key) => ({ value: key, label: key }))}
           value={state.editing}
           onChange={(event) => send({ type: "edit", event })}
         />
       )}
       {setup.lookAt && <TrayChoice legend="Look at" options={LOOK_AT_OPTIONS} value={state.lookAt} onChange={(lookAt) => send({ type: "look", lookAt })} />}
-      {eventKeys.map((key) => (
+      {presetKeys.map((key) => (
         <div key={key}>{presetButtons(key)}</div>
       ))}
+      {setup.mode === "condition" && (
+        <>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={state.shrink}
+            aria-disabled={cannotShrink || undefined}
+            aria-describedby={cannotShrink ? shrinkReasonId : undefined}
+            className="ms-board-button ms-board-switch"
+            onClick={() => send({ type: "shrink", on: !state.shrink })}
+          >
+            Shrink the world to B
+          </button>
+          {cannotShrink && (
+            <p id={shrinkReasonId} className="ms-event-note-line">
+              {SHRINK_REFUSAL}
+            </p>
+          )}
+        </>
+      )}
       {setup.toss && (
         <button type="button" className="ms-board-button" {...lockable(() => send({ type: "toss", results: simulate(scenario.outcomes, TOSS_BATCH, Math.random) }))}>
           Toss {TOSS_BATCH}
@@ -202,7 +226,13 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
             {showWrongModel ? (
               <WrongModelTiles state={state} scenario={scenario} />
             ) : (
-              <OutcomeGrid state={state} scenario={scenario} describedBy={statusId} onToggle={(id) => send({ type: "toggle", id })} />
+              <OutcomeGrid
+                state={state}
+                scenario={scenario}
+                describedBy={statusId}
+                editable={Boolean(setup.events[state.editing]?.editable)}
+                onToggle={(id) => send({ type: "toggle", id })}
+              />
             )}
           </>
         )}

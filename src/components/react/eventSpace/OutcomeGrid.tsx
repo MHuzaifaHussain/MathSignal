@@ -13,6 +13,8 @@ interface OutcomeGridProps {
   scenario: Scenario;
   /** id of the status line that describes the grid. */
   describedBy: string;
+  /** False when the events are fixed data: cells stay focusable for reading but don't toggle. */
+  editable: boolean;
   onToggle: (id: OutcomeId) => void;
 }
 
@@ -20,7 +22,8 @@ interface OutcomeGridProps {
  * The sample space as a real table: one row per value of the first part, one column per value of the second,
  * one toggle button per outcome. Membership is shown by fill, border and a letter tag, and spoken in the name.
  */
-export default function OutcomeGrid({ state, scenario, describedBy, onToggle }: OutcomeGridProps) {
+export default function OutcomeGrid({ state, scenario, describedBy, editable, onToggle }: OutcomeGridProps) {
+  const isList = scenario.layout === "list";
   const rows = scenario.rowValues.length;
   const cols = scenario.colValues.length;
   const { tabIndexFor, onKeyDown, register, onCellFocus } = useRovingGrid(rows, cols);
@@ -33,32 +36,40 @@ export default function OutcomeGrid({ state, scenario, describedBy, onToggle }: 
   return (
     <>
     {/* Visible key to the axes; the table's accessible name already says this, so it is hidden from screen readers. */}
-    <p className="ms-event-caption" aria-hidden="true">
-      Rows: {scenario.rowLabel.toLowerCase()}. Columns: {scenario.colLabel.toLowerCase()}.
-    </p>
+    {!isList && (
+      <p className="ms-event-caption" aria-hidden="true">
+        Rows: {scenario.rowLabel.toLowerCase()}. Columns: {scenario.colLabel.toLowerCase()}.
+      </p>
+    )}
     <table
       className="ms-event-grid"
       role="grid"
-      aria-multiselectable="true"
-      aria-label={`Outcomes of ${scenario.describeSpace}. Rows: ${scenario.rowLabel.toLowerCase()}. Columns: ${scenario.colLabel.toLowerCase()}.`}
+      aria-multiselectable={editable || undefined}
+      aria-label={
+        isList
+          ? `Outcomes of ${scenario.describeSpace}.`
+          : `Outcomes of ${scenario.describeSpace}. Rows: ${scenario.rowLabel.toLowerCase()}. Columns: ${scenario.colLabel.toLowerCase()}.`
+      }
       aria-describedby={describedBy}
       style={{ "--ms-event-cols": cols } as CSSProperties}
       onKeyDown={onKeyDown}
     >
-      <thead>
-        <tr>
-          <td className="ms-event-corner" />
-          {scenario.colValues.map((value) => (
-            <th key={value} scope="col">
-              {value}
-            </th>
-          ))}
-        </tr>
-      </thead>
+      {!isList && (
+        <thead>
+          <tr>
+            <td className="ms-event-corner" />
+            {scenario.colValues.map((value) => (
+              <th key={value} scope="col">
+                {value}
+              </th>
+            ))}
+          </tr>
+        </thead>
+      )}
       <tbody>
         {scenario.rowValues.map((rowValue, row) => (
           <tr key={rowValue}>
-            <th scope="row">{rowValue}</th>
+            {!isList && <th scope="row">{rowValue}</th>}
             {scenario.outcomes
               .filter((outcome) => outcome.row === row)
               .map((outcome) => {
@@ -78,10 +89,11 @@ export default function OutcomeGrid({ state, scenario, describedBy, onToggle }: 
                       type="button"
                       className={classes}
                       tabIndex={tabIndexFor(outcome.row, outcome.col)}
-                      aria-pressed={editing.has(outcome.id)}
+                      aria-pressed={editable ? editing.has(outcome.id) : undefined}
+                      aria-disabled={editable ? undefined : true}
                       aria-label={cellName(state, outcome)}
                       onFocus={() => onCellFocus(outcome.row, outcome.col)}
-                      onClick={() => onToggle(outcome.id)}
+                      onClick={editable ? () => onToggle(outcome.id) : undefined}
                     >
                       {inA && <span className="ms-event-tag ms-event-tag-a" aria-hidden="true">A</span>}
                       {state.stage === "picture" && scenario.pictureFaces ? (

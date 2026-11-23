@@ -25,6 +25,10 @@ export interface EventSpaceState {
 	tossCount: number;
 	wrongModel: boolean;
 	stage: Stage;
+	/** Condition mode: the world is shrunk to B, so only B's outcomes count. */
+	shrink: boolean;
+	/** Condition mode: the last request to shrink was refused because B is empty. */
+	shrinkRefused: boolean;
 }
 
 export type Action =
@@ -40,7 +44,8 @@ export type Action =
 	/** One batch of tosses; the page runs the random draws so the reducer stays pure. */
 	| { type: 'toss'; results: Readonly<Record<OutcomeId, number>> }
 	| { type: 'wrong-model'; on: boolean }
-	| { type: 'stage'; stage: Stage };
+	| { type: 'stage'; stage: Stage }
+	| { type: 'shrink'; on: boolean };
 
 /** Wrong Checks before the "Show the answer" button appears. */
 export const CHECKS_BEFORE_ANSWER = 2;
@@ -82,7 +87,14 @@ export function initialState(setupId: SetupId): EventSpaceState {
 		tossCount: 0,
 		wrongModel: false,
 		stage: 'letters',
+		shrink: false,
+		shrinkRefused: false,
 	};
+}
+
+/** Shrinking to B is refused while B is empty: P(A | B) is undefined when B can't happen. */
+export function shrinkBlocked(state: EventSpaceState): boolean {
+	return state.events.B.size === 0;
 }
 
 /** On a goal setup, presets, readouts and tosses stay locked until the reader passes Check. */
@@ -106,7 +118,9 @@ export function pourBlocked(state: EventSpaceState, id: OutcomeId, direction: 1 
 
 function withEvent(state: EventSpaceState, key: EventKey, members: ReadonlySet<OutcomeId>): EventSpaceState {
 	// Any change to an event clears Check's feedback: a stale "Not yet" misleads, and a stale "Yes" would approve a wrong event.
-	return { ...state, events: { ...state.events, [key]: members }, feedback: null, refusal: null };
+	const next = { ...state, events: { ...state.events, [key]: members }, feedback: null, refusal: null, shrinkRefused: false };
+	// Emptying B while the world is shrunk to it leaves nothing to condition on, so the shrink is undone and says why.
+	return next.shrink && shrinkBlocked(next) ? { ...next, shrink: false, shrinkRefused: true } : next;
 }
 
 function toggled(members: ReadonlySet<OutcomeId>, id: OutcomeId): ReadonlySet<OutcomeId> {
@@ -122,7 +136,7 @@ export function reducer(state: EventSpaceState, action: Action): EventSpaceState
 	switch (action.type) {
 		case 'toggle': {
 			const event = setup.events[state.editing];
-			if (setup.mode !== 'count' || !event?.editable || !scenario.outcomes.some((outcome) => outcome.id === action.id)) return state;
+			if (setup.mode === 'weights' || !event?.editable || !scenario.outcomes.some((outcome) => outcome.id === action.id)) return state;
 			return withEvent(state, state.editing, toggled(state.events[state.editing], action.id));
 		}
 		case 'preset': {
@@ -166,6 +180,11 @@ export function reducer(state: EventSpaceState, action: Action): EventSpaceState
 			return setup.wrongModel && scenario.wrongModel && !isLocked(state) ? { ...state, wrongModel: action.on } : state;
 		case 'stage':
 			return stageAllowed(state, action.stage) ? { ...state, stage: action.stage } : state;
+		case 'shrink': {
+			if (setup.mode !== 'condition') return state;
+			if (action.on && shrinkBlocked(state)) return { ...state, shrink: false, shrinkRefused: true };
+			return { ...state, shrink: action.on, shrinkRefused: false };
+		}
 		case 'weight-preset': {
 			const fills = setup.weightPresets?.[action.name];
 			return fills ? { ...state, weights: weightsFor(scenario, fills), refusal: null } : state;

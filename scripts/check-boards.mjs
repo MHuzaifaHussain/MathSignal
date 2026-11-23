@@ -194,4 +194,47 @@ assert.throws(() => validateSetup({ ...pourSetup, weightPresets: { Short: [2, 2,
 assert.throws(() => validateSetup({ ...pourSetup, weightPresets: { Over: [3, 3, 3, 3, 3, 3] } }), /"Over" pours 18 units/);
 assert.throws(() => validateSetup({ ...pourSetup, weightPresets: { Bad: [2, 2, 2, 2, 2.5, -0.5] } }), /"Bad" needs whole numbers of units/);
 
+// ---- Conditioning: shrink the world to B (v1.2) ----
+const kids = SCENARIOS.kids;
+assert.equal(kids.outcomes.length, 12);
+assert.equal(ids(kids, 'hat').size, 5);
+assert.equal(ids(kids, 'scarf').size, 4);
+assert.equal(intersect(ids(kids, 'hat'), ids(kids, 'scarf')).size, 2);
+assert.deepEqual(model.conditionalProbability(ids(kids, 'scarf'), ids(kids, 'hat')), fraction(2, 5));
+assert.deepEqual(model.conditionalProbability(ids(dice, 'sum-at-least-10'), ids(dice, 'double')), fraction(1, 3));
+assert.equal(model.conditionalProbability(ids(dice, 'sum-7'), new Set()), null); // undefined, not 0
+
+const conditionFresh = initialState('dice-condition');
+assert.equal(describe.statusLine(conditionFresh), '36 equally likely outcomes. Editing A.');
+assert.deepEqual(describe.readoutLines(conditionFresh), ['A = sum is at least 10: 6 of 36', 'B = a double: 6 of 36', 'A and B = {(5,5), (6,6)}: 2 of 36']);
+const shrunk = reducer(conditionFresh, { type: 'shrink', on: true });
+assert.deepEqual(describe.readoutLines(shrunk), [
+	'Inside B: 6 outcomes, 2 of them also in A, {(5,5), (6,6)}. P(A | B) = 2/6 = 1/3 ≈ 0.33, while P(A) = 6/36 = 1/6 ≈ 0.17.',
+]);
+assert.equal(describe.cellName(shrunk, dice.outcomes[1]), '1,2. First die 1, second die 2. Ruled out.');
+assert.equal(describe.cellName(shrunk, dice.outcomes[0]), '1,1. First die 1, second die 1. In B.');
+assert.equal(describe.announcementFor(reducer(shrunk, { type: 'shrink', on: false }), { type: 'shrink', on: false }), 'Back to all outcomes.');
+
+// Conditioning on an empty B is refused, before and after shrinking, and says why.
+const noB = run('dice-condition', { type: 'preset', event: 'B', preset: 'clear' });
+const refusedShrink = reducer(noB, { type: 'shrink', on: true });
+assert.equal(refusedShrink.shrink, false);
+assert.equal(describe.announcementFor(refusedShrink, { type: 'shrink', on: true }), "Undefined: B can't happen (probability 0).");
+const emptiedWhileShrunk = reducer(shrunk, { type: 'preset', event: 'B', preset: 'clear' });
+assert.equal(emptiedWhileShrunk.shrink, false);
+assert.equal(emptiedWhileShrunk.shrinkRefused, true);
+assert.equal(describe.announcementFor(emptiedWhileShrunk, { type: 'preset', event: 'B', preset: 'clear' }), "Undefined: B can't happen (probability 0).");
+// Shrinking only exists in condition mode, and Reset un-shrinks.
+assert.equal(reducer(operations, { type: 'shrink', on: true }), operations);
+assert.equal(reducer(shrunk, { type: 'reset' }).shrink, false);
+
+// The class of children is fixed data: named in the status line, not editable.
+const kidsFresh = initialState('kids-condition');
+assert.equal(describe.statusLine(kidsFresh), '12 equally likely outcomes. A: wears a scarf. B: wears a hat.');
+assert.equal(reducer(kidsFresh, { type: 'toggle', id: 'child-1' }), kidsFresh);
+assert.deepEqual(describe.readoutLines(reducer(kidsFresh, { type: 'shrink', on: true })), [
+	'Inside B: 5 outcomes, 2 of them also in A, {2, 7}. P(A | B) = 2/5 = 0.40, while P(A) = 4/12 = 1/3 ≈ 0.33.',
+]);
+assert.equal(describe.cellName(kidsFresh, kids.outcomes[1]), '2. Hat and scarf. In A and B.');
+
 console.log('Board check passed.');

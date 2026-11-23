@@ -511,6 +511,11 @@
 	border-color: var(--ms-board-ink);
 }
 
+/* Fixed data (the class of children): cells can be focused and read, not toggled. */
+.ms-event-cell[aria-disabled='true'] {
+	cursor: default;
+}
+
 .ms-event-cell.is-a {
 	border: 3px solid var(--ms-attention);
 	background-color: var(--ms-highlight);

@@ -82,7 +82,7 @@ Discrete sample spaces are HTML tables, not Mafs plots (decision 0011). They fol
 |---|---|
 | `--ms-highlight` fill, 3px solid `--ms-attention` border, "A" tag | In event A, the event of interest |
 | 2px dashed `--ms-board-ink` outline inset 3px, "B" tag | In event B, the world you condition on |
-| Muted ink text and a thin diagonal strike | Outside the set "Look at" focuses on (never opacity on text) |
+| Muted ink text and a thin diagonal strike | Outside the set "Look at" focuses on, or ruled out by "Shrink the world to B" (never opacity on text) |
 | Dotted ink outline and the word "missed" | An outcome the reader left out, after Check |
 
 Pink and blue never appear: an event is not μ or σ. Tags and words double every marking, so nothing depends on color. Probabilities are shown as an unreduced count, then the reduced fraction, then two decimals ("3 of 4 outcomes. P(A) = 3/4 = 0.75"), in plain Unicode, never KaTeX.

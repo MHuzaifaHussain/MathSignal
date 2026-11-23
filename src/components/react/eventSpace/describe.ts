@@ -53,6 +53,11 @@ export function statusLine(state: EventSpaceState): string {
 		const event = `Event A: ${scenario.events[setup.goal].label}.`;
 		return isLocked(state) ? `${space} ${event} Tap the squares that belong to A.` : `${space} ${event}`;
 	}
+	if (!Object.values(setup.events).some((event) => event?.editable)) {
+		// Fixed data (the class of children): name the events instead of inviting taps.
+		const named = (['A', 'B'] as const).filter((key) => setup.events[key]).map((key) => `${key}: ${eventText(scenario, state.events[key])}.`);
+		return `${space} ${named.join(' ')}`;
+	}
 	return setup.events.B ? `${space} Editing ${state.editing}.` : `${space} Tap squares to build event A.`;
 }
 
@@ -100,9 +105,10 @@ export function missedOutcome(state: EventSpaceState): OutcomeId | null {
 export function readoutLines(state: EventSpaceState): string[] {
 	const setup = setupOf(state);
 	const scenario = scenarioOf(state);
-	if (setup.mode !== 'count' || isLocked(state)) return [];
+	if (setup.mode === 'weights' || isLocked(state)) return [];
 	const total = scenario.outcomes.length;
 	const { A, B } = state.events;
+	if (setup.mode === 'condition') return conditionReadouts(state);
 	if (!setup.events.B) {
 		const share = probability(A, scenario.outcomes);
 		const members = A.size === 0 ? 'A is empty.' : `A = ${setText(scenario, A)}.`;
@@ -121,9 +127,41 @@ export function readoutLines(state: EventSpaceState): string[] {
 	];
 }
 
-/** The set "Look at" focuses on, or null when everything is in view. */
+// ---- Condition mode ----
+
+export const SHRINK_REFUSAL = "Undefined: B can't happen (probability 0).";
+
+/** "2/6 = 1/3 ≈ 0.33": the count first, then the reduced fraction when it differs, then two decimals. */
+function shareText(numerator: number, denominator: number): string {
+	const reduced = formatFraction(fraction(numerator, denominator));
+	const counted = `${numerator}/${denominator}`;
+	return `${counted}${reduced === counted ? '' : ` = ${reduced}`} ${equalsDecimal(numerator, denominator)}`;
+}
+
+/** With the world shrunk to B: how much of B is also A, beside the unconditioned P(A). */
+export function conditionalLine(state: EventSpaceState): string | null {
+	const scenario = scenarioOf(state);
+	const { A, B } = state.events;
+	if (B.size === 0) return null;
+	const both = intersect(A, B);
+	const inA = both.size === 0 ? 'none of them also in A' : `${both.size} of them also in A, ${setText(scenario, both)}`;
+	return `Inside B: ${plural(B.size, 'outcome', 'outcomes')}, ${inA}. P(A | B) = ${shareText(both.size, B.size)}, while P(A) = ${shareText(A.size, scenario.outcomes.length)}.`;
+}
+
+/** Condition-mode readouts. A refused shrink isn't repeated here: the tray shows its reason beside the switch. */
+function conditionReadouts(state: EventSpaceState): string[] {
+	if (state.shrink) return [conditionalLine(state) ?? SHRINK_REFUSAL];
+	const scenario = scenarioOf(state);
+	const total = scenario.outcomes.length;
+	const both = intersect(state.events.A, state.events.B);
+	const eventLine = (key: EventKey) => `${key} = ${eventText(scenario, state.events[key])}: ${state.events[key].size} of ${total}`;
+	return [eventLine('A'), eventLine('B'), `A and B = ${setText(scenario, both)}: ${both.size} of ${total}`];
+}
+
+/** The set "Look at" (or shrinking to B) focuses on, or null when everything is in view. */
 export function focusSet(state: EventSpaceState): ReadonlySet<OutcomeId> | null {
 	const { A, B } = state.events;
+	if (state.shrink) return B;
 	switch (state.lookAt) {
 		case 'everything':
 			return null;
@@ -141,7 +179,7 @@ export function cellName(state: EventSpaceState, outcome: Outcome): string {
 	const inB = state.events.B.has(outcome.id);
 	const membership = inA && inB ? ' In A and B.' : inA ? ' In A.' : inB ? ' In B.' : '';
 	const focus = focusSet(state);
-	const outside = focus && !focus.has(outcome.id) ? ' Outside.' : '';
+	const outside = focus && !focus.has(outcome.id) ? (state.shrink ? ' Ruled out.' : ' Outside.') : '';
 	const missed = missedOutcome(state) === outcome.id ? ' Missed.' : '';
 	const tossed = state.tossCount > 0 ? ` Tossed ${plural(state.tallies[outcome.id] ?? 0, 'time', 'times')}.` : '';
 	return `${outcome.label}. ${capitalize(outcome.spoken)}.${membership}${missed}${outside}${tossed}`;
@@ -220,6 +258,7 @@ export function announcementFor(state: EventSpaceState, action: Action): string 
 	switch (action.type) {
 		case 'toggle': {
 			if (isLocked(state)) return markedLine(state) ?? '';
+			if (state.shrinkRefused) return SHRINK_REFUSAL;
 			const members = state.events[state.editing];
 			return `${state.editing}: ${members.size} of ${total} outcomes, P of ${state.editing} = ${formatFraction(fraction(members.size, total))}.`;
 		}
@@ -232,6 +271,7 @@ export function announcementFor(state: EventSpaceState, action: Action): string 
 			return feedbackLine(state) ?? '';
 		case 'preset': {
 			if (isLocked(state)) return 'Check your answer first.';
+			if (state.shrinkRefused) return SHRINK_REFUSAL;
 			const members = state.events[action.event];
 			return members.size === 0 ? `${action.event} cleared.` : `${action.event} set to ${eventText(scenario, members)}: ${members.size} of ${total} outcomes.`;
 		}
@@ -256,5 +296,8 @@ export function announcementFor(state: EventSpaceState, action: Action): string 
 			return state.wrongModel ? scenario.wrongModel?.caption ?? '' : 'Back to the real outcomes.';
 		case 'stage':
 			return setsLine(state) ?? `Showing ${state.stage}.`;
+		case 'shrink':
+			if (state.shrinkRefused) return SHRINK_REFUSAL;
+			return state.shrink ? conditionalLine(state) ?? SHRINK_REFUSAL : 'Back to all outcomes.';
 	}
 }
