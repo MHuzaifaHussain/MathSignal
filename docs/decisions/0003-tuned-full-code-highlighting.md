@@ -23,6 +23,11 @@ Use a tuned full palette ("One Dark minus blue"): violet keywords, green strings
 - No blue function names, One Dark's most recognisable cue: blue belongs to σ.
 - Dark-mode tokens have little headroom above 5.5:1, so the check script is mandatory.
 
+## Evidence
+- Controlled studies find no reliable comprehension difference from syntax highlighting (Hannebauer, Hesenius & Gruhn, Empirical Software Engineering 2018; Beelders & du Plessis 2016). A small study found a speed benefit for novices that fades with experience (Sarkar, PPIG 2015). So the choice rests on familiarity, colour meaning and accessibility rather than reading speed.
+- Measured with the WCAG 2 formula, CIEDE2000 and Machado (2009) colour-blindness simulation. `npm run check:design` re-runs these measurements on every build.
+- Scored against quiet syntax on nine parameters: quiet led on μ/σ focus, cohesion and upkeep; full led on familiarity and scanning. The tuned palette removes full syntax's accessibility and colour-meaning problems, which is why it was chosen.
+
 ## Alternatives considered
 - Quiet syntax: scored higher on μ/σ focus and cohesion, lower on familiarity. Rejected in favour of familiar highlighting.
 - Conventional full palette: rejected for the colour-blindness collisions and silent contrast adjustments.

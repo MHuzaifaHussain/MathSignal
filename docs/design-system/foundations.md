@@ -28,9 +28,15 @@ Board limits: at most two boards per page, each at most about 480px tall. A boar
 | Look here, line | `--ms-attention` | `#8a5a00` ochre | `#f3d36b` yellow | Focus rings on boards, drag highlights, the active domain underline |
 | Look here, fill | `--ms-attention-fill` | `#f2d45c` | `#f3d36b` | Fills only, with ink on top. Never as a line on light paper |
 | Highlighter | `--ms-highlight` | `#fbe7a1` | `#4a4022` | `<mark>` behind text |
+| Board surface | `--ms-board` | `#e4ebe6` | `#22302e` | The board itself |
+| Board frame | `--ms-board-edge` | `#677c73` | `#6a8079` | The board's border; in dark mode it is what separates the board from the page |
+| Board tray | `--ms-board-tray` | `#d8e1db` | `#1a2523` | The control strip under a board |
+| Header ledge | `--ms-ledge` | `#ffffff` | `#22302e` | Site header background |
 | Board ink | `--ms-board-ink` | `#26332f` | `#ece8df` | Handwritten notes, labels on the board |
 | Board axis | `--ms-board-axis` | `#677c73` | `#6a8079` | Axes, ticks and slider tracks |
 | Board grid | `--ms-board-grid` | `#c4d0ca` | `#2f403d` | Grid lines (decorative, deliberately faint) |
+
+This table lists the roles you choose between when building. The complete set, including code colours and the muted variants, is in `src/design/palette.mjs`.
 
 **Adding a new meaning colour is a design decision**, not a styling choice. It needs a decision record, a contrast rule on every surface, and separation from μ, σ and attention for colour-blind readers.
 
@@ -54,6 +60,8 @@ Variables other than μ and σ (for example a slope or a prior) are written in i
 | h3 | 1.25rem / 1.3 | 600 |
 | UI text | 15px / 1.4 | 400–600 |
 | Code | 15px / 1.6 | 400; bold reserved for μ/σ markers |
+
+Fonts are self-hosted from Fontsource packages listed in Starlight's `customCss` (`astro.config.mjs`), Latin and other subsets split by `unicode-range`. A font file downloads only when text on the page uses it, so Kalam loads only on pages with a board note.
 
 Typographic rules:
 - Sentence case everywhere. No all-caps labels and no tracked-out eyebrows.

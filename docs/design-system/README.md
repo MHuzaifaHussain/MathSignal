@@ -38,6 +38,10 @@ A lecture hall: you **read on paper**, the teacher **draws on the board**, and y
 | `src/routeData.ts` | Starlight route middleware that narrows the sidebar to the active subject |
 | `src/components/overrides/` | Starlight component overrides (header, sidebar) and the subject strip |
 
+## Visual reference
+
+The running site is the visual reference: the Normal distribution page shows every component, both themes and all three surfaces. The preview pages made while choosing this direction are superseded (they still show an early half-dark light mode and quiet code colours) and are not needed to work on the site.
+
 ## Changing the system
 
 - **Change a colour:** edit `src/design/palette.mjs`, run `npm run tokens`, then `npm run check:design`. If the check fails, the colour is not allowed; pick another. Never bypass the check.
