@@ -1,11 +1,12 @@
 // Verifies the content registries and the ids pages use (decision 0009), before every build:
 //   - topics: unique ids, every prerequisite / leadsTo id exists, no prerequisite cycles,
-//     prerequisites and leadsTo agree in both directions, every published topic has a page
+//     prerequisites and leadsTo agree in both directions, and a topic's status matches its page:
+//     published = a page that isn't a draft, planned = no page yet or a draft
 //   - notation and references: unique ids; every reference has an https URL and a `checked` date
 //   - pages: every topic, reference, <Cite id> and <NotationKey symbols> id they use exists
 // Required frontmatter on concept pages is enforced during the build by src/routeData.ts.
 import { readdir, readFile } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { TOPICS } from '../src/data/topics.mjs';
@@ -40,12 +41,30 @@ function topicProblems() {
 				problems.push(`topics.mjs: "${topic.id}" leads to "${id}", but "${id}" doesn't list it as a prerequisite`);
 			}
 		}
-		if (topic.status === 'published' && !existsSync(join(DOCS_DIR, `${topic.id}.mdx`))) {
-			problems.push(`topics.mjs: "${topic.id}" is marked published but src/content/docs/${topic.id}.mdx doesn't exist`);
-		}
+		problems.push(...releaseProblems(topic));
 	}
 	problems.push(...prerequisiteCycles(byId));
 	return problems;
+}
+
+/**
+ * A topic's status and its page's `draft` flag must agree, because other pages link to a topic only when it is
+ * published: published means the page exists and is not a draft; planned means there is no page yet, or a draft.
+ * Pages are merged as drafts and released by flipping both together.
+ */
+function releaseProblems(topic) {
+	const file = join(DOCS_DIR, `${topic.id}.mdx`);
+	const exists = existsSync(file);
+	const isDraft = exists && /^draft:\s*true\s*$/m.test(frontmatterOf(readFileSync(file, 'utf8')));
+	if (topic.status === 'published' && !exists) return [`topics.mjs: "${topic.id}" is marked published but src/content/docs/${topic.id}.mdx doesn't exist`];
+	if (topic.status === 'published' && isDraft) return [`topics.mjs: "${topic.id}" is marked published but its page has \`draft: true\`; release both together`];
+	if (topic.status === 'planned' && exists && !isDraft) return [`topics.mjs: "${topic.id}" is still planned but its page is not a draft; set status 'published' or add \`draft: true\``];
+	return [];
+}
+
+/** @param {string} source */
+function frontmatterOf(source) {
+	return source.replace(/\r\n/g, '\n').match(/^---\n([\s\S]*?)\n---/)?.[1] ?? '';
 }
 
 /** Depth-first search for cycles in the prerequisite graph. */
@@ -86,7 +105,7 @@ async function mdxFiles(directory) {
 
 /** Ids used in a page's frontmatter and components, found with simple patterns over the MDX source. */
 function idsUsedIn(source) {
-	const frontmatter = source.match(/^---\n([\s\S]*?)\n---/)?.[1] ?? '';
+	const frontmatter = frontmatterOf(source);
 	const topic = frontmatter.match(/^topic:\s*["']?([^"'\n]+)["']?\s*$/m)?.[1];
 	const referenceBlock = frontmatter.match(/^references:\s*\n((?:\s+-\s.*\n?)+)/m)?.[1] ?? '';
 	const frontmatterReferences = [...referenceBlock.matchAll(/-\s*["']?([^"'\n]+?)["']?\s*$/gm)].map((match) => match[1]);

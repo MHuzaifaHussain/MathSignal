@@ -39,6 +39,10 @@ Concept pages (any page inside a subject) must set these fields; the build stops
 
 Add new symbols to `src/data/notation.mjs` and new sources to `src/data/references.mjs` (with the date you opened them). `npm run check:content` checks every id before the build ([decision 0009](../decisions/0009-single-sources-of-truth.md)).
 
+## Releasing a page
+
+Merge a finished page with `draft: true` in its frontmatter and its topic still `status: 'planned'` in `src/data/topics.mjs`. Starlight leaves drafts out of production builds, search, the sitemap and `llms.txt`, and other pages show the topic as "coming soon". To release it, remove `draft: true` and set the topic to `'published'` in the same commit. `npm run check:content` fails if the two disagree.
+
 ## Skeleton
 
 ```mdx

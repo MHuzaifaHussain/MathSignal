@@ -6,7 +6,8 @@ import { DOMAINS } from '../design/domains.mjs';
 import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from '../seo/site.mjs';
 
 export const GET: APIRoute = async () => {
-	const pages = await getCollection('docs');
+	// Drafts are left out of production builds by Starlight, so listing them here would link to missing pages.
+	const pages = await getCollection('docs', (page) => !page.data.draft);
 	const sections = DOMAINS.map((domain) => {
 		const entries = pages
 			.filter((page) => page.id.startsWith(`${domain.directory}/`))
