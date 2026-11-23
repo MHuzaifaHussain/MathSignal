@@ -6,7 +6,7 @@ import { unified } from '@astrojs/markdown-remark';
 import tailwindcss from '@tailwindcss/vite';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
-import { katexOptions } from './src/design/katex.mjs';
+import { katexOptions, rehypeKatexFailOnError } from './src/design/katex.mjs';
 
 // https://astro.build/config
 export default defineConfig({
@@ -16,7 +16,7 @@ export default defineConfig({
 		// The unified pipeline keeps remark-math + rehype-katex working.
 		processor: unified({
 			remarkPlugins: [remarkMath],
-			rehypePlugins: [[rehypeKatex, katexOptions]],
+			rehypePlugins: [[rehypeKatex, katexOptions], rehypeKatexFailOnError],
 		}),
 	},
 	integrations: [
