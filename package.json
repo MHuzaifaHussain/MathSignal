@@ -25,8 +25,6 @@
     "@fontsource-variable/atkinson-hyperlegible-next": "^5.3.0",
     "@fontsource-variable/literata": "^5.3.0",
     "@fontsource/kalam": "^5.3.0",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
     "astro": "^7.4.13",
     "katex": "^0.16.39",
     "mafs": "^0.21.0",
@@ -34,10 +32,12 @@
     "react-dom": "^19.2.4",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0",
-    "sharp": "^0.34.2"
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "typescript": "^6.0.3"
   }
 }
