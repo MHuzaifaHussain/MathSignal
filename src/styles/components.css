@@ -781,6 +781,20 @@
 }
 
 @media (forced-colors: active) {
+	/* The selected option and an "on" switch keep a visible state when fills are dropped. */
+	.ms-choice-option:has(input:checked),
+	.ms-board-switch[aria-checked='true'] {
+		forced-color-adjust: none;
+		border-color: Highlight;
+		background-color: Highlight;
+		color: HighlightText;
+	}
+
+	.ms-event-cell:focus-visible,
+	.ms-choice-option:has(input:focus-visible) {
+		outline-color: Highlight;
+	}
+
 	.ms-event-cell.is-a {
 		border-color: CanvasText;
 		background-color: Canvas;

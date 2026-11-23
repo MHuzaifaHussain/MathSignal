@@ -102,11 +102,11 @@ const editedB = run('dice-operations', { type: 'edit', event: 'B' }, { type: 'to
 assert.deepEqual([...editedB.events.A], [...operations.events.A]);
 assert.equal(editedB.events.A.size, 6);
 assert.deepEqual(describe.readoutLines(operations), [
-	'A = sum is 7: 6 of 36 = 1/6 (0.17)',
-	'B = first die is 6: 6 of 36 = 1/6 (0.17)',
+	'A = sum is 7: 6 of 36 = 1/6 (≈ 0.17)',
+	'B = first die is 6: 6 of 36 = 1/6 (≈ 0.17)',
 	'not A: 30 of 36',
 	'A and B = {(6,1)}: 1 of 36',
-	'A or B: 6 + 6 − 1 = 11 of 36 = 0.31',
+	'A or B: 6 + 6 − 1 = 11 of 36 ≈ 0.31',
 ]);
 assert.equal(describe.statusLine(operations), '36 equally likely outcomes. Editing A.');
 
@@ -155,8 +155,8 @@ assert.equal(tossedTwice.tossCount, 200);
 assert.deepEqual(tossedTwice.tallies, { HH: 50, HT: 50, TH: 50, TT: 50 });
 assert.equal(describe.tossLine(tossedTwice), 'Tossed 200 times: at least one head 150 times (0.75). Your count says 0.75.');
 const uneven = reducer(passed, { type: 'toss', results: { HH: 49, HT: 52, TH: 50, TT: 49 } });
-assert.equal(describe.tossLine(uneven), 'Tossed 200 times: at least one head 151 times (0.76). Your count says 0.75.');
-assert.equal(describe.announcementFor(uneven, { type: 'toss', results: {} }), 'Tossed 200 times in all. At least one head 151 times, 0.76.');
+assert.equal(describe.tossLine(uneven), 'Tossed 200 times: at least one head 151 times (≈ 0.76). Your count says 0.75.');
+assert.equal(describe.announcementFor(uneven, { type: 'toss', results: {} }), 'Tossed 200 times in all. At least one head 151 times, ≈ 0.76.');
 assert.equal(describe.cellName(tossedTwice, coinsOutcome('HT')), 'HT. First coin heads, second coin tails. In A. Tossed 50 times.');
 assert.equal(describe.tossLine(passed), null);
 assert.equal(reducer(passed, { type: 'wrong-model', on: true }).wrongModel, true);
@@ -177,5 +177,21 @@ assert.equal(reducer(diceFresh, { type: 'stage', stage: 'picture' }), diceFresh)
 const { stageAllowed } = await import('../src/components/react/eventSpace/state.ts');
 assert.equal(stageAllowed(diceFresh, 'picture'), false);
 assert.equal(stageAllowed(fresh, 'picture'), true); // 36 cells are too many for pictures
+
+// ---- Final review fixes ----
+// Critical: after Check passes, changing A clears the "Yes" so the board never approves a wrong event.
+assert.equal(describe.feedbackLine(reducer(passed, { type: 'toggle', id: 'TH' })), null);
+assert.equal(describe.feedbackLine(reducer(passed, { type: 'preset', event: 'A', preset: 'both-same' })), null);
+// A second wrong Check says the answer can now be shown, so it isn't a silent repeat.
+const twoFails = run('coins-build', ...toggles('TT'), { type: 'check' }, { type: 'check' });
+assert.equal(describe.announcementFor(twoFails, { type: 'check' }), "You have 0 of the squares A needs, and 1 that don't belong. You can now show the answer.");
+assert.equal(describe.announcementFor(oneFail, { type: 'check' }), "You have 0 of the squares A needs, and 1 that don't belong.");
+// Weight presets fail loudly when they can't be a jug of 12.
+const { validateSetup } = await import('../src/components/react/eventSpace/setups.ts');
+const pourSetup = getSetup('die-pour');
+assert.throws(() => validateSetup({ ...pourSetup, initialWeights: 'Fair dice' }), /initialWeights "Fair dice"/);
+assert.throws(() => validateSetup({ ...pourSetup, weightPresets: { Short: [2, 2, 2] } }), /"Short" has 3 cups/);
+assert.throws(() => validateSetup({ ...pourSetup, weightPresets: { Over: [3, 3, 3, 3, 3, 3] } }), /"Over" pours 18 units/);
+assert.throws(() => validateSetup({ ...pourSetup, weightPresets: { Bad: [2, 2, 2, 2, 2.5, -0.5] } }), /"Bad" needs whole numbers of units/);
 
 console.log('Board check passed.');

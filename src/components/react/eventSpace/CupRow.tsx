@@ -82,7 +82,7 @@ export default function CupRow({ state, scenario, send }: CupRowProps) {
         </p>
       ))}
       {state.refusal && (
-        <p className="ms-event-feedback" role="status">
+        <p className="ms-event-feedback">
           {refusalText(state.refusal.reason)}
         </p>
       )}

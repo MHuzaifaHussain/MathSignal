@@ -105,7 +105,8 @@ export function pourBlocked(state: EventSpaceState, id: OutcomeId, direction: 1 
 }
 
 function withEvent(state: EventSpaceState, key: EventKey, members: ReadonlySet<OutcomeId>): EventSpaceState {
-	return { ...state, events: { ...state.events, [key]: members }, feedback: state.checked ? state.feedback : null, refusal: null };
+	// Any change to an event clears Check's feedback: a stale "Not yet" misleads, and a stale "Yes" would approve a wrong event.
+	return { ...state, events: { ...state.events, [key]: members }, feedback: null, refusal: null };
 }
 
 function toggled(members: ReadonlySet<OutcomeId>, id: OutcomeId): ReadonlySet<OutcomeId> {

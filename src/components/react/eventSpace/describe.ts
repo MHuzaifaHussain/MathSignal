@@ -3,7 +3,7 @@
 import { complement, formatFraction, fraction, intersect, probability, union, WEIGHT_TOTAL, type Outcome, type OutcomeId } from './model.ts';
 import { eventMembers, type Scenario } from './scenarios.ts';
 import { CLEAR_PRESET } from './setups.ts';
-import { isLocked, scenarioOf, setupOf, type Action, type EventKey, type EventSpaceState, type Refusal } from './state.ts';
+import { CHECKS_BEFORE_ANSWER, isLocked, scenarioOf, setupOf, type Action, type EventKey, type EventSpaceState, type Refusal } from './state.ts';
 import { formatNumber } from '../plotColors.ts';
 
 /** Member lists longer than this show the first ones and "and k more". */
@@ -12,6 +12,12 @@ const MAX_LISTED = 8;
 const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
 const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
 const decimal = (numerator: number, denominator: number) => formatNumber(numerator / denominator, 2);
+/** True when two decimal places don't show the value exactly (1/6 → 0.17). */
+const isRounded = (numerator: number, denominator: number) => Math.abs(Number(decimal(numerator, denominator)) - numerator / denominator) > 1e-12;
+/** "0.75", or "≈ 0.17" when rounded, so the board never writes a false equation. */
+const approx = (numerator: number, denominator: number) => `${isRounded(numerator, denominator) ? '≈ ' : ''}${decimal(numerator, denominator)}`;
+/** "= 0.75", or "≈ 0.17" when rounded, for the end of an equation. */
+const equalsDecimal = (numerator: number, denominator: number) => `${isRounded(numerator, denominator) ? '≈' : '='} ${decimal(numerator, denominator)}`;
 
 function joinWords(words: readonly string[]): string {
 	if (words.length <= 1) return words.join('');
@@ -67,7 +73,7 @@ export function feedbackLine(state: EventSpaceState): string | null {
 			const marked = outcomesIn(scenario, state.events.A);
 			const total = scenario.outcomes.length;
 			const share = fraction(marked.length, total);
-			return `Yes: ${joinWords(marked.map((outcome) => outcome.label))}. ${marked.length} of ${total} squares, so P(A) = ${formatFraction(share)} = ${decimal(marked.length, total)}.`;
+			return `Yes: ${joinWords(marked.map((outcome) => outcome.label))}. ${marked.length} of ${total} squares, so P(A) = ${formatFraction(share)} ${equalsDecimal(marked.length, total)}.`;
 		}
 		case 'missed-mirror': {
 			const have = byId(feedback.have);
@@ -100,10 +106,10 @@ export function readoutLines(state: EventSpaceState): string[] {
 	if (!setup.events.B) {
 		const share = probability(A, scenario.outcomes);
 		const members = A.size === 0 ? 'A is empty.' : `A = ${setText(scenario, A)}.`;
-		return [`${members} ${A.size} of ${total} outcomes. P(A) = ${formatFraction(share)} = ${decimal(A.size, total)}.`];
+		return [`${members} ${A.size} of ${total} outcomes. P(A) = ${formatFraction(share)} ${equalsDecimal(A.size, total)}.`];
 	}
 	const eventLine = (key: EventKey, members: ReadonlySet<OutcomeId>) =>
-		`${key} = ${eventText(scenario, members)}: ${members.size} of ${total} = ${formatFraction(fraction(members.size, total))} (${decimal(members.size, total)})`;
+		`${key} = ${eventText(scenario, members)}: ${members.size} of ${total} = ${formatFraction(fraction(members.size, total))} (${approx(members.size, total)})`;
 	const both = intersect(A, B);
 	const either = union(A, B);
 	return [
@@ -111,7 +117,7 @@ export function readoutLines(state: EventSpaceState): string[] {
 		eventLine('B', B),
 		`not A: ${complement(A, scenario.outcomes).size} of ${total}`,
 		`A and B = ${setText(scenario, both)}: ${both.size} of ${total}`,
-		`A or B: ${A.size} + ${B.size} − ${both.size} = ${either.size} of ${total} = ${decimal(either.size, total)}`,
+		`A or B: ${A.size} + ${B.size} − ${both.size} = ${either.size} of ${total} ${equalsDecimal(either.size, total)}`,
 	];
 }
 
@@ -161,14 +167,14 @@ export function setsLine(state: EventSpaceState): string | null {
 function tossShare(state: EventSpaceState): { name: string; hits: number; share: string } {
 	const scenario = scenarioOf(state);
 	const hits = outcomesIn(scenario, state.events.A).reduce((total, outcome) => total + (state.tallies[outcome.id] ?? 0), 0);
-	return { name: eventText(scenario, state.events.A), hits, share: decimal(hits, state.tossCount) };
+	return { name: eventText(scenario, state.events.A), hits, share: approx(hits, state.tossCount) };
 }
 
 export function tossLine(state: EventSpaceState): string | null {
 	if (state.tossCount === 0) return null;
 	const total = scenarioOf(state).outcomes.length;
 	const { name, hits, share } = tossShare(state);
-	return `Tossed ${state.tossCount} times: ${name} ${plural(hits, 'time', 'times')} (${share}). Your count says ${decimal(state.events.A.size, total)}.`;
+	return `Tossed ${state.tossCount} times: ${name} ${plural(hits, 'time', 'times')} (${share}). Your count says ${approx(state.events.A.size, total)}.`;
 }
 
 // ---- Weights mode ----
@@ -194,7 +200,7 @@ export function additivityLine(state: EventSpaceState): string {
 	const name = eventText(scenario, state.events.A);
 	const terms = units.map((value) => `${value}/${WEIGHT_TOTAL}`).join(' + ') || '0';
 	if (unitsPoured(state) !== WEIGHT_TOTAL) return `${capitalize(name)} holds ${terms} = ${sum}/${WEIGHT_TOTAL} of the jug.`;
-	return `P(${name}) = ${terms} = ${sum}/${WEIGHT_TOTAL} = ${decimal(sum, WEIGHT_TOTAL)}.`;
+	return `P(${name}) = ${terms} = ${sum}/${WEIGHT_TOTAL} ${equalsDecimal(sum, WEIGHT_TOTAL)}.`;
 }
 
 export function cupName(state: EventSpaceState, outcome: Outcome): string {
@@ -217,7 +223,11 @@ export function announcementFor(state: EventSpaceState, action: Action): string 
 			const members = state.events[state.editing];
 			return `${state.editing}: ${members.size} of ${total} outcomes, P of ${state.editing} = ${formatFraction(fraction(members.size, total))}.`;
 		}
-		case 'check':
+		case 'check': {
+			const line = feedbackLine(state) ?? '';
+			// The second wrong Check reveals "Show the answer"; saying so also keeps it from repeating the first.
+			return state.feedback?.kind !== 'correct' && state.failedChecks === CHECKS_BEFORE_ANSWER ? `${line} You can now show the answer.` : line;
+		}
 		case 'show-answer':
 			return feedbackLine(state) ?? '';
 		case 'preset': {

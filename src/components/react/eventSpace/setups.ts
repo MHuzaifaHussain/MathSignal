@@ -1,5 +1,6 @@
 // The board configurations pages pick with <EventSpace setup="…" />. Each one fixes the outcome space,
 // the mode, the opening events and the presets (design doc: "Opening state of each setup").
+import { WEIGHT_TOTAL } from './model.ts';
 import { SCENARIOS, type ScenarioId } from './scenarios.ts';
 
 export type SetupId = 'coins-build' | 'dice-count' | 'dice-operations' | 'die-pour';
@@ -82,7 +83,8 @@ const SETUPS: Record<SetupId, Setup> = {
 	},
 };
 
-function assertValid(setup: Setup): Setup {
+/** Throws, naming the setup, if any part of its configuration can't work. Exported so the board check can test it. */
+export function validateSetup(setup: Setup): Setup {
 	const scenario = SCENARIOS[setup.scenario];
 	for (const [key, event] of Object.entries(setup.events)) {
 		if (!event) continue;
@@ -96,11 +98,20 @@ function assertValid(setup: Setup): Setup {
 		}
 	}
 	if (setup.goal && !scenario.events[setup.goal]) throw new Error(`EventSpace: setup "${setup.id}" has an unknown goal "${setup.goal}".`);
+	for (const [name, fills] of Object.entries(setup.weightPresets ?? {})) {
+		if (fills.length !== scenario.outcomes.length) throw new Error(`EventSpace: setup "${setup.id}" weight preset "${name}" has ${fills.length} cups; scenario "${scenario.id}" has ${scenario.outcomes.length}.`);
+		if (!fills.every((units) => Number.isInteger(units) && units >= 0)) throw new Error(`EventSpace: setup "${setup.id}" weight preset "${name}" needs whole numbers of units, 0 or more.`);
+		const total = fills.reduce((sum, units) => sum + units, 0);
+		if (total > WEIGHT_TOTAL) throw new Error(`EventSpace: setup "${setup.id}" weight preset "${name}" pours ${total} units; the jug holds ${WEIGHT_TOTAL}.`);
+	}
+	if (setup.initialWeights && !setup.weightPresets?.[setup.initialWeights]) {
+		throw new Error(`EventSpace: setup "${setup.id}" has initialWeights "${setup.initialWeights}", which isn't one of its weight presets.`);
+	}
 	return setup;
 }
 
 export function getSetup(id: string): Setup {
 	const setup = SETUPS[id as SetupId];
 	if (!setup) throw new Error(`EventSpace: unknown setup "${id}". Known setups: ${Object.keys(SETUPS).join(', ')}.`);
-	return assertValid(setup);
+	return validateSetup(setup);
 }

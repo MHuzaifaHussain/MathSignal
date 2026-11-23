@@ -12,6 +12,8 @@ import { getSetup, type SetupId } from "./eventSpace/setups.ts";
 import { CHECKS_BEFORE_ANSWER, initialState, isLocked, reducer, stageAllowed, type Action, type EventKey, type LookAt, type Stage } from "./eventSpace/state.ts";
 
 const LOCKED_REASON = "Check your answer first";
+/** Gap between emptying and refilling the live region, so a repeated message is spoken again. */
+const REANNOUNCE_GAP_MS = 50;
 /** Tosses per press of "Toss 100". */
 const TOSS_BATCH = 100;
 const CUPS_NOTE = "The cups are drawn the same size. The water in them is the probability, not the cup.";
@@ -46,6 +48,19 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
   const lockedReasonId = useId();
   const lastAction = useRef<Action | null>(null);
   const announceTimer = useRef<number | undefined>(undefined);
+  const repeatTimer = useRef<number | undefined>(undefined);
+  const feedbackRef = useRef<HTMLParagraphElement>(null);
+
+  /** Says `text` in the live region, even when it matches the last message (a repeat would otherwise be silent). */
+  const announce = useCallback((text: string, delay = 0) => {
+    window.clearTimeout(announceTimer.current);
+    window.clearTimeout(repeatTimer.current);
+    announceTimer.current = window.setTimeout(() => {
+      // Empty the region first, then fill it a moment later, so screen readers treat it as new text.
+      setAnnouncement("");
+      repeatTimer.current = window.setTimeout(() => setAnnouncement(text), REANNOUNCE_GAP_MS);
+    }, delay);
+  }, []);
 
   const send = useCallback((action: Action) => {
     lastAction.current = action;
@@ -56,13 +71,18 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
   useEffect(() => {
     const action = lastAction.current;
     if (!action) return;
-    const text = announcementFor(state, action);
-    window.clearTimeout(announceTimer.current);
     const burst = action.type === "toggle" || (action.type === "pour" && !state.refusal);
-    if (burst) announceTimer.current = window.setTimeout(() => setAnnouncement(text), KEYBOARD_COMMIT_DELAY_MS);
-    else setAnnouncement(text);
-  }, [state]);
-  useEffect(() => () => window.clearTimeout(announceTimer.current), []);
+    announce(announcementFor(state, action), burst ? KEYBOARD_COMMIT_DELAY_MS : 0);
+    // Check and "Show the answer" disappear once the answer is in, so keyboard focus moves to the feedback.
+    if ((action.type === "check" || action.type === "show-answer") && state.checked) feedbackRef.current?.focus();
+  }, [state, announce]);
+  useEffect(
+    () => () => {
+      window.clearTimeout(announceTimer.current);
+      window.clearTimeout(repeatTimer.current);
+    },
+    [],
+  );
 
   const locked = isLocked(state);
   const feedback = feedbackLine(state);
@@ -77,7 +97,7 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
   const lockable = (onPress: () => void) => ({
     "aria-disabled": locked || undefined,
     "aria-describedby": locked ? lockedReasonId : undefined,
-    onClick: () => (locked ? setAnnouncement(`${LOCKED_REASON}.`) : onPress()),
+    onClick: () => (locked ? announce(`${LOCKED_REASON}.`) : onPress()),
   });
 
   const presetButtons = (key: EventKey) => (
@@ -188,7 +208,11 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
         )}
         {sets && <p className="ms-event-sets">{sets}</p>}
         {marked && <p className="ms-event-status">{marked}</p>}
-        {feedback && <p className="ms-event-feedback">{feedback}</p>}
+        {feedback && (
+          <p ref={feedbackRef} className="ms-event-feedback" tabIndex={-1}>
+            {feedback}
+          </p>
+        )}
       </div>
     </Board>
   );
