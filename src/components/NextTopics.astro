@@ -1,6 +1,7 @@
 ---
 interface Props {
-	topics: { label: string; href: string; description: string }[];
+	/** Leave `href` out for a page that isn't written yet: it shows as "coming soon" instead of a broken link. */
+	topics: { label: string; href?: string; description: string }[];
 }
 
 const { topics } = Astro.props;
@@ -12,7 +13,13 @@ const { topics } = Astro.props;
 		{
 			topics.map((topic) => (
 				<li>
-					<a href={topic.href}>{topic.label}</a>
+					{topic.href ? (
+						<a href={topic.href}>{topic.label}</a>
+					) : (
+						<span class="upcoming">
+							{topic.label} <span class="soon">(coming soon)</span>
+						</span>
+					)}
 					<span class="description">{topic.description}</span>
 				</li>
 			))
@@ -57,6 +64,16 @@ const { topics } = Astro.props;
 
 	a:hover {
 		text-decoration-color: var(--ms-ink);
+	}
+
+	.upcoming {
+		font-weight: 600;
+		color: var(--ms-ink);
+	}
+
+	.soon {
+		font-weight: 400;
+		color: var(--ms-ink-muted);
 	}
 
 	.description {
