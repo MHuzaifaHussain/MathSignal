@@ -1,0 +1,27 @@
+---
+// Starlight Sidebar override: shows only the active subject's pages.
+// The mobile menu also lists the subjects, because the header strip is hidden on narrow screens.
+// Mirrors @astrojs/starlight/components/Sidebar.astro (0.43); recheck on every Starlight upgrade.
+import MobileMenuFooter from 'virtual:starlight/components/MobileMenuFooter';
+import SidebarPersister from '@astrojs/starlight/components/SidebarPersister.astro';
+import SidebarSublist from '@astrojs/starlight/components/SidebarSublist.astro';
+import DomainNav from './DomainNav.astro';
+import { filterSidebarToActiveDomain } from './domains';
+
+const sidebar = filterSidebarToActiveDomain(Astro.locals.starlightRoute.sidebar);
+---
+
+<div class="mobile-domains"><DomainNav variant="stacked" /></div>
+
+<SidebarPersister><SidebarSublist sublist={sidebar} /></SidebarPersister>
+
+<div class="md:sl-hidden"><MobileMenuFooter /></div>
+
+<style>
+	/* Same breakpoint as the header strip: below it, subjects live here */
+	@media (min-width: 72rem) {
+		.mobile-domains {
+			display: none;
+		}
+	}
+</style>

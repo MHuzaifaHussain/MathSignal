@@ -32,6 +32,14 @@ ${declarations(palette.dark)}
 :root[data-theme='light'] {
 ${declarations(palette.light)}
 }
+
+/* Print always uses the light theme: dark boards and pages waste ink and print badly. */
+@media print {
+	:root,
+	:root[data-theme='light'] {
+${declarations(palette.light).replace(/^\t/gm, '\t\t')}
+	}
+}
 `;
 }
 

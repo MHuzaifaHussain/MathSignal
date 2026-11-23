@@ -27,6 +27,11 @@ export default defineConfig({
 			},
 			description:
 				'Interactive statistics, probability, and mathematics for AI/ML practitioners',
+			// Keep overrides few: each must be rechecked on every Starlight upgrade.
+			components: {
+				Header: './src/components/overrides/Header.astro',
+				Sidebar: './src/components/overrides/Sidebar.astro',
+			},
 			expressiveCode: {
 				themes: ['dracula', 'github-light'],
 				useStarlightDarkModeSwitch: true,
@@ -65,7 +70,19 @@ export default defineConfig({
 					items: [{ autogenerate: { directory: 'ml' } }],
 				},
 			],
-			customCss: ['katex/dist/katex.min.css', 'mafs/core.css', './src/styles/global.css'],
+			customCss: [
+				// Fonts: @font-face rules only download a file when text actually uses it,
+				// so Kalam is fetched only on pages with a board note.
+				'@fontsource-variable/literata/index.css',
+				'@fontsource-variable/literata/wght-italic.css',
+				'@fontsource-variable/atkinson-hyperlegible-next/index.css',
+				'@fontsource-variable/atkinson-hyperlegible-mono/index.css',
+				'@fontsource/kalam/latin-400.css',
+				'@fontsource/kalam/latin-700.css',
+				'katex/dist/katex.min.css',
+				'mafs/core.css',
+				'./src/styles/global.css',
+			],
 		}),
 		react(),
 	],

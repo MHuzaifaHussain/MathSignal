@@ -69,3 +69,40 @@
 	--ms-code-line-number: #5f6d69;
 	--ms-code-border: #d5dbd9;
 }
+
+/* Print always uses the light theme: dark boards and pages waste ink and print badly. */
+@media print {
+	:root,
+	:root[data-theme='light'] {
+		--ms-page: #ffffff;
+		--ms-ink: #1e2725;
+		--ms-ink-muted: #56625e;
+		--ms-rule: #d5dbd9;
+		--ms-surface-sunk: #f4f6f5;
+		--ms-accent: #2f5048;
+		--ms-accent-low: #dfe9e5;
+		--ms-ledge: #ffffff;
+		--ms-ledge-ink: #1e2725;
+		--ms-ledge-rule: #d5dbd9;
+		--ms-board: #e4ebe6;
+		--ms-board-edge: #748a80;
+		--ms-board-tray: #d8e1db;
+		--ms-board-ink: #26332f;
+		--ms-board-ink-muted: #4d5c57;
+		--ms-board-axis: #748a80;
+		--ms-board-grid: #c4d0ca;
+		--ms-mu: #b0306a;
+		--ms-sigma: #1f5fa8;
+		--ms-attention: #8a5a00;
+		--ms-attention-fill: #f2d45c;
+		--ms-highlight: #fbe7a1;
+		--ms-code-bg: #f6f8f7;
+		--ms-code-ink: #1e2725;
+		--ms-code-keyword: #461f62;
+		--ms-code-string: #0d4a22;
+		--ms-code-number: #6c1f03;
+		--ms-code-comment: #464236;
+		--ms-code-line-number: #5f6d69;
+		--ms-code-border: #d5dbd9;
+	}
+}

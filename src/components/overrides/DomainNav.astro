@@ -1,0 +1,108 @@
+---
+import { getDomains } from './domains';
+
+interface Props {
+	/** 'strip' sits in the header on wide screens; 'stacked' sits at the top of the mobile menu. */
+	variant: 'strip' | 'stacked';
+}
+
+const { variant } = Astro.props;
+const domains = getDomains(Astro.locals.starlightRoute.sidebar);
+---
+
+<nav class:list={['domain-nav', variant]} aria-label="Subjects">
+	<ul>
+		{
+			domains.map((domain) => (
+				<li>
+					{domain.href ? (
+						<a href={domain.href} aria-current={domain.isActive ? 'true' : undefined}>
+							{domain.label}
+						</a>
+					) : (
+						<span class="upcoming">
+							{domain.label}
+							<span class="sr-only"> (coming soon)</span>
+						</span>
+					)}
+				</li>
+			))
+		}
+	</ul>
+</nav>
+
+<style>
+	.domain-nav ul {
+		display: flex;
+		margin: 0;
+		padding: 0;
+		list-style: none;
+		font-family: var(--ms-font-ui);
+		font-size: 0.9375rem;
+	}
+
+	.domain-nav a,
+	.domain-nav .upcoming {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
+		padding-inline: 0.75rem;
+		color: var(--ms-ledge-ink);
+		text-decoration: none;
+		white-space: nowrap;
+	}
+
+	.domain-nav .upcoming {
+		color: color-mix(in oklab, var(--ms-ledge-ink) 55%, var(--ms-ledge));
+		cursor: default;
+	}
+
+	.domain-nav a:hover {
+		text-decoration: underline;
+		text-underline-offset: 0.3em;
+	}
+
+	/* Active domain: chalk underline, yellow in dark mode, highlighter with an ochre edge in light mode */
+	.domain-nav a[aria-current='true'] {
+		font-weight: 600;
+		text-decoration: underline;
+		text-decoration-color: var(--ms-attention);
+		text-decoration-thickness: 3px;
+		text-underline-offset: 0.45em;
+	}
+
+	.strip ul {
+		gap: 0.25rem;
+	}
+
+	/* The strip needs room: below this width the mobile menu carries the stacked variant instead */
+	.strip {
+		display: none;
+	}
+
+	@media (min-width: 72rem) {
+		.strip {
+			display: block;
+		}
+	}
+
+	.stacked {
+		padding-block: 0.5rem 1rem;
+		margin-block-end: 1rem;
+		border-bottom: 1px solid var(--ms-rule);
+	}
+
+	.stacked ul {
+		flex-direction: column;
+	}
+
+	.stacked a,
+	.stacked .upcoming {
+		padding-inline: 0;
+		color: var(--ms-ink);
+	}
+
+	.stacked .upcoming {
+		color: var(--ms-ink-muted);
+	}
+</style>

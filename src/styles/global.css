@@ -1,44 +1,175 @@
+/*
+ * Chalk Margin global styles.
+ * Colours come only from --ms-* tokens (src/styles/tokens.css, generated from src/design/palette.mjs).
+ * Rules: docs/design-system/foundations.md
+ */
 @layer base, starlight, theme, components, utilities;
 
 @import '@astrojs/starlight-tailwind';
 @import 'tailwindcss/theme' layer(theme);
 @import 'tailwindcss/utilities' layer(utilities);
+@import './tokens.css';
 
-/* ── MathSignal theme: teal/cyan accent ── */
-
-:root {
-	/* Accent: cyan for dark mode */
-	--sl-color-accent-low: #164e63;
-	--sl-color-accent: #06b6d4;
-	--sl-color-accent-high: #a5f3fc;
-
-	/* Sidebar slightly different from main bg */
-	--sl-color-bg-sidebar: hsl(224, 14%, 11%);
-	--sl-color-bg-nav: hsl(224, 14%, 9%);
-}
-
+/* ── Starlight mapping ──
+ * Unlayered, so it wins over Starlight's layered defaults in both themes.
+ * The variables reference tokens, which switch with [data-theme].
+ */
+:root,
 :root[data-theme='light'] {
-	/* Accent: darker cyan for contrast on white (AA compliant) */
-	--sl-color-accent-low: #cffafe;
-	--sl-color-accent: #0891b2;
-	--sl-color-accent-high: #155e75;
+	--sl-font: var(--ms-font-ui);
+	--sl-font-mono: var(--ms-font-mono);
 
-	/* Sidebar: subtle off-white */
-	--sl-color-bg-sidebar: hsl(200, 10%, 96%);
-	--sl-color-bg-nav: hsl(200, 10%, 98%);
+	--sl-color-white: var(--ms-ink);
+	--sl-color-gray-1: color-mix(in oklab, var(--ms-ink) 90%, var(--ms-page));
+	--sl-color-gray-2: color-mix(in oklab, var(--ms-ink) 80%, var(--ms-page));
+	--sl-color-gray-3: var(--ms-ink-muted);
+	--sl-color-gray-4: color-mix(in oklab, var(--ms-ink-muted) 60%, var(--ms-page));
+	--sl-color-gray-5: var(--ms-rule);
+	--sl-color-gray-6: var(--ms-surface-sunk);
+	--sl-color-gray-7: var(--ms-surface-sunk);
+	--sl-color-black: var(--ms-page);
+
+	--sl-color-accent-low: var(--ms-accent-low);
+	--sl-color-accent: var(--ms-accent);
+	--sl-color-accent-high: var(--ms-accent);
+
+	--sl-color-text: var(--ms-ink);
+	--sl-color-text-accent: var(--ms-accent);
+	--sl-color-text-invert: var(--ms-page);
+	--sl-color-bg: var(--ms-page);
+	--sl-color-bg-nav: var(--ms-ledge);
+	--sl-color-bg-sidebar: var(--ms-page);
+	--sl-color-bg-inline-code: var(--ms-surface-sunk);
+	--sl-color-hairline: var(--ms-rule);
+	--sl-color-hairline-light: var(--ms-rule);
+	--sl-color-hairline-shade: var(--ms-rule);
 }
 
-/* ── KaTeX ── */
+/* ── Header ledge ── */
+header.header {
+	background-color: var(--ms-ledge);
+	color: var(--ms-ledge-ink);
+	border-bottom: 1px solid var(--ms-ledge-rule);
+}
 
+/* ── Sidebar: solid current item, no gradient or shadow ── */
+#starlight__sidebar a[aria-current='page'],
+#starlight__sidebar a[aria-current='page']:hover,
+#starlight__sidebar a[aria-current='page']:focus {
+	background-color: var(--ms-accent-low);
+	color: var(--ms-ink);
+	font-weight: 600;
+	box-shadow: inset 3px 0 0 var(--ms-accent);
+}
+
+/* ── Reading: serif on paper ── */
+.sl-markdown-content {
+	font-family: var(--ms-font-serif);
+	font-size: 1.125rem;
+	line-height: 1.65;
+	color: var(--ms-ink);
+}
+
+.sl-markdown-content :is(p, li, blockquote) {
+	max-inline-size: 66ch;
+}
+
+.sl-markdown-content :is(h2, h3, h4) {
+	font-family: var(--ms-font-serif);
+	font-weight: 600;
+	color: var(--ms-ink);
+	letter-spacing: 0;
+}
+
+.sl-markdown-content h2 {
+	font-size: 1.6rem;
+	line-height: 1.25;
+}
+
+.sl-markdown-content h3 {
+	font-size: 1.25rem;
+	line-height: 1.3;
+}
+
+h1#_top {
+	font-family: var(--ms-font-serif);
+	font-weight: 600;
+	color: var(--ms-ink);
+}
+
+.sl-markdown-content a:not(.not-content a) {
+	color: var(--ms-ink);
+	text-decoration: underline;
+	text-decoration-color: var(--ms-ink-muted);
+	text-underline-offset: 0.18em;
+}
+
+.sl-markdown-content a:not(.not-content a):hover {
+	text-decoration-color: var(--ms-ink);
+	text-decoration-thickness: 2px;
+}
+
+.sl-markdown-content :not(pre) > code {
+	font-family: var(--ms-font-mono);
+	font-size: 0.875em;
+	background-color: var(--ms-surface-sunk);
+	color: var(--ms-ink);
+	border-radius: 4px;
+}
+
+mark {
+	background-color: var(--ms-highlight);
+	color: var(--ms-ink);
+	padding-inline: 0.15em;
+}
+
+/* ── Focus: ink outline plus yellow halo, visible on every surface ── */
+:focus-visible {
+	outline: 2px solid var(--ms-ink);
+	outline-offset: 2px;
+	box-shadow: 0 0 0 5px var(--ms-attention-fill);
+}
+
+/* ── Meaning colours: KaTeX macros (\vmu, \vsigma) and the Var component ── */
 .katex {
-	color: var(--sl-color-text);
+	color: inherit;
 }
 
-/* ── Mafs / interactive components ── */
+.ms-mu {
+	color: var(--ms-mu);
+}
 
-:root[data-theme='light'] .MafsView {
-	--mafs-bg: #f8fafc;
-	--mafs-fg: #1e293b;
-	--mafs-line-color: #cbd5e1;
-	--grid-line-subdivision-color: #e2e8f0;
+.ms-sigma {
+	color: var(--ms-sigma);
+}
+
+/* ── Mafs boards: map Mafs' variables to tokens so plots follow the theme ── */
+.ms-board .MafsView {
+	--mafs-bg: var(--ms-board);
+	--mafs-fg: var(--ms-board-ink);
+	--mafs-line-color: var(--ms-board-axis);
+	--mafs-origin-color: var(--ms-board-axis);
+	--grid-line-subdivision-color: var(--ms-board-grid);
+	--mafs-pink: var(--ms-mu);
+	--mafs-blue: var(--ms-sigma);
+	--mafs-yellow: var(--ms-attention);
+	font-family: var(--ms-font-ui);
+}
+
+/* ── Motion ── */
+@view-transition {
+	navigation: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	@view-transition {
+		navigation: none;
+	}
+
+	*,
+	*::before,
+	*::after {
+		transition-duration: 0.01ms !important;
+		animation-duration: 0.01ms !important;
+	}
 }
