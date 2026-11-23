@@ -63,6 +63,11 @@ header.header {
 	box-shadow: inset 3px 0 0 var(--ms-accent);
 }
 
+/* ── Buttons: 4px corners like every other control (no pills) ── */
+.sl-link-button {
+	border-radius: 4px;
+}
+
 /* ── Reading: serif on paper ── */
 .sl-markdown-content {
 	font-family: var(--ms-font-serif);
