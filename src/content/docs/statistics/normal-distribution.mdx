@@ -11,6 +11,7 @@ import FormalDefinition from "../../../components/FormalDefinition.astro";
 import CommonMistakes from "../../../components/CommonMistakes.astro";
 import Mistake from "../../../components/Mistake.astro";
 import Var from "../../../components/Var.astro";
+import PyRunner from "../../../components/PyRunner.astro";
 import NextTopics from "../../../components/NextTopics.astro";
 import NormalDistribution from "../../../components/react/NormalDistribution.tsx";
 
@@ -107,6 +108,27 @@ Variational autoencoders impose a $\mathcal{N}(0, I)$ prior on the latent space.
 A Gaussian process is a distribution over *functions*, where any finite subset of function values is jointly normally distributed. GPs provide not just predictions but calibrated uncertainty estimates, making them valuable for Bayesian optimization and active learning.
 
 ## Code implementation
+
+Check the 68-95-99.7 rule yourself. This runs in your browser:
+
+<PyRunner
+  title="check_68_95_997.py"
+  code={`
+import numpy as np
+
+rng = np.random.default_rng(seed=0)
+mu, sigma = 70.0, 8.0
+samples = rng.normal(loc=mu, scale=sigma, size=100_000)
+
+for k in (1, 2, 3):
+    inside = np.mean(np.abs(samples - mu) < k * sigma)
+    print(f"within {k} sigma of the mean: {inside:.1%}")
+
+print(f"sample mean {samples.mean():.2f}, sample std {samples.std():.2f}")
+`}
+/>
+
+The same distribution with plotting, and in PyTorch (these two run on your own machine):
 
 ```python title="normal_distribution_numpy.py" {4-5,8-9}
 import numpy as np
