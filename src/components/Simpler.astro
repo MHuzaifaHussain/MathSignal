@@ -1,0 +1,13 @@
+---
+// A beginner fold: a new picture, analogy or set of numbers. If it only repeats the spine, cut it (decision 0008).
+import Fold from './Fold.astro';
+
+interface Props {
+	label: string;
+	id?: string;
+}
+
+const { label, id } = Astro.props;
+---
+
+<Fold kind="simpler" label={label} id={id}><slot /></Fold>

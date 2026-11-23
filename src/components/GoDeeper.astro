@@ -1,0 +1,13 @@
+---
+// An expert fold: derivations, edge cases, generalisations (decision 0008).
+import Fold from './Fold.astro';
+
+interface Props {
+	label: string;
+	id?: string;
+}
+
+const { label, id } = Astro.props;
+---
+
+<Fold kind="deeper" label={label} id={id}><slot /></Fold>

@@ -359,3 +359,12 @@
 		display: none;
 	}
 }
+
+/* ── Shared small label for page components (Precise statement, Before you start, Builds on…) ── */
+.ms-ui-label {
+	margin: 0 0 0.35rem;
+	font-family: var(--ms-font-ui);
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: var(--ms-ink);
+}

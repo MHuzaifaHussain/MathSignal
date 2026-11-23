@@ -1,0 +1,25 @@
+---
+// Where research on the topic stands now, with cited papers and the date it was last reviewed (decision 0008).
+interface Props {
+	/** ISO date the frontier section was last checked against the literature. */
+	reviewed: string;
+}
+
+const { reviewed } = Astro.props;
+const reviewedDate = new Date(reviewed);
+if (Number.isNaN(reviewedDate.getTime())) throw new Error(`<ResearchFrontier>: "${reviewed}" is not a valid date.`);
+const reviewedLabel = reviewedDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+---
+
+<div class="research-frontier">
+	<slot />
+	<p class="reviewed">Frontier last reviewed on {reviewedLabel}.</p>
+</div>
+
+<style>
+	.reviewed {
+		font-family: var(--ms-font-ui);
+		font-size: 0.875rem;
+		color: var(--ms-ink-muted);
+	}
+</style>

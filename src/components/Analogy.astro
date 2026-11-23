@@ -1,0 +1,15 @@
+---
+// An everyday picture plus the place it stops being true. Every analogy must say where it breaks (decision 0008).
+interface Props {
+	/** Where the picture stops matching the maths. Required: an analogy without its limits teaches a misconception. */
+	breaks: string;
+}
+
+const { breaks } = Astro.props;
+if (!breaks.trim()) throw new Error('<Analogy>: the `breaks` prop is required and must say where the picture stops being true.');
+---
+
+<div class="analogy">
+	<slot />
+	<p><strong>Where this picture breaks.</strong> {breaks}</p>
+</div>

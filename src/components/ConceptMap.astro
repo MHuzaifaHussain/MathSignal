@@ -1,0 +1,75 @@
+---
+// Where this topic sits in the curriculum: what it builds on and what it leads to, generated from
+// src/data/topics.mjs (decision 0009). A list for now; a drawn map can be added on top later.
+import { getTopic, topicHref } from '../data/topics.mjs';
+
+const topicId = Astro.locals.starlightRoute.entry.data.topic;
+if (!topicId) throw new Error('<ConceptMap>: set `topic` in this page\'s frontmatter.');
+const topic = getTopic(topicId);
+const groups = [
+	{ label: 'Builds on', topics: topic.prerequisites.map(getTopic) },
+	{ label: 'Leads to', topics: topic.leadsTo.map(getTopic) },
+].filter((group) => group.topics.length > 0);
+
+// A navigation landmark only when it holds at least one link.
+const Wrapper = groups.some((group) => group.topics.some((item) => topicHref(item))) ? 'nav' : 'section';
+---
+
+<Wrapper class="concept-map" aria-label="How this topic connects">
+	{
+		groups.map((group) => (
+			<div class="group">
+				<p class="ms-ui-label">{group.label}</p>
+				<ul>
+					{group.topics.map((item) => {
+						const href = topicHref(item);
+						return (
+							<li>
+								{href ? <a href={href}>{item.title}</a> : <span class="title">{item.title}</span>}
+								{!href && <span class="soon"> (coming soon)</span>}
+								<span class="description">{item.description}</span>
+							</li>
+						);
+					})}
+				</ul>
+			</div>
+		))
+	}
+</Wrapper>
+
+<style>
+	.group {
+		margin-block-end: 1.25rem;
+	}
+
+	ul {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	li {
+		padding-block: 0.35rem;
+	}
+
+	a,
+	.title {
+		font-weight: 600;
+		color: var(--ms-ink);
+	}
+
+	a {
+		text-decoration: underline;
+		text-decoration-color: var(--ms-ink-muted);
+		text-underline-offset: 0.18em;
+	}
+
+	.soon {
+		color: var(--ms-ink-muted);
+	}
+
+	.description {
+		display: block;
+		color: var(--ms-ink-muted);
+	}
+</style>

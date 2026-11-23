@@ -1,0 +1,31 @@
+---
+// The page's reference list, from frontmatter `references` (ids in src/data/references.mjs; decision 0009).
+import { getReference } from '../data/references.mjs';
+
+const ids = Astro.locals.starlightRoute.entry.data.references ?? [];
+if (ids.length === 0) throw new Error('<References>: list the cited source ids in this page\'s frontmatter `references`.');
+const references = ids.map(getReference);
+---
+
+<ol class="references">
+	{
+		references.map((reference) => (
+			<li id={`ref-${reference.id}`}>
+				{reference.authors.join(', ')} ({reference.year}).{' '}
+				<a href={reference.url}>{reference.title}</a>
+				{reference.venue && <>. {reference.venue}</>}.
+				{reference.note && <span class="note"> {reference.note}</span>}
+			</li>
+		))
+	}
+</ol>
+
+<style>
+	.references li {
+		margin-block-end: 0.5rem;
+	}
+
+	.note {
+		color: var(--ms-ink-muted);
+	}
+</style>

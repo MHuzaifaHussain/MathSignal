@@ -1,0 +1,12 @@
+---
+// An inline citation linking to the page's reference list: (He et al. 2015). The id must be in src/data/references.mjs.
+import { getReference, shortCitation } from '../data/references.mjs';
+
+interface Props {
+	id: string;
+}
+
+const reference = getReference(Astro.props.id);
+---
+
+<span class="cite">(<a href={`#ref-${reference.id}`}>{shortCitation(reference)}</a>)</span>

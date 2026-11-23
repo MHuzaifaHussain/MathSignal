@@ -8,6 +8,8 @@ const { entry, id } = Astro.locals.starlightRoute;
 const pageUrl = `${SITE_URL}/${id ? `${id}/` : ''}`;
 const issueTitle = `Error on "${entry.data.title}"`;
 const issueBody = `Page: ${pageUrl}\n\nWhat is wrong, and what should it say?\n`;
+const reviewedAt = entry.data.reviewedAt;
+const reviewedLabel = reviewedAt?.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 const reportUrl = `${REPOSITORY_URL}/issues/new?title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}`;
 ---
 
@@ -15,7 +17,7 @@ const reportUrl = `${REPOSITORY_URL}/issues/new?title=${encodeURIComponent(issue
 
 <div class="page-credits print:hidden">
 	<p>
-		Written by {AUTHOR_NAME}. The text is licensed under
+		Written by {AUTHOR_NAME}{reviewedLabel && <>, last reviewed on {reviewedLabel}</>}. The text is licensed under
 		<a href="https://creativecommons.org/licenses/by/4.0/" rel="license">CC BY 4.0</a> and the code under MIT.
 	</p>
 	<p>

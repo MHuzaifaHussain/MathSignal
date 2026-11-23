@@ -1,0 +1,11 @@
+---
+// The page's key takeaways, from frontmatter `takeaways` (decision 0009).
+const takeaways = Astro.locals.starlightRoute.entry.data.takeaways;
+if (!takeaways || takeaways.length === 0) {
+	throw new Error('<Takeaways>: add 3–5 `takeaways` to this page\'s frontmatter.');
+}
+---
+
+<ul class="takeaways">
+	{takeaways.map((takeaway) => <li>{takeaway}</li>)}
+</ul>

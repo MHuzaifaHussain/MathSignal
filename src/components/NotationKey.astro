@@ -1,0 +1,50 @@
+---
+// Symbol table placed before the first formula, so notation never blocks a beginner (decision 0008).
+// Rows come from src/data/notation.mjs; an unknown key fails the build.
+import { getNotation } from '../data/notation.mjs';
+import { renderTex } from '../design/renderTex.mjs';
+
+interface Props {
+	/** Keys in src/data/notation.mjs, in display order. */
+	symbols: string[];
+}
+
+const { symbols } = Astro.props;
+const rows = symbols.map((key) => {
+	const entry = getNotation(key);
+	return { ...entry, html: renderTex(entry.tex) };
+});
+---
+
+<table class="notation-key">
+	<thead>
+		<tr>
+			<th scope="col">Symbol</th>
+			<th scope="col">Say it</th>
+			<th scope="col">Meaning</th>
+		</tr>
+	</thead>
+	<tbody>
+		{
+			rows.map((row) => (
+				<tr>
+					<td set:html={row.html} />
+					<td>{row.say}</td>
+					<td>
+						{row.meaning}
+						{row.note && <span class="note">{row.note}</span>}
+					</td>
+				</tr>
+			))
+		}
+	</tbody>
+</table>
+
+<style>
+	.note {
+		display: block;
+		margin-block-start: 0.25rem;
+		font-size: 0.9375rem;
+		color: var(--ms-ink-muted);
+	}
+</style>

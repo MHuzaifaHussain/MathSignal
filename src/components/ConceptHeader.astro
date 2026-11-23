@@ -1,31 +1,65 @@
 ---
+// Opens every concept page: the definition in one sentence, the level, what to know first (with a short
+// recap of each prerequisite from src/data/topics.mjs), what the page teaches, and a skip line for experts.
+import { getTopic, topicHref } from '../data/topics.mjs';
+
+const DIFFICULTY_LABELS = {
+	beginner: 'Beginner',
+	intermediate: 'Intermediate',
+	advanced: 'Advanced',
+} as const;
+
 interface Props {
-	/** One sentence saying what the concept is. */
+	/** One sentence that names and defines the concept: "The normal distribution is …". */
 	oneLiner: string;
-	difficulty: 'beginner' | 'intermediate' | 'advanced';
-	prerequisites?: { label: string; href: string }[];
+	difficulty: keyof typeof DIFFICULTY_LABELS;
 }
 
-const { oneLiner, difficulty, prerequisites = [] } = Astro.props;
+const { oneLiner, difficulty } = Astro.props;
+const { topic: topicId, objectives = [] } = Astro.locals.starlightRoute.entry.data;
+const prerequisites = topicId ? getTopic(topicId).prerequisites.map(getTopic) : [];
 ---
 
 <div class="not-content concept-header">
 	<p class="one-liner">{oneLiner}</p>
-	<p class="meta">
-		<span>Level: {difficulty}</span>
-		{
-			prerequisites.length > 0 && (
-				<span>
-					Builds on{' '}
-					{prerequisites.map((prerequisite, index) => (
-						<>
-							<a href={prerequisite.href}>{prerequisite.label}</a>
-							{index < prerequisites.length - 2 ? ', ' : index === prerequisites.length - 2 ? ' and ' : ''}
-						</>
+	<p class="meta">Level: {DIFFICULTY_LABELS[difficulty]}</p>
+
+	{
+		prerequisites.length > 0 && (
+			<div class="block">
+				<p class="ms-ui-label">Before you start</p>
+				<ul class="prerequisites">
+					{prerequisites.map((prerequisite) => {
+						const href = topicHref(prerequisite);
+						return (
+							<li>
+								{href ? <a href={href}>{prerequisite.title}</a> : <span class="title">{prerequisite.title}</span>}
+								<span class="recap">{prerequisite.recap}</span>
+							</li>
+						);
+					})}
+				</ul>
+			</div>
+		)
+	}
+
+	{
+		objectives.length > 0 && (
+			<div class="block">
+				<p class="ms-ui-label">On this page you will</p>
+				<ul class="objectives">
+					{objectives.map((objective) => (
+						<li>{objective}</li>
 					))}
-				</span>
-			)
-		}
+				</ul>
+			</div>
+		)
+	}
+
+	<p class="skip-line">
+		Know the basics already? Jump to the <a href="#precise-statement">precise statement</a>, the
+		<a href="#formal-definition">derivations</a>, the <a href="#research-frontier">research frontier</a> or the
+		<a href="#references">references</a>.
 	</p>
 </div>
 
@@ -38,24 +72,64 @@ const { oneLiner, difficulty, prerequisites = [] } = Astro.props;
 		margin: 0;
 		max-inline-size: 60ch;
 		font-family: var(--ms-font-serif);
-		font-size: 1.3rem;
-		line-height: 1.5;
+		font-size: 1.2rem;
+		line-height: 1.55;
 		color: var(--ms-ink);
 	}
 
 	.meta {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.25rem 1.5rem;
 		margin: 0.75rem 0 0;
 		font-family: var(--ms-font-ui);
 		font-size: 0.9375rem;
 		color: var(--ms-ink-muted);
 	}
 
-	.meta a {
+	.block {
+		margin-block-start: 1.25rem;
+		max-inline-size: 66ch;
+	}
+
+	ul {
+		margin: 0.35rem 0 0;
+		padding-inline-start: 1.25rem;
+		font-family: var(--ms-font-serif);
+		font-size: 1rem;
+		line-height: 1.55;
+		color: var(--ms-ink);
+	}
+
+	.prerequisites {
+		list-style: none;
+		padding-inline-start: 0;
+	}
+
+	.prerequisites li {
+		margin-block-end: 0.5rem;
+	}
+
+	.prerequisites a,
+	.prerequisites .title {
+		font-weight: 600;
+		color: var(--ms-ink);
+	}
+
+	.recap {
+		display: block;
+		color: var(--ms-ink-muted);
+	}
+
+	a {
 		color: var(--ms-ink);
 		text-decoration: underline;
+		text-decoration-color: var(--ms-ink-muted);
 		text-underline-offset: 0.18em;
+	}
+
+	.skip-line {
+		margin: 1.25rem 0 0;
+		font-family: var(--ms-font-ui);
+		font-size: 0.9375rem;
+		line-height: 1.6;
+		color: var(--ms-ink-muted);
 	}
 </style>

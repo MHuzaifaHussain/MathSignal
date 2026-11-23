@@ -1,0 +1,64 @@
+---
+// The one disclosure primitive behind Simpler, GoDeeper, CheckYourself and worked-example answers
+// (decision 0008). Closed by default; opens when its id is in the URL hash. No headings inside, no bars.
+interface Props {
+	kind: 'simpler' | 'deeper' | 'check' | 'answer';
+	/** What the fold contains, e.g. "Why the area must stay 1". */
+	label: string;
+	/** Stable id so other pages and the skip line can link straight into the fold. */
+	id?: string;
+	open?: boolean;
+}
+
+const KIND_LABELS: Record<Props['kind'], string> = {
+	simpler: 'Simpler',
+	deeper: 'Go deeper',
+	check: 'Check',
+	answer: 'Answer',
+};
+
+const { kind, label, id, open = false } = Astro.props;
+---
+
+<details class:list={['ms-fold', `ms-fold-${kind}`]} id={id} open={open}>
+	<summary>
+		<span class="ms-fold-kind">{KIND_LABELS[kind]}:</span>
+		<span class="ms-fold-label">{label}</span>
+	</summary>
+	<div class="ms-fold-body"><slot /></div>
+</details>
+
+<script>
+	// Open a fold (and any folds around it) when the URL points into it, on load and on in-page navigation.
+	function openFoldForHash() {
+		const id = decodeURIComponent(location.hash.slice(1));
+		if (!id) return;
+		const target = document.getElementById(id);
+		let fold = target?.closest('details') ?? null;
+		while (fold) {
+			fold.open = true;
+			fold = fold.parentElement?.closest('details') ?? null;
+		}
+	}
+	openFoldForHash();
+	window.addEventListener('hashchange', openFoldForHash);
+</script>
+
+<style>
+	.ms-fold-kind {
+		font-weight: 600;
+		margin-inline-end: 0.35em;
+	}
+
+	.ms-fold-label {
+		font-weight: 400;
+	}
+
+	.ms-fold-body {
+		padding-block: 0.25rem 0.75rem;
+	}
+
+	.ms-fold-body :global(> :first-child) {
+		margin-block-start: 0;
+	}
+</style>

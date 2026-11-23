@@ -1,0 +1,39 @@
+---
+// One graded worked example. With `faded`, the reader tries it first and the answer sits in a fold (decision 0008).
+import Fold from './Fold.astro';
+
+interface Props {
+	number: number;
+	title: string;
+	/** The last example on a page is faded: the reader works it out before opening the answer. */
+	faded?: boolean;
+}
+
+const { number, title, faded = false } = Astro.props;
+---
+
+<div class="worked-example">
+	<p><strong>{number}. {title}</strong>{faded && <span class="your-turn"> Your turn.</span>}</p>
+	<slot />
+	{
+		faded ? (
+			<Fold kind="answer" label="show the working">
+				<slot name="solution" />
+			</Fold>
+		) : (
+			<slot name="solution" />
+		)
+	}
+</div>
+
+<style>
+	.worked-example {
+		margin-block: 1.25rem 1.75rem;
+	}
+
+	.your-turn {
+		font-family: var(--ms-font-ui);
+		font-size: 0.9375rem;
+		color: var(--ms-ink-muted);
+	}
+</style>
