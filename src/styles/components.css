@@ -252,3 +252,88 @@
 	padding-inline-start: 0.75rem;
 	border-inline-start: 3px solid var(--ms-attention);
 }
+
+/* ── Marimo notebook embed (src/components/react/MarimoEmbed.tsx) ── */
+.ms-marimo {
+	margin-block: 1.5rem 2rem;
+	border: 1px solid var(--ms-rule);
+	border-radius: 4px;
+	overflow: hidden;
+	font-family: var(--ms-font-ui);
+}
+
+.ms-marimo-bar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.5rem 1rem;
+	background-color: var(--ms-surface-sunk);
+	border-bottom: 1px solid var(--ms-rule);
+}
+
+.ms-marimo-title {
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: var(--ms-ink);
+}
+
+.ms-marimo-link {
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	font-size: 0.9375rem;
+	color: var(--ms-ink);
+	text-decoration: underline;
+	text-decoration-color: var(--ms-ink-muted);
+	text-underline-offset: 0.18em;
+}
+
+.ms-marimo-frame {
+	position: relative;
+	background-color: var(--ms-surface-sunk);
+}
+
+.ms-marimo-loading {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 0.75rem;
+	font-size: 0.9375rem;
+	color: var(--ms-ink-muted);
+}
+
+.ms-marimo-spinner {
+	width: 2rem;
+	height: 2rem;
+	border: 2px solid var(--ms-rule);
+	border-top-color: var(--ms-ink);
+	border-radius: 50%;
+	animation: ms-spin 0.9s linear infinite;
+}
+
+@keyframes ms-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.ms-marimo-spinner {
+		animation: none;
+	}
+}
+
+.ms-marimo-iframe {
+	display: block;
+	width: 100%;
+	height: 100%;
+	border: 0;
+}
+
+.ms-marimo-iframe[data-loaded='false'] {
+	visibility: hidden;
+}

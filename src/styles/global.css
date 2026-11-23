@@ -3,11 +3,6 @@
  * Colours come only from --ms-* tokens (src/styles/tokens.css, generated from src/design/palette.mjs).
  * Rules: docs/design-system/foundations.md
  */
-@layer base, starlight, theme, components, utilities;
-
-@import '@astrojs/starlight-tailwind';
-@import 'tailwindcss/theme' layer(theme);
-@import 'tailwindcss/utilities' layer(utilities);
 @import './tokens.css';
 @import './components.css';
 

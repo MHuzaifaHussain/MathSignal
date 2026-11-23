@@ -3,7 +3,6 @@ import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import react from '@astrojs/react';
 import { unified } from '@astrojs/markdown-remark';
-import tailwindcss from '@tailwindcss/vite';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import { katexOptions, rehypeKatexFailOnError } from './src/design/katex.mjs';
@@ -66,7 +65,6 @@ export default defineConfig({
 		react(),
 	],
 	vite: {
-		plugins: [tailwindcss()],
 		ssr: {
 			noExternal: ['katex'],
 		},
