@@ -212,7 +212,7 @@ const conditionFresh = initialState('dice-condition');
 assert.equal(describe.statusLine(conditionFresh), '36 equally likely outcomes. Editing A.');
 assert.deepEqual(describe.readoutLines(conditionFresh), [
 	'A = sum is at least 10: 6 of 36 = 1/6 (≈ 0.17)',
-	'B = a double: 6 of 36 = 1/6 (≈ 0.17)',
+	'B = doubles: 6 of 36 = 1/6 (≈ 0.17)',
 	'A and B = {(5,5), (6,6)}: 2 of 36',
 ]);
 const shrunk = reducer(conditionFresh, { type: 'shrink', on: true });

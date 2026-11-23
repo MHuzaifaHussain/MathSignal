@@ -123,7 +123,7 @@ function twoDice(): Scenario {
 			'sum-7': { label: 'sum is 7', members: (outcome) => sum(outcome) === 7 },
 			'sum-2': { label: 'sum is 2', members: (outcome) => sum(outcome) === 2 },
 			'sum-at-least-10': { label: 'sum is at least 10', members: (outcome) => sum(outcome) >= 10 },
-			double: { label: 'a double', members: (outcome) => faces(outcome)[0] === faces(outcome)[1] },
+			double: { label: 'doubles', members: (outcome) => faces(outcome)[0] === faces(outcome)[1] },
 			'first-6': { label: 'first die is 6', members: (outcome) => faces(outcome)[0] === 6 },
 			'second-6': { label: 'second die is 6', members: (outcome) => faces(outcome)[1] === 6 },
 		},
