@@ -134,6 +134,25 @@ export const REFERENCES = [
 		note: 'Section 1.2.3: a subset of [0, 1] that is not Lebesgue measurable, built with the axiom of choice.',
 		checked: '2026-11-24',
 	},
+	{
+		id: 'goodfellow2016',
+		authors: ['Ian Goodfellow', 'Yoshua Bengio', 'Aaron Courville'],
+		year: 2016,
+		title: 'Deep learning',
+		venue: 'MIT Press',
+		url: 'https://www.deeplearningbook.org/contents/mlp.html',
+		note: 'Sections 6.2.2.2 and 6.2.2.3: sigmoid output units for a binary variable and softmax output units for a distribution over n classes.',
+		checked: '2026-11-24',
+	},
+	{
+		id: 'szegedy2015',
+		authors: ['Christian Szegedy', 'Vincent Vanhoucke', 'Sergey Ioffe', 'Jonathon Shlens', 'Zbigniew Wojna'],
+		year: 2015,
+		title: 'Rethinking the Inception architecture for computer vision',
+		url: 'https://arxiv.org/abs/1512.00567',
+		note: 'Section 7: label smoothing.',
+		checked: '2026-11-24',
+	},
 ];
 
 const BY_ID = new Map(REFERENCES.map((reference) => [reference.id, reference]));

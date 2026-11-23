@@ -21,6 +21,8 @@ references:
   - kolmogorov1950
   - grinstead2003
   - tao2011
+  - goodfellow2016
+  - szegedy2015
 author: Muhammad Huzaifa Hussain
 reviewedAt: 2026-11-24
 aiAssisted: true
@@ -58,7 +60,7 @@ import EventSpace from "../../../components/react/EventSpace.tsx";
 
 ## In everyday terms
 
-<Analogy breaks="Pouring is a choice, but a real die's probabilities come from the die, not from how you like to pour. The picture shows the rules any probability must follow, not how to find the right one for a given die. And for a measurement such as a height there are so many cups that each single one holds no water at all, yet together they still hold the full jug; that case needs the precise statement further down.">
+<Analogy breaks="Pouring is a choice, but a real die's probabilities come from the die, not from how you like to pour. The picture shows the rules any probability must follow, not how to find the right one for a given die. And for a measurement such as a height there are so many cups that each single one holds no water at all, yet together they still hold the full jug; the common mistake about probability 0 further down shows how.">
 
 Think of everything you believe about one roll of a die as a single jug of water, and set out six cups, one for each face. Pour the whole jug into the cups, as much into each as you think that face deserves. Only three rules matter. No cup can hold less than nothing. All the water ends up in the cups, so together they hold exactly one jug. And the water for a question such as "is it even?" is the water in cups 2, 4 and 6 added up, because no drop sits in two cups at once.
 
@@ -80,23 +82,25 @@ Before you touch anything: on a die loaded toward six, with 1, 1, 1, 1, 1 and 7 
 
 Could you pour a die so that "even" gets 3/4 of the jug and "odd" gets 1/2? Decide which of the three rules settles it before you look at the board.
 
+Once you have decided: no. "Even" and "odd" share no cup and together cover all six, so their water adds up to exactly one jug, and 3/4 + 1/2 is more than one.
+
 </GoDeeper>
 
-The board shows six cups, Cup 1 to Cup 6, each a column of 12 slots with its share written under it, such as 2/12. Under each cup, the + button pours one unit into it and the − button pours one unit out; the tray shows how much is left in the jug. The Fill buttons pour a whole die at once: Fair die, Loaded toward six, or Start over, which empties every cup back into the jug. The A buttons, Even, At most 2 and Six, choose the event the board adds up, and its cups get an "A" tag. As a goal, press Loaded toward six with A on Even and read the bottom line, then press Fair die and compare.
+The board shows six cups, Cup 1 to Cup 6, each a column of 12 slots with its share written under it, such as 2/12. Under each cup, the + button pours one unit into it and the − button pours one unit out; the tray shows how much is left in the jug. The Fill buttons pour a whole die at once: Fair die, Loaded toward six, or Start over, which empties every cup back into the jug. The A buttons, Even, At most 2 and Six, choose the event the board adds up, and its cups get an "A" tag. As a goal, press Loaded toward six with A on Even and read the P(even) line, then press Fair die and compare.
 
 <div class="not-content">
   <EventSpace client:visible setup="die-pour" />
 </div>
 
-More likely, by a quarter of the jug. With every cup full the board writes the sum out: on the fair die "P(even) = 2/12 + 2/12 + 2/12 = 6/12 = 0.5", and on the loaded die "P(even) = 1/12 + 1/12 + 7/12 = 9/12 = 0.75". So "even" goes from 1/2 to 3/4. The loaded die takes water from cups 2 and 4, but cup 6 gains more than they lose. And the second question has the answer no: "even" and "odd" share no cup and together cover all six, so their water adds up to exactly one jug, and 3/4 + 1/2 is more than one.
+More likely, by a quarter of the jug. With every cup full the board writes the sum out: on the fair die "P(even) = 2/12 + 2/12 + 2/12 = 6/12 = 0.50", and on the loaded die "P(even) = 1/12 + 1/12 + 7/12 = 9/12 = 0.75". So "even" goes from 1/2 to 3/4. The loaded die takes water from cups 2 and 4, but cup 6 gains more than they lose.
 
 ### What the board refuses to do
 
 Each of the three rules shows up as something the board won't do or won't call a probability.
 
 - **Never negative.** Press Start over, then press − on any cup. The board refuses: "A cup can't hold less than nothing." No pouring can give a face less than zero.
-- **The whole jug, no more and no less.** The board opens full, so pouring into any cup is refused with "The jug is empty." After Start over, pour 2 units into each of cups 1 to 4 and the board says "8 of 12 units poured. The cups add up to 8/12, not 1, so this isn't a probability yet." The event line changes too: it says "Even holds 2/12 + 2/12 + 0/12 = 4/12 of the jug" instead of giving P(even). Only when all 12 units are poured does it say "All 12 units poured: the cups add up to 1."
-- **Separate cups add.** The event line always writes the sum out, one term per cup in the event. Six and At most 2 share no cup, so on the loaded die their shares, 7/12 and 2/12, add up to the 9/12 of the event made of cups 1, 2 and 6.
+- **The whole jug, no more and no less.** The board opens with all 12 units in the cups, so pouring into any cup is refused with "The jug is empty." After Start over, pour 2 units into each of cups 1 to 4 and the board says "8 of 12 units poured. The cups add up to 8/12, not 1, so this isn't a probability yet." The event line changes too: it says "Even holds 2/12 + 2/12 + 0/12 = 4/12 of the jug" instead of giving P(even). Only when all 12 units are poured does it say "All 12 units poured: the cups add up to 1."
+- **Separate cups add.** The event line always writes the sum out, one term per cup in the event. Six and At most 2 share no cup, so on the loaded die their shares, 7/12 and 2/12, add up to 9/12 for the event made of cups 1, 2 and 6. The board has no preset for that event; the 9/12 is computed here from its two lines.
 
 Under the cups the board keeps one note: "The cups are drawn the same size. The water in them is the probability, not the cup." The cup is where a face's probability goes; how much water it holds is the probability.
 
@@ -123,7 +127,7 @@ Thirty students each vote for one of three picnic spots. Share of the vote works
 </Simpler>
 
 <SideNote>
-Kolmogorov's 1933 book, translated into English in 1950, stated five axioms, two about the collection of events and three about the probabilities, and later added a sixth, continuity, as the only axiom specific to infinitely many events <Cite id="kolmogorov1950" />. The three rules here are the usual modern way to write the same system.
+Kolmogorov's 1933 book, translated into English in 1950, stated five axioms, two about the collection of events and three about the probabilities, and added a sixth, continuity, in the next chapter, as the only axiom specific to infinitely many events <Cite id="kolmogorov1950" />. The three rules here are the usual modern way to write the same system.
 </SideNote>
 
 ## Rules that follow from the three
@@ -170,11 +174,11 @@ Boundary cases. $P$ gives a value only to events in $\mathcal{F}$. On a finite $
 
 </PreciseStatement>
 
-<GoDeeper label="why the third axiom is countable, not finite">
+<GoDeeper label="why the third axiom is countable, not finite" id="countable-additivity">
 
 Kolmogorov's own fifth axiom was finite additivity: $P(A \cup B) = P(A) + P(B)$ for disjoint $A$ and $B$. For infinite collections of events he added a sixth, continuity: if $A_1 \supseteq A_2 \supseteq \cdots$ and $\bigcap_n A_n = \emptyset$, then $P(A_n) \to 0$. He showed that the two together are equivalent to countable additivity, that continuity follows from the other axioms when there are only finitely many events, and he called infinite probability fields idealized models of real random processes <Cite id="kolmogorov1950" />.
 
-What countable additivity rules out shows up in a natural-sounding experiment: pick a whole number $1, 2, 3, \ldots$ "uniformly at random". Fairness means every number gets the same probability $p$. Countable additivity then gives $P(\Omega) = \sum_{n=1}^{\infty} p$, which is $0$ if $p = 0$ and infinite if $p > 0$, never $1$. So there is no uniform probability on a countably infinite sample space <Cite id="grinstead2003" />. With finite additivity alone the argument stops halfway: $P(\{1, \ldots, n\}) = np \le 1$ for every $n$ forces $p = 0$, but nothing then forces $P(\Omega)$ to be $0$. Finite additivity on its own does not rule out a "fair lottery" on the whole numbers; countable additivity does. In exchange, countable additivity lets probabilities pass to limits, which the standard theory of expectations and of infinite sequences of tosses is built on.
+What countable additivity rules out shows up in a natural-sounding experiment: pick a whole number $1, 2, 3, \ldots$ "uniformly at random". Fairness means every number gets the same probability $p$. Countable additivity then gives $P(\Omega) = \sum_{n=1}^{\infty} p$, which is $0$ if $p = 0$ and infinite if $p > 0$, never $1$. So there is no uniform probability on a countably infinite sample space <Cite id="grinstead2003" />. With finite additivity alone the argument stops halfway: $P(\{1, \ldots, n\}) = np \le 1$ for every $n$ forces $p = 0$, but nothing then forces $P(\Omega)$ to be $0$. With finite additivity alone, this argument no longer rules out a "fair lottery" on the whole numbers; countable additivity does. In exchange, countable additivity lets probabilities pass to limits, which the standard theory of expectations and of infinite sequences of tosses is built on.
 
 </GoDeeper>
 
@@ -263,7 +267,7 @@ Check axioms 1 and 2 on each list; on a finite space with every subset an event,
 
 ### Softmax outputs
 
-A softmax layer turns any real scores $z_1, \ldots, z_K$, the logits, into a distribution over $K$ classes:
+A softmax layer turns any real scores $z_1, \ldots, z_K$, the logits, into a distribution over $K$ classes <Cite id="goodfellow2016" />:
 
 $$
 p_k = \frac{e^{z_k}}{\sum_{j=1}^{K} e^{z_j}}.
@@ -273,7 +277,7 @@ Each $e^{z_k}$ is positive, so every $p_k > 0$ and axiom 1 holds; dividing by th
 
 ### One sigmoid per label
 
-A multi-label model, which may tag one image as both "outdoor" and "dog", uses one sigmoid per label instead, $\operatorname{sigmoid}(z_k) = 1/(1 + e^{-z_k})$. Each output lies between 0 and 1 and is the probability of a separate yes-or-no event, "label $k$ applies", on its own two-outcome sample space with $P(\text{yes}) = \operatorname{sigmoid}(z_k)$ and $P(\text{no}) = 1 - \operatorname{sigmoid}(z_k)$. Those are fine probabilities. But the labels are not disjoint outcomes of one experiment, so the outputs need not add up to 1: the same logits $(2, 1, 0)$ give $(0.881, 0.731, 0.5)$, which add up to about $2.11$. Reading them as one distribution over the labels breaks axiom 2.
+A multi-label model, which may tag one image as both "outdoor" and "dog", uses one sigmoid per label instead, $\operatorname{sigmoid}(z_k) = 1/(1 + e^{-z_k})$. Each output lies between 0 and 1 and is the probability of a separate yes-or-no event, "label $k$ applies", on its own two-outcome sample space with $P(\text{yes}) = \operatorname{sigmoid}(z_k)$ and $P(\text{no}) = 1 - \operatorname{sigmoid}(z_k)$. Those are fine probabilities: a sigmoid output unit is how a network gives one binary variable a valid probability <Cite id="goodfellow2016" />. But the labels are not disjoint outcomes of one experiment, so the outputs need not add up to 1: the same logits $(2, 1, 0)$ give $(0.881, 0.731, 0.5)$, which add up to about $2.11$. Reading them as one distribution over the labels breaks axiom 2.
 
 ### Normalizing scores
 
@@ -281,7 +285,7 @@ Any list of non-negative scores $s_k$ with a positive total becomes a distributi
 
 ### Label smoothing
 
-Label smoothing trains against a softened target instead of a one-hot one. In the form used here, with $K$ classes and a smoothing amount $\epsilon$ between 0 and 1, the target is
+Label smoothing trains against a softened target instead of a one-hot one <Cite id="szegedy2015" />. In the form used here, which is the one Szegedy and coauthors used, with $K$ classes and a smoothing amount $\epsilon$ between 0 and 1, the target is
 
 $$
 \tilde{y}_k = (1 - \epsilon)\, y_k + \frac{\epsilon}{K},
@@ -301,7 +305,7 @@ which for a one-hot label of class $c$ is $-\log p_c$. The loss only rewards the
 
 ## Check the axioms in code
 
-This runs in your browser, uses exact fractions so every equality is exact, and stops with an error if a result is off. It checks every number on this page, a function `is_distribution` for axioms 1 and 2, and inclusion–exclusion on all 4,096 pairs of events of the loaded die:
+This runs in your browser, uses exact fractions so every equality is exact, and stops with an error if a result is off. It checks the page's numbers, a function `is_distribution` for axioms 1 and 2, and inclusion–exclusion on all 4,096 pairs of events of the loaded die:
 
 <PyRunner
   title="axioms.py"
@@ -443,7 +447,7 @@ The brute-force loop is the strongest check here: inclusion–exclusion holds fo
 
 <ResearchFrontier reviewed="2026-11-24">
 
-**Countable or only finite additivity.** Kolmogorov stated finite additivity as an axiom and added continuity, which together amount to countable additivity, for infinite probability fields. He noted that infinite fields occur only as idealized models and that he limited himself to models satisfying continuity because this had proved convenient in very different kinds of research <Cite id="kolmogorov1950" />. Measure theory, the standard foundation since, takes countable additivity as part of the definition. Its price is that some sets can't be given a probability at all: with the axiom of choice there are subsets of $[0, 1]$ that no countably additive, shift-invariant length can measure <Cite id="tao2011" />, which is why $P$ is defined on a collection $\mathcal{F}$ rather than on every subset. Another line of justification for the rules, from the coherence of betting odds, comes from the philosophy of probability and is not covered here.
+**Countable or only finite additivity.** Kolmogorov's finite additivity plus continuity amount to countable additivity ([see the fold above](#countable-additivity)), and he adopted continuity for infinite fields because it had proved convenient in very different kinds of research, not because experience forces it <Cite id="kolmogorov1950" />. Measure theory, the standard foundation since, takes countable additivity as part of the definition, at the price that some subsets of $[0, 1]$ can't be given a probability at all <Cite id="tao2011" />, which is why $P$ is defined on a collection $\mathcal{F}$.
 
 **What is settled for this page.** Everything derived above is settled. On finite sample spaces, which cover dice, coins and a classifier's labels, finite and countable additivity coincide, and every rule on this page follows from the three axioms.
 
