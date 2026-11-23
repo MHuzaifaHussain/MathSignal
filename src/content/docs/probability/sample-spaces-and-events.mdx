@@ -1,6 +1,6 @@
 ---
 title: "Sample spaces and events"
-description: "Toss two coins on a board, mark every way to get at least one head, and learn the outcomes and events that every probability in ML is built on."
+description: "Toss two coins on a board, mark every way to get at least one head, and learn the sample spaces and events that every probability in ML is built on."
 draft: true
 sidebar:
   order: 1
@@ -21,6 +21,7 @@ references:
   - grinstead2003
   - kolmogorov1950
   - tao2011
+  - goodfellow2016
 author: Muhammad Huzaifa Hussain
 reviewedAt: 2026-11-24
 aiAssisted: true
@@ -106,7 +107,7 @@ This mistake has a long history. Grinstead and Snell note that d'Alembert, in th
 
 ### Outcomes and events
 
-An outcome is one single result; an event is a group of outcomes, chosen because it answers a question. "At least one head" is the event made of HH, HT and TH. An event happens when the outcome that actually turns up is one of its members.
+An outcome is one result; an event is a group of outcomes, chosen because it answers a question. "At least one head" is the event made of HH, HT and TH. An event happens when the outcome that actually turns up is one of its members.
 
 The smallest events are the empty event, which holds no outcomes and never happens, and the single outcomes on their own. The largest is the whole sample space, which always happens. With four outcomes there are 16 possible events, from the empty one to all four.
 
@@ -156,9 +157,9 @@ Boundary cases: the empty set $\emptyset$ and the whole space $\Omega$ are both 
 
 </PreciseStatement>
 
-<GoDeeper label="why infinite sample spaces need a collection of events">
+<GoDeeper label="why infinite sample spaces need a collection of events" id="non-measurable-sets">
 
-Pick a point uniformly at random from $[0, 1]$. The natural probability of an interval is its length, and lengths should add up over countably many disjoint pieces and not change when a set is shifted. Using the axiom of choice, one can build a subset of $[0, 1]$ to which no such length can be given: assigning it any value contradicts countable additivity and shift invariance together <Cite id="tao2011" />. So on infinite spaces, probabilities are assigned only to the sets in a chosen collection $\mathcal{F}$, which contains $\Omega$ and is closed under complements and countable unions. This is the shape of Kolmogorov's axiomatic framework: outcomes, a collection of events, and a probability on those events <Cite id="kolmogorov1950" />. On a finite space none of this bites, and we can take $\mathcal{F}$ to be every subset.
+Pick a point uniformly at random from $[0, 1]$. The natural probability of an interval is its length, and lengths should add up over countably many disjoint pieces and not change when a set is shifted. Using the axiom of choice, one can build a subset of $[0, 1]$ to which no such length can be given: assigning it any value contradicts countable additivity and shift invariance together <Cite id="tao2011" />. So on spaces like $[0, 1]$, probabilities are assigned only to the sets in a chosen collection $\mathcal{F}$, which contains $\Omega$ and is closed under complements and countable unions. This is the shape of Kolmogorov's axiomatic framework: outcomes, a collection of events, and a probability on those events <Cite id="kolmogorov1950" />. On a finite space none of this bites, and we can take $\mathcal{F}$ to be every subset.
 
 </GoDeeper>
 
@@ -176,17 +177,17 @@ Pick a point uniformly at random from $[0, 1]$. The natural probability of an in
 
 </StepThrough>
 
-<StepThrough title="A sample space with n outcomes has 2ⁿ events" rigor="full">
+<StepThrough title="A sample space with n outcomes has 2ⁿ subsets, so 2ⁿ possible events" rigor="full">
 
-1. An event is fixed by answering, for each outcome, one yes-or-no question: is it in the event?
+1. A subset is fixed by answering, for each outcome, one yes-or-no question: is it in the subset?
 2. With $|\Omega| = n$ outcomes there are $n$ separate yes-or-no choices, so by the product rule above there are $2 \times 2 \times \dots \times 2 = 2^n$ ways to answer them.
-3. Different answers give different events, and every event arises this way, so there are exactly $2^n$ events. The all-no answer is $\emptyset$ and the all-yes answer is $\Omega$, so both are counted.
+3. Different answers give different subsets, and every subset arises this way, so there are exactly $2^n$ subsets. The all-no answer is $\emptyset$ and the all-yes answer is $\Omega$, so both are counted. Taking every subset as an event, as we do on a finite space, gives $2^n$ possible events.
 
 </StepThrough>
 
 **The complement rule for counts.** Every outcome is in $A$ or in $A^\complement$, never both, so $|A^\complement| = |\Omega| - |A|$. With equally likely outcomes this gives $P(A^\complement) = 1 - P(A)$.
 
-| Experiment | Outcomes $\lvert\Omega\rvert$ | Events $2^{\lvert\Omega\rvert}$ |
+| Experiment | Outcomes $\lvert\Omega\rvert$ | Subsets $2^{\lvert\Omega\rvert}$ |
 | --- | --- | --- |
 | One coin | 2 | 4 |
 | Two coins | 4 | 16 |
@@ -226,14 +227,14 @@ $|\Omega| = 2^3 = 8$ ordered results, from HHH to TTT. The complement of "at lea
 
 ### A classifier's labels
 
-A classifier that sorts images into cat, dog and bird works on the sample space $\Omega = \{\text{cat}, \text{dog}, \text{bird}\}$. Its softmax output gives a probability to each outcome, for example $0.7$, $0.2$ and $0.1$. These are not equally likely, so counting doesn't apply: the probability of an event is the sum of its outcomes' probabilities. The event "a four-legged animal" is $\{\text{cat}, \text{dog}\}$, with probability $0.7 + 0.2 = 0.9$. Choosing the label set is choosing the sample space; an image of a horse has no outcome to land on, and the model must still spread all of its probability over the three labels.
+A classifier that sorts images into cat, dog and bird works on the sample space $\Omega = \{\text{cat}, \text{dog}, \text{bird}\}$. Its softmax output gives a probability to each outcome <Cite id="goodfellow2016" />, for example $0.7$, $0.2$ and $0.1$. These are not equally likely, so counting doesn't apply: the probability of an event is the sum of its outcomes' probabilities. The event "a four-legged animal" is $\{\text{cat}, \text{dog}\}$, with probability $0.7 + 0.2 = 0.9$. Choosing the label set is choosing the sample space; an image of a horse has no outcome to land on, and the model must still spread all of its probability over the three labels.
 
 ### Next-token prediction
 
-A language model predicts the next token from a vocabulary $V$, which is its sample space: one outcome per token, often tens of thousands of them. Its output is a probability for every $\omega \in V$. Sampling methods work with events. Top-$k$ sampling keeps the event $V_k$ made of the $k$ most likely tokens and samples from it with
+A language model predicts the next token from a vocabulary $V$, which is its sample space: one outcome per token, often tens of thousands of them. Its output is a probability for every $\omega \in V$. Sampling methods work with events. Top-$k$ sampling keeps the event $V_k$ made of the $k$ most likely tokens and samples from it: each kept token $\omega \in V_k$ gets the new probability
 
 $$
-P(\omega \mid V_k) = \frac{P(\omega)}{P(V_k)} \quad \text{for } \omega \in V_k.
+\frac{P(\{\omega\})}{P(V_k)}.
 $$
 
 In words: each kept token's probability is divided by the total probability of the kept tokens, so they add up to 1 again, and every token outside $V_k$ gets probability 0.
@@ -292,7 +293,7 @@ no_heads = [outcome for outcome in three_coins if "H" not in outcome]
 assert len(three_coins) == 8 and len(no_heads) == 1
 assert 1 - probability(no_heads, three_coins) == Fraction(7, 8)
 
-# A space with n outcomes has 2**n events (the properties table).
+# A space with n outcomes has 2**n subsets (the properties table).
 assert sum(1 for _ in product([False, True], repeat=len(coins))) == 16
 assert [2**n for n in (2, 4, 6, 36)] == [4, 16, 64, 68_719_476_736]
 
@@ -315,9 +316,9 @@ The simulation's share is within 0.01 of 0.75 and the share of "one of each" is 
 
 <ResearchFrontier reviewed="2026-11-24">
 
-**Why probability is defined on a collection of events.** Kolmogorov built probability on a set of outcomes, a collection of events and a probability on those events <Cite id="kolmogorov1950" />, and this framework is the standard one. The reason for the middle piece is a settled result: with the axiom of choice there are subsets of $[0, 1]$ that no length, and so no uniform probability, can measure while staying countably additive and unchanged by shifts <Cite id="tao2011" />. Tao also notes that without the axiom of choice there are models of set theory in which every subset of the line is measurable <Cite id="tao2011" />, so the obstacle comes from that axiom, not from probability itself.
+**Why probability is defined on a collection of events.** Kolmogorov built probability on a set of outcomes, a collection of events and a probability on those events <Cite id="kolmogorov1950" />, and this framework is the standard one. The middle piece is there because of [non-measurable sets](#non-measurable-sets), a settled result. Tao also notes that without the axiom of choice there are models of set theory in which every subset of the line is measurable <Cite id="tao2011" />, so the construction needs the axiom of choice.
 
-**What is settled for this page.** Nothing here is an open problem. For finite sample spaces we can take every subset as an event and nothing goes wrong; the subtleties begin only with infinite spaces, and the standard framework above handles the cases machine learning uses.
+**Nothing open here.** No result on this page is an open problem. For finite sample spaces we can take every subset as an event and nothing goes wrong; the subtleties begin only with infinite spaces, and the standard framework above handles the cases machine learning uses.
 
 </ResearchFrontier>
 

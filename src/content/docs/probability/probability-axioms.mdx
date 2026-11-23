@@ -1,6 +1,6 @@
 ---
 title: "Probability axioms"
-description: "Pour one jug of probability into six cups for a die, learn the three rules every probability follows, and see why softmax and cross-entropy rely on them."
+description: "Every softmax output and cross-entropy loss leans on the three probability axioms. Pour a die from a jug of probability to see each rule at work."
 draft: true
 sidebar:
   order: 2
@@ -20,7 +20,6 @@ takeaways:
 references:
   - kolmogorov1950
   - grinstead2003
-  - tao2011
   - goodfellow2016
   - szegedy2015
 author: Muhammad Huzaifa Hussain
@@ -114,11 +113,11 @@ The first rule says a probability is never below 0. A probability of 0 means "no
 
 ### The whole sample space gets 1
 
-The second rule says the sample space, the event "something happens", has probability 1. Some outcome always occurs, so all the probability is spread over the outcomes and none is left over or missing. This is what makes 1 the top of the scale: it is the probability of the one event that is certain.
+The second rule says the sample space, the event "something happens", has probability 1. Some outcome always occurs, so all the probability is spread over the outcomes and none is left over or missing. The certain event gets probability 1, and (as shown below) no event can have more.
 
 ### Events that can't happen together add up
 
-The third rule says that if two events share no outcome, the probability that one or the other happens is the sum of their probabilities. On a die, "at most 2" and "six" can't both happen, so the chance of either is the chance of the first plus the chance of the second. Events with no outcome in common are called disjoint, or mutually exclusive. Applied one outcome at a time, the rule says that on a finite sample space the probability of any event is the sum of the probabilities of its outcomes. Counting outcomes, as on the [previous page](/probability/sample-spaces-and-events/), is the special case where every outcome gets the same share.
+The third rule says that if two events share no outcome, the probability that one or the other happens is the sum of their probabilities. On a die, "at most 2" and "six" can't both happen, so the chance of either is the chance of the first plus the chance of the second. Events with no outcome in common are called disjoint, or mutually exclusive. Applied one outcome at a time, when every outcome is an event, as on a finite space, the rule says that the probability of any event is the sum of the probabilities of its outcomes. Counting outcomes, as on [sample spaces and events](/probability/sample-spaces-and-events/), is the special case where every outcome gets the same share.
 
 <Simpler label="the same rules with a class vote">
 
@@ -195,7 +194,7 @@ What countable additivity rules out shows up in a natural-sounding experiment: p
 
 </StepThrough>
 
-<StepThrough title="The complement rule: P(Aᶜ) = 1 − P(A)" rigor="full">
+<StepThrough title="The complement rule: P(not A) = 1 − P(A)" rigor="full">
 
 1. $A$ and $A^\complement$ are disjoint, and $A \cup A^\complement = \Omega$.
 2. Finite additivity gives $P(A) + P(A^\complement) = P(\Omega)$.
@@ -447,9 +446,9 @@ The brute-force loop is the strongest check here: inclusion–exclusion holds fo
 
 <ResearchFrontier reviewed="2026-11-24">
 
-**Countable or only finite additivity.** Kolmogorov's finite additivity plus continuity amount to countable additivity ([see the fold above](#countable-additivity)), and he adopted continuity for infinite fields because it had proved convenient in very different kinds of research <Cite id="kolmogorov1950" />. Measure theory, the standard foundation since, takes countable additivity as part of the definition, at the price that, with the axiom of choice, no uniform, shift-invariant probability on $[0, 1]$ can be defined on every subset <Cite id="tao2011" />, which is why $P$ is defined on a collection $\mathcal{F}$.
+**Why countable additivity became standard.** Kolmogorov adopted continuity, and with it the third axiom ([countable additivity](#countable-additivity)), because it had proved convenient in very different kinds of research <Cite id="kolmogorov1950" />. Measure theory kept it, at the price that $P$ is defined only on a collection $\mathcal{F}$, because of [subsets of the unit interval that no length can measure](/probability/sample-spaces-and-events/#non-measurable-sets).
 
-**What is settled for this page.** Everything derived above is settled. On finite sample spaces, which cover dice, coins and a classifier's labels, finite and countable additivity coincide, and every rule on this page follows from the three axioms.
+**Finite spaces.** Everything derived above is settled. On finite sample spaces, which cover dice, coins and a classifier's labels, finite and countable additivity coincide, and every rule on this page follows from the three axioms.
 
 </ResearchFrontier>
 
@@ -474,7 +473,7 @@ Inclusion–exclusion gives $P(A \cap B) = P(A) + P(B) - P(A \cup B)$. Since $A 
 ## Common mistakes
 
 <CommonMistakes>
-  <Mistake wrong="A probability can come out as 1.2, or as −0.1, when a model is very sure.">
+  <Mistake wrong="A probability can come out as 1.2, or as −0.1, if the arithmetic or the model goes wrong.">
     It can't. Axiom 1 rules out anything below 0, and axiom 2 with monotonicity rules out anything above 1. A number outside $[0, 1]$ means the calculation or the model's output is not a probability; check for a missing normalization or a sum over overlapping events.
   </Mistake>
   <Mistake wrong="P(A or B) = P(A) + P(B).">
@@ -485,9 +484,6 @@ Inclusion–exclusion gives $P(A \cap B) = P(A) + P(B) - P(A \cup B)$. Since $A 
   </Mistake>
   <Mistake wrong="An event with probability 0 is impossible.">
     On a finite space where every outcome has a positive weight, as with fair dice, yes: only $\emptyset$ has probability 0. In general, no. Pick a point uniformly from $[0, 1]$: any single point $x$ lies in an interval of length $2\epsilon$ around it, so monotonicity gives $P(\{x\}) \le 2\epsilon$ for every $\epsilon > 0$, and $P(\{x\}) = 0$. Yet some point is always picked. This is how densities such as the [normal distribution](/statistics/normal-distribution/) work.
-  </Mistake>
-  <Mistake wrong="A bigger cup, or a bigger square, means a more likely outcome.">
-    The board draws every cup and every square the same size; the size is a picture, not the probability. On the jug board the water in a cup is the probability, and a loaded die puts 7 units in cup 6 and 1 in each of the others, all in cups of the same size.
   </Mistake>
 </CommonMistakes>
 
