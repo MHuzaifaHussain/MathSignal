@@ -33,8 +33,10 @@ A lecture hall: you **read on paper**, the teacher **draws on the board**, and y
 | `src/design/code-themes.mjs` | Builds the Expressive Code light and dark themes from the palette |
 | `scripts/check-design.mjs` | Fails the build if any contrast or colour-blindness rule breaks |
 | `src/components/` | Astro layout components (server-rendered) |
-| `src/components/react/` | React islands (interactive boards, the Python runner) |
-| `src/components/overrides/` | Starlight component overrides (header, sidebar) |
+| `src/components/react/` | React islands (boards, tray sliders, `PyRunControls` and its Pyodide worker) |
+| `src/design/domains.mjs` | The subject list, shared by the sidebar and the header strip |
+| `src/routeData.ts` | Starlight route middleware that narrows the sidebar to the active subject |
+| `src/components/overrides/` | Starlight component overrides (header, sidebar) and the subject strip |
 
 ## Changing the system
 

@@ -22,3 +22,5 @@ Scores (out of 50): two themes 41, light only 35, hybrid 34, dark only 24.
 - Pure yellow can't be a line on light surfaces, so light mode uses ochre for "look here" lines.
 - Print styles use the light board.
 - The original dark-board frame (`#3e4f4b`, 2.0:1) failed on low-contrast screens; the brighter `#6a8079` (4.1:1) replaced it.
+
+Amendment (2026-11-23): the light board frame and axis moved from `#748a80` to `#677c73` so slider tracks and the Reset border reach 3:1 on the tray as well as the board.

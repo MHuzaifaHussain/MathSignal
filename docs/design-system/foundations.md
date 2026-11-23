@@ -10,7 +10,7 @@ All values below come from `src/design/palette.mjs`. Use the CSS custom property
 | Ledge (`--ms-ledge`) | Site header with the domain strip | White with a rule below | Slate, same as the board |
 | Board (`--ms-board`) | Every interactive plot | Pale green-grey with a frame | Slate with a brighter frame |
 | Tray (`--ms-board-tray`) | Sliders, readouts and Reset under a board | Slightly darker green-grey | Darker slate |
-| Margin | Side notes (`SideNote`) | Paper, smaller serif | Paper, smaller serif |
+| Side note | Asides (`SideNote`), inline in the reading column with a hairline on the left (the page margin holds Starlight's "On this page" list) | Paper, smaller serif | Paper, smaller serif |
 | Sunk (`--ms-surface-sunk`) | Quiet backgrounds such as the definition panel | `#f4f6f5` | `#1f2423` |
 
 Board limits: at most two boards per page, each at most about 480px tall. A board always has its frame (`--ms-board-edge`). In dark mode the frame is what separates the board from the page.
@@ -29,7 +29,7 @@ Board limits: at most two boards per page, each at most about 480px tall. A boar
 | Look here, fill | `--ms-attention-fill` | `#f2d45c` | `#f3d36b` | Fills only, with ink on top. Never as a line on light paper |
 | Highlighter | `--ms-highlight` | `#fbe7a1` | `#4a4022` | `<mark>` behind text |
 | Board ink | `--ms-board-ink` | `#26332f` | `#ece8df` | Handwritten notes, labels on the board |
-| Board axis | `--ms-board-axis` | `#748a80` | `#6a8079` | Axes and ticks |
+| Board axis | `--ms-board-axis` | `#677c73` | `#6a8079` | Axes, ticks and slider tracks |
 | Board grid | `--ms-board-grid` | `#c4d0ca` | `#2f403d` | Grid lines (decorative, deliberately faint) |
 
 **Adding a new meaning colour is a design decision**, not a styling choice. It needs a decision record, a contrast rule on every surface, and separation from μ, σ and attention for colour-blind readers.

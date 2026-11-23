@@ -23,6 +23,8 @@ $$
 
 The macros expand to `\htmlClass{ms-mu}{\mu}` and `\htmlClass{ms-sigma}{\sigma}`. KaTeX's `trust` option allows only `\htmlClass`, so `\href`, `\url` and the other trusted commands stay disabled.
 
+A broken formula fails the build. rehype-katex on its own only logs a warning and ships red error text, so `rehypeKatexFailOnError` (in `src/design/katex.mjs`) turns those warnings into a build error that names the formula.
+
 Colour a variable only where the page is teaching it. In a long derivation, colour the first and the key occurrences, not every one.
 
 ### Variables in prose
@@ -54,16 +56,17 @@ import { plotColors } from './plotColors';
 | `plotColors.sigma` | Anything that is σ: the σ handle, the σ span |
 | `plotColors.attention` | The handle being dragged or focused, highlighted regions |
 | `plotColors.ink` | Neutral strokes and labels on the board |
+| `plotColors.inkMuted` | Secondary labels on the board |
 | `plotColors.axis` | Secondary guides |
 
 Never use `Theme.blue` or other Mafs defaults for meaning: they are not the design system's colours.
 
 ### Board behaviour
 
-- Drags start only within 24px of a handle, so touch scrolling still works (`touch-action: pan-y` on the board, `none` while dragging).
-- Every handle has a slider in the tray as a keyboard and screen-reader alternative, with `aria-valuetext` in words.
-- A live region announces the new values when a drag or slider change ends, never on every frame.
-- Handwritten notes (`ChalkNote`) sit in empty space and hide when the board is under 560px wide.
+- Drags start only on a handle's hitbox (Mafs draws it at a fixed 30px radius). The board sets `touch-action: pan-y` on the plot so touch scrolling still works on empty space; handles keep Mafs' own `touch-action: none`, so touching a handle drags it.
+- Every handle has a keyboard path. Either the tray has a slider for it (with `aria-valuetext` in words) and the handle is hidden from the tab order, or the board passes `handleLabels` so the handle itself is focusable, named and moved with the arrow keys (used by `LinearRegression`, which has nine points).
+- A live region announces the new values when a drag, an arrow-key move or a slider change ends, never on every frame.
+- Handwritten notes (`ChalkNote`) sit at the board's top-left and switch to their `short` text when the board is under 560px wide.
 
 ## Code (Expressive Code)
 
@@ -77,6 +80,10 @@ Code uses the **tuned full** palette: familiar editor-style highlighting with ev
 | Comments and docstrings | `#464236` | `#ac9879` | Italic |
 | Names, calls, operators, parameters | `#1e2725` | `#f2f0ea` | Regular |
 | Background | `#f6f8f7` | `#1f2423` | |
+| Line numbers | `#5f6d69` | `#8b9692` | |
+| Highlighted lines (`{4-5}` in a fence) | Band `#f5ebc1` with an ochre `#8a5a00` edge | Yellow `#f3d36b` edge only | |
+
+In dark mode highlighted lines have no visible band, because any band pushes the dark token colours under 5.5:1. Diff markers (`ins`/`del`) still use Expressive Code's defaults; avoid them in teaching code until they get palette colours.
 
 Rules:
 - **Nothing in a code theme is bold.** Bold is reserved for the μ/σ markers.

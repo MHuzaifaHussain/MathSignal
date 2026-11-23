@@ -37,7 +37,7 @@ A plain list of links at the end of a page. No cards.
 
 | Prop | Type |
 |---|---|
-| `topics` | `{ label, href, description }[]` |
+| `topics` | `{ label, href?, description }[]`. Leave `href` out for a page that isn't written yet: it renders as "coming soon" instead of a broken link |
 
 ## Inline
 
@@ -56,15 +56,17 @@ The frame every interactive plot sits in. It sets Mafs' CSS variables from the t
 |---|---|---|
 | `label` | `string` | Accessible name of the figure, for example "Normal distribution with draggable mean and spread" |
 | `children` | `ReactNode` | The Mafs canvas |
-| `tray` | `ReactNode` | Sliders, readouts and buttons shown under the canvas |
+| `tray` | `ReactNode` | Optional. Sliders, readouts and buttons shown under the canvas |
 | `onReset` | `() => void` | Optional; adds a Reset button to the tray |
 | `announcement` | `string` | Text for the polite live region; update it only when an interaction ends |
+| `onInteractionEnd` | `() => void` | Optional. Called once when a drag or an arrow-key move on the canvas ends; set `announcement` here. Board listens in the capture phase because Mafs captures the pointer and stops `pointerup`/`keyup` from bubbling |
+| `handleLabels` | `string[]` | Optional. Names for the canvas's draggable handles, in render order. Given: the handles stay keyboard-focusable and are announced as draggable points. Omitted: the tray sliders are the keyboard path, so the handles are removed from the tab order and the accessibility tree |
 
 ### `ChalkNote`
-A short handwritten note on a board, in Kalam at 20px or larger. Qualitative only ("wider bell, lower peak"), never a number. It takes a `long` and a `short` text and hides itself when the board is under 560px wide.
+A short handwritten note on a board, in Kalam at 20px or larger. Qualitative only ("wider bell, lower peak"), never a number. It takes a `long` and a `short` text and shows the `short` one when the board is under 560px wide.
 
 ### `TraySlider`
-A labelled slider for the tray, built on Base UI's Slider. Props: `label`, `value`, `min`, `max`, `step`, `onValueChange`, `onValueCommitted`, `format` (for the readout and `aria-valuetext`), `meaning` (`'mu' | 'sigma' | undefined`, which colours the thumb and label).
+A labelled slider for the tray, built on Base UI's Slider. Props: `label`, `value`, `min`, `max`, `step`, `largeStep` (optional; PageUp/PageDown and Shift+Arrow, defaults to about a tenth of the range), `onValueChange`, `onValueCommitted` (called once per drag, and once after a short pause for keyboard changes, so the board announces once), `format` (readout text, and `aria-valuetext` unless `describe` is given), `describe` (optional spoken value, e.g. "mean 1.50"), `meaning` (`'mu' | 'sigma' | undefined`, which colours the thumb and label).
 
 ### `NormalDistribution`, `LinearRegression`, `BayesTheorem`
 Concept boards. Each composes `Board`, Mafs, `plotColors`, and `TraySlider`s.
@@ -74,8 +76,8 @@ Concept boards. Each composes `Board`, Mafs, `plotColors`, and `TraySlider`s.
 ### Fenced code blocks
 Plain Markdown fences render through Expressive Code with the tuned full palette, line numbers, and the μ/σ markers. Use `collapse={1-5}` to fold set-up lines, and `title="fit.py"` for a file name.
 
-### `PyRunner` (React)
-A runnable Python block. The code is shown with the same highlighting; a Run button loads Pyodide in a Web Worker on first click (about 9 MB with NumPy, so it shows a loading state), and output appears below. Stop restarts the worker.
+### `PyRunner` (Astro, wraps the `PyRunControls` React island)
+A runnable Python block. The code is rendered by Starlight's `<Code>` component, so it has the same highlighting and μ/σ markers as every fence. A Run button loads Pyodide 314 from jsDelivr in a Web Worker on first click (about 9 MB with NumPy, so it shows a loading state), and output appears below. Stop terminates the worker; the next Run starts a fresh one. A failed download shows a plain "check your connection" message; Python exceptions show their traceback.
 
 | Prop | Type | Notes |
 |---|---|---|
@@ -90,8 +92,10 @@ Overrides live in `src/components/overrides/` and are registered in `astro.confi
 
 | Override | What it changes |
 |---|---|
-| `Header` | Adds the domain strip (Statistics, Probability, Linear algebra, Machine learning) with an underline on the active domain. Search and the theme toggle stay Starlight's own |
-| `Sidebar` | Shows only the active domain's pages, so the sidebar stays short |
+| `Header` | Adds the subject strip (from `src/design/domains.mjs`) with an underline on the active subject. Search and the theme toggle stay Starlight's own |
+| `Sidebar` | Wraps Starlight's own sidebar and adds the subject list at the top of the mobile menu |
+
+The sidebar is narrowed to the active subject by Starlight route middleware (`src/routeData.ts`), not by the override, so Starlight's sidebar markup and state persistence keep working. Subjects are defined once in `src/design/domains.mjs`, which feeds both the sidebar config and the strip; the build fails if they disagree.
 
 ## Writing new components
 
