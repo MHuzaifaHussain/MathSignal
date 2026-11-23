@@ -17,7 +17,8 @@ Write for the learner first. Follow [docs/seo/README.md](docs/seo/README.md): an
 - Colour means something: pink is μ, blue is σ, yellow/ochre is "look here". Everything else is ink. Use `\vmu`/`\vsigma` in formulas, `<Var>` in prose, `plotColors` in Mafs code.
 - Code themes have no bold and no blue or pink; every token stays at least 5.5:1. `npm run check:design` enforces this.
 - Plots live inside `Board`; every draggable handle needs a keyboard path (a tray slider, or `handleLabels`).
-- Subjects are defined once in `src/design/domains.mjs`.
+- Subjects are defined once in `src/design/domains.mjs`. Topics, symbols and references are defined once in `src/data/` and used by id (decision 0009).
+- Concept pages follow the spine-and-folds template (decision 0008) and need the full frontmatter in [writing-a-concept-page.md](docs/design-system/writing-a-concept-page.md); the build stops without it.
 - React islands use `client:visible` and sit inside `<div class="not-content">` in MDX. Island CSS goes in `src/styles/components.css` (islands drop CSS imports).
 - There is no Tailwind (decision 0005). Style with tokens in scoped `<style>` blocks or `components.css`; Starlight's own utilities (`sl-flex`, `sr-only`, `print:hidden`) are fine.
 - Don't use `starlight-katex`. Maths runs through `remark-math` + `rehype-katex` on Astro's `unified()` processor; Astro 7's default Sätteri processor breaks `$$` blocks.
@@ -26,9 +27,11 @@ Write for the learner first. Follow [docs/seo/README.md](docs/seo/README.md): an
 | Command | What it does |
 |---|---|
 | `npm run dev` | Dev server |
-| `npm run build` | Static build; runs `check:design` first |
+| `npm run build` | Static build; runs `check:design` and `check:content` first |
 | `npm run check` | Type-checks `.astro`, `.ts`, `.tsx` |
 | `npm run check:design` | Contrast and colour-blindness rules, tokens up to date |
+| `npm run check:content` | Topic, notation and reference ids, prerequisite graph |
+| `npm run check:code` | Runs every `PyRunner` example under Pyodide |
 | `npm run tokens` | Regenerates `src/styles/tokens.css` from the palette |
 
 Node 24 (see `.nvmrc`).

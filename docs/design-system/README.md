@@ -36,8 +36,9 @@ A lecture hall: you **read on paper**, the teacher **draws on the board**, and y
 | `src/components/` | Astro layout components (server-rendered) |
 | `src/components/react/` | React islands (boards, tray sliders, `PyRunControls` and its Pyodide worker) |
 | `src/design/domains.mjs` | The subject list, shared by the sidebar and the header strip |
+| `src/data/` | Topic, notation and reference registries that pages refer to by id ([decision 0009](../decisions/0009-single-sources-of-truth.md)) |
 | `src/routeData.ts` | Starlight route middleware that narrows the sidebar to the active subject |
-| `src/components/overrides/` | Starlight component overrides (header, sidebar) and the subject strip |
+| `src/components/overrides/` | Starlight component overrides (header, sidebar, footer) and the subject strip |
 
 ## Visual reference
 
@@ -56,5 +57,7 @@ The running site is the visual reference: the Normal distribution page shows eve
 |---|---|
 | `npm run check:design` | Contrast and colour-separation rules, tokens file up to date. Runs automatically before `npm run build` |
 | `npm run tokens` | Regenerates `src/styles/tokens.css` |
-| `npm run build` | Full static build; fails if the design check fails |
+| `npm run check:content` | Registry ids, prerequisite graph and the ids each page uses. Runs automatically before `npm run build` |
+| `npm run check:code` | Runs every `PyRunner` example under Pyodide and fails on an error or failed `assert`. Run before merging a page with runnable code |
+| `npm run build` | Full static build; fails if the design or content check fails, a formula is broken, or concept-page frontmatter is missing |
 | `npm run check` | Type-checks `.astro`, `.ts` and `.tsx` files (`astro check`) |

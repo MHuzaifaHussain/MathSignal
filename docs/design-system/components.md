@@ -7,19 +7,20 @@ In MDX, wrap React islands in `<div class="not-content">` so Starlight's prose s
 ## Page structure
 
 ### `ConceptHeader` (Astro)
-Opens every concept page, under the title Starlight renders.
+Opens every concept page, under the title Starlight renders. Prerequisites and objectives come from the page's frontmatter and `src/data/topics.mjs`, not from props.
 
 | Prop | Type | Notes |
 |---|---|---|
-| `oneLiner` | `string` | One sentence saying what the concept is |
+| `oneLiner` | `string` | One sentence that names the concept and says what it is |
 | `difficulty` | `'beginner' \| 'intermediate' \| 'advanced'` | Shown as a plain word ("Level: beginner"), not a coloured pill |
-| `prerequisites` | `{ label, href }[]` | Optional. Rendered as a sentence of links |
+
+It renders, in order: the level, the one-liner, a "Before you start" list (each prerequisite from the topic registry with its one-line recap), "On this page you will" (the frontmatter `objectives`), and a skip line linking to the precise statement, formal definition, research frontier and references for readers who already know the basics.
 
 ### `WhyThisMatters` (Astro)
 The ML relevance of the concept, after the everyday section. Paper surface set apart by its label "Why this matters in ML" and extra spacing, with no bar. Slot: one short paragraph.
 
 ### `FormalDefinition` (Astro)
-A `<details>` panel on the sunk surface holding derivations, proof sketches and the properties table. A plain sunk band: no outline, no rounded corners, no inner rule. Closed by default; the precise statement stays outside it, always visible. Slot: KaTeX and prose.
+A `<details>` panel (`id="formal-definition"`, summary "Formal definition, derivations and properties") on the sunk surface, holding `StepThrough` derivations and the properties table. A plain sunk band: no outline, no rounded corners, no inner rule. Closed by default; the precise statement stays outside it, always visible. Slot: KaTeX and prose.
 
 ### `CommonMistakes` (Astro) and `Mistake` (Astro)
 A list of misconceptions, each as a "Not quite" / "Instead" pair. The page puts a `## Common mistakes` heading above it, so it appears in the table of contents. The misconception is the `wrong` prop; the correction is the slot, so it can hold formulas and links.
@@ -32,12 +33,32 @@ A list of misconceptions, each as a "Not quite" / "Instead" pair. The page puts 
 </CommonMistakes>
 ```
 
-### `NextTopics` (Astro)
-A plain list of links at the end of a page, under a `## Where to go next` heading in the page. No cards. It is a navigation landmark only once at least one topic has a link.
+### `Takeaways`, `ConceptMap`, `References` (Astro)
+The closing sections, each under its own `##` heading in the page. All three read the page's frontmatter, so they take no props.
 
-| Prop | Type |
-|---|---|
-| `topics` | `{ label, href?, description }[]`. Leave `href` out for a page that isn't written yet: it renders as "coming soon" instead of a broken link |
+- `Takeaways` lists the frontmatter `takeaways` (three to five sentences).
+- `ConceptMap` lists "Builds on" and "Leads to" from `src/data/topics.mjs`. Topics without a page show as "coming soon" instead of a broken link. It is a `nav` landmark only when it holds at least one link.
+- `References` lists the frontmatter `references` ids, resolved from `src/data/references.mjs`, each with an `id="ref-…"` anchor that `Cite` links to.
+
+## Teaching layers
+
+The components behind the spine-and-folds template ([decision 0008](../decisions/0008-spine-and-folds-article-template.md)). Folds are plain `<details>`: closed by default, no headings inside, and opened automatically when the URL hash is their id or something inside them.
+
+| Component | Props | Use |
+|---|---|---|
+| `Fold` | `kind` (`simpler` \| `deeper` \| `check` \| `answer`), `label`, `id?`, `open?` | The shared primitive. Pages use the wrappers below |
+| `Simpler` | `label`, `id?` | A new picture, analogy or numbers for a beginner. Never a repeat of the spine |
+| `GoDeeper` | `label`, `id?` | Derivations, edge cases, generalisations |
+| `Analogy` | `breaks` (required) | The everyday section's text, followed by a bold "Where this picture breaks." paragraph from `breaks`. Plain prose, no box |
+| `NotationKey` | `symbols` (ids from `src/data/notation.mjs`) | Symbol / Say it / Meaning table. Unknown ids fail the build |
+| `PreciseStatement` | none | The always-visible exact definition with its conditions (`id="precise-statement"`) |
+| `StepThrough` | `title`, `rigour?` (`sketch` \| `full`) | A numbered derivation, labelled "sketch" unless it is a full proof. Put an ordered list in the slot |
+| `WorkedExample` | `number`, `title`, `faded?` | A worked example. With `faded`, the solution goes in `<div slot="solution">` and sits behind an "Answer" fold |
+| `CheckYourself` | `question`, `level` (`intuition` \| `standard` \| `proof`) | A self-test question with its answer in a fold. The answer explains why |
+| `Cite` | `id` | An inline citation linking to `#ref-id`. The id must also be in the frontmatter `references` |
+| `ResearchFrontier` | `reviewed` (YYYY-MM-DD) | Open questions and recent work, with the date it was last checked (`id="research-frontier"`) |
+
+`src/design/renderTex.mjs` renders TeX in Astro components (for example the notation table) with the same macros as page formulas, and throws on a broken formula.
 
 ## Inline
 
