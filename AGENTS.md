@@ -27,11 +27,12 @@ Write for the learner first. Follow [docs/seo/README.md](docs/seo/README.md): an
 | Command | What it does |
 |---|---|
 | `npm run dev` | Dev server |
-| `npm run build` | Static build; runs `check:design` and `check:content` first |
+| `npm run build` | Static build; runs `check:design` and `check:content` first and `check:links` after |
 | `npm run check` | Type-checks `.astro`, `.ts`, `.tsx` |
 | `npm run check:design` | Contrast and colour-blindness rules, tokens up to date |
 | `npm run check:content` | Topic, notation and reference ids, prerequisite graph |
 | `npm run check:code` | Runs every `PyRunner` example under Pyodide |
+| `npm run check:links` | Internal links, anchors and trailing slashes in `dist/` |
 | `npm run tokens` | Regenerates `src/styles/tokens.css` from the palette |
 
 Node 24 (see `.nvmrc`).

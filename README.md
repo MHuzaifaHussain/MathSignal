@@ -29,7 +29,7 @@ Requires Node 24 (see `.nvmrc`).
 ```bash
 npm install
 npm run dev       # dev server at http://localhost:4321
-npm run build     # static build to ./dist (runs the design and content checks first)
+npm run build     # static build to ./dist (design and content checks before, link check after)
 npm run preview   # serve the build locally
 ```
 
@@ -39,6 +39,7 @@ npm run preview   # serve the build locally
 | `npm run check:design` | Contrast and colour-blindness rules; generated tokens, favicon and logos up to date |
 | `npm run check:content` | Topic, notation and reference registries, and the ids each page uses |
 | `npm run check:code` | Runs every runnable Python example under Pyodide and checks its assertions |
+| `npm run check:links` | Checks every internal link and anchor in the built site |
 | `npm run tokens` | Regenerates the CSS tokens, favicon, logos and web manifest from `src/design/palette.mjs` |
 | `npm run brand-images` | Regenerates the social card and app icons (PNG) |
 
