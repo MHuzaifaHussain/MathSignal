@@ -95,6 +95,8 @@ A segmented choice for the tray: a fieldset of native radios styled as buttons, 
 ### `NormalDistribution`, `LinearRegression`, `BayesTheorem`
 Concept boards. Each composes `Board`, Mafs, `plotColors`, and `TraySlider`s.
 
+`BayesTheorem` also has "Example" preset buttons, defined with their math in `src/components/react/bayesTheorem/scenarios.ts` and checked by `npm run check:boards`: "Any two events" (the opening view), "Medical test" (1 in 100 has the condition, a test right 9 times in 10, so a positive means P(A | B) ≈ 0.083) and "Wet lawn" (rain or the sprinkler, P(A | B) ≈ 0.429). A line under the presets says what A and B stand for. When A's column is thinner than 0.15, its labels sit beside it. Try it at `/lab/bayes-theorem/`.
+
 ### `EventSpace`
 A sample space as a table of outcomes (decision 0011). One prop: `setup`, the id of a configuration in `src/components/react/eventSpace/setups.ts` (`coins-build`, `dice-count`, `dice-operations`, `die-pour`, `dice-condition`, `kids-condition`); an unknown id fails the build.
 

@@ -255,4 +255,26 @@ assert.deepEqual(describe.readoutLines(reducer(kidsFresh, { type: 'shrink', on: 
 ]);
 assert.equal(describe.cellName(kidsFresh, kids.outcomes[1]), '2. Hat and scarf. In A and B.');
 
+// ---- BayesTheorem scenarios (week 2 presets) ----
+const bayes = await import('../src/components/react/bayesTheorem/scenarios.ts');
+const posteriorOf = (id) => bayes.computePosterior(bayes.BAYES_SCENARIOS[id].values);
+const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-12, `${actual} is not ${expected}`);
+// Medical test: 1 in 100 has the condition, the test is right 9 times in 10. A positive means only 1/12 ≈ 0.083.
+near(posteriorOf('medical-test').evidence, 0.108);
+near(posteriorOf('medical-test').posterior, 1 / 12);
+// Wet lawn: P(rain) = 0.2, P(wet | rain) = 0.9, P(wet | no rain) = 0.3 gives 0.18 / 0.42 = 3/7 ≈ 0.429.
+near(posteriorOf('wet-lawn').evidence, 0.42);
+near(posteriorOf('wet-lawn').posterior, 3 / 7);
+near(posteriorOf('any-events').posterior, 0.24 / 0.31);
+assert.equal(bayes.BAYES_SCENARIOS[bayes.DEFAULT_SCENARIO].id, 'any-events');
+// Every scenario sits on the sliders' 0.01 grid inside their range, so loading one never clamps a value.
+for (const scenario of Object.values(bayes.BAYES_SCENARIOS)) {
+	for (const value of Object.values(scenario.values)) {
+		assert.ok(value >= 0.01 && value <= 0.99 && Math.abs(value * 100 - Math.round(value * 100)) < 1e-9, `${scenario.id}: ${value} is off the slider grid`);
+	}
+}
+// P(B) = 0 has no posterior, and impossible inputs fail loudly.
+assert.equal(bayes.computePosterior({ prior: 0.5, likelihood: 0, falsePositive: 0 }).posterior, null);
+assert.throws(() => bayes.computePosterior({ prior: 1.2, likelihood: 0.5, falsePositive: 0.5 }), /prior must be a probability/);
+
 console.log('Board check passed.');

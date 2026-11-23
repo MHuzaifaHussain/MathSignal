@@ -4,11 +4,15 @@ import type { vec } from "mafs";
 import Board from "./Board";
 import TraySlider from "./TraySlider";
 import { formatNumber, plotColors } from "./plotColors";
+import { BAYES_SCENARIOS, DEFAULT_SCENARIO, computePosterior, type BayesScenarioId, type BayesValues } from "./bayesTheorem/scenarios.ts";
 
 const PROBABILITY_RANGE: vec.Vector2 = [0.01, 0.99];
 const PROBABILITY_STEP = 0.01;
-const INITIAL = { prior: 0.3, likelihood: 0.8, falsePositive: 0.1 };
 const BOARD_HEIGHT = 340;
+const SCENARIO_IDS = Object.keys(BAYES_SCENARIOS) as BayesScenarioId[];
+/** Below this prior, A's column is too thin to hold its labels (the medical test's is 0.01), so they sit beside it. */
+const NARROW_COLUMN = 0.15;
+const LABEL_GAP = 0.01;
 
 const rectangle = (x0: number, x1: number, y0: number, y1: number): vec.Vector2[] => [
   [x0, y0],
@@ -17,37 +21,48 @@ const rectangle = (x0: number, x1: number, y0: number, y1: number): vec.Vector2[
   [x0, y1],
 ];
 
-function computePosterior(prior: number, likelihood: number, falsePositive: number) {
-  const evidence = likelihood * prior + falsePositive * (1 - prior);
-  return { evidence, posterior: evidence > 0 ? (likelihood * prior) / evidence : 0 };
-}
+/** "0.083", or the reason there is no posterior when P(B) is 0. */
+const posteriorText = (posterior: number | null) => (posterior === null ? "undefined, because P(B) = 0" : formatNumber(posterior, 3));
 
 /**
  * Bayes' theorem as areas in a unit square: the prior is a column's width, each likelihood is a
  * height within its column, and the posterior is the highlighted area's share of everything that tested positive.
+ * Presets load a named scenario (bayesTheorem/scenarios.ts) and say what A and B stand for.
  */
 export default function BayesTheorem() {
-  const [prior, setPrior] = useState(INITIAL.prior);
-  const [likelihood, setLikelihood] = useState(INITIAL.likelihood);
-  const [falsePositive, setFalsePositive] = useState(INITIAL.falsePositive);
+  const initial = BAYES_SCENARIOS[DEFAULT_SCENARIO];
+  const [scenarioId, setScenarioId] = useState<BayesScenarioId>(DEFAULT_SCENARIO);
+  const [prior, setPrior] = useState(initial.values.prior);
+  const [likelihood, setLikelihood] = useState(initial.values.likelihood);
+  const [falsePositive, setFalsePositive] = useState(initial.values.falsePositive);
   const [announcement, setAnnouncement] = useState("");
 
   const { evidence, posterior } = useMemo(
-    () => computePosterior(prior, likelihood, falsePositive),
+    () => computePosterior({ prior, likelihood, falsePositive }),
     [prior, likelihood, falsePositive],
   );
 
-  const announce = useCallback((nextPrior: number, nextLikelihood: number, nextFalsePositive: number) => {
-    const result = computePosterior(nextPrior, nextLikelihood, nextFalsePositive);
-    setAnnouncement(`Posterior P of A given B is ${formatNumber(result.posterior, 3)}.`);
+  const announce = useCallback((values: BayesValues, prefix = "") => {
+    setAnnouncement(`${prefix}Posterior P of A given B is ${posteriorText(computePosterior(values).posterior)}.`);
   }, []);
 
-  const handleReset = useCallback(() => {
-    setPrior(INITIAL.prior);
-    setLikelihood(INITIAL.likelihood);
-    setFalsePositive(INITIAL.falsePositive);
-    announce(INITIAL.prior, INITIAL.likelihood, INITIAL.falsePositive);
-  }, [announce]);
+  const loadScenario = useCallback(
+    (id: BayesScenarioId) => {
+      const scenario = BAYES_SCENARIOS[id];
+      setScenarioId(id);
+      setPrior(scenario.values.prior);
+      setLikelihood(scenario.values.likelihood);
+      setFalsePositive(scenario.values.falsePositive);
+      announce(scenario.values, `${scenario.label}. ${scenario.meaning} `);
+    },
+    [announce],
+  );
+
+  const handleReset = useCallback(() => loadScenario(DEFAULT_SCENARIO), [loadScenario]);
+
+  // Labels for A's column: centered inside it, or anchored just right of it when the column is too thin.
+  const columnLabelPosition =
+    prior < NARROW_COLUMN ? { x: prior + LABEL_GAP, attach: "e" as const } : { x: prior / 2 };
 
   const probabilitySlider = (label: string, value: number, onChange: (value: number) => void, commit: (value: number) => void) => (
     <TraySlider
@@ -65,18 +80,27 @@ export default function BayesTheorem() {
 
   const tray = (
     <>
-      {probabilitySlider("P(A)", prior, setPrior, (value) => announce(value, likelihood, falsePositive))}
-      {probabilitySlider("P(B | A)", likelihood, setLikelihood, (value) => announce(prior, value, falsePositive))}
-      {probabilitySlider("P(B | not A)", falsePositive, setFalsePositive, (value) => announce(prior, likelihood, value))}
+      <div className="ms-event-presets" role="group" aria-label="Example scenarios">
+        <span className="ms-event-presets-label">Example:</span>
+        {SCENARIO_IDS.map((id) => (
+          <button key={id} type="button" className="ms-board-button" aria-pressed={id === scenarioId} onClick={() => loadScenario(id)}>
+            {BAYES_SCENARIOS[id].label}
+          </button>
+        ))}
+      </div>
+      <p className="ms-event-note-line">{BAYES_SCENARIOS[scenarioId].meaning}</p>
+      {probabilitySlider("P(A)", prior, setPrior, (value) => announce({ prior: value, likelihood, falsePositive }))}
+      {probabilitySlider("P(B | A)", likelihood, setLikelihood, (value) => announce({ prior, likelihood: value, falsePositive }))}
+      {probabilitySlider("P(B | not A)", falsePositive, setFalsePositive, (value) => announce({ prior, likelihood, falsePositive: value }))}
       <p className="ms-board-readout">
-        P(A | B) = {formatNumber(posterior, 3)} &nbsp; P(B) = {formatNumber(evidence, 3)}
+        P(A | B) = {posteriorText(posterior)} &nbsp; P(B) = {formatNumber(evidence, 3)}
       </p>
     </>
   );
 
   return (
     <Board
-      label="Bayes' theorem as areas. Adjust the prior and the two likelihoods with the sliders below."
+      label="Bayes' theorem as areas. Pick an example or adjust the prior and the two likelihoods with the sliders below."
       tray={tray}
       onReset={handleReset}
       announcement={announcement}
@@ -91,13 +115,13 @@ export default function BayesTheorem() {
         {/* B and not A: false positives */}
         <Polygon points={rectangle(prior, 1, 0, falsePositive)} color={plotColors.ink} fillOpacity={0.28} />
 
-        <Text x={prior / 2} y={1.0 - 0.04} size={14} color={plotColors.ink}>
+        <Text {...columnLabelPosition} y={1.0 - 0.04} size={14} color={plotColors.ink}>
           A
         </Text>
         <Text x={(prior + 1) / 2} y={1.0 - 0.04} size={14} color={plotColors.inkMuted}>
           not A
         </Text>
-        <Text x={prior / 2} y={likelihood / 2} size={13} color={plotColors.ink}>
+        <Text {...columnLabelPosition} y={likelihood / 2} size={13} color={plotColors.ink}>
           B and A
         </Text>
         <Text x={(prior + 1) / 2} y={Math.max(falsePositive / 2, 0.04)} size={13} color={plotColors.ink}>
