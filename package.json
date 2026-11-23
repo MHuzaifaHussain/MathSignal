@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
-    "prebuild": "npm run check:design",
+    "prebuild": "npm run check:design && npm run check:content",
     "build": "astro build",
     "tokens": "node scripts/build-tokens.mjs",
     "check:design": "node scripts/check-design.mjs",
@@ -13,7 +13,9 @@
     "astro": "astro",
     "deploy": "npm run build",
     "check": "astro check",
-    "brand-images": "node scripts/build-brand-images.mjs"
+    "brand-images": "node scripts/build-brand-images.mjs",
+    "check:content": "node scripts/check-content.mjs",
+    "check:code": "node scripts/check-code.mjs"
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.10",
@@ -39,6 +41,7 @@
     "@astrojs/check": "^0.9.12",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "pyodide": "^314.0.8",
     "typescript": "^6.0.3"
   },
   "overrides": {

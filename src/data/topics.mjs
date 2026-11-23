@@ -1,0 +1,86 @@
+// Every topic, published or planned, and how they connect (decision 0009).
+// `id` is the page path without slashes (subject/slug). Planned topics show as "coming soon" until published.
+// `recap` is the two-line reminder shown wherever the topic is a prerequisite, so it is written once.
+
+/** @typedef {{ id: string, title: string, description: string, recap: string, status: 'published' | 'planned', prerequisites: string[], leadsTo: string[] }} Topic */
+
+/** @type {Topic[]} */
+export const TOPICS = [
+	{
+		id: 'probability/random-variables-and-distributions',
+		title: 'Random variables and distributions',
+		description: 'Numbers that come out of chance, and the rules that say how likely each value is.',
+		recap: 'A random variable is a number decided by chance, such as a height or a dice roll. Its distribution says how likely each value, or range of values, is.',
+		status: 'planned',
+		prerequisites: [],
+		leadsTo: ['statistics/normal-distribution'],
+	},
+	{
+		id: 'statistics/mean-and-expected-value',
+		title: 'Mean and expected value',
+		description: 'The balance point of a set of numbers, and the long-run average of a random variable.',
+		recap: 'The mean is the average: add the values and divide by how many there are. For a random variable, the expected value is the average you would get over many repeats.',
+		status: 'planned',
+		prerequisites: [],
+		leadsTo: ['statistics/normal-distribution', 'statistics/variance-and-standard-deviation'],
+	},
+	{
+		id: 'statistics/variance-and-standard-deviation',
+		title: 'Variance and standard deviation',
+		description: 'Measuring spread, and why there are two versions.',
+		recap: 'Variance is the average squared distance from the mean. The standard deviation is its square root, so it is in the data\'s own units.',
+		status: 'planned',
+		prerequisites: ['statistics/mean-and-expected-value'],
+		leadsTo: ['statistics/normal-distribution'],
+	},
+	{
+		id: 'statistics/normal-distribution',
+		title: 'Normal distribution',
+		description: 'The bell curve, its two parameters, and why it shows up throughout machine learning.',
+		recap: 'The normal (Gaussian) distribution is the symmetric bell curve set by its mean μ and standard deviation σ. About 68% of values lie within one σ of the mean.',
+		status: 'published',
+		prerequisites: ['probability/random-variables-and-distributions', 'statistics/mean-and-expected-value', 'statistics/variance-and-standard-deviation'],
+		leadsTo: ['statistics/central-limit-theorem', 'statistics/hypothesis-testing', 'probability/multivariate-normal-distribution'],
+	},
+	{
+		id: 'statistics/central-limit-theorem',
+		title: 'Central limit theorem',
+		description: 'Why averages of almost anything end up bell-shaped.',
+		recap: 'Averages of many independent draws with finite variance are approximately normal, whatever the original distribution looks like.',
+		status: 'planned',
+		prerequisites: ['statistics/normal-distribution'],
+		leadsTo: [],
+	},
+	{
+		id: 'statistics/hypothesis-testing',
+		title: 'Hypothesis testing',
+		description: 'Using the normal distribution to decide what is surprising.',
+		recap: 'A hypothesis test asks how likely data this extreme would be if nothing interesting were going on.',
+		status: 'planned',
+		prerequisites: ['statistics/normal-distribution'],
+		leadsTo: [],
+	},
+	{
+		id: 'probability/multivariate-normal-distribution',
+		title: 'Multivariate normal distribution',
+		description: 'The bell curve in several dimensions, and the covariance matrix that shapes it.',
+		recap: 'The multivariate normal extends the bell curve to vectors; a covariance matrix replaces σ² and sets the shape and tilt of the bell.',
+		status: 'planned',
+		prerequisites: ['statistics/normal-distribution'],
+		leadsTo: [],
+	},
+];
+
+const BY_ID = new Map(TOPICS.map((topic) => [topic.id, topic]));
+
+/** @param {string} id */
+export function getTopic(id) {
+	const topic = BY_ID.get(id);
+	if (!topic) throw new Error(`Unknown topic id "${id}". Add it to src/data/topics.mjs.`);
+	return topic;
+}
+
+/** Root-relative URL for a published topic, or null while it is planned. */
+export function topicHref(topic) {
+	return topic.status === 'published' ? `/${topic.id}/` : null;
+}
