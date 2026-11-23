@@ -22,8 +22,11 @@ export default defineConfig({
 	integrations: [
 		starlight({
 			title: 'MathSignal',
+			// Generated from the palette by scripts/build-tokens.mjs. Starlight inserts the logo as an <img>,
+			// so it can't inherit currentColor: one file per theme.
 			logo: {
-				src: './src/assets/logo.svg',
+				light: './src/assets/logo-light.svg',
+				dark: './src/assets/logo-dark.svg',
 				alt: 'MathSignal',
 			},
 			description:

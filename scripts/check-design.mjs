@@ -2,16 +2,13 @@
 //   1. every contrast pair in src/design/palette.mjs meets its minimum, in both themes
 //   2. code colours stay perceptually far from the meaning colours (mu, sigma, attention),
 //      for normal vision and the three common colour-vision deficiencies
-//   3. src/styles/tokens.css matches the palette
+//   3. every file generated from the palette (tokens.css, favicon, logos) is up to date
 // Fails loudly with every violation listed, so nothing ships silently off-spec.
-import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
 import { contrastRules, meaningSeparation, palette } from '../src/design/palette.mjs';
 import { COLOUR_VISION_TYPES, contrastRatio, perceptualDistance } from './lib/color.mjs';
-import { renderTokensCss } from './build-tokens.mjs';
+import { staleGeneratedFiles } from './build-tokens.mjs';
 
 const MINIMUM_CONTRAST = { text: 4.5, large: 3, graphic: 3, code: 5.5 };
-const TOKENS_PATH = fileURLToPath(new URL('../src/styles/tokens.css', import.meta.url));
 
 /** @param {string} themeName @param {Record<string, string>} theme */
 function contrastViolations(themeName, theme) {
@@ -43,15 +40,15 @@ function separationViolations(themeName, theme) {
 	);
 }
 
-async function tokensFileViolations() {
-	const current = await readFile(TOKENS_PATH, 'utf8').catch(() => '');
-	return current.replace(/\r\n/g, '\n') === renderTokensCss() ? [] : ['src/styles/tokens.css is out of date: run `npm run tokens`'];
+async function generatedFileViolations() {
+	const stale = await staleGeneratedFiles();
+	return stale.map((path) => `${path} is out of date: run \`npm run tokens\``);
 }
 
 async function main() {
 	const violations = [
 		...Object.entries(palette).flatMap(([name, theme]) => [...contrastViolations(name, theme), ...separationViolations(name, theme)]),
-		...(await tokensFileViolations()),
+		...(await generatedFileViolations()),
 	];
 	if (violations.length > 0) {
 		console.error(`Design check failed with ${violations.length} problem(s):`);
