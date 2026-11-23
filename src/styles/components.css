@@ -350,3 +350,12 @@
 .ms-marimo-iframe[data-loaded='false'] {
 	visibility: hidden;
 }
+
+/* ── Print: keep the plots and their values, drop the controls that can't work on paper ── */
+@media print {
+	.ms-board-button,
+	.ms-slider-control,
+	.ms-runner-bar {
+		display: none;
+	}
+}
