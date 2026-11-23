@@ -3,17 +3,60 @@ title: "Normal distribution"
 description: "Drag the mean and standard deviation of a bell curve, then see why the Gaussian shows up in weight initialisation, batch norm and diffusion models."
 sidebar:
   order: 1
+topic: statistics/normal-distribution
+type: A
+objectives:
+  - Describe a normal distribution by its mean and standard deviation, and say what each one changes.
+  - Use the 68-95-99.7 rule and z-scores to judge how unusual a value is.
+  - Explain why sums and averages tend towards a bell, and when they don't.
+  - Recognise the normal distribution in weight initialisation, batch norm, naive Bayes, VAEs and Gaussian processes.
+takeaways:
+  - Two numbers set the whole bell. The mean μ moves it; the standard deviation σ widens it.
+  - About 68%, 95% and 99.7% of values lie within one, two and three standard deviations of the mean.
+  - Widening the bell lowers its peak, because the area under it is always 1.
+  - In 𝒩(μ, σ²) the second number is the variance. NumPy and PyTorch take the standard deviation.
+  - The bell appears where many small independent effects add up with finite variance. It is not guaranteed for real data.
+references:
+  - he2015
+  - glorot2010
+  - ioffe2015
+  - kingma2013
+  - ho2020
+  - song2020
+  - lee2017
+  - jacot2018
+  - simsekli2019
+  - rasmussen2006
+  - deisenroth2020
+author: Muhammad Huzaifa Hussain
+reviewedAt: 2026-11-23
+aiAssisted: true
+primaryQuery: normal distribution
+searchIntent: learn
+depthStatus: complete
 ---
 
-import ConceptHeader from "../../../components/ConceptHeader.astro";
-import WhyThisMatters from "../../../components/WhyThisMatters.astro";
-import FormalDefinition from "../../../components/FormalDefinition.astro";
+import Analogy from "../../../components/Analogy.astro";
+import CheckYourself from "../../../components/CheckYourself.astro";
+import Cite from "../../../components/Cite.astro";
 import CommonMistakes from "../../../components/CommonMistakes.astro";
+import ConceptHeader from "../../../components/ConceptHeader.astro";
+import ConceptMap from "../../../components/ConceptMap.astro";
+import FormalDefinition from "../../../components/FormalDefinition.astro";
+import GoDeeper from "../../../components/GoDeeper.astro";
 import Mistake from "../../../components/Mistake.astro";
-import SideNote from "../../../components/SideNote.astro";
-import Var from "../../../components/Var.astro";
+import NotationKey from "../../../components/NotationKey.astro";
+import PreciseStatement from "../../../components/PreciseStatement.astro";
 import PyRunner from "../../../components/PyRunner.astro";
-import NextTopics from "../../../components/NextTopics.astro";
+import References from "../../../components/References.astro";
+import ResearchFrontier from "../../../components/ResearchFrontier.astro";
+import SideNote from "../../../components/SideNote.astro";
+import Simpler from "../../../components/Simpler.astro";
+import StepThrough from "../../../components/StepThrough.astro";
+import Takeaways from "../../../components/Takeaways.astro";
+import Var from "../../../components/Var.astro";
+import WhyThisMatters from "../../../components/WhyThisMatters.astro";
+import WorkedExample from "../../../components/WorkedExample.astro";
 import NormalDistribution from "../../../components/react/NormalDistribution.tsx";
 
 <ConceptHeader
@@ -23,17 +66,19 @@ import NormalDistribution from "../../../components/react/NormalDistribution.tsx
 
 ## In everyday terms
 
+<Analogy breaks="Heights can never be negative, yet the bell's tails stretch forever in both directions, so the bell is an approximation that works well near the middle. Mix two groups with different average heights, such as children and adults, and you get two humps instead of one bell.">
+
 Line up everyone in a class by height. A few are very short, a few are very tall, and most stand somewhere in the middle. Count how many people fall into each 5 cm step and stack them into columns, and the columns rise in the middle and fall away evenly on both sides. With enough people, that outline becomes a smooth bell. That bell is the normal distribution.
 
 A peg board shows why it happens. Drop a ball through rows of pegs and it bounces left or right at each one. Most balls collect a mix of lefts and rights and land near the middle; only a lucky few go left every time. Many small, independent nudges added together produce the bell.
 
-**Where this picture breaks.** Heights can never be negative, yet the bell's tails stretch forever in both directions, so the bell is an approximation that works well near the middle. Mix two groups with different average heights, such as children and adults, and you get two humps instead of one bell.
+</Analogy>
 
 <WhyThisMatters>
 Neural network weights are usually initialised by sampling from a normal distribution, and the scale of that distribution decides whether training gets started at all. Diffusion models generate images by starting from pure Gaussian noise and learning to remove it step by step. Linear regression, t-tests and ANOVA assume normally distributed errors when they report exact p-values and intervals. And the central limit theorem says averages of many independent measurements are approximately normal, which is why the bell appears even when the underlying data isn't.
 </WhyThisMatters>
 
-## Interactive visualisation
+## Move the bell yourself
 
 Before you touch anything: if <Var name="sigma" /> doubles, does the peak get taller, lower or stay the same? By what factor? Make a guess, then test it.
 
@@ -51,6 +96,12 @@ The normal distribution is the shape you get when a measurement is the sum of ma
 
 Two numbers describe it completely. The **mean** (<Var name="mu" />) is where the bell is centred, and the **standard deviation** (<Var name="sigma" />) is how wide it is. A small <Var name="sigma" /> gives a tall, narrow bell, with values packed close to the mean. A large <Var name="sigma" /> gives a low, wide bell, with values spread out.
 
+<Simpler label="the same idea with dice">
+
+Roll one die and every number from 1 to 6 is equally likely: a flat shape, not a bell. Roll two dice and add them, and 7 is the most common total (6 ways out of 36) while 2 and 12 are the rarest (1 way each). Add ten dice and the totals pile up around 35 in an almost perfect bell. Each die is one small independent nudge; adding many of them is what makes the bell.
+
+</Simpler>
+
 ### The 68-95-99.7 rule
 
 The 68-95-99.7 rule says how much of a normal distribution lies within one, two and three standard deviations of the mean:
@@ -61,11 +112,21 @@ The 68-95-99.7 rule says how much of a normal distribution lies within one, two 
 
 The exact band that holds 95% is ±1.96σ, which is why 1.96 appears in so many confidence intervals. A value more than 3σ from the mean happens about 3 times in 1,000, so it is either rare or a sign that something unusual is going on.
 
+<GoDeeper label="where the three numbers come from">
+
+Let $\Phi$ be the cumulative distribution function of the standard normal. The share within $k$ standard deviations is $\Phi(k) - \Phi(-k) = 2\Phi(k) - 1 = \operatorname{erf}(k/\sqrt{2})$. For $k = 1, 2, 3$ this gives 0.6827, 0.9545 and 0.9973. The rule holds for every normal distribution because standardising (see the derivations below) turns any of them into the standard one.
+
+</GoDeeper>
+
 ### Why does it appear everywhere?
 
 The central limit theorem is the reason. Add up $n$ independent, identically distributed variables with mean $\vmu$ and finite variance $\vsigma^2$. As $n$ grows, the standardised sum $(S_n - n\vmu)/(\vsigma\sqrt{n})$ approaches the standard normal distribution. Equivalently, the average of $n$ draws is approximately normal, centred on $\vmu$ with spread $\vsigma/\sqrt{n}$.
 
-The finite variance condition matters. Averages of draws from a Cauchy distribution never settle into a bell, however many you take.
+<GoDeeper label="why the finite variance condition matters">
+
+The theorem needs the variance to be finite. The Cauchy distribution has tails so heavy that its variance doesn't exist, and the average of $n$ Cauchy draws has exactly the same Cauchy distribution as a single draw, however large $n$ is. No bell ever appears. Heavy-tailed data in practice, possibly including some gradient noise (see the research frontier), can behave much more like this than like the textbook case.
+
+</GoDeeper>
 
 None of this means all data is normal. Incomes, city sizes, earthquake magnitudes and post-ReLU activations are all far from it. The bell appears where effects **add up**; where they **multiply**, you tend to see log-normal or power-law shapes instead.
 
@@ -75,23 +136,22 @@ You will also see it called the Gaussian distribution, after Carl Friedrich Gaus
 
 ## Notation
 
-| Symbol | Say it | Meaning |
-| --- | --- | --- |
-| $\vmu$ | "mu" | Mean: the centre of the bell |
-| $\vsigma$ | "sigma" | Standard deviation: the spread, in the data's units |
-| $\vsigma^2$ | "sigma squared" | Variance: the spread in squared units |
-| $\mathcal{N}(\vmu, \vsigma^2)$ | "normal with mean mu and variance sigma squared" | A normal distribution. The second argument is the **variance**, not the standard deviation |
-| $X \sim \mathcal{N}(\vmu, \vsigma^2)$ | "X is distributed normally with…" | The random variable $X$ follows that distribution |
+<NotationKey symbols={["mu", "sigma", "sigma2", "normal", "sim"]} />
 
-**Precise statement.** For any real $\vmu$ and any $\vsigma > 0$, a random variable $X \sim \mathcal{N}(\vmu, \vsigma^2)$ has density
+<PreciseStatement>
+
+For any real $\vmu$ and any $\vsigma > 0$, a random variable $X \sim \mathcal{N}(\vmu, \vsigma^2)$ has density
 
 $$
 f(x) = \frac{1}{\vsigma\sqrt{2\pi}} \exp\!\left(-\frac{(x - \vmu)^2}{2\vsigma^2}\right), \qquad x \in \mathbb{R},
 $$
 
-with $\mathbb{E}[X] = \vmu$ and $\operatorname{Var}[X] = \vsigma^2$.
+with $\mathbb{E}[X] = \vmu$ and $\operatorname{Var}[X] = \vsigma^2$. The case $\vsigma = 0$ is excluded: it would put all the probability on the single point $\vmu$, which has no density.
+
+</PreciseStatement>
 
 <FormalDefinition>
+
 **Standardising.** Any normal random variable can be turned into a standard normal one by subtracting the mean and dividing by the standard deviation:
 
 $$
@@ -100,21 +160,23 @@ $$
 
 This is the **z-score**. It lets one reference table, or `scipy.stats.norm`, serve every normal distribution.
 
-**Why the constant is $1/\sqrt{2\pi}$ (sketch).** Let $I = \int_{-\infty}^{\infty} e^{-x^2/2}\,dx$.
+<StepThrough title="Why the constant is 1/√(2π)">
 
-1. Square it and write it as a double integral: $I^2 = \iint e^{-(x^2 + y^2)/2}\,dx\,dy$.
+1. Let $I = \int_{-\infty}^{\infty} e^{-x^2/2}\,dx$. Square it and write it as a double integral: $I^2 = \iint e^{-(x^2 + y^2)/2}\,dx\,dy$.
 2. Switch to polar coordinates, where $dx\,dy = r\,dr\,d\theta$: $I^2 = \int_0^{2\pi}\!\int_0^\infty e^{-r^2/2}\, r\,dr\,d\theta$.
 3. The inner integral is $\left[-e^{-r^2/2}\right]_0^\infty = 1$, so $I^2 = 2\pi$ and $I = \sqrt{2\pi}$.
+4. Dividing by $\sqrt{2\pi}$, and by $\vsigma$ after rescaling $x$, makes the total area exactly 1.
 
-Dividing by $\sqrt{2\pi}$ (and by $\vsigma$ after rescaling) makes the total area exactly 1.
+</StepThrough>
 
-**Moment generating function.** Completing the square in the exponent of $\mathbb{E}[e^{tX}]$ gives
+<StepThrough title="The moment generating function">
 
-$$
-M_X(t) = \exp\!\left(\vmu t + \frac{\vsigma^2 t^2}{2}\right).
-$$
+1. By definition $M_X(t) = \mathbb{E}[e^{tX}] = \int e^{tx} f(x)\,dx$.
+2. Combine the exponents and complete the square in $x$: $tx - \frac{(x - \vmu)^2}{2\vsigma^2} = -\frac{(x - \vmu - \vsigma^2 t)^2}{2\vsigma^2} + \vmu t + \frac{\vsigma^2 t^2}{2}$.
+3. The first term is the exponent of a normal density centred at $\vmu + \vsigma^2 t$, which integrates to 1, leaving $M_X(t) = \exp\!\left(\vmu t + \tfrac{1}{2}\vsigma^2 t^2\right)$.
+4. Differentiating at $t = 0$ produces the moments. The $n$-th moment about the mean is zero for odd $n$, by symmetry, and $\vsigma^n (n-1)!!$ for even $n$.
 
-Differentiating at $t = 0$ produces the moments. The $n$-th moment about the mean is zero for odd $n$, by symmetry, and $\vsigma^n (n-1)!!$ for even $n$.
+</StepThrough>
 
 | Property | Value |
 | --- | --- |
@@ -124,25 +186,44 @@ Differentiating at $t = 0$ produces the moments. The $n$-th moment about the mea
 | Excess kurtosis | 0 |
 | Entropy | $\tfrac{1}{2}\ln(2\pi e \vsigma^2)$ |
 | Moment generating function | $\exp(\vmu t + \vsigma^2 t^2 / 2)$ |
+
 </FormalDefinition>
 
 ## Worked examples
 
-**1. How unusual is a height?** Suppose adult heights in a group are normal with $\vmu = 165$ cm and $\vsigma = 7$ cm. A person 179 cm tall has $z = (179 - 165)/7 = 2$: two standard deviations above the mean. Only about 2.3% of the group is taller.
+<WorkedExample number={1} title="How unusual is a height?">
 
-**2. Where does the top 5% start?** The 95th percentile of a standard normal is $z = 1.645$. For the same group, that is $165 + 1.645 \times 7 \approx 176.5$ cm.
+Suppose adult heights in a group are normal with $\vmu = 165$ cm and $\vsigma = 7$ cm. A person 179 cm tall has $z = (179 - 165)/7 = 2$: two standard deviations above the mean. Only about 2.3% of the group is taller.
 
-**3. Your turn: a weight initialisation.** He initialisation draws weights from $\mathcal{N}(0, 2/n_{\text{in}})$. For a layer with $n_{\text{in}} = 512$ inputs, what is the standard deviation of the weights? (Answer: the variance is $2/512 \approx 0.0039$, so the standard deviation is $\sqrt{2/512} = 0.0625$.)
+</WorkedExample>
 
-## In practice: machine learning applications
+<WorkedExample number={2} title="Where does the top 5% start?">
+
+The 95th percentile of a standard normal is $z = 1.645$. For the same group, that is $165 + 1.645 \times 7 \approx 176.5$ cm.
+
+</WorkedExample>
+
+<WorkedExample number={3} title="A weight initialisation" faded>
+
+He initialisation draws weights from $\mathcal{N}(0, 2/n_{\text{in}})$. For a layer with $n_{\text{in}} = 512$ inputs, what is the standard deviation of the weights?
+
+<div slot="solution">
+
+The second argument is the variance: $2/512 \approx 0.0039$. The standard deviation is its square root, $\sqrt{2/512} = 0.0625$.
+
+</div>
+
+</WorkedExample>
+
+## Where the normal distribution shows up in ML
 
 ### Weight initialisation
 
-How weights start decides whether signals and gradients survive the trip through a deep network. **He initialisation** draws weights from $\mathcal{N}(0,\, 2/n_{\text{in}})$, giving a standard deviation of $\sqrt{2/n_{\text{in}}}$, and was derived for ReLU layers. **Xavier (Glorot) initialisation** uses $\mathcal{N}(0,\, 2/(n_{\text{in}} + n_{\text{out}}))$ and was derived for tanh, sigmoid and linear layers. Glorot and Bengio's paper used the uniform version $U(-a, a)$ with $a = \sqrt{6/(n_{\text{in}} + n_{\text{out}})}$, which has the same variance and is Keras's default. In both cases the second argument is the variance (see the third common mistake below).
+How weights start decides whether signals and gradients survive the trip through a deep network. **He initialisation** <Cite id="he2015" /> draws weights from $\mathcal{N}(0,\, 2/n_{\text{in}})$, giving a standard deviation of $\sqrt{2/n_{\text{in}}}$, and was derived for ReLU layers. **Xavier (Glorot) initialisation** <Cite id="glorot2010" /> uses $\mathcal{N}(0,\, 2/(n_{\text{in}} + n_{\text{out}}))$ and was derived for tanh, sigmoid and linear layers. Glorot and Bengio's paper used the uniform version $U(-a, a)$ with $a = \sqrt{6/(n_{\text{in}} + n_{\text{out}})}$, which has the same variance and is Keras's default. In both cases the second argument is the variance.
 
 ### Batch normalisation
 
-Batch normalisation standardises each feature over a mini-batch and then rescales it with two learned parameters:
+Batch normalisation <Cite id="ioffe2015" /> standardises each feature over a mini-batch and then rescales it with two learned parameters:
 
 $$
 \hat{x} = \frac{x - \mu_B}{\sqrt{\sigma_B^2 + \epsilon}}, \qquad y = \gamma \hat{x} + \beta
@@ -162,15 +243,15 @@ It predicts the class with the largest $P(y = c)\, p(\mathbf{x} \mid y = c)$, so
 
 ### VAE latent spaces
 
-Variational autoencoders place a $\mathcal{N}(0, I)$ prior on the latent space. The encoder outputs $\mu$ and $\sigma$ parameters, and the reparameterisation trick ($z = \mu + \sigma \odot \epsilon$, where $\epsilon \sim \mathcal{N}(0, I)$) lets gradients flow through the sampling step.
+Variational autoencoders place a $\mathcal{N}(0, I)$ prior on the latent space. The encoder outputs $\mu$ and $\sigma$ parameters, and the reparameterisation trick <Cite id="kingma2013" /> ($z = \mu + \sigma \odot \epsilon$, where $\epsilon \sim \mathcal{N}(0, I)$) lets gradients flow through the sampling step.
 
 ### Gaussian processes
 
-A Gaussian process is a distribution over functions. Writing $f \sim \mathcal{GP}(m, k)$ means that for any inputs $x_1, \dots, x_n$, the values $(f(x_1), \dots, f(x_n))$ are jointly normal with mean vector $m$ and covariance matrix $K_{ij} = k(x_i, x_j)$. Gaussian processes give predictions with uncertainty attached, which is well calibrated when the kernel and noise model fit the data, and makes them useful for Bayesian optimisation and active learning.
+A Gaussian process is a distribution over functions <Cite id="rasmussen2006" />. Writing $f \sim \mathcal{GP}(m, k)$ means that for any inputs $x_1, \dots, x_n$, the values $(f(x_1), \dots, f(x_n))$ are jointly normal with mean vector $m$ and covariance matrix $K_{ij} = k(x_i, x_j)$. Gaussian processes give predictions with uncertainty attached, which is well calibrated when the kernel and noise model fit the data, and makes them useful for Bayesian optimisation and active learning.
 
-## Code implementation
+## Check the 68-95-99.7 rule in code
 
-Check the 68-95-99.7 rule yourself. This runs in your browser, uses the same standard normal as the board's starting position, and stops with an error if a result is off:
+This runs in your browser, uses the same standard normal as the board's starting position, and stops with an error if a result is off:
 
 <PyRunner
   title="check_68_95_997.py"
@@ -239,28 +320,35 @@ nll = -dist.log_prob(torch.tensor(1.5))
 print(f"NLL at x=1.5:  {nll:.4f}")
 ```
 
+## Research frontier
+
+<ResearchFrontier reviewed="2026-11-23">
+
+**Wide neural networks behave like Gaussian processes.** As the layers of a deep network grow infinitely wide, the network at initialisation becomes exactly a Gaussian process, which allows fully Bayesian prediction with deep networks <Cite id="lee2017" />. In the same limit, training by gradient descent is described by a fixed kernel, the neural tangent kernel <Cite id="jacot2018" />. How closely these infinite-width results describe the finite networks used in practice is an active area of research.
+
+**Generative models built on Gaussian noise.** Diffusion models corrupt data with small amounts of Gaussian noise over many steps and learn to reverse the process <Cite id="ho2020" />. Score-based models describe the same idea as a continuous stochastic differential equation, which links the noising and denoising directions <Cite id="song2020" />.
+
+**Is gradient noise really Gaussian?** Analyses of stochastic gradient descent often assume the noise in each step is Gaussian, an appeal to the central limit theorem. Şimşekli, Sagun and Gürbüzbalaban argue it is heavy-tailed instead, model it with an α-stable distribution, and find the noise strongly non-Gaussian in their experiments <Cite id="simsekli2019" />. If so, the finite-variance condition above fails, and conclusions built on the Gaussian assumption need rechecking.
+
+</ResearchFrontier>
+
 ## Check yourself
 
-<details>
-<summary>1. A normal distribution has σ = 3. What is its variance?</summary>
+<CheckYourself level="intuition" question="You widen the bell from σ = 1 to σ = 3. What happens to the peak height?">
+It falls to one third. The peak is $1/(\vsigma\sqrt{2\pi})$, so it scales with $1/\vsigma$; the area has to stay 1.
+</CheckYourself>
 
-9. The variance is the standard deviation squared, which is why $\mathcal{N}(0, 9)$ and a standard deviation of 3 describe the same distribution.
+<CheckYourself level="standard" question="What share of a normal distribution lies between μ − σ and μ + 2σ?">
+About 82% (81.86%). Half of the 68.27% band lies between μ − σ and μ, and half of the 95.45% band lies between μ and μ + 2σ: 34.13% + 47.72%, or exactly $\Phi(2) - \Phi(-1) = 0.8186$.
+</CheckYourself>
 
-</details>
-
-<details>
-<summary>2. You widen the bell from σ = 1 to σ = 3. What happens to the peak height?</summary>
-
-It falls to one third. The peak is $1/(\vsigma\sqrt{2\pi})$, so it scales with $1/\vsigma$.
-
-</details>
-
-<details>
-<summary>3. Does batch normalisation make a layer's activations normally distributed?</summary>
-
+<CheckYourself level="standard" question="Does batch normalisation make a layer's activations normally distributed?">
 No. It sets each feature's batch mean to 0 and variance to 1 (before $\gamma$ and $\beta$), but a skewed distribution stays skewed.
+</CheckYourself>
 
-</details>
+<CheckYourself level="proof" question="Show that the mean of X ~ 𝒩(μ, σ²) is μ, using only the symmetry of the density.">
+Write $\mathbb{E}[X] - \vmu = \int (x - \vmu) f(x)\,dx$ and substitute $y = x - \vmu$. The density is symmetric about $\vmu$, so in terms of $y$ it is an even function, while $y$ itself is odd. Their product is odd, and the integral of an odd function over the whole real line is 0, provided it converges, which it does here because the tails fall off like $e^{-y^2/2\vsigma^2}$. So $\mathbb{E}[X] = \vmu$.
+</CheckYourself>
 
 ## Common mistakes
 
@@ -282,31 +370,14 @@ No. It sets each feature's batch mean to 0 and variance to 1 (before $\gamma$ an
   </Mistake>
 </CommonMistakes>
 
-## Where to go next
+## Key takeaways
 
-<NextTopics
-  topics={[
-    {
-      label: "Central limit theorem",
-      description: "Why averages of almost anything end up bell-shaped",
-    },
-    {
-      label: "Variance and standard deviation",
-      description: "Measuring spread, and why there are two versions",
-    },
-    {
-      label: "Hypothesis testing",
-      description: "Using the normal distribution to decide what's surprising",
-    },
-  ]}
-/>
+<Takeaways />
+
+## How this connects
+
+<ConceptMap />
 
 ## References
 
-- Kaiming He, Xiangyu Zhang, Shaoqing Ren and Jian Sun (2015). [Delving deep into rectifiers: surpassing human-level performance on ImageNet classification](https://arxiv.org/abs/1502.01852). The source of He initialisation.
-- Xavier Glorot and Yoshua Bengio (2010). [Understanding the difficulty of training deep feedforward neural networks](https://proceedings.mlr.press/v9/glorot10a.html). AISTATS, PMLR 9. The source of Xavier initialisation.
-- Sergey Ioffe and Christian Szegedy (2015). [Batch normalization: accelerating deep network training by reducing internal covariate shift](https://arxiv.org/abs/1502.03167).
-- Diederik P. Kingma and Max Welling (2014). [Auto-encoding variational Bayes](https://arxiv.org/abs/1312.6114). Introduces the reparameterisation trick.
-- Jonathan Ho, Ajay Jain and Pieter Abbeel (2020). [Denoising diffusion probabilistic models](https://arxiv.org/abs/2006.11239).
-- Carl Edward Rasmussen and Christopher K. I. Williams (2006). [Gaussian processes for machine learning](https://gaussianprocess.org/gpml/), chapter 2. MIT Press.
-- Marc Peter Deisenroth, A. Aldo Faisal and Cheng Soon Ong (2020). [Mathematics for machine learning](https://mml-book.github.io/), section 6.5. Cambridge University Press.
+<References />

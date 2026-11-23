@@ -4,6 +4,7 @@
 //   persistence and markup working on the list the reader actually sees.
 // - Keeps previous/next links inside the active subject, so a page never "continues" into another subject.
 // - Adds JSON-LD structured data: WebSite + Organization on the home page, breadcrumb + article on concept pages.
+// - Fails the build if a concept page is missing the frontmatter its components and checks rely on (decision 0009).
 import { defineRouteMiddleware } from '@astrojs/starlight/route-data';
 import { DOMAINS } from './design/domains.mjs';
 import { filterSidebarToActiveDomain, getDomains } from './components/overrides/domains';
@@ -20,6 +21,32 @@ function subjectOf(pathOrId: string): string | null {
 
 type StarlightRoute = App.Locals['starlightRoute'];
 
+const REQUIRED_CONCEPT_FIELDS = [
+	'topic',
+	'type',
+	'objectives',
+	'takeaways',
+	'references',
+	'author',
+	'reviewedAt',
+	'aiAssisted',
+	'primaryQuery',
+	'searchIntent',
+	'depthStatus',
+] as const;
+
+/** Concept pages need every field their components and checks read; the topic id must match the page path. */
+function assertConceptFrontmatter(route: StarlightRoute) {
+	const data = route.entry.data as Record<string, unknown>;
+	const missing = REQUIRED_CONCEPT_FIELDS.filter((field) => data[field] === undefined);
+	if (missing.length > 0) {
+		throw new Error(`${route.id}: concept page frontmatter is missing ${missing.join(', ')} (see docs/design-system/writing-a-concept-page.md).`);
+	}
+	if (data.topic !== route.id) {
+		throw new Error(`${route.id}: frontmatter topic is "${String(data.topic)}" but must match the page path "${route.id}".`);
+	}
+}
+
 /** JSON-LD for the page, or null for pages that get none (the introduction, the 404 page). */
 function structuredDataFor(route: StarlightRoute, subject: string | null) {
 	if (route.id === HOME_ROUTE_ID) return homeGraph();
@@ -27,6 +54,8 @@ function structuredDataFor(route: StarlightRoute, subject: string | null) {
 	return conceptPageGraph({
 		title: route.entry.data.title,
 		description: route.entry.data.description ?? '',
+		author: route.entry.data.author,
+		dateModified: route.entry.data.reviewedAt,
 		path: `/${route.id}/`,
 		subjectLabel: DOMAINS.find((domain) => domain.directory === subject)?.label ?? subject,
 	});
@@ -38,6 +67,7 @@ export const onRequest = defineRouteMiddleware((context) => {
 	route.sidebar = filterSidebarToActiveDomain(route.sidebar);
 
 	const subject = subjectOf(route.id);
+	if (subject) assertConceptFrontmatter(route);
 	const structuredData = structuredDataFor(route, subject);
 	if (structuredData) {
 		route.head.push({ tag: 'script', attrs: { type: 'application/ld+json' }, content: serialiseJsonLd(structuredData) });

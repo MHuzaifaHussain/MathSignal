@@ -38,9 +38,11 @@ interface ArticleInput {
 	/** Path with leading and trailing slash, e.g. /statistics/normal-distribution/ */
 	path: string;
 	subjectLabel: string;
+	author?: string;
+	dateModified?: Date;
 }
 
-export function conceptPageGraph({ title, description, path, subjectLabel }: ArticleInput): JsonLd {
+export function conceptPageGraph({ title, description, path, subjectLabel, author, dateModified }: ArticleInput): JsonLd {
 	const url = `${SITE_URL}${path}`;
 	return {
 		'@context': 'https://schema.org',
@@ -63,6 +65,8 @@ export function conceptPageGraph({ title, description, path, subjectLabel }: Art
 				keywords: [subjectLabel, 'machine learning'],
 				isPartOf: { '@id': WEBSITE_ID },
 				publisher: { '@id': ORGANIZATION_ID },
+				...(author ? { author: { '@type': 'Person', name: author } } : {}),
+				...(dateModified ? { dateModified: dateModified.toISOString().slice(0, 10) } : {}),
 			},
 		],
 	};
