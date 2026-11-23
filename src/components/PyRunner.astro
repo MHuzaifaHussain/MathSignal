@@ -1,0 +1,34 @@
+---
+// A runnable Python block: highlighted by Expressive Code (same palette and mu/sigma markers as
+// every fence), with a Run button that executes it in the browser through Pyodide.
+// Only the standard library, NumPy and SciPy run; keep PyTorch examples display-only.
+import { Code } from '@astrojs/starlight/components';
+import PyRunControls from './react/PyRunControls';
+
+interface Props {
+	code: string;
+	/** Optional file name or caption shown in the code frame. */
+	title?: string;
+}
+
+const { code, title } = Astro.props;
+const source = code.replace(/^\s*\n/, '').trimEnd();
+if (source.length === 0) {
+	throw new Error('<PyRunner>: the `code` prop is empty.');
+}
+---
+
+<div class="py-runner">
+	<Code code={source} lang="python" title={title} />
+	<div class="not-content"><PyRunControls code={source} client:visible /></div>
+</div>
+
+<style>
+	.py-runner {
+		margin-block: 1.5rem 2rem;
+	}
+
+	.py-runner :global(.expressive-code) {
+		margin-block-end: 0;
+	}
+</style>

@@ -192,3 +192,63 @@
 	background-color: color-mix(in srgb, var(--ms-sigma) var(--ms-code-marker-fill), transparent);
 	box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ms-sigma) 55%, transparent);
 }
+
+/* ── Python runner (src/components/PyRunner.astro) ── */
+.ms-runner {
+	border: 1px solid var(--ms-rule);
+	border-top: 0;
+	border-radius: 0 0 4px 4px;
+	background-color: var(--ms-surface-sunk);
+	font-family: var(--ms-font-ui);
+}
+
+.ms-runner-bar {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	padding: 0.5rem 0.75rem;
+}
+
+.ms-runner-button {
+	min-height: 44px;
+	min-width: 5.5rem;
+	padding-inline: 1rem;
+	border: 1px solid var(--ms-ink);
+	border-radius: 4px;
+	background-color: var(--ms-page);
+	color: var(--ms-ink);
+	font: 600 0.9375rem var(--ms-font-ui);
+	cursor: pointer;
+}
+
+.ms-runner-button:hover {
+	background-color: var(--ms-accent-low);
+}
+
+.ms-runner-status {
+	margin: 0;
+	font-size: 0.9375rem;
+	color: var(--ms-ink-muted);
+}
+
+.ms-runner-output {
+	display: block;
+	max-height: 20rem;
+	overflow: auto;
+	margin: 0;
+	padding: 0.75rem 1rem;
+	border-top: 1px solid var(--ms-rule);
+	font-family: var(--ms-font-mono);
+	font-size: 0.875rem;
+	line-height: 1.55;
+	white-space: pre-wrap;
+	color: var(--ms-ink);
+}
+
+/* Errors and stderr keep ink colour (red is not a meaning colour) and carry an attention edge instead */
+.ms-runner-stderr,
+.ms-runner-error {
+	display: block;
+	padding-inline-start: 0.75rem;
+	border-inline-start: 3px solid var(--ms-attention);
+}
