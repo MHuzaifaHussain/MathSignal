@@ -4,7 +4,8 @@
 //     published = a page that isn't a draft, planned = no page yet or a draft
 //   - notation and references: unique ids; every reference has an https URL and a `checked` date
 //   - pages: every topic, reference, <Cite id> and <NotationKey symbols> id they use exists
-//   - SEO: descriptions 120-160 characters; titles, descriptions and primary queries unique (docs/seo/README.md)
+//   - SEO: descriptions 120-160 characters; titles, descriptions and primary queries unique (docs/seo/README.md);
+//     searchIntent matches the page type
 // Required frontmatter on concept pages is enforced during the build by src/routeData.ts.
 import { readdir, readFile } from 'node:fs/promises';
 import { existsSync, readFileSync } from 'node:fs';
@@ -21,6 +22,8 @@ const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 const DESCRIPTION_LENGTH = { min: 120, max: 160 };
 const MAX_FULL_TITLE_LENGTH = 60;
 const TITLE_SUFFIX = ` | ${SITE_NAME}`;
+// Each page type owns one kind of search intent (docs/design-system/writing-a-concept-page.md).
+const INTENT_FOR_TYPE = { A: 'learn', B: 'learn', C: 'solve', D: 'compare', E: 'apply', F: 'reference' };
 
 /** @param {{ id?: string, key?: string }[]} items @param {'id' | 'key'} field @param {string} name */
 function duplicateIds(items, field, name) {
@@ -185,6 +188,15 @@ function seoProblems(pages) {
 	return { problems, warnings };
 }
 
+function intentProblems(pages) {
+	return pages.flatMap(({ name, frontmatter }) => {
+		const type = frontmatterValue(frontmatter, 'type');
+		const intent = frontmatterValue(frontmatter, 'searchIntent');
+		if (!type || !intent || INTENT_FOR_TYPE[type] === intent) return [];
+		return [`${name}: a type ${type} page has searchIntent "${INTENT_FOR_TYPE[type] ?? '(unknown type)'}", not "${intent}"`];
+	});
+}
+
 async function main() {
 	const pages = await readPages();
 	const seo = seoProblems(pages);
@@ -194,6 +206,7 @@ async function main() {
 		...referenceProblems(),
 		...pageProblems(pages),
 		...seo.problems,
+		...intentProblems(pages),
 	];
 	for (const warning of seo.warnings) console.warn(`  warning: ${warning}`);
 	if (problems.length > 0) {

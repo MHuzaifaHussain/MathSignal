@@ -28,13 +28,13 @@ Concept pages (any page inside a subject) must set these fields; the build stops
 | Field | Meaning |
 |---|---|
 | `topic` | Id in `src/data/topics.mjs`, equal to the page path (`statistics/normal-distribution`). Add the topic there first |
-| `type` | Page type A–F from the content plan (A is a core concept page) |
+| `type` | A: concept page that introduces a new board. B: concept page on an existing board. C: worked walkthrough of one skill. D: "X vs Y" comparison. E: ML deep dive. F: hub or cheat sheet |
 | `objectives` | Three to five things the reader will be able to do, starting with a verb |
 | `takeaways` | Three to five sentences that stand on their own |
 | `references` | Ids from `src/data/references.mjs`. Every `<Cite id>` must be listed here |
 | `author`, `reviewedAt` | Who wrote it and when it was last checked (YYYY-MM-DD). Shown in the footer and JSON-LD |
 | `aiAssisted` | `true` if an AI assistant helped draft it |
-| `primaryQuery`, `searchIntent` | The plain search phrase the page answers, and `learn`, `compare`, `how-to` or `reference` ([SEO guide](../seo/README.md)) |
+| `primaryQuery`, `searchIntent` | The plain search phrase the page answers ([SEO guide](../seo/README.md)), and the intent that follows from the type: `learn` (A, B), `solve` (C), `compare` (D), `apply` (E) or `reference` (F) |
 | `depthStatus` | `spine` while only the spine is written, `complete` once folds, frontier and checks are in |
 
 Add new symbols to `src/data/notation.mjs` and new sources to `src/data/references.mjs` (with the date you opened them). `npm run check:content` checks every id before the build ([decision 0009](../decisions/0009-single-sources-of-truth.md)).

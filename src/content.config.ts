@@ -22,7 +22,8 @@ const conceptPageFields = z.object({
 	aiAssisted: z.boolean().optional(),
 	/** The one search query this page answers (docs/seo/README.md). */
 	primaryQuery: z.string().optional(),
-	searchIntent: z.enum(['learn', 'compare', 'how-to', 'reference']).optional(),
+	// Follows the page type (content plan): A and B learn, C solve, D compare, E apply, F reference.
+	searchIntent: z.enum(['learn', 'solve', 'compare', 'apply', 'reference']).optional(),
 	/** "spine" pages are publishable; "complete" pages have every layer, including the research frontier and checks. */
 	depthStatus: z.enum(['spine', 'complete']).optional(),
 });
