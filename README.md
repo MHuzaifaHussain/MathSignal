@@ -39,6 +39,7 @@ npm run preview   # serve the build locally
 | `npm run check:design` | Contrast and color-blindness rules; generated tokens, favicon and logos up to date |
 | `npm run check:content` | Topic, notation and reference registries, and the ids each page uses |
 | `npm run check:code` | Runs every runnable Python example under Pyodide and checks its assertions |
+| `npm run check:boards` | Checks the boards' math, wording and state rules |
 | `npm run check:links` | Checks every internal link and anchor in the built site |
 | `npm run tokens` | Regenerates the CSS tokens, favicon, logos and web manifest from `src/design/palette.mjs` |
 | `npm run brand-images` | Regenerates the social card and app icons (PNG) |

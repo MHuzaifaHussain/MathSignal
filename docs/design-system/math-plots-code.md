@@ -74,6 +74,19 @@ Mafs 0.21's `vec.lerp` (and `vec.midpoint`) return `[NaN, NaN]` when both points
 - A live region announces the new values when a drag, an arrow-key move or a slider change ends, never on every frame.
 - Handwritten notes (`ChalkNote`) sit at the board's top-left and switch to their `short` text when the board is under 560px wide.
 
+## Discrete boards (EventSpace)
+
+Discrete sample spaces are HTML tables, not Mafs plots (decision 0011). They follow the same color rules with these conventions:
+
+| Marking | Meaning |
+|---|---|
+| `--ms-highlight` fill, 3px solid `--ms-attention` border, "A" tag | In event A, the event of interest |
+| 2px dashed `--ms-board-ink` outline inset 3px, "B" tag | In event B, the world you condition on |
+| Muted ink text and a thin diagonal strike | Outside the set "Look at" focuses on (never opacity on text) |
+| Dotted ink outline and the word "missed" | An outcome the reader left out, after Check |
+
+Pink and blue never appear: an event is not μ or σ. Tags and words double every marking, so nothing depends on color. Probabilities are shown as an unreduced count, then the reduced fraction, then two decimals ("3 of 4 outcomes. P(A) = 3/4 = 0.75"), in plain Unicode, never KaTeX.
+
 ## Code (Expressive Code)
 
 Code uses the **tuned full** palette: familiar editor-style highlighting with every color chosen so it can't be mistaken for μ, σ or "look here", even with color blindness.

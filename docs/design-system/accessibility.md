@@ -21,6 +21,7 @@ Yellow can't reach 3:1 on light surfaces. In light mode "look here" is ochre for
 ## Keyboard and screen readers
 
 - Every board has a tray slider for each draggable handle, with `aria-valuetext` in words ("mean 1.50").
+- Discrete boards (EventSpace) are a native table with `role="grid"`: one tab stop with a roving tabindex, arrow keys without wrapping, Home/End, Ctrl+Home/End, Space/Enter to toggle. Each outcome is a `<button aria-pressed>` whose name ends with its membership in words ("HT. First coin heads, second coin tails. In A."). Cells are at least 44px at a 375px viewport and never under 36px at 320px, with a 6px gap so the focus halo never touches a neighbor. Bursts of toggles announce once, after a 600ms pause, with the final count. Refused actions stay focusable (`aria-disabled`) and point at a visible reason.
 - Board figures have an accessible name (`Board`'s `label`).
 - Live regions are polite and update when an interaction ends, never on every frame.
 - The focus ring is visible on every surface (ink outline plus yellow halo).

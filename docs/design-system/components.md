@@ -71,12 +71,12 @@ A short aside: a clarification, a historical note, a "you may have seen this wri
 ## Boards (React)
 
 ### `Board`
-The frame every interactive plot sits in. It sets Mafs' CSS variables from the tokens, draws the frame and the tray, and owns the keyboard and screen-reader alternatives.
+The frame every interactive board sits in. It sets Mafs' CSS variables from the tokens, draws the frame and the tray, and owns the keyboard and screen-reader alternatives. Its content is either a Mafs canvas or, for discrete spaces, an HTML table (decision 0011).
 
 | Prop | Type | Notes |
 |---|---|---|
 | `label` | `string` | Accessible name of the figure, for example "Normal distribution with draggable mean and spread" |
-| `children` | `ReactNode` | The Mafs canvas |
+| `children` | `ReactNode` | A Mafs canvas, or an HTML table for discrete content. HTML boards own their announcements: they don't pass `onInteractionEnd` or `handleLabels` |
 | `tray` | `ReactNode` | Optional. Sliders, readouts and buttons shown under the canvas |
 | `onReset` | `() => void` | Optional; adds a Reset button to the tray |
 | `announcement` | `string` | Text for the polite live region; update it only when an interaction ends |
@@ -89,8 +89,25 @@ A short handwritten note on a board, in Kalam at 20px or larger. Qualitative onl
 ### `TraySlider`
 A labeled slider for the tray, built on Base UI's Slider. Props: `label`, `value`, `min`, `max`, `step`, `largeStep` (optional; PageUp/PageDown and Shift+Arrow, defaults to about a tenth of the range), `onValueChange`, `onValueCommitted` (called once per drag, and once after a short pause for keyboard changes, so the board announces once), `format` (readout text, and `aria-valuetext` unless `describe` is given), `describe` (optional spoken value, e.g. "mean 1.50"), `meaning` (`'mu' | 'sigma' | undefined`, which colors the thumb and label).
 
+### `TrayChoice`
+A segmented choice for the tray: a fieldset of native radios styled as buttons, so arrow keys and screen readers work natively. Props: `legend`, `options` (`{ value, label }[]`), `value`, `onChange`. The selected option is shown by fill and weight, never by color alone.
+
 ### `NormalDistribution`, `LinearRegression`, `BayesTheorem`
 Concept boards. Each composes `Board`, Mafs, `plotColors`, and `TraySlider`s.
+
+### `EventSpace`
+A sample space as a table of outcomes (decision 0011). One prop: `setup`, the id of a configuration in `src/components/react/eventSpace/setups.ts` (`coins-build`, `dice-count`, `dice-operations`, `die-pour`); an unknown id fails the build.
+
+```mdx
+<div class="not-content">
+  <EventSpace client:visible setup="coins-build" />
+</div>
+```
+
+- **Count mode:** readers tap outcomes to build event A (and B on two-event setups); readouts give exact counts and fractions, plus "not A", "A and B" and "A or B". "Look at" mutes the outcomes outside a chosen set.
+- **Goal setups** (`coins-build`): presets and readouts stay locked until the reader passes **Check**, which names the specific mistake (HT marked without TH). "Show the answer" appears after two wrong Checks.
+- **Weights mode** (`die-pour`): six cups poured from a jug of 12 units, for the probability axioms. Impossible pours are refused with a visible reason.
+- All math and copy live in pure modules (`model.ts`, `describe.ts`, `state.ts`) checked by `npm run check:boards`. Try every setup at `/lab/event-space/` in the dev server.
 
 ## Code
 

@@ -5,7 +5,10 @@ const MOVE_KEYS = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
 interface BoardProps {
   /** Accessible name of the figure, e.g. "Normal distribution with draggable mean and spread". */
   label: string;
-  /** The Mafs canvas, plus any ChalkNote. */
+  /**
+   * A Mafs canvas (plus any ChalkNote), or an HTML table for discrete content (decision 0011). HTML boards own
+   * their announcements and don't pass onInteractionEnd or handleLabels.
+   */
   children: ReactNode;
   /** Optional sliders, readouts and buttons shown under the canvas. */
   tray?: ReactNode;
