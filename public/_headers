@@ -1,0 +1,13 @@
+# Cloudflare response headers (Pages and Workers static assets both read this file).
+
+# Security headers for every response. No Content-Security-Policy yet: it would have to allow jsDelivr (Pyodide),
+# the runner's Web Worker, WebAssembly and Starlight's inline theme script, so it needs testing on a preview deploy.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), interest-cohort=()
+  X-Frame-Options: SAMEORIGIN
+
+# Astro's build output: every file name contains a content hash, so it can be cached for a year.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
