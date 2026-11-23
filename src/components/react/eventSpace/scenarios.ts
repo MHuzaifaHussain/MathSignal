@@ -1,6 +1,6 @@
 // The outcome spaces EventSpace can show, and the named events on each. Board configuration, not shared
 // facts, so it lives next to the component rather than in src/data/ (decision 0011).
-import type { Outcome, OutcomeId } from './model.ts';
+import type { Outcome, OutcomeId, WrongModelTile } from './model.ts';
 
 export interface EventDefinition {
 	/** How the event is named in sentences, e.g. "at least one head". */
@@ -24,6 +24,8 @@ export interface Scenario {
 	events: Record<string, EventDefinition>;
 	/** The same outcomes in the other order (TH for HT), or undefined when there is no other order. */
 	mirrorOf: (id: OutcomeId) => OutcomeId | undefined;
+	/** A tempting but wrong way to count this space, shown by re-pooling the reader's tosses. */
+	wrongModel?: { switchLabel: string; tiles: WrongModelTile[]; caption: string };
 }
 
 const MAX_OUTCOMES = 36;
@@ -58,6 +60,15 @@ function twoCoins(): Scenario {
 			'both-same': { label: 'both the same', members: (outcome) => outcome.id[0] === outcome.id[1] },
 		},
 		mirrorOf: (id) => (id[0] === id[1] ? undefined : `${id[1]}${id[0]}`),
+		wrongModel: {
+			switchLabel: 'Treat HT and TH as the same outcome',
+			tiles: [
+				{ label: 'HH', members: ['HH'] },
+				{ label: 'one of each', members: ['HT', 'TH'] },
+				{ label: 'TT', members: ['TT'] },
+			],
+			caption: 'If these 3 were equally likely, at least one head would be 2/3.',
+		},
 	};
 }
 

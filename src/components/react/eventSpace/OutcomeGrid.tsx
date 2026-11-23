@@ -5,6 +5,9 @@ import type { EventSpaceState } from "./state.ts";
 import { useRovingGrid } from "./useRovingGrid.ts";
 import type { OutcomeId } from "./model.ts";
 
+/** Grids up to this size show toss counts inside the cells. */
+const MAX_CELLS_WITH_TALLIES = 12;
+
 interface OutcomeGridProps {
   state: EventSpaceState;
   scenario: Scenario;
@@ -24,6 +27,8 @@ export default function OutcomeGrid({ state, scenario, describedBy, onToggle }: 
   const editing = state.events[state.editing];
   const focus = focusSet(state);
   const missed = missedOutcome(state);
+  // Counts fit inside cells only on small grids; larger ones show them in the readout.
+  const showTallies = state.tossCount > 0 && scenario.outcomes.length <= MAX_CELLS_WITH_TALLIES;
 
   return (
     <>
@@ -82,6 +87,7 @@ export default function OutcomeGrid({ state, scenario, describedBy, onToggle }: 
                       <span className="ms-event-label" aria-hidden="true">{outcome.label}</span>
                       {inB && <span className="ms-event-tag ms-event-tag-b" aria-hidden="true">B</span>}
                       {missed === outcome.id && <span className="ms-event-note" aria-hidden="true">missed</span>}
+                      {showTallies && <span className="ms-event-note" aria-hidden="true">{state.tallies[outcome.id] ?? 0}</span>}
                     </button>
                   </td>
                 );

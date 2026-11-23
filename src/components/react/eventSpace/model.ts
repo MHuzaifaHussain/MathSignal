@@ -91,3 +91,27 @@ export function pour(weights: Readonly<Record<OutcomeId, number>>, id: OutcomeId
 	if (direction === 1 && poured >= WEIGHT_TOTAL) return { ok: false, reason: 'jug-empty' };
 	return { ok: true, weights: { ...weights, [id]: current + direction } };
 }
+
+/**
+ * Tosses `count` times, each outcome equally likely, and returns how often each one came up. `random` is
+ * passed in (Math.random on the page) so this stays pure and checkable.
+ */
+export function simulate(all: readonly Outcome[], count: number, random: () => number): Record<OutcomeId, number> {
+	const tallies: Record<OutcomeId, number> = Object.fromEntries(all.map((outcome) => [outcome.id, 0]));
+	for (let toss = 0; toss < count; toss += 1) {
+		const outcome = all[Math.min(Math.floor(random() * all.length), all.length - 1)];
+		tallies[outcome.id] += 1;
+	}
+	return tallies;
+}
+
+/** One tile of a wrong model that lumps outcomes together, such as "one of each" for HT and TH. */
+export interface WrongModelTile {
+	label: string;
+	members: OutcomeId[];
+}
+
+/** Re-pools real tallies into the wrong model's tiles, so the reader's own tosses show it is wrong. */
+export function poolTiles(tallies: Readonly<Record<OutcomeId, number>>, tiles: readonly WrongModelTile[]): { label: string; count: number }[] {
+	return tiles.map((tile) => ({ label: tile.label, count: tile.members.reduce((total, id) => total + (tallies[id] ?? 0), 0) }));
+}

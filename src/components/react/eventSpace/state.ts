@@ -36,7 +36,10 @@ export type Action =
 	| { type: 'show-answer' }
 	| { type: 'reset' }
 	| { type: 'pour'; id: OutcomeId; direction: 1 | -1 }
-	| { type: 'weight-preset'; name: string };
+	| { type: 'weight-preset'; name: string }
+	/** One batch of tosses; the page runs the random draws so the reducer stays pure. */
+	| { type: 'toss'; results: Readonly<Record<OutcomeId, number>> }
+	| { type: 'wrong-model'; on: boolean };
 
 /** Wrong Checks before the "Show the answer" button appears. */
 export const CHECKS_BEFORE_ANSWER = 2;
@@ -137,6 +140,18 @@ export function reducer(state: EventSpaceState, action: Action): EventSpaceState
 			const result = pour(state.weights, action.id, action.direction);
 			return result.ok ? { ...state, weights: result.weights, refusal: null } : { ...state, refusal: { id: action.id, reason: result.reason } };
 		}
+		case 'toss': {
+			if (!setup.toss || isLocked(state)) return state;
+			const tallies = { ...state.tallies };
+			let added = 0;
+			for (const [id, count] of Object.entries(action.results)) {
+				tallies[id] = (tallies[id] ?? 0) + count;
+				added += count;
+			}
+			return { ...state, tallies, tossCount: state.tossCount + added };
+		}
+		case 'wrong-model':
+			return setup.wrongModel && scenario.wrongModel && !isLocked(state) ? { ...state, wrongModel: action.on } : state;
 		case 'weight-preset': {
 			const fills = setup.weightPresets?.[action.name];
 			return fills ? { ...state, weights: weightsFor(scenario, fills), refusal: null } : state;

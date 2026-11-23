@@ -604,6 +604,45 @@
 	margin: 0.15rem 0;
 }
 
+/* The wrong model: dashed ink tiles, so it never reads as one of the real events. */
+.ms-wrong-model {
+	margin: 0;
+}
+
+.ms-wrong-model-tiles {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 6px;
+	margin: 0 0 0.75rem;
+	padding: 0;
+	list-style: none;
+}
+
+.ms-wrong-model-tile {
+	display: grid;
+	place-items: center;
+	gap: 0.25rem;
+	min-height: 72px;
+	padding: 0.5rem;
+	border: 2px dashed var(--ms-board-ink);
+	border-radius: 4px;
+	text-align: center;
+}
+
+.ms-wrong-model-label {
+	font: 600 0.9375rem var(--ms-font-mono);
+}
+
+.ms-wrong-model-count {
+	font-size: 0.875rem;
+}
+
+.ms-board-switch[aria-checked='true'] {
+	border-color: var(--ms-board-ink);
+	background-color: var(--ms-board);
+	font-weight: 600;
+}
+
 /* ── EventSpace weights mode: six cups of 12 unit slots ── */
 .ms-cup-row {
 	inline-size: 100%;

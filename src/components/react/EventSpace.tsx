@@ -4,12 +4,16 @@ import TrayChoice from "./TrayChoice";
 import { KEYBOARD_COMMIT_DELAY_MS } from "./boardTiming";
 import CupRow from "./eventSpace/CupRow.tsx";
 import OutcomeGrid from "./eventSpace/OutcomeGrid.tsx";
-import { additivityLine, announcementFor, feedbackLine, jugLine, markedLine, presetLabel, readoutLines, statusLine, totalLine } from "./eventSpace/describe.ts";
+import WrongModelTiles from "./eventSpace/WrongModelTiles.tsx";
+import { simulate } from "./eventSpace/model.ts";
+import { additivityLine, announcementFor, feedbackLine, jugLine, markedLine, presetLabel, readoutLines, statusLine, tossLine, totalLine } from "./eventSpace/describe.ts";
 import { SCENARIOS } from "./eventSpace/scenarios.ts";
 import { getSetup, type SetupId } from "./eventSpace/setups.ts";
 import { CHECKS_BEFORE_ANSWER, initialState, isLocked, reducer, type Action, type EventKey, type LookAt } from "./eventSpace/state.ts";
 
 const LOCKED_REASON = "Check your answer first";
+/** Tosses per press of "Toss 100". */
+const TOSS_BATCH = 100;
 const CUPS_NOTE = "The cups are drawn the same size. The water in them is the probability, not the cup.";
 const LOOK_AT_OPTIONS: readonly { value: LookAt; label: string }[] = [
   { value: "everything", label: "Everything" },
@@ -60,19 +64,20 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
   const marked = markedLine(state);
   const readouts = readoutLines(state);
   const eventKeys = (Object.keys(setup.events) as EventKey[]).filter((key) => setup.events[key]);
+  const tosses = tossLine(state);
+  const showWrongModel = state.wrongModel && Boolean(scenario.wrongModel);
+  /** A button that is shown but refused until Check passes on a goal setup. */
+  const lockable = (onPress: () => void) => ({
+    "aria-disabled": locked || undefined,
+    "aria-describedby": locked ? lockedReasonId : undefined,
+    onClick: () => (locked ? setAnnouncement(`${LOCKED_REASON}.`) : onPress()),
+  });
 
   const presetButtons = (key: EventKey) => (
     <div className="ms-event-presets" role="group" aria-label={`Presets for event ${key}`}>
       <span className="ms-event-presets-label">{key}:</span>
       {setup.events[key]?.presets.map((preset) => (
-        <button
-          key={preset}
-          type="button"
-          className="ms-board-button"
-          aria-disabled={locked || undefined}
-          aria-describedby={locked ? lockedReasonId : undefined}
-          onClick={() => (locked ? setAnnouncement(`${LOCKED_REASON}.`) : send({ type: "preset", event: key, preset }))}
-        >
+        <button key={preset} type="button" className="ms-board-button" {...lockable(() => send({ type: "preset", event: key, preset }))}>
           {presetLabel(scenario, preset)}
         </button>
       ))}
@@ -103,6 +108,22 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
       {eventKeys.map((key) => (
         <div key={key}>{presetButtons(key)}</div>
       ))}
+      {setup.toss && (
+        <button type="button" className="ms-board-button" {...lockable(() => send({ type: "toss", results: simulate(scenario.outcomes, TOSS_BATCH, Math.random) }))}>
+          Toss {TOSS_BATCH}
+        </button>
+      )}
+      {setup.wrongModel && scenario.wrongModel && (
+        <button
+          type="button"
+          role="switch"
+          aria-checked={state.wrongModel}
+          className="ms-board-button ms-board-switch"
+          {...lockable(() => send({ type: "wrong-model", on: !state.wrongModel }))}
+        >
+          {scenario.wrongModel.switchLabel}
+        </button>
+      )}
       {locked && (
         <p id={lockedReasonId} className="ms-event-note-line">
           {LOCKED_REASON}: presets and readouts unlock when your answer is right.
@@ -126,9 +147,9 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
           <p className="ms-event-note-line">{CUPS_NOTE}</p>
         </>
       )}
-      {readouts.length > 0 && (
+      {(readouts.length > 0 || tosses) && (
         <div className="ms-event-readouts">
-          {readouts.map((line) => (
+          {[...readouts, ...(tosses ? [tosses] : [])].map((line) => (
             <p key={line} className="ms-board-readout">
               {line}
             </p>
@@ -147,7 +168,13 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
         {setup.mode === "weights" ? (
           <CupRow state={state} scenario={scenario} send={send} />
         ) : (
-          <OutcomeGrid state={state} scenario={scenario} describedBy={statusId} onToggle={(id) => send({ type: "toggle", id })} />
+          <>
+            {showWrongModel ? (
+              <WrongModelTiles state={state} scenario={scenario} />
+            ) : (
+              <OutcomeGrid state={state} scenario={scenario} describedBy={statusId} onToggle={(id) => send({ type: "toggle", id })} />
+            )}
+          </>
         )}
         {marked && <p className="ms-event-status">{marked}</p>}
         {feedback && <p className="ms-event-feedback">{feedback}</p>}

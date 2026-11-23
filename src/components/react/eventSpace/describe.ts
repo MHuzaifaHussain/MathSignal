@@ -137,12 +137,29 @@ export function cellName(state: EventSpaceState, outcome: Outcome): string {
 	const focus = focusSet(state);
 	const outside = focus && !focus.has(outcome.id) ? ' Outside.' : '';
 	const missed = missedOutcome(state) === outcome.id ? ' Missed.' : '';
-	return `${outcome.label}. ${capitalize(outcome.spoken)}.${membership}${missed}${outside}`;
+	const tossed = state.tossCount > 0 ? ` Tossed ${plural(state.tallies[outcome.id] ?? 0, 'time', 'times')}.` : '';
+	return `${outcome.label}. ${capitalize(outcome.spoken)}.${membership}${missed}${outside}${tossed}`;
 }
 
 /** The text on a preset button, e.g. "At least one head" or "Clear". */
 export function presetLabel(scenario: Scenario, preset: string): string {
 	return preset === CLEAR_PRESET ? 'Clear' : capitalize(scenario.events[preset].label);
+}
+
+// ---- Tosses ----
+
+/** How often event A came up in the reader's tosses, beside the exact value, so a small sample can't mislead. */
+function tossShare(state: EventSpaceState): { name: string; hits: number; share: string } {
+	const scenario = scenarioOf(state);
+	const hits = outcomesIn(scenario, state.events.A).reduce((total, outcome) => total + (state.tallies[outcome.id] ?? 0), 0);
+	return { name: eventText(scenario, state.events.A), hits, share: decimal(hits, state.tossCount) };
+}
+
+export function tossLine(state: EventSpaceState): string | null {
+	if (state.tossCount === 0) return null;
+	const total = scenarioOf(state).outcomes.length;
+	const { name, hits, share } = tossShare(state);
+	return `Tossed ${state.tossCount} times: ${name} ${plural(hits, 'time', 'times')} (${share}). Your count says ${decimal(state.events.A.size, total)}.`;
 }
 
 // ---- Weights mode ----
@@ -212,5 +229,11 @@ export function announcementFor(state: EventSpaceState, action: Action): string 
 		}
 		case 'weight-preset':
 			return `${action.name}. ${totalLine(state)}`;
+		case 'toss': {
+			const { name, hits, share } = tossShare(state);
+			return `Tossed ${state.tossCount} times in all. ${capitalize(name)} ${plural(hits, 'time', 'times')}, ${share}.`;
+		}
+		case 'wrong-model':
+			return state.wrongModel ? scenario.wrongModel?.caption ?? '' : 'Back to the four real outcomes.';
 	}
 }

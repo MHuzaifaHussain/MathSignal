@@ -135,4 +135,33 @@ assert.equal(describe.cupName(pourFresh, die.outcomes[2]), 'Cup 3: 2 of 12 units
 // With water left in the jug the cups aren't a probability yet, so the sum isn't written as P(...).
 assert.equal(describe.additivityLine(eightPoured), 'Even holds 1/12 + 1/12 + 2/12 = 4/12 of the jug.');
 
+// ---- Tosses and the wrong three-outcome model (v1.1) ----
+const model = await import('../src/components/react/eventSpace/model.ts');
+const cycling = () => { let index = 0; const values = [0, 0.25, 0.5, 0.75]; return () => values[index++ % values.length]; };
+const batch = model.simulate(coins.outcomes, 100, cycling());
+assert.deepEqual(batch, { HH: 25, HT: 25, TH: 25, TT: 25 });
+assert.deepEqual(model.poolTiles(batch, coins.wrongModel.tiles), [
+	{ label: 'HH', count: 25 },
+	{ label: 'one of each', count: 50 },
+	{ label: 'TT', count: 25 },
+]);
+assert.equal(coins.wrongModel.caption, 'If these 3 were equally likely, at least one head would be 2/3.');
+
+// Tosses and the wrong model stay locked until Check passes, so they can't give the answer away.
+assert.equal(reducer(fresh, { type: 'toss', results: batch }), fresh);
+assert.equal(reducer(fresh, { type: 'wrong-model', on: true }), fresh);
+const tossedTwice = [{ type: 'toss', results: batch }, { type: 'toss', results: batch }].reduce(reducer, passed);
+assert.equal(tossedTwice.tossCount, 200);
+assert.deepEqual(tossedTwice.tallies, { HH: 50, HT: 50, TH: 50, TT: 50 });
+assert.equal(describe.tossLine(tossedTwice), 'Tossed 200 times: at least one head 150 times (0.75). Your count says 0.75.');
+const uneven = reducer(passed, { type: 'toss', results: { HH: 49, HT: 52, TH: 50, TT: 49 } });
+assert.equal(describe.tossLine(uneven), 'Tossed 200 times: at least one head 151 times (0.76). Your count says 0.75.');
+assert.equal(describe.announcementFor(uneven, { type: 'toss', results: {} }), 'Tossed 200 times in all. At least one head 151 times, 0.76.');
+assert.equal(describe.cellName(tossedTwice, coinsOutcome('HT')), 'HT. First coin heads, second coin tails. In A. Tossed 50 times.');
+assert.equal(describe.tossLine(passed), null);
+assert.equal(reducer(passed, { type: 'wrong-model', on: true }).wrongModel, true);
+assert.equal(reducer(initialState('dice-count'), { type: 'wrong-model', on: true }).wrongModel, false);
+// Reset clears tosses too.
+assert.equal(reducer(tossedTwice, { type: 'reset' }).tossCount, 0);
+
 console.log('Board check passed.');
