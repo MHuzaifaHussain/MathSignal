@@ -132,6 +132,10 @@ assert.equal(pourBlocked(pourFresh, '3', -1), null);
 assert.equal(pourBlocked(startedOver, '3', -1), 'cup-empty');
 assert.equal(pourBlocked(startedOver, '3', 1), null);
 assert.equal(describe.cupName(pourFresh, die.outcomes[2]), 'Cup 3: 2 of 12 units.');
+// The pour announcement agrees in number ("1 unit", "2 units").
+const onePoured = run('die-pour', { type: 'pour', id: '1', direction: -1 });
+assert.equal(describe.announcementFor(onePoured, { type: 'pour', id: '1', direction: -1 }), 'Cup 1: 1 of 12 units. 1 unit left in the jug.');
+assert.equal(describe.announcementFor(reducer(onePoured, { type: 'pour', id: '2', direction: -1 }), { type: 'pour', id: '2', direction: -1 }), 'Cup 2: 1 of 12 units. 2 units left in the jug.');
 // With water left in the jug the cups aren't a probability yet, so the sum isn't written as P(...).
 assert.equal(describe.additivityLine(eightPoured), 'Even holds 1/12 + 1/12 + 2/12 = 4/12 of the jug.');
 

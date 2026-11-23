@@ -284,7 +284,7 @@ export function announcementFor(state: EventSpaceState, action: Action): string 
 		case 'pour': {
 			if (state.refusal) return refusalText(state.refusal.reason);
 			const outcome = scenario.outcomes.find((candidate) => candidate.id === action.id);
-			return `${outcome ? cupName(state, outcome) : ''} ${WEIGHT_TOTAL - unitsPoured(state)} units left in the jug.`.trim();
+			return `${outcome ? cupName(state, outcome) : ''} ${plural(WEIGHT_TOTAL - unitsPoured(state), 'unit', 'units')} left in the jug.`.trim();
 		}
 		case 'weight-preset':
 			return `${action.name}. ${totalLine(state)}`;
