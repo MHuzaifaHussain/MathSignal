@@ -8,6 +8,8 @@ interface OutputChunk {
   text: string;
 }
 
+const RUNTIME_FAILURE_TEXT = "The Python runtime couldn't load. Check your connection and press Run to try again.";
+
 const STATUS_TEXT: Record<Phase, string> = {
   idle: "",
   "loading-runtime": "Loading Python. The first run downloads about 9 MB.",
@@ -52,7 +54,8 @@ export default function PyRunControls({ code }: PyRunControlsProps) {
         setPhase("done");
         break;
       case "error":
-        setErrorMessage(message.message);
+        // Download failures get a plain explanation; Python exceptions keep their traceback.
+        setErrorMessage(message.kind === "runtime" ? RUNTIME_FAILURE_TEXT : message.message);
         setPhase("error");
         break;
     }
@@ -64,7 +67,7 @@ export default function PyRunControls({ code }: PyRunControlsProps) {
     worker.addEventListener("message", handleMessage);
     worker.addEventListener("error", (event) => {
       console.error("Python runner worker failed:", event.message);
-      setErrorMessage("The Python runtime couldn't start. Check your connection and try again.");
+      setErrorMessage(RUNTIME_FAILURE_TEXT);
       setPhase("error");
       terminateWorker();
     });

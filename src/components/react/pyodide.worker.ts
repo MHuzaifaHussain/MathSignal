@@ -15,7 +15,8 @@ export type RunnerMessage =
   | { type: "stdout"; text: string }
   | { type: "stderr"; text: string }
   | { type: "done" }
-  | { type: "error"; message: string };
+  /** "runtime": Pyodide or a package failed to download. "python": the code raised an exception. */
+  | { type: "error"; kind: "runtime" | "python"; message: string };
 
 /** The small part of Pyodide's API this worker uses. */
 interface PyodideRuntime {
@@ -44,28 +45,39 @@ function loadRuntime(): Promise<PyodideRuntime> {
   return runtimePromise;
 }
 
-async function run(code: string) {
-  post({ type: "status", status: "loading-runtime" });
+async function prepare(code: string): Promise<PyodideRuntime> {
+  if (runtimePromise === null) post({ type: "status", status: "loading-runtime" });
   const runtime = await loadRuntime();
   post({ type: "status", status: "loading-packages" });
   // Package-loading progress goes to the status line, not into the program's output.
   await runtime.loadPackagesFromImports(code, { messageCallback: () => undefined });
-  post({ type: "status", status: "running" });
-  await runtime.runPythonAsync(code);
+  return runtime;
 }
 
 self.onmessage = async (event: MessageEvent<RunnerRequest>) => {
   if (event.data?.type !== "run") {
-    post({ type: "error", message: `Unknown request: ${JSON.stringify(event.data)}` });
+    post({ type: "error", kind: "runtime", message: `Unknown request: ${JSON.stringify(event.data)}` });
     return;
   }
+  const { code } = event.data;
+
+  let runtime: PyodideRuntime;
   try {
-    await run(event.data.code);
+    runtime = await prepare(code);
+  } catch (error) {
+    // A failed download must not stay cached, so the next Run retries it.
+    runtimePromise = null;
+    console.error("Python runner: loading Pyodide or a package failed", error);
+    post({ type: "error", kind: "runtime", message: error instanceof Error ? error.message : String(error) });
+    return;
+  }
+
+  try {
+    post({ type: "status", status: "running" });
+    await runtime.runPythonAsync(code);
     post({ type: "done" });
   } catch (error) {
     // Python exceptions arrive as PythonError with the traceback in .message.
-    // A failed runtime download must not be cached, so the next Run retries it.
-    if (!(error instanceof Error && error.constructor.name === "PythonError")) runtimePromise = null;
-    post({ type: "error", message: error instanceof Error ? error.message : String(error) });
+    post({ type: "error", kind: "python", message: error instanceof Error ? error.message : String(error) });
   }
 };
