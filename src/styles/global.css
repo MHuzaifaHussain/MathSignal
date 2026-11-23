@@ -80,6 +80,18 @@ header.header {
 	font-weight: 600;
 }
 
+/* ── "On this page": the current section is heavier and underlined in the attention colour.
+ * Starlight marks it with the accent colour alone, which in light mode is almost the same as ink. ── */
+starlight-toc a[aria-current='true'],
+starlight-toc a[aria-current='true']:hover {
+	color: var(--ms-ink);
+	font-weight: 600;
+	text-decoration: underline;
+	text-decoration-color: var(--ms-attention);
+	text-decoration-thickness: 2px;
+	text-underline-offset: 0.3em;
+}
+
 /* ── Disclosure blocks (<details>): no left bar; the triangle and the label carry the meaning ── */
 .sl-markdown-content details:not(:where(.not-content *)) {
 	border-inline-start: 0;
