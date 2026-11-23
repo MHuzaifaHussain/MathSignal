@@ -50,3 +50,4 @@ A lecture hall: you **read on paper**, the teacher **draws on the board**, and y
 | `npm run check:design` | Contrast and colour-separation rules, tokens file up to date. Runs automatically before `npm run build` |
 | `npm run tokens` | Regenerates `src/styles/tokens.css` |
 | `npm run build` | Full static build; fails if the design check fails |
+| `npm run check` | Type-checks `.astro`, `.ts` and `.tsx` files (`astro check`) |
