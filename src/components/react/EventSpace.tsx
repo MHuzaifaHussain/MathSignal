@@ -37,7 +37,7 @@ interface EventSpaceProps {
 /**
  * A sample space as a table of equally likely outcomes. Readers build events by tapping outcomes, and the
  * board reads them back as exact counts and fractions. On goal setups nothing is revealed until Check passes.
- * Design: docs/superpowers/specs/2026-11-23-eventspace-design.md. Decision 0011.
+ * Design and reasoning: decision 0011.
  */
 export default function EventSpace({ setup: setupId }: EventSpaceProps) {
   const setup = getSetup(setupId);

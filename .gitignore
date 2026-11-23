@@ -20,7 +20,3 @@ node_modules/
 # IDE
 .vscode/
 .idea/
-
-# Claude Code local workspace: settings, plans, research notes, reference dumps.
-# Anything meant for contributors (design system, decisions) lives in docs/.
-.claude/

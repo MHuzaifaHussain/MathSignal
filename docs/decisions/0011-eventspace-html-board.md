@@ -3,7 +3,7 @@
 Status: accepted, 2026-11-23
 
 ## Context
-The first probability pages need a board where a reader sees every possible outcome and builds events from them, and that board must defeat the classic mistake of treating HT and TH as one outcome. Every board so far is a Mafs plot with draggable points and sliders. A sample space of discrete, equally likely outcomes is not a coordinate plane: it is a table. The design ([docs/superpowers/specs/2026-11-23-eventspace-design.md](../superpowers/specs/2026-11-23-eventspace-design.md)) compared a table inside `Board`, an extension of the BayesTheorem area board, and building a generic Board API (goal, presets, prediction) first.
+The first probability pages need a board where a reader sees every possible outcome and builds events from them, and that board must defeat the classic mistake of treating HT and TH as one outcome. Every board so far is a Mafs plot with draggable points and sliders. A sample space of discrete, equally likely outcomes is not a coordinate plane: it is a table. The design compared a table inside `Board`, an extension of the BayesTheorem area board, and building a generic Board API (goal, presets, prediction) first.
 
 ## Decision
 - **EventSpace renders an HTML table inside `Board`**, not a Mafs canvas: native table semantics with one `aria-pressed` toggle button per outcome, a roving-tabindex grid, text that reflows at 375 px and 200% zoom, a server-rendered table that prints, and no Mafs in its bundle. `Board` itself is unchanged: its `children` may be a Mafs canvas or an HTML table, and an HTML board owns its announcements and never passes `onInteractionEnd` or `handleLabels`.

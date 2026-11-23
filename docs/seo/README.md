@@ -2,7 +2,7 @@
 
 Balanced SEO: pages are written for learners first, and search engines and AI assistants find them because they are clear, correct and well linked. Nothing here should change the tone of an article. If an SEO idea makes a sentence worse for the reader, drop the idea.
 
-Sources: the `seo-audit`, `ai-seo` and `programmatic-seo` skills from [coreyhaines31/marketingskills](https://github.com/coreyhaines31/marketingskills), Google's guidance on helpful and scaled content, and the week-zero site audit (2026-11-23).
+Sources: the SEO audit, AI search and programmatic SEO guides in [coreyhaines31/marketingskills](https://github.com/coreyhaines31/marketingskills), Google's guidance on helpful and scaled content, and the site audit of 2026-11-23.
 
 ## Principles
 
@@ -32,7 +32,3 @@ Sources: the `seo-audit`, `ai-seo` and `programmatic-seo` skills from [coreyhain
 ## What we don't do
 
 Keyword density targets, keyword-stuffed headings, doorway pages, FAQ sections written for snippets, AI-only content, hidden text, buying links, or rewriting a good sentence to fit a search phrase.
-
-## Tools
-
-The three skills this guide draws on can be installed for an AI assistant; see [docs/tooling/agent-skills.md](../tooling/agent-skills.md).

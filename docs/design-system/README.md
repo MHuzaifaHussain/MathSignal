@@ -24,6 +24,20 @@ A lecture hall: you **read on paper**, the teacher **draws on the board**, and y
 4. **Handwriting is a garnish.** Kalam appears only on boards, at 20px or larger, for short qualitative notes. Never for numbers, labels or anything a reader must parse precisely.
 5. **No decoration without information.** No cards, pills, drop shadows, gradients or decorative vertical bars. Columns are separated by whitespace; blocks are set apart by a label, spacing or the sunk surface. Borders, numbering and labels exist only when they encode structure ([decision 0006](../decisions/0006-no-decorative-rules-or-shadows.md)).
 
+## Rules that are easy to break
+
+- Colors come only from `src/design/palette.mjs`. Run `npm run tokens` after changing it; never edit `src/styles/tokens.css` by hand. Components use `var(--ms-*)`, never hex values.
+- Use `\vmu`/`\vsigma` in formulas, `<Var>` in prose and `plotColors` in Mafs code, so μ and σ keep their colors everywhere.
+- Code themes have no bold and no blue or pink; every token stays at least 5.5:1. `npm run check:design` enforces this.
+- Plots live inside `Board`; every draggable handle needs a keyboard path (a tray slider, or `handleLabels`). Discrete boards are HTML tables (decision 0011).
+- Subjects are defined once in `src/design/domains.mjs`. Topics, symbols and references are defined once in `src/data/` and used by id (decision 0009).
+- Concept pages follow the spine-and-folds template (decision 0008) with the full frontmatter in [writing-a-concept-page.md](writing-a-concept-page.md); the build stops without it.
+- React islands use `client:visible` and sit inside `<div class="not-content">` in MDX. Island CSS goes in `src/styles/components.css` (islands drop CSS imports).
+- There is no Tailwind (decision 0005). Style with tokens in scoped `<style>` blocks or `components.css`; Starlight's own utilities (`sl-flex`, `sr-only`, `print:hidden`) are fine.
+- Don't use `starlight-katex`. Math runs through `remark-math` + `rehype-katex` on Astro's `unified()` processor; Astro 7's default processor breaks `$$` blocks.
+- American English everywhere (decision 0010); `npm run check:content` fails on British spellings in page prose.
+- Big choices get a decision record in `docs/decisions/` before the change.
+
 ## Where things live
 
 | Path | Role |
