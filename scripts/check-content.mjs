@@ -6,17 +6,22 @@
 //   - pages: every topic, reference, <Cite id> and <NotationKey symbols> id they use exists
 //   - SEO: descriptions 120-160 characters; titles, descriptions and primary queries unique (docs/seo/README.md);
 //     searchIntent matches the page type
+// Frontmatter is parsed the way Astro parses it (the `yaml` package, core schema), so `draft: True`, comments,
+// quoting and multi-line values mean the same here as in the build.
 // Required frontmatter on concept pages is enforced during the build by src/routeData.ts.
 import { readdir, readFile } from 'node:fs/promises';
-import { existsSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseDocument } from 'yaml';
 import { TOPICS } from '../src/data/topics.mjs';
 import { NOTATION } from '../src/data/notation.mjs';
 import { REFERENCES } from '../src/data/references.mjs';
 import { SITE_NAME } from '../src/seo/site.mjs';
 
 const DOCS_DIR = fileURLToPath(new URL('../src/content/docs/', import.meta.url));
+const PAGE_EXTENSION = /\.mdx?$/;
+// Astro's own frontmatter pattern (@astrojs/internal-helpers): an optional BOM or leading blank lines, then ---.
+const FRONTMATTER = /^(?:﻿?|\s*\n)---\r?\n([\s\S]*?\r?\n)?---/;
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 // From docs/seo/README.md. Starlight appends " | MathSignal" to every page title.
 const DESCRIPTION_LENGTH = { min: 120, max: 160 };
@@ -36,7 +41,7 @@ function duplicateIds(items, field, name) {
 	});
 }
 
-function topicProblems() {
+function topicProblems(pagesById) {
 	const byId = new Map(TOPICS.map((topic) => [topic.id, topic]));
 	const problems = duplicateIds(TOPICS, 'id', 'topics.mjs');
 	for (const topic of TOPICS) {
@@ -50,7 +55,7 @@ function topicProblems() {
 				problems.push(`topics.mjs: "${topic.id}" leads to "${id}", but "${id}" doesn't list it as a prerequisite`);
 			}
 		}
-		problems.push(...releaseProblems(topic));
+		problems.push(...releaseProblems(topic, pagesById.get(topic.id)));
 	}
 	problems.push(...prerequisiteCycles(byId));
 	return problems;
@@ -61,19 +66,12 @@ function topicProblems() {
  * published: published means the page exists and is not a draft; planned means there is no page yet, or a draft.
  * Pages are merged as drafts and released by flipping both together.
  */
-function releaseProblems(topic) {
-	const file = join(DOCS_DIR, `${topic.id}.mdx`);
-	const exists = existsSync(file);
-	const isDraft = exists && /^draft:\s*true\s*$/m.test(frontmatterOf(readFileSync(file, 'utf8')));
-	if (topic.status === 'published' && !exists) return [`topics.mjs: "${topic.id}" is marked published but src/content/docs/${topic.id}.mdx doesn't exist`];
-	if (topic.status === 'published' && isDraft) return [`topics.mjs: "${topic.id}" is marked published but its page has \`draft: true\`; release both together`];
-	if (topic.status === 'planned' && exists && !isDraft) return [`topics.mjs: "${topic.id}" is still planned but its page is not a draft; set status 'published' or add \`draft: true\``];
+function releaseProblems(topic, page) {
+	const isDraft = page?.data.draft === true;
+	if (topic.status === 'published' && !page) return [`topics.mjs: "${topic.id}" is marked published but no page exists at src/content/docs/${topic.id}.mdx`];
+	if (topic.status === 'published' && isDraft) return [`topics.mjs: "${topic.id}" is marked published but ${page.name} has \`draft: true\`; release both together`];
+	if (topic.status === 'planned' && page && !isDraft) return [`topics.mjs: "${topic.id}" is still planned but ${page.name} is not a draft; set status 'published' or add \`draft: true\``];
 	return [];
-}
-
-/** @param {string} source */
-function frontmatterOf(source) {
-	return source.replace(/\r\n/g, '\n').match(/^---\n([\s\S]*?)\n---/)?.[1] ?? '';
 }
 
 /** Depth-first search for cycles in the prerequisite graph. */
@@ -104,33 +102,43 @@ function referenceProblems() {
 	return problems;
 }
 
-async function mdxFiles(directory) {
+async function pageFiles(directory) {
 	const entries = await readdir(directory, { withFileTypes: true });
 	const files = await Promise.all(
-		entries.map((entry) => (entry.isDirectory() ? mdxFiles(join(directory, entry.name)) : entry.name.endsWith('.mdx') ? [join(directory, entry.name)] : [])),
+		entries.map((entry) => (entry.isDirectory() ? pageFiles(join(directory, entry.name)) : PAGE_EXTENSION.test(entry.name) ? [join(directory, entry.name)] : [])),
 	);
 	return files.flat();
 }
 
-/** Ids used in a page's frontmatter and components, found with simple patterns over the MDX source. */
-function idsUsedIn(source) {
-	const frontmatter = frontmatterOf(source);
-	const topic = frontmatter.match(/^topic:\s*["']?([^"'\n]+)["']?\s*$/m)?.[1];
-	const referenceBlock = frontmatter.match(/^references:\s*\n((?:\s+-\s.*\n?)+)/m)?.[1] ?? '';
-	const frontmatterReferences = [...referenceBlock.matchAll(/-\s*["']?([^"'\n]+?)["']?\s*$/gm)].map((match) => match[1]);
-	const cited = [...source.matchAll(/<Cite\s+id=["']([^"']+)["']/g)].map((match) => match[1]);
-	const symbols = [...source.matchAll(/<NotationKey\s+symbols=\{\[([^\]]*)\]\}/g)].flatMap((match) => [...match[1].matchAll(/["']([^"']+)["']/g)].map((symbol) => symbol[1]));
-	return { topic, frontmatterReferences, cited, symbols };
+/** The route id Starlight gives a file: statistics/clt.mdx and statistics/clt/index.md are both statistics/clt. */
+function routeIdOf(name) {
+	return name.replace(PAGE_EXTENSION, '').replace(/(^|\/)index$/, '');
 }
 
-/** Every MDX page once: its path under src/content/docs, its source with LF line endings, and its frontmatter. */
+/** The frontmatter as Astro reads it, or a parse error to report. */
+function parseFrontmatter(source) {
+	const yamlSource = source.match(FRONTMATTER)?.[1] ?? '';
+	const document = parseDocument(yamlSource, { customTags: ['timestamp'], merge: true, schema: 'core' });
+	if (document.errors.length > 0) return { data: {}, error: document.errors[0].message };
+	const data = document.toJS();
+	return { data: data && typeof data === 'object' ? data : {}, error: null };
+}
+
+/** Every page once: its file path under src/content/docs, its route id, its source and its parsed frontmatter. */
 async function readPages() {
 	return Promise.all(
-		(await mdxFiles(DOCS_DIR)).map(async (file) => {
-			const source = (await readFile(file, 'utf8')).replace(/\r\n/g, '\n');
-			return { name: relative(DOCS_DIR, file).replace(/\\/g, '/'), source, frontmatter: frontmatterOf(source) };
+		(await pageFiles(DOCS_DIR)).map(async (file) => {
+			const source = await readFile(file, 'utf8');
+			const name = relative(DOCS_DIR, file).replace(/\\/g, '/');
+			return { name, id: routeIdOf(name), source, ...parseFrontmatter(source) };
 		}),
 	);
+}
+
+/** A frontmatter field as a list of strings, whatever YAML shape it was written in. */
+function stringList(value) {
+	if (value === undefined || value === null) return [];
+	return (Array.isArray(value) ? value : [value]).map(String);
 }
 
 function pageProblems(pages) {
@@ -138,9 +146,15 @@ function pageProblems(pages) {
 	const referenceIds = new Set(REFERENCES.map((reference) => reference.id));
 	const notationKeys = new Set(NOTATION.map((entry) => entry.key));
 	const problems = [];
-	for (const { name, source } of pages) {
-		const { topic, frontmatterReferences, cited, symbols } = idsUsedIn(source);
-		if (topic && !topicIds.has(topic)) problems.push(`${name}: unknown topic "${topic}"`);
+	for (const { name, source, data, error } of pages) {
+		if (error) {
+			problems.push(`${name}: frontmatter is not valid YAML (${error})`);
+			continue;
+		}
+		const frontmatterReferences = stringList(data.references);
+		const cited = [...source.matchAll(/<Cite\s+id=["']([^"']+)["']/g)].map((match) => match[1]);
+		const symbols = [...source.matchAll(/<NotationKey\s+symbols=\{\[([^\]]*)\]\}/g)].flatMap((match) => [...match[1].matchAll(/["']([^"']+)["']/g)].map((symbol) => symbol[1]));
+		if (data.topic !== undefined && !topicIds.has(String(data.topic))) problems.push(`${name}: unknown topic "${data.topic}"`);
 		for (const id of [...frontmatterReferences, ...cited]) {
 			if (!referenceIds.has(id)) problems.push(`${name}: unknown reference "${id}"`);
 		}
@@ -154,10 +168,9 @@ function pageProblems(pages) {
 	return problems;
 }
 
-/** A single-line frontmatter value, with surrounding quotes removed. */
-function frontmatterValue(frontmatter, field) {
-	const raw = frontmatter.match(new RegExp(`^${field}:[ \t]*(.+?)[ \t]*$`, 'm'))?.[1];
-	return raw?.replace(/^(["'])(.*)\1$/, '$2');
+/** A frontmatter value as trimmed text, or undefined when it is missing or not a string. */
+function text(value) {
+	return typeof value === 'string' && value.trim() !== '' ? value.trim() : undefined;
 }
 
 /**
@@ -168,8 +181,9 @@ function seoProblems(pages) {
 	const problems = [];
 	const warnings = [];
 	const seen = { title: new Map(), description: new Map(), primaryQuery: new Map() };
-	for (const { name, frontmatter } of pages) {
-		const values = Object.fromEntries(Object.keys(seen).map((field) => [field, frontmatterValue(frontmatter, field)]));
+	for (const { name, data, error } of pages) {
+		if (error) continue;
+		const values = Object.fromEntries(Object.keys(seen).map((field) => [field, text(data[field])]));
 		if (!values.description) problems.push(`${name}: needs a description`);
 		else if (values.description.length < DESCRIPTION_LENGTH.min || values.description.length > DESCRIPTION_LENGTH.max) {
 			problems.push(`${name}: description is ${values.description.length} characters; keep it ${DESCRIPTION_LENGTH.min}-${DESCRIPTION_LENGTH.max}`);
@@ -189,19 +203,21 @@ function seoProblems(pages) {
 }
 
 function intentProblems(pages) {
-	return pages.flatMap(({ name, frontmatter }) => {
-		const type = frontmatterValue(frontmatter, 'type');
-		const intent = frontmatterValue(frontmatter, 'searchIntent');
-		if (!type || !intent || INTENT_FOR_TYPE[type] === intent) return [];
+	return pages.flatMap(({ name, data, error }) => {
+		const type = text(data.type);
+		const intent = text(data.searchIntent);
+		if (error || !type || !intent || INTENT_FOR_TYPE[type] === intent) return [];
 		return [`${name}: a type ${type} page has searchIntent "${INTENT_FOR_TYPE[type] ?? '(unknown type)'}", not "${intent}"`];
 	});
 }
 
 async function main() {
 	const pages = await readPages();
+	const pagesById = new Map(pages.map((page) => [page.id, page]));
 	const seo = seoProblems(pages);
 	const problems = [
-		...topicProblems(),
+		...duplicateIds(pages, 'id', 'src/content/docs (two files serve the same route)'),
+		...topicProblems(pagesById),
 		...duplicateIds(NOTATION, 'key', 'notation.mjs'),
 		...referenceProblems(),
 		...pageProblems(pages),

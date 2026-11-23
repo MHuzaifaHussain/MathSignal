@@ -5,7 +5,8 @@ import { docsSchema } from '@astrojs/starlight/schema';
 
 /**
  * Concept-page frontmatter (decisions 0008 and 0009). Optional here because the home and About pages
- * don't use it; `npm run check:content` requires every field on pages inside a subject folder.
+ * don't use it. src/routeData.ts requires every field on pages inside a subject folder during the build;
+ * `npm run check:content` checks the ids they name, the draft/topic status and the type/searchIntent pairing.
  */
 const conceptPageFields = z.object({
 	/** Id in src/data/topics.mjs, e.g. "statistics/normal-distribution". */
