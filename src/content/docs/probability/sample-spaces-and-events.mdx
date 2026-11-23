@@ -1,0 +1,363 @@
+---
+title: "Sample spaces and events"
+description: "Toss two coins on a board, mark every way to get at least one head, and learn the outcomes and events that every probability in ML is built on."
+draft: true
+sidebar:
+  order: 1
+topic: probability/sample-spaces-and-events
+type: A
+objectives:
+  - List the sample space of a simple experiment, keeping outcomes that differ only in order apart.
+  - Tell an outcome from an event, and write an event as a set of outcomes.
+  - Compute a probability by counting, and say when counting is allowed.
+  - Recognize sample spaces and events in classifiers, language models and test-set accuracy.
+takeaways:
+  - A sample space lists every possible outcome of an experiment; exactly one of them happens each time.
+  - An event is a set of outcomes. A single outcome is one point; an event can hold none, some or all of them.
+  - Two coins have four outcomes, HH, HT, TH and TT, so at least one head has probability 3/4, not 2/3.
+  - Counting gives a probability, |A| divided by |Ω|, only when every outcome is equally likely.
+  - On a finite sample space every subset is an event. On infinite ones, probability is defined on a chosen collection of events 𝓕.
+references:
+  - grinstead2003
+  - kolmogorov1950
+  - tao2011
+author: Muhammad Huzaifa Hussain
+reviewedAt: 2026-11-24
+aiAssisted: true
+primaryQuery: sample space and events
+searchIntent: learn
+depthStatus: complete
+---
+
+import Analogy from "../../../components/Analogy.astro";
+import CheckYourself from "../../../components/CheckYourself.astro";
+import Cite from "../../../components/Cite.astro";
+import CommonMistakes from "../../../components/CommonMistakes.astro";
+import ConceptHeader from "../../../components/ConceptHeader.astro";
+import ConceptMap from "../../../components/ConceptMap.astro";
+import FormalDefinition from "../../../components/FormalDefinition.astro";
+import GoDeeper from "../../../components/GoDeeper.astro";
+import Mistake from "../../../components/Mistake.astro";
+import NotationKey from "../../../components/NotationKey.astro";
+import PreciseStatement from "../../../components/PreciseStatement.astro";
+import PyRunner from "../../../components/PyRunner.astro";
+import References from "../../../components/References.astro";
+import ResearchFrontier from "../../../components/ResearchFrontier.astro";
+import SideNote from "../../../components/SideNote.astro";
+import Simpler from "../../../components/Simpler.astro";
+import StepThrough from "../../../components/StepThrough.astro";
+import Takeaways from "../../../components/Takeaways.astro";
+import WhyThisMatters from "../../../components/WhyThisMatters.astro";
+import WorkedExample from "../../../components/WorkedExample.astro";
+import EventSpace from "../../../components/react/EventSpace.tsx";
+
+<ConceptHeader
+  oneLiner="A sample space is the set of every possible outcome of a random experiment, and an event is any group of those outcomes."
+  difficulty="beginner"
+/>
+
+## In everyday terms
+
+<Analogy breaks="Cards in a pile look equally likely, but outcomes don't have to be: a loaded die still has six outcomes, they just aren't equally likely, and then counting cards gives the wrong answer. And for a measurement such as a height there are far too many outcomes to write on cards, which is where the precise statement further down takes over.">
+
+Before you toss a coin, take a pile of blank cards and write one possible result on each: one card says "heads", one says "tails". The pile is the sample space: everything that could happen. When you toss, exactly one card comes true. Each card is an outcome.
+
+Now ask a question about the toss, such as "did it land heads?". The answer picks out some of the cards, here just one. That group of cards is an event. A question like "did it land heads or tails?" picks out the whole pile, and "did it land on its edge?", if you left that card out, picks out none.
+
+Toss two coins, a penny and a dime, and the pile needs more care. "Penny heads, dime tails" and "penny tails, dime heads" are different cards, because you can tell the coins apart. Write them as one card and the pile no longer matches the world: "one of each" can happen in two ways, while "both heads" can happen in only one. A good pile has one card for each distinct way the experiment can turn out.
+
+</Analogy>
+
+<WhyThisMatters>
+Every probability a model reports is a probability of some event in some sample space. A classifier spreads its probability over a fixed set of labels, and a language model spreads it over its whole vocabulary of tokens. Test accuracy is how often the event "the prediction is right" happens. When a number like 0.9 comes out of a model, the first thing to ask is: 0.9 of what? The sample space and the event are the answer, and getting them wrong, for example by merging outcomes that should stay separate, gives confident numbers that are simply wrong.
+</WhyThisMatters>
+
+## Count the ways two coins can land
+
+Before you touch anything: toss two coins. What is the chance of at least one head: 1/2, 2/3 or 3/4? Pick one, then test it.
+
+<GoDeeper label="a second question before you start">
+
+How many different ways can two coins land, and are they all equally likely? Write the list down before you look at the board. Then check whether your list and your answer above agree with each other.
+
+</GoDeeper>
+
+The board shows every way two coins can land, one square per outcome, with the first coin down the side and the second across the top. Tap a square to put it in event A and tap it again to take it out; from the keyboard, the arrow keys move between squares and Space toggles one. As a goal, tap every square where at least one coin shows heads, then press Check. Check tells you what is missing or extra, and after two wrong tries a Show the answer button appears.
+
+<div class="not-content">
+  <EventSpace client:visible setup="coins-build" />
+</div>
+
+The answer is 3/4. The two coins can land in four ways, HH, HT, TH and TT, and three of them have at least one head. HT and TH are different outcomes: in HT the first coin shows heads, in TH the second one does. Fair coins make all four equally likely, so the event "at least one head" holds 3 of 4 equally likely outcomes.
+
+Once Check passes, the rest of the board unlocks. Switch "Show as" to Pictures to see the coins drawn as faces, or to Sets for the same answer as sets. Turn on "Treat HT and TH as the same outcome" to see where 2/3 comes from: with three tiles, HH, one of each and TT, two of the three contain a head. That model would be right only if the three tiles were equally likely, and they aren't. Press Toss 100 a few times: the tile "one of each" collects about half of the tosses, not a third, and at least one head comes up close to three quarters of the time.
+
+## What is a sample space?
+
+A sample space is the list of every possible outcome of an experiment, written so that exactly one outcome happens each time it runs. For one coin it is heads and tails. For one die it is the six faces. For two coins it is the four ordered results HH, HT, TH and TT. For a measurement such as a height it is a whole range of numbers, which is where densities like the [normal distribution](/statistics/normal-distribution/) come in.
+
+Two rules make a list a sample space. The outcomes must not overlap, so no single toss can count as two of them, and they must cover everything, so every toss counts as one of them. "Heads" and "at least one head" can't both be outcomes of the same list, because one includes the other.
+
+There is no single correct sample space for an experiment <Cite id="grinstead2003" />. For two coins you could also record only the number of heads, 0, 1 or 2. That is a legitimate sample space, but its three outcomes are not equally likely, so you can't find probabilities in it by counting.
+
+<SideNote>
+This mistake has a long history. Grinstead and Snell note that d'Alembert, in the eighteenth century, gave 0, 1 and 2 heads in two tosses equal probabilities, while Cardano, two centuries earlier, had already counted two dice as 36 ordered pairs <Cite id="grinstead2003" />.
+</SideNote>
+
+### Outcomes and events
+
+An outcome is one single result; an event is a group of outcomes, chosen because it answers a question. "At least one head" is the event made of HH, HT and TH. An event happens when the outcome that actually turns up is one of its members.
+
+The smallest events are the empty event, which holds no outcomes and never happens, and the single outcomes on their own. The largest is the whole sample space, which always happens. With four outcomes there are 16 possible events, from the empty one to all four.
+
+<Simpler label="the same idea with one die">
+
+Roll one die. The sample space is the six faces, 1 to 6. "The die shows 4" is an event with one outcome in it. "The die shows an even number" is an event with three: 2, 4 and 6. "The die shows 7" is an event too, the empty one, because no face shows 7. Each event is a question you could ask about the roll, written as the faces that answer yes.
+
+</Simpler>
+
+### Combining events: not, and, or
+
+Events combine the way questions do, and each combination is again an event. "Not A" holds the outcomes outside A. "A and B" holds the outcomes in both. "A or B" holds the outcomes in either one, or in both. For two coins, the opposite of "at least one head" is "no heads", the single outcome TT. The rules that probabilities of these combined events must follow are the subject of the next page, [probability axioms](/probability/probability-axioms/).
+
+### Counting works only when outcomes are equally likely
+
+When every outcome in the sample space is equally likely, the probability of an event is the number of its outcomes divided by the number of outcomes in the sample space. That is how 3 of 4 became 3/4 above. The rule depends on the condition: squares of the same size on a board, or cards of the same size in a pile, don't make outcomes equally likely. Only the experiment does.
+
+Is a sum of 7 as likely as a sum of 2, when you roll two dice? Guess first. The board below lists all 36 ordered results, first die down the side and second die across the top. Tap squares to build event A, or press the presets "Sum is 7" and "Sum is 2", and read the count under the table.
+
+<div class="not-content">
+  <EventSpace client:visible setup="dice-count" />
+</div>
+
+No. A sum of 7 happens in 6 of the 36 outcomes, (1,6), (2,5), (3,4), (4,3), (5,2) and (6,1), so its probability is 6/36 = 1/6. A sum of 2 happens only as (1,1): 1/36. Each outcome is equally likely with fair dice, but the sums are not, because they hold different numbers of outcomes.
+
+<GoDeeper label="when the outcomes are not equally likely">
+
+A loaded die still has the sample space 1 to 6, but now each face gets its own weight, a number from 0 to 1, and the six weights add up to 1. The probability of an event is the sum of the weights of its outcomes. Counting is the special case where every weight is the same, 1/6 here. The general rules for weights are the probability axioms on the next page.
+
+</GoDeeper>
+
+## Notation
+
+<NotationKey symbols={["sample-space", "outcome", "event", "complement", "intersection", "union", "empty-set", "probability", "cardinality", "event-collection"]} />
+
+<PreciseStatement>
+
+Let $\Omega$ be a finite, nonempty set, the sample space; each $\omega \in \Omega$ is an outcome, and exactly one outcome occurs. On a finite sample space every subset $A \subseteq \Omega$ is an event, so the collection of events is $\mathcal{F} = \{A : A \subseteq \Omega\}$, all subsets of $\Omega$. Events combine by $A^\complement = \Omega \setminus A$, $A \cap B$ and $A \cup B$, and each result is again an event.
+
+When every outcome is equally likely, and only then, the probability of every event $A$ is
+
+$$
+P(A) = \frac{|A|}{|\Omega|}.
+$$
+
+Boundary cases: the empty set $\emptyset$ and the whole space $\Omega$ are both events, with $P(\emptyset) = 0$ and $P(\Omega) = 1$. An empty sample space is excluded, since some outcome must occur and $|\Omega|$ would be 0. On an infinite sample space $\mathcal{F}$ cannot always be all subsets; see the fold below.
+
+</PreciseStatement>
+
+<GoDeeper label="why infinite sample spaces need a collection of events">
+
+Pick a point uniformly at random from $[0, 1]$. The natural probability of an interval is its length, and lengths should add up over countably many disjoint pieces and not change when a set is shifted. Using the axiom of choice, one can build a subset of $[0, 1]$ to which no such length can be given: assigning it any value contradicts countable additivity and shift invariance together <Cite id="tao2011" />. So on infinite spaces, probabilities are assigned only to the sets in a chosen collection $\mathcal{F}$, which contains $\Omega$ and is closed under complements and countable unions. This is the shape of Kolmogorov's axiomatic framework: outcomes, a collection of events, and a probability on those events <Cite id="kolmogorov1950" />. On a finite space none of this bites, and $\mathcal{F}$ is simply every subset.
+
+</GoDeeper>
+
+<FormalDefinition>
+
+**Product spaces.** Two experiments run one after the other have the sample space $\Omega_1 \times \Omega_2$, the set of ordered pairs $(\omega_1, \omega_2)$. Two coins give $\{H, T\} \times \{H, T\} = \{HH, HT, TH, TT\}$.
+
+<StepThrough title="Why two coins have four outcomes: |Ω₁ × Ω₂| = |Ω₁| |Ω₂|" rigor="full">
+
+1. Split $\Omega_1 \times \Omega_2$ by the first coordinate: for each $\omega_1 \in \Omega_1$, the pairs that start with it are $\{\omega_1\} \times \Omega_2$.
+2. Each of these pieces has exactly $|\Omega_2|$ members, one for each choice of second coordinate.
+3. The pieces don't overlap, because a pair has only one first coordinate, and together they cover every pair.
+4. So $|\Omega_1 \times \Omega_2| = \sum_{\omega_1 \in \Omega_1} |\Omega_2| = |\Omega_1|\,|\Omega_2|$. For two coins, $2 \times 2 = 4$; for two dice, $6 \times 6 = 36$.
+5. The pairs are ordered because $(H, T)$ and $(T, H)$ describe different tosses: which coin showed heads differs. Unordered, the two would merge into one item that can happen in two ways, and the remaining items would no longer be equally likely.
+
+</StepThrough>
+
+<StepThrough title="A sample space with n outcomes has 2ⁿ events" rigor="full">
+
+1. An event is fixed by answering, for each outcome, one yes-or-no question: is it in the event?
+2. With $|\Omega| = n$ outcomes there are $n$ independent yes-or-no choices, so by the product rule above there are $2 \times 2 \times \dots \times 2 = 2^n$ ways to answer them.
+3. Different answers give different events, and every event arises this way, so there are exactly $2^n$ events. The all-no answer is $\emptyset$ and the all-yes answer is $\Omega$, so both are counted.
+
+</StepThrough>
+
+**The complement rule for counts.** Every outcome is in $A$ or in $A^\complement$, never both, so $|A^\complement| = |\Omega| - |A|$. With equally likely outcomes this gives $P(A^\complement) = 1 - P(A)$.
+
+| Experiment | Outcomes $\lvert\Omega\rvert$ | Events $2^{\lvert\Omega\rvert}$ |
+| --- | --- | --- |
+| One coin | 2 | 4 |
+| Two coins | 4 | 16 |
+| One die | 6 | 64 |
+| Two dice | 36 | $2^{36} = 68{,}719{,}476{,}736$ |
+| $n$ coins | $2^n$ | $2^{2^n}$ |
+
+</FormalDefinition>
+
+## Worked examples
+
+<WorkedExample number={1} title="An even number on one die">
+
+$\Omega = \{1, 2, 3, 4, 5, 6\}$ and the event is $A = \{2, 4, 6\}$. A fair die makes the six faces equally likely, so $P(A) = |A|/|\Omega| = 3/6 = 1/2$.
+
+</WorkedExample>
+
+<WorkedExample number={2} title="The first die beats the second">
+
+Roll two dice and let $A$ be the event that the first die shows more than the second. The 36 ordered pairs split into 6 doubles and 30 pairs with different faces. By symmetry, half of those 30 have the first die larger, so $|A| = 15$ and $P(A) = 15/36 = 5/12$. Note that this needs ordered pairs: $(5, 2)$ is in $A$ and $(2, 5)$ is not.
+
+</WorkedExample>
+
+<WorkedExample number={3} title="Three coins, at least one head" faded>
+
+Toss three fair coins. How many outcomes are there, and what is the probability of at least one head? Hint: count the complement.
+
+<div slot="solution">
+
+$|\Omega| = 2^3 = 8$ ordered results, from HHH to TTT. The complement of "at least one head" is "no heads", which is only $\{TTT\}$, so $|A| = 8 - 1 = 7$ and $P(A) = 7/8$. Listing the seven outcomes directly gives the same answer, but the complement needs one outcome instead of seven.
+
+</div>
+
+</WorkedExample>
+
+## Outcomes and events in machine learning
+
+### A classifier's labels
+
+A classifier that sorts images into cat, dog and bird works on the sample space $\Omega = \{\text{cat}, \text{dog}, \text{bird}\}$. Its softmax output gives a probability to each outcome, for example $0.7$, $0.2$ and $0.1$. These are not equally likely, so counting doesn't apply: the probability of an event is the sum of its outcomes' probabilities. The event "a four-legged animal" is $\{\text{cat}, \text{dog}\}$, with probability $0.7 + 0.2 = 0.9$. Choosing the label set is choosing the sample space; an image of a horse has no outcome to land on, and the model must still spread all of its probability over the three labels.
+
+### Next-token prediction
+
+A language model predicts the next token from a vocabulary $V$, which is its sample space: one outcome per token, often tens of thousands of them. Its output is a probability for every $\omega \in V$. Sampling methods work with events. Top-$k$ sampling keeps the event made of the $k$ most likely tokens, divides their probabilities by the probability of that event so they add up to 1 again, and samples from it. Every token outside the event gets probability 0.
+
+### Test-set accuracy
+
+Accuracy is the share of test examples on which the event "prediction equals label" happened. If a model gets 912 of 1,000 test examples right, its accuracy is $912/1000 = 0.912$. Like the Toss 100 tallies on the board, this is a frequency from a sample, an estimate of the probability of that event on new data, not the probability itself. It is a good estimate only when the test set is drawn the same way as the data the model will meet.
+
+## Count outcomes in code
+
+This runs in your browser, builds the sample spaces from this page with `itertools.product`, and stops with an error if a result is off:
+
+<PyRunner
+  title="sample_space.py"
+  code={`
+import random
+from fractions import Fraction
+from itertools import product
+
+
+def probability(event, space):
+    """P(A) = |A| / |Omega|, valid only when every outcome is equally likely."""
+    return Fraction(len(event), len(space))
+
+
+# Two coins: ordered pairs, so HT and TH are different outcomes.
+coins = ["".join(pair) for pair in product("HT", repeat=2)]
+at_least_one_head = [outcome for outcome in coins if "H" in outcome]
+print("two coins:", coins)
+assert coins == ["HH", "HT", "TH", "TT"]
+assert probability(at_least_one_head, coins) == Fraction(3, 4)
+
+# The wrong model merges HT and TH into one tile and treats the 3 tiles as equally likely.
+tiles = ["HH", "one of each", "TT"]
+wrong_answer = probability([tile for tile in tiles if tile != "TT"], tiles)
+print("wrong model says", wrong_answer, "but the truth is", probability(at_least_one_head, coins))
+assert wrong_answer == Fraction(2, 3)
+assert wrong_answer != Fraction(3, 4)
+
+# Two dice: 36 ordered pairs.
+dice = list(product(range(1, 7), repeat=2))
+sum_is_7 = [roll for roll in dice if sum(roll) == 7]
+sum_is_2 = [roll for roll in dice if sum(roll) == 2]
+first_beats_second = [roll for roll in dice if roll[0] > roll[1]]
+assert len(dice) == 36
+assert probability(sum_is_7, dice) == Fraction(6, 36) == Fraction(1, 6)
+assert probability(sum_is_2, dice) == Fraction(1, 36)
+assert probability(first_beats_second, dice) == Fraction(15, 36) == Fraction(5, 12)
+print("sum is 7:", probability(sum_is_7, dice), " sum is 2:", probability(sum_is_2, dice))
+
+# One die and three coins (worked examples 1 and 3).
+die = list(range(1, 7))
+assert probability([face for face in die if face % 2 == 0], die) == Fraction(1, 2)
+three_coins = list(product("HT", repeat=3))
+no_heads = [outcome for outcome in three_coins if "H" not in outcome]
+assert len(three_coins) == 8 and len(no_heads) == 1
+assert 1 - probability(no_heads, three_coins) == Fraction(7, 8)
+
+# A space with n outcomes has 2**n events (the properties table).
+assert sum(1 for _ in product([False, True], repeat=len(coins))) == 16
+assert [2**n for n in (2, 4, 6, 36)] == [4, 16, 64, 68_719_476_736]
+
+# Simulate: the share of tosses with at least one head settles near 3/4, not 2/3.
+rng = random.Random(0)
+tosses = 100_000
+results = [rng.choice("HT") + rng.choice("HT") for _ in range(tosses)]
+share_head = sum("H" in result for result in results) / tosses
+share_mixed = sum(result in ("HT", "TH") for result in results) / tosses
+print(f"at least one head in {share_head:.3f} of {tosses} tosses; one of each in {share_mixed:.3f}")
+assert abs(share_head - 0.75) < 0.01
+assert abs(share_mixed - 0.5) < 0.01
+assert abs(share_head - 2 / 3) > 0.05
+`}
+/>
+
+The simulation's share is within 0.01 of 0.75 and the share of "one of each" is within 0.01 of 0.5, so the tosses side with four equally likely outcomes, not three.
+
+## Research frontier
+
+<ResearchFrontier reviewed="2026-11-24">
+
+**Why probability is defined on a collection of events.** Kolmogorov built probability on a set of outcomes, a collection of events and a probability on those events, and this framework is the standard one <Cite id="kolmogorov1950" />. The reason for the middle piece is a settled result: with the axiom of choice there are subsets of $[0, 1]$ that no length, and so no uniform probability, can measure while staying countably additive and unchanged by shifts <Cite id="tao2011" />. Tao also notes that without the axiom of choice there are models of set theory in which every subset of the line is measurable <Cite id="tao2011" />, so the obstacle comes from that axiom, not from probability itself.
+
+**What is settled for this page.** Nothing here is an open problem. For finite sample spaces, every subset is an event and the theory is complete; the subtleties begin only with infinite spaces, and the standard framework above handles the cases machine learning uses.
+
+</ResearchFrontier>
+
+## Check yourself
+
+<CheckYourself level="intuition" question="You toss a coin and roll a die together. How many outcomes does the sample space have?">
+12. Each of the 2 coin faces pairs with each of the 6 die faces, and every pair is a different way the two can land, so there are $2 \times 6 = 12$ ordered outcomes.
+</CheckYourself>
+
+<CheckYourself level="standard" question="Someone lists the results of rolling two dice as 21 unordered pairs, such as {1, 2} and {1, 1}, and counts. Why do they get wrong probabilities?">
+The 21 unordered pairs are not equally likely. The pair $\{1, 2\}$ covers two ordered outcomes, $(1, 2)$ and $(2, 1)$, while $\{1, 1\}$ covers only one. Counting treats them all as the same size, so it gives doubles too much probability: $1/21$ each instead of $1/36$.
+</CheckYourself>
+
+<CheckYourself level="standard" question="Is sum is 7 an outcome or an event when you roll two dice?">
+An event. It is the set of 6 outcomes $\{(1,6), (2,5), (3,4), (4,3), (5,2), (6,1)\}$. An outcome is one ordered pair, such as $(3, 4)$, and it is also the one-outcome event $\{(3, 4)\}$ when you treat it as a question.
+</CheckYourself>
+
+<CheckYourself level="proof" question="On a finite sample space with equally likely outcomes, show that P(A ∪ B) ≤ P(A) + P(B) for any events A and B.">
+Every outcome in $A \cup B$ is in $A$ or in $B$, so it is counted at least once in $|A| + |B|$; outcomes in both are counted twice. So $|A \cup B| \le |A| + |B|$. Dividing by $|\Omega| > 0$ gives $P(A \cup B) \le P(A) + P(B)$, with equality exactly when $A \cap B = \emptyset$.
+</CheckYourself>
+
+## Common mistakes
+
+<CommonMistakes>
+  <Mistake wrong="Two coins can land in three ways: two heads, two tails, or one of each, so at least one head has probability 2/3.">
+    There are four equally likely outcomes, HH, HT, TH and TT, because the first coin showing heads and the second showing heads are different results. At least one head is $3/4$. The three-way list is a valid sample space, but its outcomes are not equally likely: one of each has probability $1/2$. Try the switch and Toss 100 on the board above.
+  </Mistake>
+  <Mistake wrong="An outcome and an event are the same thing.">
+    An outcome is one result, such as HT. An event is a set of outcomes, such as $\{HH, HT, TH\}$, and can hold none, one or many. A single outcome becomes the event $\{HT\}$ only when you ask about it.
+  </Mistake>
+  <Mistake wrong="Equally sized squares mean equally likely outcomes.">
+    The board draws every outcome the same size, but that is a picture, not a fact about the experiment. $P(A) = |A|/|\Omega|$ holds only when the outcomes really are equally likely, as with fair coins and dice. For a loaded die or a classifier's labels, add up the outcomes' probabilities instead.
+  </Mistake>
+  <Mistake wrong="The empty set is not a real event, because nothing is in it.">
+    $\emptyset$ is a well-defined event: the event that can't happen, such as a die showing 7. It always has probability 0. It is needed so that events stay closed under not, and, or: two events with no outcome in common have $A \cap B = \emptyset$.
+  </Mistake>
+</CommonMistakes>
+
+## Key takeaways
+
+<Takeaways />
+
+## How this connects
+
+<ConceptMap />
+
+## References
+
+<References />
