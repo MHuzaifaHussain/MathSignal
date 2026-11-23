@@ -1,35 +1,30 @@
 ---
 title: "Interactive math for AI and ML"
-description: "Interactive statistics, probability, and mathematics for AI/ML practitioners. From intuition to implementation."
-template: splash
-hero:
-  tagline: "The maths behind machine learning, from intuition to implementation. Read it, drag it, run it."
-  actions:
-    - text: Start with the normal distribution
-      link: /statistics/normal-distribution/
-    - text: View on GitHub
-      link: https://github.com/mhuzaifahussain/mathsignal
-      variant: minimal
+description: "Learn the statistics, probability and linear algebra behind machine learning by dragging live plots, reading worked examples and running Python in your browser."
+tableOfContents: false
+head:
+  - tag: meta
+    attrs:
+      property: og:type
+      content: website
 ---
 
 import NormalDistribution from '../../components/react/NormalDistribution.tsx';
 import Var from '../../components/Var.astro';
 
-## Try it
-
-Every bell curve has a centre and a spread. Drag the pink point to move the mean <Var name="mu" />, and the blue point to change the spread <Var name="sigma" />.
+MathSignal explains the maths behind machine learning from the first intuition to the research papers, with plots you can move and code you can run. Try one: drag the pink point to move the mean <Var name="mu" />, and the blue point to change the spread <Var name="sigma" />.
 
 <div class="not-content">
   <NormalDistribution client:visible />
 </div>
 
+[Start with the normal distribution](/statistics/normal-distribution/), the bell curve behind weight initialisation, batch norm and diffusion models.
+
 ## How each page works
 
-Every concept follows the same path: why it matters in machine learning, an interactive board to build intuition, the explanation, the formal definition, real ML applications, code you can run in the browser, and the mistakes people commonly make.
+Every topic starts with an everyday picture anyone can follow, then a plot to experiment with, the explanation, the exact notation and definitions, worked examples, where it shows up in machine learning, code you can run, questions to check yourself, the mistakes people make and the papers to read next. Read as far as you need: the early sections assume nothing, the later ones are precise.
 
 ## Subjects
 
-- **[Statistics](/statistics/normal-distribution/)**: distributions, estimation, hypothesis testing and regression. The foundation for reasoning from data.
-- **Probability** (coming soon): Bayes' theorem, conditional probability, random variables. The language of uncertainty.
-- **Linear algebra** (coming soon): vectors, matrices, eigenvalues, SVD. The computational backbone of ML.
-- **Machine learning** (coming soon): gradient descent, loss functions, backpropagation. Where the maths meets the model.
+- **[Statistics](/statistics/normal-distribution/)**: distributions, estimation, hypothesis testing and regression.
+- Coming next: **probability**, **linear algebra** and **machine learning**.
