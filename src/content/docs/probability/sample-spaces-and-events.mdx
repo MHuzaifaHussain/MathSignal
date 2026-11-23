@@ -22,6 +22,7 @@ references:
   - kolmogorov1950
   - tao2011
   - goodfellow2016
+  - cao2021
 author: Muhammad Huzaifa Hussain
 reviewedAt: 2026-11-24
 aiAssisted: true
@@ -63,14 +64,14 @@ import EventSpace from "../../../components/react/EventSpace.tsx";
 
 Before you toss a coin, take a pile of blank cards and write one possible result on each: one card says "heads", one says "tails". The pile is the sample space: everything that could happen. When you toss, exactly one card comes true. Each card is an outcome.
 
-Now ask a question about the toss, such as "did it land heads?". The answer picks out some of the cards, here just one. That group of cards is an event. A question like "did it land heads or tails?" picks out the whole pile, and "did it land on its edge?", if you left that card out, picks out none.
+Now ask a question about the toss, such as "did it land heads?". The answer picks out some of the cards, here just one. That group of cards is an event. A question like "did it land heads or tails?" picks out the whole pile, and "did it land on its edge?", if you left that card out, picks out none. Which cards to write is a modeling choice: leaving out the edge assumes it never happens.
 
-Toss two coins, a penny and a dime, and the pile needs more care. "Penny heads, dime tails" and "penny tails, dime heads" are different cards, because you can tell the coins apart. Write them as one card and the pile no longer matches the world: "one of each" can happen in two ways, while "both heads" can happen in only one. A good pile has one card for each distinct way the experiment can turn out.
+Toss two coins, a penny and a dime, and the pile needs more care. "Penny heads, dime tails" and "penny tails, dime heads" are different cards, because you can tell the coins apart. Write them as one card and you still have a valid pile, but its cards are no longer equally likely: "one of each" can happen in two ways, while "both heads" can happen in only one, so counting cards gives the wrong answer. A pile you can count has one card for each distinct way the experiment can turn out.
 
 </Analogy>
 
 <WhyThisMatters>
-Every probability a model reports is a probability of some event in some sample space. A classifier spreads its probability over a fixed set of labels, and a language model spreads it over its whole vocabulary of tokens. Test accuracy is how often the event "the prediction is right" happens. So when a model reports 0.9, ask which sample space and which event the 0.9 belongs to. Get those wrong, for example by merging outcomes that should stay separate, and the resulting numbers will look precise while being wrong.
+Every probability a model reports is a probability of some event in some sample space. A classifier spreads its probability over a fixed set of labels, and a language model spreads it over its whole vocabulary of tokens. Test accuracy is how often the event "the prediction is right" happens. So when a model reports 0.9, ask which sample space and which event the 0.9 belongs to. Get those wrong, for example by merging outcomes and then counting them as if they were equally likely, and the resulting numbers will look precise while being wrong.
 </WhyThisMatters>
 
 ## Count the ways two coins can land
@@ -91,7 +92,7 @@ The board shows every way two coins can land, one square per outcome, with the f
 
 The answer is 3/4. The two coins can land in four ways, HH, HT, TH and TT, and three of them have at least one head. HT and TH are different outcomes: in HT the first coin shows heads, in TH the second one does. Fair coins make all four equally likely, so the event "at least one head" holds 3 of 4 equally likely outcomes.
 
-Once Check passes, the presets, tosses and switch unlock. Switch "Show as" to Pictures to see the coins drawn as faces, or to Sets for the same answer as sets. Turn on "Treat HT and TH as the same outcome" to see where 2/3 comes from: with three tiles, HH, one of each and TT, two of the three contain a head. That model would be right only if the three tiles were equally likely, and they aren't. Press Toss 100 a few times: the tile "one of each" collects about half of the tosses, not a third, and at least one head comes up close to three quarters of the time.
+Once Check passes, the presets, tosses and switch unlock. Switch "Show as" to Pictures to see the coins drawn as faces, or to Sets for the same answer as sets. The Sets view writes the list of all outcomes as Ω and the chance of event A as P(A); the Notation section below explains both. Turn on "Treat HT and TH as the same outcome" to see where 2/3 comes from: with three tiles, HH, one of each and TT, two of the three contain a head. That model would be right only if the three tiles were equally likely, and they aren't. Press Toss 100 a few times: the tile "one of each" collects about half of the tosses, not a third, and at least one head comes up close to three quarters of the time.
 
 ## What is a sample space?
 
@@ -145,7 +146,9 @@ A loaded die still has the sample space 1 to 6, but now each face gets its own w
 
 <PreciseStatement>
 
-Let $\Omega$ be a finite, nonempty set, the sample space; each $\omega \in \Omega$ is an outcome, and exactly one outcome occurs. On a finite sample space we can, and usually do, take every subset $A \subseteq \Omega$ as an event, so the collection of events is $\mathcal{F} = 2^\Omega$, all subsets of $\Omega$. This is a convention: a smaller collection also works if it contains $\Omega$ and is closed under the operations below. Events combine by $A^\complement = \Omega \setminus A$, $A \cap B$ and $A \cup B$, and each result is again an event.
+In plain words: list every outcome once, call any group of outcomes an event, and when the outcomes are equally likely, find a probability by counting.
+
+Let $\Omega$ be a finite, nonempty set, the sample space; each $\omega \in \Omega$, read "$\omega$ is in $\Omega$", is an outcome, and exactly one outcome occurs. On a finite sample space we can, and usually do, take every subset $A \subseteq \Omega$ as an event, so the collection of events is $\mathcal{F} = 2^\Omega$, all subsets of $\Omega$. This is a convention: a smaller collection also works if it contains $\Omega$ and is closed under the operations below, meaning that applying them to events always gives another event. Events combine by $A^\complement = \Omega \setminus A$, the outcomes of $\Omega$ that are not in $A$, by $A \cap B$ and by $A \cup B$, and each result is again an event.
 
 When every outcome is equally likely, and only then, the probability of every event $A$ is
 
@@ -153,7 +156,7 @@ $$
 P(A) = \frac{|A|}{|\Omega|}.
 $$
 
-Boundary cases: the empty set $\emptyset$ and the whole space $\Omega$ are both events, with $P(\emptyset) = 0$ and $P(\Omega) = 1$. An empty sample space is excluded, since some outcome must occur and $|\Omega|$ would be 0. On finite and countable sample spaces every subset can be an event <Cite id="grinstead2003" />. On an uncountable sample space, such as $[0, 1)$, $\mathcal{F}$ cannot always be all subsets; see the fold below.
+Boundary cases: the empty set $\emptyset$ and the whole space $\Omega$ are both events, with $P(\emptyset) = 0$ and $P(\Omega) = 1$. An empty sample space is excluded, since some outcome must occur and $|\Omega|$ would be 0. On finite and countable sample spaces every subset can be an event <Cite id="grinstead2003" />. On an uncountable sample space, such as $[0, 1)$, $\mathcal{F}$ cannot always be all subsets; see the fold below. The general definition, with a σ-algebra of events and countable additivity, is on the [probability axioms](/probability/probability-axioms/) page.
 
 </PreciseStatement>
 
@@ -321,7 +324,7 @@ The simulation's share is within 0.01 of 0.75 and the share of "one of each" is 
 
 **Why probability is defined on a collection of events.** Kolmogorov built probability on a set of outcomes, a collection of events and a probability on those events <Cite id="kolmogorov1950" />, and this framework is the standard one. The middle piece is there because of [non-measurable sets](#non-measurable-sets), a settled result.
 
-**Nothing open here.** For finite sample spaces we can take every subset as an event and nothing goes wrong; the subtleties begin only with uncountable spaces, such as a point picked from $[0, 1]$, and Kolmogorov's framework above is the standard way to handle them.
+**Tokenization is a choice of sample space.** A language model's outcomes are token sequences, and one string can be split into tokens in many ways. So the probability of a string is the probability of an event, the set of all token sequences that spell it, and not of a single outcome. Models are usually scored on one canonical tokenization instead. Cao and Rimell argue for scoring the whole event; summing over every tokenization exactly is intractable, because their number grows exponentially with the length of the text, so they estimate the sum by sampling and find that the two scores can differ markedly, especially on text unlike the training data <Cite id="cao2021" />. Which of the two numbers evaluations should report is the question they leave open.
 
 </ResearchFrontier>
 
@@ -335,8 +338,8 @@ The simulation's share is within 0.01 of 0.75 and the share of "one of each" is 
 The 21 unordered pairs are not equally likely. The pair $\{1, 2\}$ covers two ordered outcomes, $(1, 2)$ and $(2, 1)$, while $\{1, 1\}$ covers only one. Counting treats them all as the same size, so it gives doubles too much probability: $1/21$ each instead of $1/36$.
 </CheckYourself>
 
-<CheckYourself level="standard" question="Is sum is 7 an outcome or an event when you roll two dice?">
-An event. It is the set of 6 outcomes $\{(1,6), (2,5), (3,4), (4,3), (5,2), (6,1)\}$. An outcome is one ordered pair, such as $(3, 4)$, and it is also the one-outcome event $\{(3, 4)\}$ when you treat it as a question.
+<CheckYourself level="standard" question="You roll two dice, with the 36 ordered pairs as the sample space. Is sum is 7 an outcome or an event?">
+An event. It is the set of 6 outcomes $\{(1,6), (2,5), (3,4), (4,3), (5,2), (6,1)\}$. An outcome is one ordered pair, such as $(3, 4)$, and it is also the one-outcome event $\{(3, 4)\}$ when you treat it as a question. If you recorded only the sum, from 2 to 12, then "the sum is 7" would be an outcome of that smaller sample space.
 </CheckYourself>
 
 <CheckYourself level="proof" question="On a finite sample space with equally likely outcomes, show that P(A ∪ B) ≤ P(A) + P(B) for any events A and B.">

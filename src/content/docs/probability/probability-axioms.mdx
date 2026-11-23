@@ -22,6 +22,7 @@ references:
   - grinstead2003
   - goodfellow2016
   - szegedy2015
+  - du2022
 author: Muhammad Huzaifa Hussain
 reviewedAt: 2026-11-24
 aiAssisted: true
@@ -59,18 +60,18 @@ import EventSpace from "../../../components/react/EventSpace.tsx";
 
 ## In everyday terms
 
-<Analogy breaks="Pouring is a choice, but a real die's probabilities come from the die, not from how you like to pour. The picture shows the rules any probability must follow; it won't tell you the right pour for a given die. And the cups can't picture a measurement such as a height, where every exact value has probability 0 and only ranges of values, such as 170 to 171 cm, get a positive share.">
+<Analogy breaks="The rules say which pours are allowed, not which pour matches a given die. That comes from the die itself, or from watching it roll. And the cups can't picture a measurement such as a height, where every exact value has probability 0 and only ranges of values, such as 170 to 171 cm, get a positive share.">
 
-Think of everything you believe about one roll of a die as a single jug of water, and set out six cups, one for each face. Pour the whole jug into the cups, as much into each as you think that face deserves. Only three rules matter. No cup can hold less than nothing. All the water ends up in the cups, so together they hold exactly one jug. And the water for a question such as "is it even?" is the water in cups 2, 4 and 6 added up, because no drop sits in two cups at once.
+Think of all the chance in one roll of a die as a single jug of water, and set out six cups, one for each face. Pour the whole jug into the cups, giving each cup a share that matches how the die behaves. Only three rules matter. No cup can hold less than nothing. All the water ends up in the cups, so together they hold exactly one jug. And the water for a question such as "is it even?" is the water in cups 2, 4 and 6 added up, because no drop sits in two cups at once.
 
-A fair die gets the same amount in every cup. A die loaded toward six gets most of the jug in cup 6.
+A fair die gets the same share in every cup. A die loaded toward six gets most of the jug in cup 6.
 
 The jug has a blind spot. Each drop sits in one cup, but questions overlap: "even" and "at most 2" both care about cup 2. So put labels on the cups as well: "even" on cups 2, 4 and 6, "at most 2" on cups 1 and 2. The water for a question is the water in the cups that carry its label. Cup 2 carries both labels, so if you add the water for "even" to the water for "at most 2", cup 2 is counted twice, and you have to take it off once.
 
 </Analogy>
 
 <WhyThisMatters>
-A classifier's output is a probability only if it follows these three rules: no negative numbers, a total of 1 over the labels, and probabilities of separate labels that add. Softmax produces numbers that follow them, and cross-entropy training depends on that. When a model's numbers break one of the rules, for example one sigmoid per label giving outputs that add up to more than 1, they can still be useful, but they are not a distribution over the labels, and reading them as one gives wrong answers.
+A classifier's output is a probability only if it follows these three rules: no negative numbers, a total of 1 over the labels, and probabilities of separate labels that add. Softmax produces numbers that follow them, a distribution over the labels: a full set of probabilities that sum to 1. Cross-entropy training depends on that. When a model's numbers break one of the rules, for example one sigmoid per label giving outputs that add up to more than 1, they can still be useful, but they are not a distribution over the labels, and reading them as one gives wrong answers.
 </WhyThisMatters>
 
 ## Pour a die from a jug
@@ -99,7 +100,7 @@ Each of the three rules shows up as something the board won't do or won't call a
 
 - **Never negative.** Press Start over, then press − on any cup. The board refuses: "A cup can't hold less than nothing." No pouring can give a face less than zero.
 - **The whole jug, no more and no less.** The board opens with all 12 units in the cups, so pouring into any cup is refused with "The jug is empty." After Start over, pour 2 units into each of cups 1 to 4 and the board says "8 of 12 units poured. The cups add up to 8/12, not 1, so this isn't a probability yet." The event line changes too: it says "Even holds 2/12 + 2/12 + 0/12 = 4/12 of the jug" instead of giving P(even). Only when all 12 units are poured does it say "All 12 units poured: the cups add up to 1."
-- **Separate cups add.** The event line always writes the sum out, one term per cup in the event. Six and At most 2 share no cup, so on the loaded die their shares, 7/12 and 2/12, add up to 9/12 for the event made of cups 1, 2 and 6. The board has no preset for that event; the 9/12 is computed here from its two lines.
+- **Separate cups add.** The event line always writes the sum out, one term per cup in the event. On the fair die, Six holds 2/12 and At most 2 holds 4/12, and they share no cup, so together they hold 6/12. The board has no preset for "at most 2 or six"; the 6/12 is computed here from its two lines.
 
 Under the cups the board keeps one note: "The cups are drawn the same size. The water in them is the probability, not the cup."
 
@@ -117,7 +118,7 @@ The second rule says the sample space, the event "something happens", has probab
 
 ### Events that can't happen together add up
 
-The third rule says that if two events share no outcome, the probability that one or the other happens is the sum of their probabilities. On a die, "at most 2" and "six" can't both happen, so the chance of either is the chance of the first plus the chance of the second. Events with no outcome in common are called disjoint, or mutually exclusive. Applied one outcome at a time, when every outcome is an event, as on a finite space, the rule says that the probability of any event is the sum of the probabilities of its outcomes. Counting outcomes, as on [sample spaces and events](/probability/sample-spaces-and-events/), is the special case where every outcome gets the same share.
+The third rule says that if two events share no outcome, the probability that one or the other happens is the sum of their probabilities. On a die, "at most 2" and "six" can't both happen, so the chance of either is the chance of the first plus the chance of the second. Events with no outcome in common are called disjoint, or mutually exclusive. On a finite space every single outcome is an event, so the rule can be applied one outcome at a time. Then the probability of any event is the sum of its outcomes' probabilities: "even" holds the water in cups 2, 4 and 6. Counting outcomes, as on [sample spaces and events](/probability/sample-spaces-and-events/), is the special case where every outcome gets the same share.
 
 <Simpler label="the same rules with a class vote">
 
@@ -167,9 +168,11 @@ A probability space is a triple $(\Omega, \mathcal{F}, P)$. Here $\Omega$ is a n
 2. $P(\Omega) = 1$;
 3. if $A_1, A_2, \ldots \in \mathcal{F}$ are pairwise disjoint, meaning $A_i \cap A_j = \emptyset$ whenever $i \ne j$, then $P\big(\bigcup_{i=1}^{\infty} A_i\big) = \sum_{i=1}^{\infty} P(A_i)$.
 
+The third axiom contains the two-event rule from above: for two disjoint events $A$ and $B$, take $A_1 = A$, $A_2 = B$ and every later $A_i$ empty.
+
 A collection with the closure properties of $\mathcal{F}$ is called a σ-algebra. The σ in that standard name refers to countable unions and has nothing to do with the standard deviation; this site writes the collection itself as $\mathcal{F}$.
 
-Boundary cases. $P$ gives a value only to events in $\mathcal{F}$. On a finite $\Omega$, a pairwise disjoint sequence has at most $|\Omega|$ nonempty members, so the third axiom reduces to finite additivity, $P(A \cup B) = P(A) + P(B)$ for disjoint $A$ and $B$, together with $P(\emptyset) = 0$, proved below. There we usually take $\mathcal{F} = 2^\Omega$, and $P$ is fixed by one weight per outcome, $p(\omega) = P(\{\omega\}) \ge 0$ with $\sum_{\omega \in \Omega} p(\omega) = 1$, through $P(A) = \sum_{\omega \in A} p(\omega)$. Equally likely outcomes are the case $p(\omega) = 1/|\Omega|$, which gives $P(A) = |A|/|\Omega|$.
+Boundary cases. $P$ gives a value only to events in $\mathcal{F}$. On a finite $\Omega$, a pairwise disjoint sequence has at most $|\Omega|$ nonempty members, so the third axiom reduces to finite additivity, $P(A \cup B) = P(A) + P(B)$ for disjoint $A$ and $B$, together with $P(\emptyset) = 0$, proved below. There we usually take $\mathcal{F} = 2^\Omega$, and $P$ is fixed by one weight per outcome, which on the board is a cup's share of the jug, $p(\omega) = P(\{\omega\}) \ge 0$ with $\sum_{\omega \in \Omega} p(\omega) = 1$, through $P(A) = \sum_{\omega \in A} p(\omega)$. Equally likely outcomes are the case $p(\omega) = 1/|\Omega|$, which gives $P(A) = |A|/|\Omega|$.
 
 </PreciseStatement>
 
@@ -284,9 +287,21 @@ A multi-label model, which may tag one image as both "outdoor" and "dog", uses o
 
 Any list of non-negative scores $s_k$ with a positive total becomes a distribution by dividing by that total, $p_k = s_k / \sum_j s_j$. Scores $(3, 1, 0)$ give $(3/4, 1/4, 0)$. The method needs the scores to be non-negative; dividing raw logits that can be negative by their sum can give negative "probabilities", or divide by 0, which is one reason softmax exponentiates first.
 
-### Label smoothing
+### Why cross-entropy needs outputs that add up to 1
 
-Label smoothing trains against a softened target instead of a one-hot one <Cite id="szegedy2015" />. In the form used here, which is the one Szegedy and coauthors used, with $K$ classes and a smoothing amount $\epsilon$ between 0 and 1, the target is
+Cross-entropy, the usual loss for a classifier (the number training tries to make small), is low when the model gives the true class a high probability. That only works because the outputs must add up to 1: if they didn't have to, predicting 1 for every class would score a perfect loss on every example while having learned nothing.
+
+<GoDeeper label="the cross-entropy formula, and label smoothing">
+
+For a target distribution $y$ and a prediction $p$, the cross-entropy loss is
+
+$$
+L = -\sum_{k=1}^{K} y_k \log p_k.
+$$
+
+For a one-hot label, which puts probability 1 on the true class $c$ and 0 on the others, it is $-\log p_c$. The softmax above gives the label $(1, 0, 0)$ a loss of $-\log 0.665 \approx 0.408$, and a model that outputs 1 for every class would get $-\log 1 = 0$. Because the $p_k$ must add up to 1, raising the probability of the true class has to take probability away from the others. If the true label is drawn from a distribution $q$, the expected loss $-\sum_k q_k \log p_k$ is smallest, among all distributions $p$, exactly at $p = q$; that guarantee needs the outputs to sum to 1.
+
+Label smoothing trains against a softened target instead of a one-hot one <Cite id="szegedy2015" />. In the form Szegedy and coauthors used, with $K$ classes and a smoothing amount $\epsilon$ between 0 and 1, the target is
 
 $$
 \tilde{y}_k = (1 - \epsilon)\, y_k + \frac{\epsilon}{K},
@@ -294,15 +309,7 @@ $$
 
 where $y$ is the one-hot label. Every entry is non-negative, and the total is $(1 - \epsilon) \cdot 1 + K \cdot \epsilon / K = 1$, so the target is still a distribution. With $K = 3$ and $\epsilon = 0.1$, the label $(1, 0, 0)$ becomes $(14/15, 1/30, 1/30)$.
 
-### Why cross-entropy needs outputs that add up to 1
-
-The cross-entropy loss for a target distribution $y$ and a prediction $p$ is
-
-$$
-L = -\sum_{k=1}^{K} y_k \log p_k,
-$$
-
-which for a one-hot label of class $c$ is $-\log p_c$. The loss only rewards the right thing because the $p_k$ must add up to 1: raising the probability of the true class has to take probability away from the others. Without axiom 2, a model that outputs 1 for every class would score a perfect loss of $0$ on every example while having learned nothing. With it, if the true label is drawn from a distribution $q$, the expected loss $-\sum_k q_k \log p_k$ is smallest, among all distributions $p$, exactly at $p = q$, so the loss rewards honest probabilities; that guarantee needs the outputs to sum to 1. The softmax above gives the label $(1, 0, 0)$ a loss of $-\log 0.665 \approx 0.408$.
+</GoDeeper>
 
 ## Check the axioms in code
 
@@ -450,7 +457,7 @@ The loop over all pairs of events checks inclusion–exclusion on every one of t
 
 **Why countable additivity became standard.** Kolmogorov adopted continuity, and with it the third axiom ([countable additivity](#countable-additivity)), because it had proved convenient in very different kinds of research <Cite id="kolmogorov1950" />. Measure theory kept it, at the price that on uncountable sample spaces $P$ is defined only on a collection $\mathcal{F}$, because of [subsets of the unit interval that no length can measure](/probability/sample-spaces-and-events/#non-measurable-sets).
 
-**Finite spaces.** Everything derived above is settled. On finite sample spaces, which cover dice, coins and a classifier's labels, finite and countable additivity coincide, and every rule on this page follows from the three axioms.
+**Language models that leak probability.** A language model is meant to be a distribution over finite strings, but a model that writes one token at a time can, for some settings, keep going forever with positive probability, so its probabilities for finite strings add up to less than 1. Du and coauthors make this precise. The set of infinite sequences is uncountable, so they build a σ-algebra on finite and infinite sequences together and rely on countable additivity, and they call a model tight when the infinite sequences get probability 0. They prove that Transformer language models are always tight, while some n-gram models, and a recurrent network with ReLU activations that they construct, are not <Cite id="du2022" />.
 
 </ResearchFrontier>
 
