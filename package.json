@@ -5,7 +5,10 @@
   "scripts": {
     "dev": "astro dev",
     "start": "astro dev",
+    "prebuild": "npm run check:design",
     "build": "astro build",
+    "tokens": "node scripts/build-tokens.mjs",
+    "check:design": "node scripts/check-design.mjs",
     "preview": "astro preview",
     "astro": "astro",
     "deploy": "npm run build"
