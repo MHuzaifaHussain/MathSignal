@@ -20,6 +20,11 @@ const VIEW: vec.Vector2 = [-1, 10];
 const BOARD_HEIGHT = 380;
 /** Below this, the x values are effectively identical and the slope is undefined. */
 const VERTICAL_LINE_EPSILON = 1e-10;
+const HANDLE_LABELS = INITIAL_POINTS.map((_, i) => `Data point ${i + 1} of ${INITIAL_POINTS.length}`);
+
+const clampToView = (value: number) => Math.min(VIEW[1], Math.max(VIEW[0], value));
+/** Points stay on the board: the view is fixed, so a point dropped outside would be lost but still counted. */
+const keepInView = ([x, y]: vec.Vector2): vec.Vector2 => [clampToView(x), clampToView(y)];
 
 interface Fit {
   slope: number;
@@ -77,17 +82,18 @@ export default function LinearRegression() {
 
   return (
     <Board
-      label="Linear regression. Drag any point to see the least-squares line refit."
+      label="Linear regression. Drag any point, or focus it and use the arrow keys, to see the least-squares line refit."
       tray={tray}
       onReset={handleReset}
       announcement={announcement}
       onInteractionEnd={() => setAnnouncement(describeFit(fit))}
+      handleLabels={HANDLE_LABELS}
     >
       <Mafs height={BOARD_HEIGHT} viewBox={{ x: VIEW, y: VIEW, padding: 0 }} preserveAspectRatio={false} pan={false} zoom={false}>
         <Coordinates.Cartesian xAxis={{ lines: 1 }} yAxis={{ lines: 1 }} />
         {fit && <Line.PointSlope point={[0, fit.intercept]} slope={fit.slope} color={plotColors.ink} weight={2.5} />}
         {points.map((point, i) => (
-          <MovablePoint key={i} point={point} onMove={(next) => movePoint(i, next)} color={plotColors.attention} />
+          <MovablePoint key={i} point={point} constrain={keepInView} onMove={(next) => movePoint(i, next)} color={plotColors.attention} />
         ))}
       </Mafs>
       <ChalkNote long="one outlier can tilt the whole line" short="outliers tilt the line" />

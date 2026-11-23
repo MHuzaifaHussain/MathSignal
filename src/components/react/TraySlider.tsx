@@ -1,5 +1,11 @@
-import { useId } from "react";
+import { useEffect, useId, useRef } from "react";
 import { Slider } from "@base-ui/react/slider";
+
+/** Keyboard changes commit on every key press; wait for a pause so the board announces once. */
+const KEYBOARD_COMMIT_DELAY_MS = 600;
+const KEYBOARD_REASONS = new Set(["keyboard", "input-change"]);
+/** PageUp/PageDown and Shift+Arrow move about a tenth of the range. */
+const LARGE_STEP_FRACTION = 10;
 
 interface TraySliderProps {
   label: string;
@@ -7,6 +13,8 @@ interface TraySliderProps {
   min: number;
   max: number;
   step: number;
+  /** Step for PageUp/PageDown and Shift+Arrow. Defaults to about a tenth of the range. */
+  largeStep?: number;
   onValueChange: (value: number) => void;
   /** Called once when the user finishes a change; use it to update the board's announcement. */
   onValueCommitted?: (value: number) => void;
@@ -18,6 +26,9 @@ interface TraySliderProps {
   meaning?: "mu" | "sigma";
 }
 
+const defaultLargeStep = (min: number, max: number, step: number) =>
+  step * Math.max(1, Math.round((max - min) / step / LARGE_STEP_FRACTION));
+
 /** A labelled slider for a board's tray: the keyboard and screen-reader alternative to dragging. */
 export default function TraySlider({
   label,
@@ -25,6 +36,7 @@ export default function TraySlider({
   min,
   max,
   step,
+  largeStep,
   onValueChange,
   onValueCommitted,
   format,
@@ -33,6 +45,17 @@ export default function TraySlider({
 }: TraySliderProps) {
   const labelId = useId();
   const meaningClass = meaning ? `ms-${meaning}` : "";
+  const commitTimerRef = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(commitTimerRef.current), []);
+
+  const handleCommit = (next: number, reason: string) => {
+    window.clearTimeout(commitTimerRef.current);
+    if (!KEYBOARD_REASONS.has(reason)) {
+      onValueCommitted?.(next);
+      return;
+    }
+    commitTimerRef.current = window.setTimeout(() => onValueCommitted?.(next), KEYBOARD_COMMIT_DELAY_MS);
+  };
 
   return (
     <div className={`ms-slider ${meaningClass}`}>
@@ -45,9 +68,10 @@ export default function TraySlider({
         min={min}
         max={max}
         step={step}
+        largeStep={largeStep ?? defaultLargeStep(min, max, step)}
         aria-labelledby={labelId}
         onValueChange={(next) => onValueChange(next)}
-        onValueCommitted={(next) => onValueCommitted?.(next)}
+        onValueCommitted={(next, details) => handleCommit(next, details.reason)}
       >
         <Slider.Control className="ms-slider-control">
           <Slider.Track className="ms-slider-track">

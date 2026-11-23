@@ -1,38 +1,98 @@
-import { useCallback, useEffect, useRef, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
+
+const MOVE_KEYS = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
 
 interface BoardProps {
   /** Accessible name of the figure, e.g. "Normal distribution with draggable mean and spread". */
   label: string;
   /** The Mafs canvas, plus any ChalkNote. */
   children: ReactNode;
-  /** Sliders, readouts and buttons shown under the canvas. */
+  /** Optional sliders, readouts and buttons shown under the canvas. */
   tray?: ReactNode;
   /** Adds a Reset button to the tray. */
   onReset?: () => void;
   /** Polite live-region text. Update it only when an interaction ends, never on every frame. */
   announcement?: string;
-  /** Called once when a drag on the canvas ends; use it to update `announcement`. */
+  /** Called once when a drag or an arrow-key move on the canvas ends; use it to update `announcement`. */
   onInteractionEnd?: () => void;
+  /**
+   * Accessible names for the canvas's draggable handles, in render order. When given, the handles stay
+   * keyboard-focusable (arrow keys move them). When omitted, the tray's sliders are the keyboard path,
+   * so the handles are removed from the tab order and the accessibility tree.
+   */
+  handleLabels?: readonly string[];
 }
 
 /** The frame every interactive plot sits in. Styles: src/styles/components.css (.ms-board). */
-export default function Board({ label, children, tray, onReset, announcement = "", onInteractionEnd }: BoardProps) {
+export default function Board({
+  label,
+  children,
+  tray,
+  onReset,
+  announcement = "",
+  onInteractionEnd,
+  handleLabels,
+}: BoardProps) {
   const hasTray = Boolean(tray) || Boolean(onReset);
+  const canvasRef = useRef<HTMLDivElement>(null);
 
-  // Mafs captures the pointer and stops pointerup from bubbling, so listen on window in the
-  // capture phase for the end of a drag that started on this board.
+  // Mafs renders each handle as a focusable <g> with no name or role; give them one or hide them.
+  // Mafs mounts its handles only after measuring itself, so watch the canvas for them.
+  const handleLabelsRef = useRef(handleLabels);
+  useEffect(() => {
+    handleLabelsRef.current = handleLabels;
+  });
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const describeHandles = () => {
+      canvas.querySelectorAll<SVGGElement>(".mafs-movable-point").forEach((handle, index) => {
+        const handleLabel = handleLabelsRef.current?.[index];
+        if (handleLabel) {
+          handle.setAttribute("role", "button");
+          handle.setAttribute("aria-roledescription", "draggable point");
+          handle.setAttribute("aria-label", `${handleLabel}. Use the arrow keys to move it.`);
+          handle.removeAttribute("aria-hidden");
+          handle.setAttribute("tabindex", "0");
+        } else {
+          handle.setAttribute("tabindex", "-1");
+          handle.setAttribute("aria-hidden", "true");
+        }
+      });
+    };
+    describeHandles();
+    // childList only: the attribute changes above must not retrigger the observer.
+    const observer = new MutationObserver(describeHandles);
+    observer.observe(canvas, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
+
+  // Mafs captures the pointer and stops pointerup and keyup from bubbling, so listen in the
+  // capture phase. The callback is deferred one task so Mafs' own final onMove has rendered first.
   const interactionEndRef = useRef(onInteractionEnd);
   useEffect(() => {
     interactionEndRef.current = onInteractionEnd;
   });
+  const pendingEndRef = useRef<number | undefined>(undefined);
   const removeListenersRef = useRef<(() => void) | null>(null);
-  useEffect(() => () => removeListenersRef.current?.(), []);
+  useEffect(
+    () => () => {
+      removeListenersRef.current?.();
+      window.clearTimeout(pendingEndRef.current);
+    },
+    [],
+  );
+
+  const endInteraction = useCallback(() => {
+    window.clearTimeout(pendingEndRef.current);
+    pendingEndRef.current = window.setTimeout(() => interactionEndRef.current?.(), 0);
+  }, []);
 
   const handlePointerDown = useCallback(() => {
     removeListenersRef.current?.();
     const handleEnd = () => {
       removeListenersRef.current?.();
-      interactionEndRef.current?.();
+      endInteraction();
     };
     window.addEventListener("pointerup", handleEnd, { capture: true });
     window.addEventListener("pointercancel", handleEnd, { capture: true });
@@ -41,11 +101,18 @@ export default function Board({ label, children, tray, onReset, announcement = "
       window.removeEventListener("pointercancel", handleEnd, { capture: true });
       removeListenersRef.current = null;
     };
-  }, []);
+  }, [endInteraction]);
+
+  const handleKeyUp = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if (MOVE_KEYS.has(event.key)) endInteraction();
+    },
+    [endInteraction],
+  );
 
   return (
     <figure className="ms-board" role="group" aria-label={label}>
-      <div className="ms-board-canvas" onPointerDownCapture={handlePointerDown}>
+      <div ref={canvasRef} className="ms-board-canvas" onPointerDownCapture={handlePointerDown} onKeyUpCapture={handleKeyUp}>
         {children}
       </div>
       {hasTray && (

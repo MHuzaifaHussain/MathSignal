@@ -25,6 +25,11 @@ function gaussian(x: number, mu: number, sigma: number): number {
 const clamp = (value: number, [min, max]: vec.Vector2) => Math.min(max, Math.max(min, value));
 /** The σ handle sits on whichever side of μ has more room, so it never leaves the board. */
 const sigmaSide = (mu: number) => (mu > 0 ? -1 : 1);
+/**
+ * σ from the handle's x, measured on the handle's own side of μ. Moving past μ pins σ at its
+ * minimum instead of mirroring it (which made the spread grow while dragging or pressing inward).
+ */
+const sigmaFromHandleX = (x: number, mu: number) => clamp(sigmaSide(mu) * (x - mu), SIGMA_RANGE);
 
 function describeState(mu: number, sigma: number): string {
   return `Mean ${formatNumber(mu)}, standard deviation ${formatNumber(sigma)}, peak height ${formatNumber(gaussian(mu, mu, sigma))}.`;
@@ -57,13 +62,13 @@ export default function NormalDistribution() {
   );
 
   const handleSigmaMove = useCallback(
-    ([x]: vec.Vector2) => setSigma(clamp(Math.abs(x - mu), SIGMA_RANGE)),
+    ([x]: vec.Vector2) => setSigma(sigmaFromHandleX(x, mu)),
     [mu],
   );
 
   const constrainSigma = useCallback(
     ([x]: vec.Vector2): vec.Vector2 => {
-      const nextSigma = clamp(Math.abs(x - mu), SIGMA_RANGE);
+      const nextSigma = sigmaFromHandleX(x, mu);
       return [mu + sigmaSide(mu) * nextSigma, gaussian(mu + nextSigma, mu, nextSigma)];
     },
     [mu],
