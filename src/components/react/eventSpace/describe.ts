@@ -2,6 +2,7 @@
 // from the same functions, so what a screen reader hears always matches the screen.
 import { complement, formatFraction, fraction, intersect, probability, union, WEIGHT_TOTAL, type Outcome, type OutcomeId } from './model.ts';
 import { eventMembers, type Scenario } from './scenarios.ts';
+import { CLEAR_PRESET } from './setups.ts';
 import { isLocked, scenarioOf, setupOf, type Action, type EventKey, type EventSpaceState, type Refusal } from './state.ts';
 import { formatNumber } from '../plotColors.ts';
 
@@ -137,6 +138,11 @@ export function cellName(state: EventSpaceState, outcome: Outcome): string {
 	const outside = focus && !focus.has(outcome.id) ? ' Outside.' : '';
 	const missed = missedOutcome(state) === outcome.id ? ' Missed.' : '';
 	return `${outcome.label}. ${capitalize(outcome.spoken)}.${membership}${missed}${outside}`;
+}
+
+/** The text on a preset button, e.g. "At least one head" or "Clear". */
+export function presetLabel(scenario: Scenario, preset: string): string {
+	return preset === CLEAR_PRESET ? 'Clear' : capitalize(scenario.events[preset].label);
 }
 
 // ---- Weights mode ----

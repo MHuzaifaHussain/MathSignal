@@ -355,6 +355,7 @@
 @media print {
 	.ms-board-button,
 	.ms-slider-control,
+	.ms-choice,
 	.ms-runner-bar {
 		display: none;
 	}
@@ -367,4 +368,266 @@
 	font-size: 0.9375rem;
 	font-weight: 600;
 	color: var(--ms-ink);
+}
+
+/* ── Tray choice: a segmented fieldset of native radios (TrayChoice) ── */
+.ms-choice {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.ms-choice-legend {
+	float: left;
+	margin-inline-end: 0.5rem;
+	padding: 0;
+	font-size: 0.9375rem;
+	font-weight: 600;
+	color: var(--ms-board-ink);
+}
+
+.ms-choice-options {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+}
+
+.ms-choice-option {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	min-height: 44px;
+	padding-inline: 0.85rem;
+	border: 1px solid var(--ms-board-edge);
+	border-radius: 4px;
+	color: var(--ms-board-ink);
+	font-size: 0.9375rem;
+	cursor: pointer;
+}
+
+/* The radio stays in the accessibility tree and takes focus; the label is what you see. */
+.ms-choice-option input {
+	position: absolute;
+	inset: 0;
+	margin: 0;
+	opacity: 0;
+	cursor: pointer;
+}
+
+.ms-choice-option:has(input:checked) {
+	border-color: var(--ms-board-ink);
+	background-color: var(--ms-board);
+	font-weight: 600;
+}
+
+.ms-choice-option:has(input:focus-visible) {
+	outline: 2px solid var(--ms-ink);
+	outline-offset: 2px;
+	box-shadow: 0 0 0 5px var(--ms-attention-fill);
+}
+
+.ms-board-button-primary {
+	border-color: var(--ms-board-ink);
+	font-weight: 600;
+}
+
+.ms-board-button[aria-disabled='true'] {
+	color: var(--ms-board-ink-muted);
+	border-style: dashed;
+	cursor: not-allowed;
+}
+
+/* ── EventSpace: a sample space as a table of outcomes (decision 0011) ──
+ * A: highlighter fill + solid ochre border + "A" tag. B: dashed ink outline + "B" tag.
+ * Every cue is doubled by shape or text, and the focus ring stays outside the cell. */
+.ms-event {
+	padding: 0.75rem 8px 1rem;
+}
+
+.ms-event-status,
+.ms-event-feedback {
+	margin: 0 0 0.75rem;
+	font-size: 0.9375rem;
+	line-height: 1.5;
+	color: var(--ms-board-ink);
+}
+
+.ms-event-feedback {
+	margin: 0.75rem 0 0;
+	font-weight: 600;
+}
+
+.ms-event-grid {
+	--ms-event-gap: 6px;
+	--ms-event-header: 2rem;
+	--ms-event-cell: clamp(36px, calc((100cqi - 16px - var(--ms-event-header) - var(--ms-event-cols) * var(--ms-event-gap)) / var(--ms-event-cols)), 72px);
+	border-collapse: separate;
+	border-spacing: var(--ms-event-gap);
+	margin: 0 calc(-1 * var(--ms-event-gap));
+	font-variant-numeric: tabular-nums;
+}
+
+.ms-event-caption {
+	margin: 0 0 0.25rem;
+	font-size: 0.875rem;
+	color: var(--ms-board-ink-muted);
+}
+
+.ms-event-grid th {
+	inline-size: var(--ms-event-header);
+	padding: 0;
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: var(--ms-board-ink);
+	text-align: center;
+}
+
+.ms-event-grid td {
+	padding: 0;
+}
+
+.ms-event-cell {
+	position: relative;
+	display: grid;
+	place-items: center;
+	box-sizing: border-box;
+	inline-size: var(--ms-event-cell);
+	block-size: var(--ms-event-cell);
+	padding: 0;
+	border: 1px solid var(--ms-board-axis);
+	border-radius: 4px;
+	background-color: transparent;
+	color: var(--ms-board-ink);
+	font: 500 0.875rem var(--ms-font-mono);
+	cursor: pointer;
+	print-color-adjust: exact;
+}
+
+.ms-event-cell:hover {
+	border-color: var(--ms-board-ink);
+}
+
+.ms-event-cell.is-a {
+	border: 3px solid var(--ms-attention);
+	background-color: var(--ms-highlight);
+}
+
+.ms-event-cell.is-b::after {
+	content: '';
+	position: absolute;
+	inset: 3px;
+	border: 2px dashed var(--ms-board-ink);
+	border-radius: 2px;
+	pointer-events: none;
+}
+
+.ms-event-tag {
+	position: absolute;
+	z-index: 1;
+	inset-block-start: 1px;
+	padding-inline: 1px;
+	/* The cell's own fill, so a tag sits cleanly on B's dashed line instead of being crossed by it. */
+	background-color: inherit;
+	font: 600 12px/1 var(--ms-font-ui);
+	color: var(--ms-board-ink);
+}
+
+.ms-event-tag-a {
+	inset-inline-start: 4px;
+}
+
+.ms-event-tag-b {
+	inset-inline-end: 4px;
+}
+
+.ms-event-note {
+	position: absolute;
+	inset-block-end: 2px;
+	font: 500 11px/1 var(--ms-font-ui);
+	color: var(--ms-board-ink);
+}
+
+/* Missed after Check: dotted, so it can't be mistaken for B's dashes. */
+.ms-event-cell.is-missed::before {
+	content: '';
+	position: absolute;
+	inset: 3px;
+	border: 2px dotted var(--ms-board-ink);
+	border-radius: 2px;
+	pointer-events: none;
+}
+
+/* Outside the set "Look at" focuses on: no fill, muted text, a thin strike. Never opacity on text. */
+.ms-event-cell.is-outside {
+	background-color: transparent;
+	color: var(--ms-board-ink-muted);
+}
+
+.ms-event-cell.is-outside::before {
+	content: '';
+	position: absolute;
+	inset-inline: 6px;
+	inset-block-start: 50%;
+	border-block-start: 1px solid var(--ms-board-ink-muted);
+	transform: rotate(-35deg);
+	pointer-events: none;
+}
+
+.ms-event-presets {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.25rem 0.5rem;
+}
+
+.ms-event-presets-label {
+	font-size: 0.9375rem;
+	font-weight: 600;
+}
+
+.ms-event-note-line {
+	flex-basis: 100%;
+	margin: 0;
+	font-size: 0.875rem;
+	color: var(--ms-board-ink-muted);
+}
+
+.ms-event-readouts {
+	flex-basis: 100%;
+}
+
+.ms-event-readouts .ms-board-readout {
+	margin: 0.15rem 0;
+}
+
+@container (max-width: 399px) {
+	.ms-event-grid {
+		--ms-event-header: 24px;
+	}
+
+	.ms-event-cell {
+		font-size: 0.8125rem;
+	}
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.ms-event-cell {
+		transition: background-color 120ms, border-color 120ms;
+	}
+}
+
+@media (forced-colors: active) {
+	.ms-event-cell.is-a {
+		border-color: CanvasText;
+		background-color: Canvas;
+	}
+
+	.ms-event-cell.is-b::after,
+	.ms-event-cell.is-missed::before {
+		border-color: CanvasText;
+	}
 }

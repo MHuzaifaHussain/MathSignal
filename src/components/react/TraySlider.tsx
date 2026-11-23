@@ -1,8 +1,7 @@
 import { useEffect, useId, useRef } from "react";
 import { Slider } from "@base-ui/react/slider";
+import { KEYBOARD_COMMIT_DELAY_MS } from "./boardTiming";
 
-/** Keyboard changes commit on every key press; wait for a pause so the board announces once. */
-const KEYBOARD_COMMIT_DELAY_MS = 600;
 const KEYBOARD_REASONS = new Set(["keyboard", "input-change"]);
 /** PageUp/PageDown and Shift+Arrow move about a tenth of the range. */
 const LARGE_STEP_FRACTION = 10;

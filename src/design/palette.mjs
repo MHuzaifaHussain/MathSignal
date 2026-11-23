@@ -132,6 +132,9 @@ export const contrastRules = [
 	['attention', 'page', 'graphic'],
 	['attention', 'board', 'graphic'],
 	['ink', 'highlight', 'text'],
+	// EventSpace marks event A with the highlighter fill, an ochre border and an ink tag (decision 0011)
+	['boardInk', 'highlight', 'text'],
+	['attention', 'highlight', 'graphic'],
 	['codeInk', 'codeBg', 'code'],
 	['codeKeyword', 'codeBg', 'code'],
 	['codeString', 'codeBg', 'code'],
