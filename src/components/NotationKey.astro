@@ -28,7 +28,7 @@ const rows = symbols.map((key) => {
 		{
 			rows.map((row) => (
 				<tr>
-					<td set:html={row.html} />
+					<td class="symbol" set:html={row.html} />
 					<td>{row.say}</td>
 					<td>
 						{row.meaning}
@@ -41,6 +41,11 @@ const rows = symbols.map((key) => {
 </table>
 
 <style>
+	/* A symbol never breaks across lines; on narrow screens Starlight lets the table scroll instead. */
+	.symbol {
+		white-space: nowrap;
+	}
+
 	.note {
 		display: block;
 		margin-block-start: 0.25rem;
