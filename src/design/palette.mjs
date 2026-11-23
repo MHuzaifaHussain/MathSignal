@@ -28,11 +28,11 @@ export const palette = {
 
 		// Board: where every interactive plot lives
 		board: '#e4ebe6',
-		boardEdge: '#748a80',
+		boardEdge: '#677c73',
 		boardTray: '#d8e1db',
 		boardInk: '#26332f',
 		boardInkMuted: '#4d5c57',
-		boardAxis: '#748a80',
+		boardAxis: '#677c73',
 		boardGrid: '#c4d0ca',
 
 		// Meaning colours: the only saturated colours on a page
@@ -96,7 +96,7 @@ export const palette = {
 	},
 };
 
-// Typography tokens. Families are loaded by src/styles/fonts.css.
+// Typography tokens. Families are loaded through the @fontsource entries in astro.config.mjs customCss.
 export const fonts = {
 	serif: "'Literata Variable', Literata, Georgia, serif",
 	ui: "'Atkinson Hyperlegible Next Variable', 'Atkinson Hyperlegible Next', system-ui, sans-serif",
@@ -114,10 +114,17 @@ export const contrastRules = [
 	['accent', 'page', 'text'],
 	['accent', 'accentLow', 'text'],
 	['ledgeInk', 'ledge', 'text'],
+	['inkMuted', 'ledge', 'text'],
 	['boardInk', 'board', 'text'],
 	['boardInkMuted', 'board', 'text'],
 	['boardAxis', 'board', 'graphic'],
 	['boardEdge', 'page', 'graphic'],
+	// The tray under each board carries labels, readouts, the Reset border and slider tracks
+	['boardInk', 'boardTray', 'text'],
+	['mu', 'boardTray', 'text'],
+	['sigma', 'boardTray', 'text'],
+	['boardAxis', 'boardTray', 'graphic'],
+	['boardEdge', 'boardTray', 'graphic'],
 	['mu', 'page', 'text'],
 	['sigma', 'page', 'text'],
 	['mu', 'board', 'text'],
