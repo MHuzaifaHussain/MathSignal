@@ -22,7 +22,7 @@ The ML relevance of the concept, straight after the header. Paper surface with a
 A `<details>` panel on the sunk surface holding the formal maths. Closed by default. Slot: KaTeX and prose.
 
 ### `CommonMistakes` (Astro) and `Mistake` (Astro)
-A list of misconceptions, each as a "Not quite" / "Instead" pair. The misconception is the `wrong` prop; the correction is the slot, so it can hold formulas and links.
+A list of misconceptions, each as a "Not quite" / "Instead" pair. The page puts a `## Common mistakes` heading above it, so it appears in the table of contents. The misconception is the `wrong` prop; the correction is the slot, so it can hold formulas and links.
 
 ```mdx
 <CommonMistakes>
@@ -33,7 +33,7 @@ A list of misconceptions, each as a "Not quite" / "Instead" pair. The misconcept
 ```
 
 ### `NextTopics` (Astro)
-A plain list of links at the end of a page. No cards.
+A plain list of links at the end of a page, under a `## Where to go next` heading in the page. No cards. It is a navigation landmark only once at least one topic has a link.
 
 | Prop | Type |
 |---|---|

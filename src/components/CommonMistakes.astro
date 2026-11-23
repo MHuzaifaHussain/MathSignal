@@ -1,23 +1,14 @@
 ---
-// A list of misconceptions. Children are <Mistake> items.
+// A list of misconceptions. Children are <Mistake> items. The page supplies the "## Common mistakes" heading.
 ---
 
-<aside class="common-mistakes" aria-label="Common mistakes">
-	<p class="label">Common mistakes</p>
+<div class="common-mistakes">
 	<ul><slot /></ul>
-</aside>
+</div>
 
 <style>
 	.common-mistakes {
-		margin-block: 2.5rem;
-	}
-
-	.label {
-		margin: 0 0 0.75rem;
-		font-family: var(--ms-font-ui);
-		font-size: 0.9375rem;
-		font-weight: 600;
-		color: var(--ms-ink);
+		margin-block: 1rem 2.5rem;
 	}
 
 	ul {

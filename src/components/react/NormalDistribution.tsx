@@ -145,7 +145,7 @@ export default function NormalDistribution() {
         <MovablePoint point={[mu, 0]} onMove={handleMuMove} constrain={constrainMu} color={plotColors.mu} />
         <MovablePoint point={sigmaHandle} onMove={handleSigmaMove} constrain={constrainSigma} color={plotColors.sigma} />
       </Mafs>
-      <ChalkNote long="peak drops as the bell widens" short="wider bell, lower peak" />
+      <ChalkNote long="widen the bell and watch the peak" short="widen it, watch the peak" />
     </Board>
   );
 }

@@ -5,10 +5,11 @@ interface Props {
 }
 
 const { topics } = Astro.props;
+// A navigation landmark with no links is noise for screen readers: use a plain section until a topic is published.
+const Wrapper = topics.some((topic) => topic.href) ? 'nav' : 'section';
 ---
 
-<nav class="next-topics" aria-label="Up next">
-	<p class="label">Up next</p>
+<Wrapper class="next-topics" aria-label="Where to go next">
 	<ul>
 		{
 			topics.map((topic) => (
@@ -25,19 +26,11 @@ const { topics } = Astro.props;
 			))
 		}
 	</ul>
-</nav>
+</Wrapper>
 
 <style>
 	.next-topics {
-		margin-block: 2.5rem 1rem;
-	}
-
-	.label {
-		margin: 0 0 0.5rem;
-		font-family: var(--ms-font-ui);
-		font-size: 0.9375rem;
-		font-weight: 600;
-		color: var(--ms-ink);
+		margin-block: 1rem 1rem;
 	}
 
 	ul {
