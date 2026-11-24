@@ -1792,6 +1792,16 @@ const announcerRun = () => {
 		'As a sample of a bigger group, the same mean is written x̄ = 134 cm.',
 		'Sample variance: 576 / 8 = 72 cm². s = √72 ≈ 8.49 cm.',
 	]);
+	assert.equal(
+		dsay.announcementFor(sample, { type: 'sample', on: true }),
+		'As a sample of a bigger group, the same mean is written x̄ = 134 cm. Sample variance: 576 / 8 = 72 cm². s = √72 ≈ 8.49 cm.',
+	);
+	assert.equal(dsay.announcementFor(dst.reducer(sample, { type: 'sample', on: false }), { type: 'sample', on: false }), 'Sample versions hidden.');
+	// With σ = 0 the sample lines still appear, and their switch still speaks.
+	const sameSample = run('class-spread', { type: 'preset', id: 'everyone-134' }, { type: 'sample', on: true });
+	assert.deepEqual(dsay.sampleLines(sameSample), ['As a sample of a bigger group, the same mean is written x̄ = 134 cm.', 'Sample variance: 0 / 8 = 0 cm². s = √0 = 0 cm.']);
+	assert.deepEqual(dsay.readoutLines(sameSample).slice(0, 3), ['Every child is 134 cm: every distance is 0, so the variance is 0 and σ = 0 cm.', ...dsay.sampleLines(sameSample)]);
+	assert.equal(dsay.announcementFor(sameSample, { type: 'sample', on: true }), dsay.sampleLines(sameSample).join(' '));
 	assert.equal(dsay.readoutLines(run('class-spread', { type: 'sample', on: true }, { type: 'preset', id: 'tight-class' }))[3], 'Sample variance: 144 / 8 = 18 cm². s = √18 ≈ 4.24 cm.');
 	assert.equal(
 		dsay.symbolLines(run('class-spread', { type: 'stage', stage: 'symbols' })).at(-1).text,

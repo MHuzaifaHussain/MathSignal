@@ -327,12 +327,24 @@ export function sigmaText(values: readonly number[]): string {
 	return rootAmount(populationSD(values));
 }
 
+/** Owner decision 6: x̄ and s (÷ n − 1) beside μ and σ, while "Also as a sample" is on. Their switch announces them. */
+export function sampleLines(state: DescriptiveState): string[] {
+	if (!state.sample) return [];
+	const setup = setupOf(state);
+	const values = state.values;
+	const sampleVar = sampleVariance(values);
+	return [
+		`As a sample of a bigger group, the same mean is written x̄ ${equalsAmount(mean(values))} cm.`,
+		`Sample variance: ${amount(squaredTotal(values))} / ${n(values) - 1} ${equalsAmount(sampleVar)} ${setup.words.unitSquared}. ${symbolChain('s', sampleVar, sampleSD(values), setup)}.`,
+	];
+}
+
 function spreadLines(state: DescriptiveState): string[] {
 	const setup = setupOf(state);
 	const values = state.values;
 	const center = mean(values);
 	if (new Set(values).size === 1) {
-		return [`Every child is ${values[0]} cm: every distance is 0, so the variance is 0 and σ = 0 cm.`];
+		return [`Every child is ${values[0]} cm: every distance is 0, so the variance is 0 and σ = 0 cm.`, ...sampleLines(state)];
 	}
 	const lines = [`Mean: ${groupThousands(sum(values))} / ${n(values)} ${equalsAmount(center)} cm.`];
 	const ordered = sortedValues(values);
@@ -350,13 +362,8 @@ function spreadLines(state: DescriptiveState): string[] {
 		);
 	}
 	const variance = populationVariance(values);
-	const totalText = total.denominator === 1 ? groupThousands(total.numerator) : amount(total);
-	lines.push(`Variance: ${totalText} / ${n(values)} ${equalsAmount(variance)} ${setup.words.unitSquared}. Standard deviation: ${rootChain(variance, populationSD(values), setup)}.`);
-	if (state.sample) {
-		const sampleVar = sampleVariance(values);
-		lines.push(`As a sample of a bigger group, the same mean is written x̄ ${equalsAmount(center)} cm.`);
-		lines.push(`Sample variance: ${totalText} / ${n(values) - 1} ${equalsAmount(sampleVar)} ${setup.words.unitSquared}. ${symbolChain('s', sampleVar, sampleSD(values), setup)}.`);
-	}
+	lines.push(`Variance: ${amount(total)} / ${n(values)} ${equalsAmount(variance)} ${setup.words.unitSquared}. Standard deviation: ${rootChain(variance, populationSD(values), setup)}.`);
+	lines.push(...sampleLines(state));
 	return lines;
 }
 
@@ -818,7 +825,7 @@ export function announcementFor(state: DescriptiveState, action: Action): string
 		case 'distances':
 			return state.distances ? readouts : 'Distances hidden.';
 		case 'sample':
-			return state.sample ? readoutLines(state).filter((line) => /x̄|Sample/.test(line)).join(' ') : 'Sample versions hidden.';
+			return state.sample ? sampleLines(state).join(' ') : 'Sample versions hidden.';
 		case 'newcomer':
 			return state.newcomer === null ? `Nobody new. ${readouts}` : newcomerChange(state);
 		case 'scale':
