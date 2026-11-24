@@ -1694,6 +1694,8 @@ const announcerRun = () => {
 	const stacked = vst.reducer(tripsArrows, moveTo('sum', [3, 2]));
 	assert.deepEqual(stacked.b, [0, 0]);
 	assert.equal(vd.handleAnnouncement(stacked, 'sum'), 'b = (0, 0). a + b = (3, 2). Both handles are at (3, 2).');
+	// The same handles keep the same array, so the plane's memoized move handlers survive a drag.
+	assert.equal(vst.handleIds(aMoved), vst.handleIds(tripsArrows));
 	// Reset covers the answer again.
 	const tripsReset = vst.reducer(tripsDone, { type: 'reset' });
 	assert.deepEqual(tripsReset, vst.initialState('trips-add'));

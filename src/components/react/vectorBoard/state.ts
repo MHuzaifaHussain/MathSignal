@@ -138,12 +138,21 @@ export function steppableVectors(state: VectorState): readonly VectorId[] {
 	return ['a'];
 }
 
+/** Shared, frozen lists, so the same handles keep the same array and the plane's handlers survive a move. */
+const HANDLE_LISTS = {
+	guessOnly: Object.freeze(['guess']),
+	addChecked: Object.freeze(['a', 'sum']),
+	none: Object.freeze([]),
+	both: Object.freeze(['a', 'b']),
+	aOnly: Object.freeze(['a']),
+} as const satisfies Record<string, readonly HandleId[]>;
+
 /** The Mafs handles right now, in render order. Locked vectors get no handle at all, so a pointer can't drag them. */
 export function handleIds(state: VectorState): readonly HandleId[] {
 	const kind = setupOf(state).kind;
-	if (kind === 'add') return state.checked ? ['a', 'sum'] : ['guess'];
-	if (kind === 'align') return state.checked ? ['a', 'b'] : [];
-	return ['a'];
+	if (kind === 'add') return state.checked ? HANDLE_LISTS.addChecked : HANDLE_LISTS.guessOnly;
+	if (kind === 'align') return state.checked ? HANDLE_LISTS.both : HANDLE_LISTS.none;
+	return HANDLE_LISTS.aOnly;
 }
 
 /** a and b are the question on the add and align setups, so they wait for Check. */

@@ -212,6 +212,13 @@ export default function VectorPlane({ state, linkedId, size, onMove }: VectorPla
     };
     return Object.fromEntries(handleIds(state).map((id) => [id, constrainTo(id)])) as Partial<Record<HandleId, (point: vec.Vector2) => vec.Vector2>>;
   }, [state]);
+  // One move handler per handle. handleIds returns the same array while the handles stay the same, so a drag
+  // doesn't rebuild them.
+  const ids = handleIds(state);
+  const moveHandlers = useMemo(
+    () => Object.fromEntries(ids.map((id) => [id, (point: vec.Vector2) => onMove(id, point)])) as Partial<Record<HandleId, (point: vec.Vector2) => void>>,
+    [ids, onMove],
+  );
   const axis = trips ? { lines: 1, labels: false as const } : { lines: 1, labels: (n: number) => numberText(n) };
 
   return (
@@ -224,15 +231,19 @@ export default function VectorPlane({ state, linkedId, size, onMove }: VectorPla
           {label.text}
         </Text>
       ))}
-      {handles.map((handle) => (
-        <MovablePoint
-          key={handle.id}
-          point={[handle.point[0], handle.point[1]]}
-          constrain={constraints[handle.id]}
-          onMove={(point) => onMove(handle.id, point)}
-          color={plotColors.ink}
-        />
-      ))}
+      {handles.map((handle) => {
+        const handleMove = moveHandlers[handle.id];
+        if (!handleMove) throw new Error(`VectorBoard2D: handle "${handle.id}" has no move handler.`);
+        return (
+          <MovablePoint
+            key={handle.id}
+            point={[handle.point[0], handle.point[1]]}
+            constrain={constraints[handle.id]}
+            onMove={handleMove}
+            color={plotColors.ink}
+          />
+        );
+      })}
     </Mafs>
   );
 }
