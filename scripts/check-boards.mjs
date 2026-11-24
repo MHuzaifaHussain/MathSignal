@@ -134,6 +134,9 @@ assert.deepEqual(describe.readoutLines(operations), [
 	'A or B: 6 + 6 − 1 = 11 of 36 ≈ 0.31',
 ]);
 assert.equal(describe.statusLine(operations), '36 equally likely outcomes. Editing A.');
+// An empty A ∩ B is worded, not drawn as "{}", on every two-event setup.
+assert.equal(describe.readoutLines(run('dice-operations', { type: 'preset', event: 'B', preset: 'clear' }))[3], 'A and B: no shared outcome, 0 of 36');
+assert.equal(describe.readoutLines(run('dice-condition', { type: 'preset', event: 'A', preset: 'clear' }))[2], 'A and B: no shared outcome, 0 of 36');
 
 // pour refusals keep the weights and say why.
 const pourFresh = initialState('die-pour');

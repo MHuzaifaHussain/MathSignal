@@ -111,7 +111,9 @@ function eventLine(scenario: Scenario, key: EventKey, members: ReadonlySet<Outco
 
 function bothLine(scenario: Scenario, a: ReadonlySet<OutcomeId>, b: ReadonlySet<OutcomeId>): string {
 	const both = intersect(a, b);
-	return `A and B = ${setText(scenario, both)}: ${both.size} of ${scenario.outcomes.length}`;
+	const total = scenario.outcomes.length;
+	if (both.size === 0) return `A and B: no shared outcome, 0 of ${total}`;
+	return `A and B = ${setText(scenario, both)}: ${both.size} of ${total}`;
 }
 
 /** Readouts for the counting modes; empty while a goal setup is locked, so nothing gives the answer away. */
