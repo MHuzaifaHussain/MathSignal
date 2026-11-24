@@ -87,6 +87,13 @@ Discrete sample spaces are HTML tables, not Mafs plots (decision 0011). They fol
 
 Pink and blue never appear: an event is not μ or σ. Tags and words double every marking, so nothing depends on color. Probabilities are shown as an unreduced count, then the reduced fraction, then two decimals ("3 of 4 outcomes. P(A) = 3/4 = 0.75"), in plain Unicode, never KaTeX.
 
+Compare mode follows these wording rules:
+
+- The verdict is words alone: "Independent: yes." or "Independent: no.", never green and red, an icon, or pink and blue. An event of probability 0 gets "Independent: yes, but only because B can't happen." (or A, or neither).
+- Exclusivity is its own line, decided from the sets: "Mutually exclusive: no, A and B share 3 outcomes, {H2, H4, H6}."
+- The product line prints decimals only when the two sides differ, so the reader sees by how much: "P(A and B) = 1/12 (≈ 0.08), but P(A) × P(B) = 1/12 × 1/2 = 1/24 (≈ 0.04): not equal." An equal line has none: "P(A and B) = 1/4, and P(A) × P(B) = 1/2 × 1/2 = 1/4: equal." Whole numbers never get decimals. The conditional line follows the same rule.
+- A weighted face's note ("2/12") is board ink, like every other number. It writes units out of the jug the way the die-pour board does; cell names say "2 of 12 units".
+
 ### Discrete distributions (DistributionBoard)
 
 DistributionBoard draws a random variable as stacked tiles, one tile per outcome, in columns by value ([decision 0012](../decisions/0012-distribution-board.md)). It is HTML like EventSpace and follows the same color rules with these conventions:

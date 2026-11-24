@@ -110,7 +110,7 @@ Concept boards. Each composes `Board`, Mafs, `plotColors`, and `TraySlider`s.
 `BayesTheorem` also has "Example" preset buttons, defined with their math in `src/components/react/bayesTheorem/scenarios.ts` and checked by `npm run check:boards`: "Any two events" (the opening view), "Medical test" (1 in 100 has the condition, a test right 9 times in 10, so a positive means P(A | B) ≈ 0.083) and "Wet lawn" (rain or the sprinkler, P(A | B) ≈ 0.429). A line under the presets says what A and B stand for. When A's column is thinner than 0.15, its labels sit beside it. Try it at `/lab/bayes-theorem/`.
 
 ### `EventSpace`
-A sample space as a table of outcomes (decision 0011). One prop: `setup`, the id of a configuration in `src/components/react/eventSpace/setups.ts` (`coins-build`, `dice-count`, `dice-operations`, `die-pour`, `dice-condition`, `kids-condition`); an unknown id fails the build.
+A sample space as a table of outcomes (decision 0011). One prop: `setup`, the id of a configuration in `src/components/react/eventSpace/setups.ts` (`coins-build`, `dice-count`, `dice-operations`, `die-pour`, `dice-condition`, `kids-condition`, `coin-die-independence`, `dice-independence`, `weather-exclusive`, `die-compare`); an unknown id fails the build.
 
 ```mdx
 <div class="not-content">
@@ -118,10 +118,16 @@ A sample space as a table of outcomes (decision 0011). One prop: `setup`, the id
 </div>
 ```
 
-- **Count mode:** readers tap outcomes to build event A (and B on two-event setups); readouts give exact counts and fractions, plus "not A", "A and B" and "A or B". "Look at" mutes the outcomes outside a chosen set.
+- **Count mode:** readers tap outcomes to build event A (and B on two-event setups); readouts give exact counts and fractions, plus "not A", "A and B" and "A or B". An empty A ∩ B is worded, never drawn as "{}": "A and B: no shared outcome, 0 of 36". "Look at" mutes the outcomes outside a chosen set.
 - **Goal setups** (`coins-build`): presets and readouts stay locked until the reader passes **Check**, which names the specific mistake (HT marked without TH). "Show the answer" appears after two wrong Checks.
 - **Weights mode** (`die-pour`): six cups poured from a jug of 12 units, for the probability axioms. Impossible pours are refused with a visible reason.
 - **Condition mode** (`dice-condition`, `kids-condition`): a "Shrink the world to B" switch rules out every outcome outside B (muted, struck through, "Ruled out" in its name), and the readout gives P(A | B) beside P(A). The switch is refused while B is empty, with the visible reason "Undefined: B can't happen (probability 0)." `kids-condition` is fixed data (a class of 12 children in a list layout without headers), so its cells can be read but not toggled.
+- **Compare mode** (`coin-die-independence`, `dice-independence`, `weather-exclusive`, `die-compare`), for independence and mutual exclusivity: the readouts show P(A) and P(B) only, and a "Compare A and B" switch, off at the start, reveals the A ∩ B line and a comparison block: whether A and B are independent, whether they are mutually exclusive (with the shared outcomes), P(A and B) against P(A) × P(B), and P(A | B) beside P(A). Independence is decided only by P(A ∩ B) = P(A) P(B) in exact fractions, so an event that can't happen is reported as independent of everything ("Independent: yes, but only because B can't happen.") while P(A | B) is undefined. Exclusivity comes from the sets alone. "Shrink the world to B", where a setup offers it, is refused until Compare is on, so nothing answers the page's question before the reader acts; turning Compare off also leaves the shrunk view.
+  - `coin-die-independence`: a coin beside a die (H1 to T6). A: Die is 6 (the opening), Die is even, Heads and a six, Clear. B: Coin is heads (the opening), Coin is tails, Clear.
+  - `dice-independence`: two dice. A: Sum is 7 (the opening), Sum is 8, Doubles, Sum is at least 10. B: First die is 6 (the opening), Second die is 6, Doubles, Clear. It also serves the comparison page's pairs with A and B swapped, which changes no number because every event there holds 6 of 36 outcomes.
+  - `weather-exclusive`: 12 fixed days (rain all day, sun all day, or sun and showers), read but not toggled. A: Rain all day, Some rain. B: Sun all day, Some sun.
+  - `die-compare`: one die in a list layout, with a "Die" choice between Fair die and Loaded toward six (1, 1, 1, 1, 1 and 7 of 12 units, the same fills as `die-pour`). A and B come from presets only. Each cell shows its share of the 12 units ("2/12"), and readouts count units ("4 of 12 units = 1/3"). It shows that a loaded die changes independence and never changes exclusivity.
+  - `validateSetup` refuses a compare setup without B, or with a goal, tosses, "Look at", stages or a wrong model; weights on any space but one die; a fill that doesn't pour exactly 12 units or leaves a face empty; and weights combined with shrinking.
 - Check, "Show the answer", the "Show as" choice, the presets, the refusal notes and the live region are the guided pieces above.
 - All math and copy live in pure modules (`model.ts`, `describe.ts`, `state.ts`) checked by `npm run check:boards`. Try every setup at `/lab/event-space/` in the dev server.
 
