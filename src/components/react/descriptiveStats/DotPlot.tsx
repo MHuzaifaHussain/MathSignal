@@ -1,8 +1,6 @@
-import type { CSSProperties, PointerEvent } from "react";
-import { MeanGuide, MeanMark, SigmaSpan } from "../chartMarks.tsx";
+import type { PointerEvent } from "react";
+import { MeanGuide, MeanMark, SigmaSpan, type Position } from "../chartMarks.tsx";
 import type { ChartDot, ChartRow } from "./chart.ts";
-
-type Position = CSSProperties & Record<`--${string}`, string | number>;
 
 /** Spread onto the strip under the axis: pointer drag that mirrors a tray slider. */
 export interface ScrubHandlers {

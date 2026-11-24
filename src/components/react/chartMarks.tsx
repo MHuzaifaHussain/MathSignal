@@ -4,7 +4,8 @@ import type { CSSProperties } from "react";
 // Each mark is positioned in percent across its row; the row itself is the board's own element.
 // Styles: "Chart marks" in src/styles/components.css.
 
-type Position = CSSProperties & Record<`--${string}`, string>;
+/** Inline style that sets CSS custom properties, such as `--x` and `--row`, on a chart element. */
+export type Position = CSSProperties & Record<`--${string}`, string | number>;
 
 /** Clamped to the row, so a mark for a value past the axis stays at its edge instead of drawing off the board. */
 const percent = (value: number) => `${Math.min(Math.max(value, 0), 100)}%`;

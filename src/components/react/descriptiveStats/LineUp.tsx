@@ -1,8 +1,6 @@
-import type { CSSProperties } from "react";
+import type { Position } from "../chartMarks.tsx";
 import { lineUpBars } from "./chart.ts";
 import type { DescriptiveState } from "./state.ts";
-
-type Position = CSSProperties & Record<`--${string}`, string | number>;
 
 interface LineUpProps {
   state: DescriptiveState;

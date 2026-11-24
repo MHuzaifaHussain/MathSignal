@@ -1,6 +1,5 @@
-import type { CSSProperties } from "react";
 import { toNumber } from "../boardMath.ts";
-import { MeanGuide, MeanMark, SigmaSpan } from "../chartMarks.tsx";
+import { MeanGuide, MeanMark, SigmaSpan, type Position } from "../chartMarks.tsx";
 import { chartLabels } from "./describe.ts";
 import { mean, standardDeviation, torqueSign, type Bar } from "./model.ts";
 import { TILT_DEGREES, type Setup } from "./setups.ts";
@@ -58,8 +57,6 @@ interface BarChartProps {
   onPencilMove: (k: number) => void;
   onPencilCommit: (k: number) => void;
 }
-
-type Position = CSSProperties & Record<`--${string}`, string | number>;
 
 /**
  * The chart: stacked outcome tiles on a plank, the axis, and on later setups the ochre pencil, the pink μ and the
