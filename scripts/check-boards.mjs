@@ -390,4 +390,168 @@ assert.equal(classifyGuess(dieDistribution([2, 2, 2, 2, 0, 4]), 12, 6), 'balance
 assert.throws(() => torqueSign(plainDie, 1.5, 6), /integer/);
 assert.throws(() => torqueSign(plainDie, 1, 0), /positive/);
 
+// ---- DistributionBoard setups and state ----
+const distSetups = await import('../src/components/react/distributionBoard/setups.ts');
+const dist = await import('../src/components/react/distributionBoard/state.ts');
+const distRun = (setupId, ...actions) => actions.reduce(dist.reducer, dist.initialState(setupId));
+const faceValues = (values) => Object.fromEntries(values.map((value, index) => [String(index + 1), value]));
+/** Steps each die face from 0 up to its target value. */
+const stepsTo = (values) => values.flatMap((value, index) => Array.from({ length: value }, () => ({ type: 'step', id: String(index + 1), direction: 1 })));
+
+// Setup validation names the setup and the cause.
+assert.throws(() => distSetups.getSetup('candy-bild'), /unknown setup "candy-bild"/);
+const candyBuild = distSetups.getSetup('candy-build');
+const candyBalance = distSetups.getSetup('candy-balance');
+assert.throws(
+	() => distSetups.validateSetup({ ...candyBalance, presets: ['Plain die', 'One big prize', 'Lopsided', 'All win 1', 'Game card'] }),
+	/"candy-balance".*5 presets/,
+);
+assert.throws(
+	() => distSetups.validateSetup({ ...candyBalance, presets: ['Too high'] }, { ...distSetups.PRESETS, 'Too high': [0, 0, 0, 0, 0, 7] }),
+	/"candy-balance".*"Too high".*7.*0\.\.6/,
+);
+assert.throws(
+	() => distSetups.validateSetup({ ...candyBalance, presets: ['Short'] }, { ...distSetups.PRESETS, Short: [1, 2, 3, 4, 5] }),
+	/"candy-balance".*"Short".*5 values.*6 outcomes/,
+);
+assert.throws(() => distSetups.validateSetup({ ...candyBalance, opening: [1, 2, 3, 4, 5] }), /"candy-balance".*opening.*5 values.*6 outcomes/);
+assert.throws(
+	() => distSetups.validateSetup({ ...candyBalance, stepDenominator: 4, presets: ['Plain die', 'Game card'] }),
+	/"candy-balance".*"Game card".*7\/6.*4/,
+);
+// Every built-in setup passes, and "All zero" fits both the die and the coins.
+for (const id of ['candy-build', 'coins-heads', 'candy-balance', 'candy-spread']) assert.equal(distSetups.getSetup(id).id, id);
+assert.deepEqual(distSetups.presetValues(distSetups.getSetup('coins-heads'), 'All zero'), [0, 0, 0, 0]);
+assert.deepEqual(distSetups.presetValues(candyBuild, 'All zero'), [0, 0, 0, 0, 0, 0]);
+assert.throws(() => distSetups.validateSetup({ ...candyBuild, card: undefined }), /"candy-build".*card/);
+assert.throws(() => distSetups.validateSetup({ ...candyBuild, card: [0, 0, 0, 1, 1, 9] }), /"candy-build".*card.*9.*0\.\.6/);
+assert.throws(() => distSetups.validateSetup({ ...candyBuild, range: [0, 7] }), /"candy-build".*8 tile columns/);
+assert.throws(
+	() => distSetups.validateSetup({ ...distSetups.getSetup('candy-spread'), presets: ['One big prize'] }),
+	/"candy-spread".*"One big prize".*off the axis/,
+);
+assert.throws(() => distSetups.validateSetup({ ...candyBalance, stepDenominator: 3, presets: ['One big prize'], opening: [0, 0, 0, 0, 0, 6] }), /"candy-balance".*even/);
+assert.equal(candyBuild.wording.valueText(1), '1 candy');
+assert.equal(candyBuild.wording.valueText(0), '0 candies');
+assert.equal(candyBuild.wording.raiseName('4'), 'More candies for face 4');
+assert.equal(candyBuild.wording.lowerName('4'), 'Fewer candies for face 4');
+assert.equal(distSetups.getSetup('coins-heads').wording.valueText(1), 'X = 1');
+assert.equal(distSetups.getSetup('coins-heads').wording.raiseName('HT'), 'Raise X for HT');
+
+// The covered chart: Check uncovers it only when the values match the card.
+const buildFresh = dist.initialState('candy-build');
+assert.equal(dist.isCovered(buildFresh), true);
+assert.deepEqual(buildFresh.values, faceValues([0, 0, 0, 0, 0, 0]));
+const cardMatched = distRun('candy-build', ...stepsTo([0, 0, 0, 1, 1, 5]), { type: 'check' });
+assert.equal(dist.isCovered(cardMatched), false);
+assert.equal(cardMatched.feedback.kind, 'match');
+assert.equal(cardMatched.goal, 'open');
+assert.deepEqual(dist.distributionNow(cardMatched).bars.map((bar) => bar.members), [['1', '2', '3'], ['4', '5'], ['6']]);
+const oneWrong = distRun('candy-build', ...stepsTo([0, 0, 0, 1, 1, 4]), { type: 'check' });
+assert.deepEqual(oneWrong.feedback, { kind: 'one-wrong', id: '6', set: 4, card: 5 });
+assert.equal(dist.isCovered(oneWrong), true);
+const threeWrong = distRun('candy-build', { type: 'check' });
+assert.deepEqual(threeWrong.feedback, { kind: 'several-wrong', ids: ['4', '5', '6'] });
+// A value change clears stale feedback.
+assert.equal(dist.reducer(threeWrong, { type: 'step', id: '1', direction: 1 }).feedback, null);
+
+// "Show the answer" needs two failed Checks.
+const oneFailed = distRun('candy-build', { type: 'check' });
+assert.equal(dist.reducer(oneFailed, { type: 'show-answer' }), oneFailed);
+const answerShown = distRun('candy-build', { type: 'check' }, { type: 'check' }, { type: 'show-answer' });
+assert.deepEqual(answerShown.values, faceValues([0, 0, 0, 1, 1, 5]));
+assert.equal(answerShown.feedback.kind, 'shown');
+assert.equal(dist.isCovered(answerShown), false);
+
+// A refused step leaves the values and says why.
+const belowRange = dist.reducer(buildFresh, { type: 'step', id: '1', direction: -1 });
+assert.deepEqual(belowRange.values, buildFresh.values);
+assert.deepEqual(belowRange.refusal, { kind: 'below-range', id: '1' });
+const atTop = distRun('candy-build', ...stepsTo([6, 0, 0, 0, 0, 0]));
+const aboveRange = dist.reducer(atTop, { type: 'step', id: '1', direction: 1 });
+assert.deepEqual(aboveRange.values, atTop.values);
+assert.equal(aboveRange.refusal.kind, 'above-range');
+assert.equal(dist.stepBlocked(atTop, '1', 1), 'above-range');
+assert.equal(dist.reducer(aboveRange, { type: 'step', id: '1', direction: -1 }).refusal, null);
+
+// Presets wait for the match on goal setups; Symbols too.
+assert.equal(dist.reducer(buildFresh, { type: 'preset', name: 'Game card' }).refusal.kind, 'locked');
+assert.deepEqual(dist.reducer(buildFresh, { type: 'preset', name: 'Game card' }).values, buildFresh.values);
+assert.equal(dist.reducer(buildFresh, { type: 'stage', stage: 'symbols' }), buildFresh);
+assert.equal(dist.stageAllowed(buildFresh, 'symbols'), false);
+assert.equal(dist.stageAllowed(buildFresh, 'pictures'), true);
+assert.equal(dist.reducer(cardMatched, { type: 'stage', stage: 'symbols' }).stage, 'symbols');
+assert.equal(dist.reducer(cardMatched, { type: 'preset', name: 'All zero' }).activePreset, 'All zero');
+
+// The follow-up goal on candy-build: exactly 3 faces at 1, retryable forever. coins-heads has none.
+const goalFrom = (values) => dist.reducer({ ...cardMatched, values: faceValues(values) }, { type: 'check-goal' });
+assert.equal(goalFrom([1, 0, 1, 0, 1, 5]).goal, 'passed');
+const goalMissed = goalFrom([0, 0, 0, 1, 1, 5]);
+assert.equal(goalMissed.goal, 'not-yet');
+const goalRetried = [{ type: 'step', id: '1', direction: 1 }, { type: 'check-goal' }].reduce(dist.reducer, goalMissed);
+assert.equal(goalRetried.goal, 'passed');
+assert.equal(dist.reducer(goalRetried, { type: 'step', id: '2', direction: 1 }).goal, 'open');
+assert.equal(dist.reducer(buildFresh, { type: 'check-goal' }), buildFresh);
+const coinsMatched = distRun('coins-heads', { type: 'step', id: 'HH', direction: 1 }, { type: 'step', id: 'HH', direction: 1 }, { type: 'step', id: 'HT', direction: 1 }, { type: 'step', id: 'TH', direction: 1 }, { type: 'check' });
+assert.equal(coinsMatched.feedback.kind, 'match');
+assert.equal(coinsMatched.goal, null);
+assert.equal(dist.initialState('coins-heads').pencil, -2);
+
+// The pencil on candy-balance: Balance it is refused while parked, and steps wait for the reveal.
+const balanceFresh = dist.initialState('candy-balance');
+assert.equal(balanceFresh.pencil, -3);
+assert.equal(dist.PARKED, -0.5);
+assert.equal(balanceFresh.activePreset, 'Plain die');
+assert.equal(balanceFresh.revealed, false);
+const parkedBalance = dist.reducer(balanceFresh, { type: 'balance' });
+assert.equal(parkedBalance.refusal.kind, 'parked');
+assert.equal(parkedBalance.revealed, false);
+assert.equal(dist.reducer(balanceFresh, { type: 'step', id: '1', direction: 1 }).refusal.kind, 'locked');
+assert.deepEqual(dist.reducer(balanceFresh, { type: 'step', id: '1', direction: 1 }).values, balanceFresh.values);
+const pencilMoved = dist.reducer(balanceFresh, { type: 'pencil', k: 21 });
+assert.deepEqual({ ...pencilMoved, pencil: balanceFresh.pencil }, balanceFresh);
+const balanced = dist.reducer(pencilMoved, { type: 'balance' });
+assert.equal(balanced.revealed, true);
+assert.equal(balanced.refusal, null);
+const editedAfterReveal = dist.reducer(balanced, { type: 'step', id: '1', direction: 1 });
+assert.equal(editedAfterReveal.values['1'], 2);
+assert.equal(editedAfterReveal.refusal, null);
+assert.equal(editedAfterReveal.activePreset, null);
+// The pencil clamps to its track, from −W/2 to 6W.
+assert.equal(dist.reducer(balanceFresh, { type: 'pencil', k: -10 }).pencil, -3);
+assert.equal(dist.reducer(balanceFresh, { type: 'pencil', k: 99 }).pencil, 36);
+assert.equal(dist.reducer(buildFresh, { type: 'pencil', k: 6 }), buildFresh);
+assert.equal(dist.reducer(buildFresh, { type: 'balance' }), buildFresh);
+// A preset re-parks the pencil and re-hides μ.
+const newGame = dist.reducer(balanced, { type: 'preset', name: 'One big prize' });
+assert.equal(newGame.revealed, false);
+assert.equal(newGame.pencil, -3);
+assert.equal(newGame.activePreset, 'One big prize');
+assert.deepEqual(newGame.values, faceValues([0, 0, 0, 0, 0, 6]));
+
+// candy-spread: the ghost keeps the previous preset's σ, never the same preset's.
+const spreadOn = dist.reducer(dist.initialState('candy-spread'), { type: 'spread', on: true });
+assert.equal(spreadOn.revealed, true);
+assert.equal(spreadOn.activePreset, 'Many amounts');
+assert.equal(distRun('candy-spread', { type: 'spread', on: true }, { type: 'preset', name: 'Many amounts' }, { type: 'preset', name: 'Many amounts' }).ghost, null);
+const ghosted = [{ type: 'preset', name: 'Many amounts' }, { type: 'preset', name: 'All or nothing' }].reduce(dist.reducer, spreadOn);
+assert.equal(ghosted.ghost.preset, 'Many amounts');
+assert.ok(Math.abs(ghosted.ghost.sigma - 0.8165) < 1e-4, `ghost sigma ${ghosted.ghost.sigma}`);
+assert.equal(dist.reducer(dist.initialState('candy-spread'), { type: 'preset', name: 'All or nothing' }).ghost, null);
+assert.equal(dist.reducer(ghosted, { type: 'spread', on: false }).ghost, null);
+for (const id of ['1', '2', '3', '4', '5', '6']) {
+	for (const direction of [1, -1]) {
+		const refused = dist.reducer(spreadOn, { type: 'step', id, direction });
+		assert.equal(refused.refusal.kind, 'not-editable', `step ${direction} on face ${id}`);
+		assert.deepEqual(refused.values, spreadOn.values);
+	}
+}
+assert.equal(dist.reducer(spreadOn, { type: 'stage', stage: 'symbols' }), spreadOn);
+assert.equal(dist.reducer(spreadOn, { type: 'check' }), spreadOn);
+
+// Reset returns the opening state exactly.
+assert.deepEqual(dist.reducer(cardMatched, { type: 'reset' }), dist.initialState('candy-build'));
+assert.deepEqual(dist.reducer(balanced, { type: 'reset' }), dist.initialState('candy-balance'));
+assert.deepEqual(dist.reducer(ghosted, { type: 'reset' }), dist.initialState('candy-spread'));
+
 console.log('Board check passed.');
