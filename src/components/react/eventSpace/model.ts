@@ -1,5 +1,6 @@
-// The math behind EventSpace: outcomes, events as sets, exact fractions, goal checking and pouring.
-// Pure TypeScript with no imports, so scripts/check-boards.mjs can run it directly under Node.
+// The math behind EventSpace: outcomes, events as sets, goal checking and pouring. Pure TypeScript that imports
+// only the shared fraction helpers, so scripts/check-boards.mjs can run it directly under Node.
+import { fraction, type Fraction } from '../boardMath.ts';
 
 export type OutcomeId = string;
 
@@ -13,28 +14,8 @@ export interface Outcome {
 	spoken: string;
 }
 
-export interface Fraction {
-	numerator: number;
-	denominator: number;
-}
-
 /** Weights mode pours a jug of 12 units, so halves, thirds, quarters and sixths stay exact. */
 export const WEIGHT_TOTAL = 12;
-
-function greatestCommonDivisor(a: number, b: number): number {
-	return b === 0 ? Math.abs(a) : greatestCommonDivisor(b, a % b);
-}
-
-export function fraction(numerator: number, denominator: number): Fraction {
-	if (!(denominator > 0)) throw new Error(`fraction: denominator must be positive, got ${denominator}`);
-	if (numerator === 0) return { numerator: 0, denominator: 1 };
-	const divisor = greatestCommonDivisor(numerator, denominator);
-	return { numerator: numerator / divisor, denominator: denominator / divisor };
-}
-
-export function formatFraction(value: Fraction): string {
-	return value.denominator === 1 ? String(value.numerator) : `${value.numerator}/${value.denominator}`;
-}
 
 export function intersect(a: ReadonlySet<OutcomeId>, b: ReadonlySet<OutcomeId>): ReadonlySet<OutcomeId> {
 	return new Set([...a].filter((id) => b.has(id)));

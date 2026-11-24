@@ -2,9 +2,23 @@
 // before every build. Node 24 runs the TypeScript modules directly, so no test framework is needed.
 // Each section names the behavior it pins; the exact values come from the board's design doc.
 import assert from 'node:assert/strict';
-import { fraction, formatFraction, probability, checkGoal, pour, intersect, union, complement, WEIGHT_TOTAL } from '../src/components/react/eventSpace/model.ts';
+import { fraction, formatFraction, addFractions, multiplyFractions, compareFractions } from '../src/components/react/boardMath.ts';
+import { joinWords, plural, equalsDecimal } from '../src/components/react/boardText.ts';
+import { probability, checkGoal, pour, intersect, union, complement, WEIGHT_TOTAL } from '../src/components/react/eventSpace/model.ts';
 import { SCENARIOS } from '../src/components/react/eventSpace/scenarios.ts';
 import { getSetup } from '../src/components/react/eventSpace/setups.ts';
+
+// ---- Shared board helpers ----
+
+assert.deepEqual(addFractions(fraction(1, 6), fraction(1, 3)), fraction(1, 2));
+assert.deepEqual(multiplyFractions(fraction(5, 6), fraction(6, 5)), fraction(1, 1));
+assert.equal(compareFractions(fraction(7, 6), fraction(1, 1)), 1);
+assert.equal(compareFractions(fraction(2, 4), fraction(1, 2)), 0);
+assert.throws(() => multiplyFractions(fraction(2 ** 30, 1), fraction(2 ** 30, 1)), /overflowed safe integers/);
+assert.equal(joinWords(['1', '2', '3']), '1, 2 and 3');
+assert.equal(plural(1, 'candy', 'candies'), '1 candy');
+assert.equal(equalsDecimal(1, 6), '≈ 0.17');
+assert.equal(equalsDecimal(1, 2), '= 0.50');
 
 const coins = SCENARIOS['two-coins'];
 const dice = SCENARIOS['two-dice'];

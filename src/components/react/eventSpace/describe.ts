@@ -1,31 +1,17 @@
 // Every sentence EventSpace shows or speaks, built from state. The visible text and the live-region text come
 // from the same functions, so what a screen reader hears always matches the screen.
-import { complement, conditionalProbability, formatFraction, fraction, intersect, probability, union, WEIGHT_TOTAL, type Fraction, type Outcome, type OutcomeId } from './model.ts';
+import { formatFraction, fraction, type Fraction } from '../boardMath.ts';
+import { approx, capitalize, equalsDecimal, joinWords, plural } from '../boardText.ts';
+import { complement, conditionalProbability, intersect, probability, union, WEIGHT_TOTAL, type Outcome, type OutcomeId } from './model.ts';
 import { eventMembers, type Scenario } from './scenarios.ts';
 import { CLEAR_PRESET } from './setups.ts';
 import { CHECKS_BEFORE_ANSWER, isLocked, scenarioOf, setupOf, type Action, type EventKey, type EventSpaceState, type Refusal, type Stage } from './state.ts';
-import { formatNumber } from '../plotColors.ts';
 
 /** The "Show as" options' names, shown on the buttons and spoken when the view changes. */
 export const STAGE_LABELS: Readonly<Record<Stage, string>> = { picture: 'Pictures', letters: 'Letters', sets: 'Sets' };
 
 /** Member lists longer than this show the first ones and "and k more". */
 const MAX_LISTED = 8;
-
-const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
-const plural = (count: number, one: string, many: string) => `${count} ${count === 1 ? one : many}`;
-const decimal = (numerator: number, denominator: number) => formatNumber(numerator / denominator, 2);
-/** True when two decimal places don't show the value exactly (1/6 → 0.17). */
-const isRounded = (numerator: number, denominator: number) => Math.abs(Number(decimal(numerator, denominator)) - numerator / denominator) > 1e-12;
-/** "0.75", or "≈ 0.17" when rounded, so the board never writes a false equation. */
-const approx = (numerator: number, denominator: number) => `${isRounded(numerator, denominator) ? '≈ ' : ''}${decimal(numerator, denominator)}`;
-/** "= 0.75", or "≈ 0.17" when rounded, for the end of an equation. */
-const equalsDecimal = (numerator: number, denominator: number) => `${isRounded(numerator, denominator) ? '≈' : '='} ${decimal(numerator, denominator)}`;
-
-function joinWords(words: readonly string[]): string {
-	if (words.length <= 1) return words.join('');
-	return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
-}
 
 function outcomesIn(scenario: Scenario, members: ReadonlySet<OutcomeId>): Outcome[] {
 	return scenario.outcomes.filter((outcome) => members.has(outcome.id));
