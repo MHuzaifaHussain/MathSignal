@@ -5,7 +5,7 @@ import { toNumber } from '../boardMath.ts';
 import type { SpanKind } from '../chartMarks.tsx';
 import { axisUnit, ghostLabel, laneLabel, meanLabel, medianLabel, spreadLabel, tickLabel } from './describe.ts';
 import { across, stackHeight, stackRows, ticks, type Axis } from './layout.ts';
-import { fences, iqrFlags, mean, median, minMax, modes, populationSD, quartiles, sampleSD, sortedValues, zFlags, zScore, type Root } from './model.ts';
+import { fences, iqrFlags, mean, median, minMax, modes, populationSD, quartiles, rootNumber, sampleSD, sortedValues, zFlags, zScore, type Root } from './model.ts';
 import { listsOf, type Setup } from './setups.ts';
 import { isCovered, setupOf, valuesNow, type DescriptiveState } from './state.ts';
 
@@ -44,8 +44,6 @@ export interface ChartRow {
 	/** Ink "mode" tags above the tallest stacks. */
 	modeTags: { x: number; row: number }[];
 }
-
-const rootNumber = (root: Root) => (root.exact ? toNumber(root.value) : root.value);
 
 /**
  * Dot rows the chart reserves, so it keeps its height. A slider can stack every dot on one value, so those setups

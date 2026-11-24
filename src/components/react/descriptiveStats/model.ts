@@ -28,7 +28,7 @@ function requireSafe(operation: string, ...integers: number[]): void {
 }
 
 const negate = (value: Fraction): Fraction => fraction(-value.numerator, value.denominator);
-const subtractFractions = (a: Fraction, b: Fraction): Fraction => addFractions(a, negate(b));
+export const subtractFractions = (a: Fraction, b: Fraction): Fraction => addFractions(a, negate(b));
 const whole = (value: number): Fraction => fraction(value, 1);
 
 /** Smallest first. The input is left as it is. */
@@ -173,7 +173,8 @@ export function zScore(value: number, values: readonly number[]): Root {
 	return { exact: false, value: toNumber(distance) / sigma.value };
 }
 
-const rootNumber = (root: Root): number => (root.exact ? toNumber(root.value) : root.value);
+/** A root as a plain number, for comparisons and positions. */
+export const rootNumber = (root: Root): number => (root.exact ? toNumber(root.value) : root.value);
 
 /** For each value, whether its |z| is strictly above the cutoff. */
 export function zFlags(values: readonly number[], cutoff: number): boolean[] {

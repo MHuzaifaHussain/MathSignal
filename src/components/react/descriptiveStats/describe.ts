@@ -6,11 +6,12 @@
 // - An exact amount drops trailing zeros ("103.6", "4.5"); a rounded one shows two decimals after "≈" ("≈ 8.44").
 // - A min–max score reads unreduced, reduced, then rounded: "15/18 = 5/6 ≈ 0.83".
 // "≈" appears only when the decimal is rounded.
-import { compareFractions, formatFraction, fraction, toNumber, type Fraction } from '../boardMath.ts';
+import { compareFractions, formatFraction, fraction, multiplyFractions, toNumber, type Fraction } from '../boardMath.ts';
 import { capitalize, joinWords, plural } from '../boardText.ts';
 import { formatNumber } from '../plotColors.ts';
 import { CAFE_SAVINGS, TEST_B } from './datasets.ts';
 import {
+	FENCE_FACTOR,
 	fences,
 	iqr,
 	iqrFlags,
@@ -23,9 +24,11 @@ import {
 	quartiles,
 	range,
 	rankOf,
+	rootNumber,
 	sampleSD,
 	sampleVariance,
 	sortedValues,
+	subtractFractions,
 	sum,
 	topCount,
 	zScore,
@@ -109,8 +112,6 @@ export function rootAmount(root: Root): string {
 	return root.exact ? amount(root.value) : approxNumber(root.value);
 }
 
-const rootNumber = (root: Root) => (root.exact ? toNumber(root.value) : root.value);
-
 /** "+3", "−12", "0": a signed distance. */
 function signed(value: Fraction): string {
 	if (value.numerator === 0) return '0';
@@ -134,7 +135,6 @@ function subscript(n: number): string {
 
 const withUnit = (text: string, setup: Setup) => (setup.words.unit ? `${text} ${setup.words.unit}` : text);
 const childName = (child: number) => `Child ${child + 1}`;
-const subtract = (a: Fraction, b: Fraction): Fraction => fraction(a.numerator * b.denominator - b.numerator * a.denominator, a.denominator * b.denominator);
 
 // ---- Board name, status and the stage choice ----
 
@@ -216,7 +216,7 @@ function meanChain(values: readonly number[]): string {
 
 /** Why the mean sits above or below the median, from all the distances, not one child. */
 function meanVersusMedian(values: readonly number[], setup: Setup): string {
-	const gap = subtract(mean(values), median(values));
+	const gap = subtractFractions(mean(values), median(values));
 	const size = withUnit(amount(fraction(Math.abs(gap.numerator), gap.denominator)), setup);
 	const order = compareFractions(gap, fraction(0, 1));
 	if (order === 0) return 'The mean and the median are the same.';
@@ -348,7 +348,7 @@ function spreadLines(state: DescriptiveState): string[] {
 	}
 	const lines = [`Mean: ${groupThousands(sum(values))} / ${n(values)} ${equalsAmount(center)} cm.`];
 	const ordered = sortedValues(values);
-	const distances = ordered.map((value) => subtract(fraction(value, 1), center));
+	const distances = ordered.map((value) => subtractFractions(fraction(value, 1), center));
 	const total = squaredTotal(values);
 	if (state.distances) {
 		const exactCenter = center.denominator === 1;
@@ -422,7 +422,7 @@ function boxLines(state: DescriptiveState): string[] {
 	const quartileLine = `Each quarter is ${plural(quarter, 'step', 'steps')}: Q1 is the ${place(quarter)} in line (${amount(q1)} cm), the median the ${place(2 * quarter)} (${amount(middle)} cm), Q3 the ${place(3 * quarter)} (${amount(q3)} cm).`;
 	if (state.stage === 'quartiles') return [quartileLine];
 	const spreadQ = iqr(values);
-	const reach = fraction(spreadQ.numerator * 3, spreadQ.denominator * 2);
+	const reach = multiplyFractions(FENCE_FACTOR, spreadQ);
 	const { lower, upper } = fences(values);
 	const flags = iqrFlags(values);
 	const inside = ordered.filter((value) => !flags[values.indexOf(value)]);
@@ -516,7 +516,7 @@ function outlierLines(state: DescriptiveState): string[] {
 	const values = state.values;
 	const { q1, q3 } = quartiles(values);
 	const spreadQ = iqr(values);
-	const reach = fraction(spreadQ.numerator * 3, spreadQ.denominator * 2);
+	const reach = multiplyFractions(FENCE_FACTOR, spreadQ);
 	const { lower, upper } = fences(values);
 	const fenceLine = `Q1 = ${amount(q1)} kg, Q3 = ${amount(q3)} kg, IQR = ${amount(spreadQ)} kg, so the upper fence is ${amount(q3)} + ${amount(reach)} = ${amount(upper)} kg.`;
 	const giant = state.giant;
