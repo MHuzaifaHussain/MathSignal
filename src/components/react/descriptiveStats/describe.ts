@@ -224,11 +224,12 @@ function meanVersusMedian(values: readonly number[], setup: Setup): string {
 	return `The shortest children stand further below the median than the tallest stand above it, so the mean sits ${size} lower.`;
 }
 
-function modeSentence(values: readonly number[], setup: Setup): string {
+/** `noMode` ends the sentence when nothing repeats: "there is no mode", or "this class has no mode" on line-ups. */
+function modeSentence(values: readonly number[], setup: Setup, noMode = 'there is no mode'): string {
 	const found = modes(values);
 	const top = topCount(values);
 	if (found.length === 0) {
-		return top === 1 ? `No ${setup.kind === 'newcomer' ? 'amount' : 'height'} repeats, so there is no mode.` : `Every value appears ${top} times, so there is no mode.`;
+		return top === 1 ? `No ${setup.kind === 'newcomer' ? 'amount' : 'height'} repeats, so ${noMode}.` : `Every value appears ${top} times, so ${noMode}.`;
 	}
 	const held = found.length === 1 ? `held by ${plural(top, setup.words.item, setup.words.items)}` : `each held by ${plural(top, setup.words.item, setup.words.items)}`;
 	return `Mode: ${joinWords(found.map((value) => withUnit(groupThousands(value), setup)))}, ${held}.`;
@@ -239,10 +240,9 @@ function lineupSummary(state: DescriptiveState): string[] {
 	const setup = setupOf(state);
 	const values = state.values;
 	const ordered = sortedValues(values);
-	const noMode = modes(values).length === 0 && topCount(values) === 1;
 	return [
 		`Mean: ${meanChain(values)} cm. ${meanVersusMedian(values, setup)}`,
-		noMode ? 'No height repeats, so this class has no mode.' : modeSentence(values, setup),
+		modeSentence(values, setup, 'this class has no mode'),
 		`Range: ${ordered[ordered.length - 1]} − ${ordered[0]} = ${range(values)} cm.`,
 	];
 }
@@ -353,7 +353,7 @@ function spreadLines(state: DescriptiveState): string[] {
 	if (state.distances) {
 		const exactCenter = center.denominator === 1;
 		lines.push(
-			`Distances from the mean, ${amount(center)} cm${exactCenter ? '' : ', rounded'}: ${joinWords(distances.map(signed))} cm. They add up to 0, so their plain average is always 0.`,
+			`Distances from the mean, ${amount(center)} cm: ${joinWords(distances.map(signed))} cm. They add up to 0, so their plain average is always 0.`,
 		);
 		lines.push(
 			exactCenter

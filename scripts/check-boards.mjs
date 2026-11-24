@@ -1776,6 +1776,11 @@ const announcerRun = () => {
 		'Squared: 144 + 81 + 36 + 9 + 1 + 9 + 36 + 64 + 196 = 576 cm².',
 		'Variance: 576 / 9 = 64 cm². Standard deviation: √64 = 8 cm.',
 	]);
+	// A mean that isn't whole: the "≈" marks already say the distances are rounded.
+	assert.equal(
+		dsay.readoutLines(dst.reducer(dst.reducer(spread, { type: 'select', child: 4 }), { type: 'set-value', value: 145 }))[1],
+		'Distances from the mean, ≈ 133.67 cm: ≈ −11.67, ≈ −8.67, ≈ −5.67, ≈ −2.67, ≈ −0.67, ≈ +3.33, ≈ +6.33, ≈ +8.33 and ≈ +11.33 cm. They add up to 0, so their plain average is always 0.',
+	);
 	const tight = dst.reducer(spread, { type: 'preset', id: 'tight-class' });
 	assert.equal(
 		dsay.readoutLines(tight).slice(2).join(' '),
