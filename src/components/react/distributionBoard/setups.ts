@@ -252,8 +252,15 @@ export function zipValues(setup: Setup, values: readonly number[]): Record<strin
 	return Object.fromEntries(outcomesOf(setup.source).map((outcome, index) => [outcome.id, values[index]]));
 }
 
+/** Every setup, validated once at import, so a bad one fails the build and renders don't repeat the work. */
+const VALIDATED_SETUPS: Readonly<Record<SetupId, Setup>> = Object.freeze(
+	Object.fromEntries(Object.entries(SETUPS).map(([id, setup]) => [id, validateSetup(setup)])) as Record<SetupId, Setup>,
+);
+
 export function getSetup(id: string): Setup {
-	const setup = SETUPS[id as SetupId];
-	if (!setup) throw new Error(`DistributionBoard: unknown setup "${id}". Known setups: ${Object.keys(SETUPS).join(', ')}.`);
-	return validateSetup(setup);
+	// Own keys only, so "toString" and friends count as unknown rather than reaching Object.prototype.
+	if (!Object.hasOwn(VALIDATED_SETUPS, id)) {
+		throw new Error(`DistributionBoard: unknown setup "${id}". Known setups: ${Object.keys(VALIDATED_SETUPS).join(', ')}.`);
+	}
+	return VALIDATED_SETUPS[id as SetupId];
 }

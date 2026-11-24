@@ -400,6 +400,7 @@ const stepsTo = (values) => values.flatMap((value, index) => Array.from({ length
 
 // Setup validation names the setup and the cause.
 assert.throws(() => distSetups.getSetup('candy-bild'), /unknown setup "candy-bild"/);
+assert.throws(() => distSetups.getSetup('toString'), /unknown setup "toString"/);
 const candyBuild = distSetups.getSetup('candy-build');
 const candyBalance = distSetups.getSetup('candy-balance');
 assert.throws(
