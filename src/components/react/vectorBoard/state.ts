@@ -210,10 +210,13 @@ export function handleRefusals(state: VectorState, handle: HandleId): readonly R
 
 /**
  * Every value change goes through here. Stale feedback misleads (a "Yes" must never stand next to values it didn't
- * judge), so it is cleared, along with the preset and the before-and-after comparison.
+ * judge), so it is cleared. A change to a, b or c also leaves the preset and the before-and-after comparison; moving
+ * the guess doesn't.
  */
 function withValues(state: VectorState, values: Partial<Pick<VectorState, 'a' | 'b' | 'scalar' | 'guess'>>): VectorState {
-	return { ...state, ...values, feedback: null, refusal: null, activePreset: null, before: null };
+	const leavesPreset = 'a' in values || 'b' in values || 'scalar' in values;
+	const preset = leavesPreset ? { activePreset: null, before: null } : {};
+	return { ...state, ...values, feedback: null, refusal: null, ...preset };
 }
 
 function moveHandle(state: VectorState, handle: HandleId, to: Vec2): VectorState {

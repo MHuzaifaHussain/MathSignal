@@ -1671,6 +1671,9 @@ const announcerRun = () => {
 
 	// Presets, after Check.
 	assert.deepEqual(vd.presetsFor(tripsDone).map((preset) => preset.label), ['Two trips', 'There and back', 'Same direction', 'Square corner']);
+	// The opening is the "Two trips" preset; moving the guess doesn't leave it, moving a does.
+	assert.equal(tripsDone.activePreset, 'two-trips');
+	assert.equal(vst.reducer(tripsArrows, moveTo('a', [2, 2])).activePreset, null);
 	const tripPreset = (id) => vst.reducer(tripsArrows, { type: 'preset', id });
 	assert.deepEqual(vd.readoutLines(tripPreset('there-and-back')), ['a = (3, 2), b = (−3, −2), a + b = (0, 0).', 'Both trips: you end where you started. a + b = (0, 0), the zero vector.']);
 	assert.equal(vd.ochreElement(tripPreset('there-and-back')), null);
