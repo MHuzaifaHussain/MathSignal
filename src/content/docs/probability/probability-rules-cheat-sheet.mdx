@@ -1,0 +1,219 @@
+---
+title: "Probability rules cheat sheet"
+description: "All the basic probability rules on one page, from complement and addition to the chain rule, Bayes and independence, each worked on one bag of marbles."
+sidebar:
+  order: 50
+draft: true
+topic: probability/probability-rules-cheat-sheet
+type: F
+objectives:
+  - Choose the rule a question needs from its wording, whether it says not, or, and, given, split into cases, or turned around.
+  - State the condition each rule needs (disjoint events, P(B) > 0, a partition, independence) and spot when it is missing.
+  - Compute complement, addition, conditional, product, chain, total-probability and Bayes answers on one bag of marbles.
+  - Tell independent events from mutually exclusive ones, and independence from conditional independence.
+  - Match each rule to the name it goes by in machine learning texts, such as the sum rule and the chain rule.
+takeaways:
+  - Every rule here follows from the three axioms and the definition P(A | B) = P(A ∩ B) / P(B), which needs P(B) > 0.
+  - '"Or" adds and takes the overlap off once. "And" multiplies, but by a conditional probability unless the events are independent: two blue marbles without replacement is 6/10 × 5/9 = 1/3, not 9/25.'
+  - 'Total probability adds up B over cases that cover everything. Bayes divides by that total to turn P(B | A) into P(A | B): in the bag, P(striped | red) = 3/4 but P(red | striped) = 3/5.'
+  - Mutually exclusive events with positive probabilities are never independent, and events that are independent given C can be dependent without it.
+  - In machine learning texts the "sum rule" is total probability (marginalizing), and the "chain rule", also called the "product rule", splits a joint probability into a product of conditional ones.
+references:
+  - grinstead2003
+  - goodfellow2016prob
+author: Muhammad Huzaifa Hussain
+reviewedAt: 2026-11-25
+aiAssisted: true
+primaryQuery: probability rules cheat sheet
+searchIntent: reference
+depthStatus: complete
+---
+
+import CheckYourself from "../../../components/CheckYourself.astro";
+import Cite from "../../../components/Cite.astro";
+import ConceptHeader from "../../../components/ConceptHeader.astro";
+import ConceptMap from "../../../components/ConceptMap.astro";
+import NotationKey from "../../../components/NotationKey.astro";
+import References from "../../../components/References.astro";
+import Takeaways from "../../../components/Takeaways.astro";
+
+<ConceptHeader
+  oneLiner="The basic probability rules, collected on this cheat sheet, are a short list of identities that follow from the three axioms and the definition of conditional probability, and that turn the probabilities you know into the one you need."
+  difficulty="beginner"
+/>
+
+Find your question's wording in the first table, then look up the rule's condition before you use it. The tables work every rule on one bag of marbles, or on two bags where a rule needs cases, so you can compare the rules on one set of numbers. Each row links to the page that explains its rule, with the reasons, the proofs and more examples. The checks at the end mix the rules on purpose, because choosing the rule is the hard part.
+
+## Notation
+
+<NotationKey symbols={["sample-space", "event", "complement", "intersection", "union", "empty-set", "probability", "conditional", "partition", "sum", "independent", "conditionally-independent"]} />
+
+## The marble bag every example uses
+
+The examples in the tables draw from one bag of 10 marbles: 4 red and 6 blue, and some of each are striped. You draw one marble, and every marble is equally likely.
+
+|  | Striped | Plain | Total |
+| --- | --- | --- | --- |
+| **Red** | 3 | 1 | 4 |
+| **Blue** | 2 | 4 | 6 |
+| **Total** | 5 | 5 | 10 |
+
+So $P(\text{red}) = 4/10 = 2/5$, $P(\text{blue}) = 3/5$, $P(\text{striped}) = 5/10 = 1/2$ and $P(\text{red} \cap \text{striped}) = 3/10$.
+
+A second setup appears only where a rule needs cases: two bags. A fair coin picks bag 1, which holds 8 red marbles out of 10, or bag 2, which holds 4 red out of 10, and you draw from the bag it picked. When you draw twice, the first marble goes back before the second draw.
+
+## Which rule do I need?
+
+The wording of the question names the rule. Match the phrase, then check the warning before you calculate.
+
+| The question asks for | Rule | Watch out for |
+| --- | --- | --- |
+| "not A" | [Complement](#rules-for-one-event) | Nothing extra: any event works |
+| "A or B" | [Addition](#or-the-addition-rules) | Take the overlap off unless the events are disjoint |
+| "A given B" | [Conditional probability](#given-and-and-conditional-product-and-chain-rules) | Divide by $P(B)$, not by the whole space; needs $P(B) > 0$ |
+| "A and B" | [Product (multiplication) rule](#given-and-and-conditional-product-and-chain-rules) | Multiply by $P(A \mid B)$; plain $P(A)\,P(B)$ only for independent events |
+| "A, then B, then C" | [Chain rule](#given-and-and-conditional-product-and-chain-rules) | Each factor is given everything before it |
+| "B, when it depends on which case you are in" | [Total probability](#split-into-cases-or-turn-the-question-around) | The cases must not overlap and must cover everything |
+| "the cause, given the evidence" | [Bayes' theorem](#split-into-cases-or-turn-the-question-around) | Don't swap $P(A \mid B)$ and $P(B \mid A)$; include the base rate |
+| "does knowing B change A?" | [Independence test](#independence-and-its-look-alikes) | Disjoint is not independent |
+
+## Rules for one event
+
+These rules hold for any event, and they are the first consequences of the three axioms.
+
+| Rule | Formula | Needs | In the bag | Explained on |
+| --- | --- | --- | --- | --- |
+| Range | $0 \le P(A) \le 1$ | Any event | $P(\text{red}) = 2/5$ | [the three probability axioms](/probability/probability-axioms/#three-rules-for-any-probability) |
+| Certain and impossible | $P(\Omega) = 1$, $P(\emptyset) = 0$ | Nothing extra | $P(\text{red or blue}) = 1$ | [the whole sample space gets 1](/probability/probability-axioms/#the-whole-sample-space-gets-1) |
+| Complement | $P(A^\complement) = 1 - P(A)$ | Any event | $P(\text{not red}) = 1 - 2/5 = 3/5$ | [not A is one minus A](/probability/probability-axioms/#not-a-is-one-minus-a) |
+| Monotonicity | $A \subseteq B \Rightarrow P(A) \le P(B)$ | $A$ inside $B$ | $P(\text{red} \cap \text{striped}) = 3/10 \le P(\text{red}) = 2/5$ | [a bigger event is never less likely](/probability/probability-axioms/#a-bigger-event-is-never-less-likely) |
+
+For a discrete sample space, Grinstead and Snell's Theorem 1.1 lists nonnegativity, $P(\Omega) = 1$, monotonicity, additivity for two disjoint events and the complement rule (p. 22) <Cite id="grinstead2003" />.
+
+## "Or": the addition rules
+
+"A or B" adds the two probabilities, then takes off once what they share.
+
+| Rule | Formula | Needs | In the bag | Explained on |
+| --- | --- | --- | --- | --- |
+| Disjoint events | $P(A \cup B) = P(A) + P(B)$ | $A \cap B = \emptyset$ | $P(\text{red striped or blue striped}) = 3/10 + 2/10 = 1/2$ | [events that can't happen together add up](/probability/probability-axioms/#events-that-cant-happen-together-add-up) |
+| Any two events (inclusion–exclusion) | $P(A \cup B) = P(A) + P(B) - P(A \cap B)$ | Any events | $P(\text{red or striped}) = 2/5 + 1/2 - 3/10 = 3/5$; count: 4 red and 2 blue striped make 6 of 10 | [add, then take the overlap off once](/probability/probability-axioms/#a-or-b-add-then-take-the-overlap-off-once) |
+
+Countably many disjoint events add too, which is the third axiom in full: see [why the third axiom is countable](/probability/probability-axioms/#countable-additivity). Inclusion–exclusion is Grinstead and Snell's Theorem 1.4, equation (1.1) (p. 24) <Cite id="grinstead2003" />.
+
+## "Given" and "and": conditional, product and chain rules
+
+"Given B" keeps only the outcomes in B, and "and" multiplies along a chain of such conditions.
+
+| Rule | Formula | Needs | In the bag | Explained on |
+| --- | --- | --- | --- | --- |
+| Conditional probability | $P(A \mid B) = P(A \cap B)/P(B)$ | $P(B) > 0$ | $P(\text{striped} \mid \text{red}) = (3/10)/(2/5) = 3/4$ | [divide by B, not by everything](/probability/conditional-probability/#divide-by-b-not-by-everything) |
+| The other direction | $P(B \mid A) = P(A \cap B)/P(A)$ | $P(A) > 0$ | $P(\text{red} \mid \text{striped}) = (3/10)/(1/2) = 3/5$, not $3/4$ | [hat given scarf is not scarf given hat](/probability/conditional-probability/#hat-given-scarf-is-not-scarf-given-hat) |
+| Complement given $B$ | $P(A^\complement \mid B) = 1 - P(A \mid B)$ | $P(B) > 0$ | $P(\text{plain} \mid \text{red}) = 1 - 3/4 = 1/4$ | [not A, given B](/probability/conditional-probability/#not-a-given-b) |
+| Product (multiplication) rule | $P(A \cap B) = P(A \mid B)\,P(B)$ | $P(B) > 0$ | $P(\text{red} \cap \text{striped}) = 3/4 \times 2/5 = 3/10$; two reds without replacement: $4/10 \times 3/9 = 2/15$ | [the multiplication rule](/probability/conditional-probability/#the-multiplication-rule) |
+| Chain rule | $P(A \cap B \cap C) = P(A)\,P(B \mid A)\,P(C \mid A \cap B)$ | $P(A \cap B) > 0$ | Three reds without replacement: $4/10 \times 3/9 \times 2/8 = 1/30$ | [the chain rule derivation](/probability/conditional-probability/#formal-definition) |
+
+A conditional probability obeys every rule on this page, with B as the new whole space: see [why conditioning gives a probability](/probability/conditional-probability/#conditioning-is-a-probability).
+
+## Split into cases, or turn the question around
+
+Total probability adds up an event over cases, and Bayes' theorem divides one case's share by that total. In the table, $H_1, \ldots, H_m$ are the cases.
+
+| Rule | Formula | Needs | In the bag | Explained on |
+| --- | --- | --- | --- | --- |
+| Total probability | $P(B) = \sum_{k} P(B \mid H_k)\,P(H_k)$ | The $H_k$ share no outcome and cover $\Omega$; cases with $P(H_k) = 0$ are dropped | $P(\text{striped}) = 3/4 \times 2/5 + 1/3 \times 3/5 = 3/10 + 1/5 = 1/2$. Two bags: $P(\text{red}) = 1/2 \times 4/5 + 1/2 \times 2/5 = 3/5$ | [the law of total probability, worked through](/probability/law-of-total-probability/#weight-chance-multiply-add) |
+| Bayes' theorem | $P(A \mid B) = P(B \mid A)\,P(A)/P(B)$ | $P(A) > 0$, $P(B) > 0$ | $P(\text{red} \mid \text{striped}) = (3/4 \times 2/5)/(1/2) = 3/5$. Two bags: $P(\text{bag 1} \mid \text{red}) = (1/2 \times 4/5)/(3/5) = 2/3$ | [turn the question around](/probability/bayes-theorem/#turn-the-question-around) |
+| Odds form | $\dfrac{P(A \mid B)}{P(A^\complement \mid B)} = \dfrac{P(A)}{P(A^\complement)} \cdot \dfrac{P(B \mid A)}{P(B \mid A^\complement)}$ | $0 < P(A) < 1$, $P(B \mid A^\complement) > 0$ | Red against blue, given striped: $2/3 \times (3/4)/(1/3) = 2/3 \times 9/4 = 3/2$, so $P(\text{red} \mid \text{striped}) = 3/5$ | [the odds form](/probability/bayes-theorem/#odds-form) |
+| Updating twice | The posterior after one piece of evidence becomes the prior for the next | The pieces of evidence are independent given each case | Two bags, two reds: $P(\text{bag 1} \mid \text{both red}) = (1/2 \times 16/25)/(2/5) = 4/5$ | [updating twice](/probability/bayes-theorem/#updating-twice) |
+
+For cases that share no outcome and cover $\Omega$, Grinstead and Snell's Theorem 1.3 gives $P(B) = \sum_k P(B \cap H_k)$ (p. 23) <Cite id="grinstead2003" />. The multiplication rule turns each term into $P(B \mid H_k)\,P(H_k)$. For more on where the sum comes from, see [add up every way the evidence can happen](/probability/bayes-theorem/#add-up-every-way-the-evidence-can-happen). Two pages work these rules through on a single famous problem each: [the base rate fallacy in medical tests](/probability/base-rate-fallacy-medical-test/#count-four-groups-then-read-one-column) and [the Monty Hall problem](/probability/monty-hall-problem/#turn-it-around-with-bayes-theorem).
+
+## Independence and its look-alikes
+
+A and B are independent when knowing one leaves the other's probability unchanged, which the product test checks.
+
+| Rule | Formula | Needs | In the bag | Explained on |
+| --- | --- | --- | --- | --- |
+| Independent events | $A \perp\!\!\!\perp B \iff P(A \cap B) = P(A)\,P(B)$; the same as $P(A \mid B) = P(A)$ when $P(B) > 0$ | Nothing extra; an event of probability 0 is independent of everything | Red and striped are not independent: $3/10 \ne 2/5 \times 1/2 = 1/5$. Two draws with replacement are: $P(\text{red, red}) = 2/5 \times 2/5 = 4/25$ | [two ways to say it](/probability/independence/#two-ways-to-say-it) |
+| Mutual independence | Every group of two or more events multiplies | Checking only the pairs is not enough | Two coins on the independence page pass every pair and fail the triple | [three or more events](/probability/independence/#three-or-more-events) |
+| Mutually exclusive is not independent | $A \cap B = \emptyset$ with $P(A), P(B) > 0$ makes them dependent | Both events possible | Red and blue on one draw: $P(\text{both}) = 0$, but $2/5 \times 3/5 = 6/25$ | [exclusive events with positive probability are dependent](/probability/independence-vs-mutual-exclusivity/#exclusive-events-with-positive-probability-are-always-dependent) |
+| Conditional independence | $A \perp\!\!\!\perp B \mid C \iff P(A \cap B \mid C) = P(A \mid C)\,P(B \mid C)$ | $P(C) > 0$ | Given bag 1, $P(\text{red, red}) = 16/25 = (4/5)^2$. Overall $P(\text{red, red}) = 1/2 \times 16/25 + 1/2 \times 4/25 = 2/5$, not $(3/5)^2 = 9/25$ | [check it inside each group](/probability/conditional-independence/#check-it-inside-each-group) |
+
+Grinstead and Snell's Definition 4.1 counts two events as independent when at least one has probability 0, their Theorem 4.1 proves that the product test decides independence, and their Definition 4.2 asks every subset of the events to multiply (pp. 139–141) <Cite id="grinstead2003" />. [Naive Bayes](/probability/naive-bayes-classifier/#from-bayes-theorem-to-one-multiplication-per-feature) rests on the last row: it assumes the features are independent given the class.
+
+## The same rules under machine learning names
+
+Machine learning texts give some of these rules other names, and two of the names clash with this page. The middle column gives the name and equation in Goodfellow, Bengio and Courville's Chapter 3, which writes $P(x)$ for the probability that a random variable takes the value $x$.
+
+| Rule on this page | Name in the textbook | Where it shows up |
+| --- | --- | --- |
+| Total probability, for random variables: $P(x) = \sum_{y} P(x, y)$ | "Sum rule", marginalizing (§3.4, eq. 3.3) | [Mixture models](/probability/law-of-total-probability/#mixture-models-a-hidden-case-for-every-data-point) add up over a hidden group |
+| Conditional probability | Conditional probability, defined only when the condition has positive probability (§3.5, eq. 3.5) | A [classifier's output](/probability/conditional-probability/#a-classifiers-output) estimates $P(y \mid x)$ |
+| Chain rule | "Chain rule, or product rule" (§3.6, eq. 3.6) | A language model scores a text one [next token](/probability/conditional-probability/#the-next-token) at a time |
+| Independence and conditional independence | Independence and conditional independence (§3.7, eqs. 3.7–3.8) | [Naive Bayes](/probability/naive-bayes-classifier/) assumes the features are independent given the class |
+| Bayes' theorem | "Bayes' rule" (§3.11, eq. 3.42) | A [classifier's output as a posterior](/probability/bayes-theorem/#a-classifiers-output-is-a-posterior-estimate) |
+
+The book names marginalizing the sum rule, $P(x) = \sum_y P(x, y)$, in §3.4 <Cite id="goodfellow2016prob" />. It defines conditional probability only when the condition has positive probability, and calls the factorization of a joint distribution into one-variable conditionals "the chain rule, or product rule" (§§3.5–3.6) <Cite id="goodfellow2016prob" />. It writes independence with a single ⊥, and it computes the bottom of Bayes' rule as $P(y) = \sum_x P(y \mid x)\,P(x)$ (§§3.7 and 3.11) <Cite id="goodfellow2016prob" />. This site writes independence as ⫫ and keeps ⊥ for perpendicular vectors.
+
+Two warnings follow. The "sum rule" means marginalizing, not the addition rule for "or". And "product rule" can mean the two-event multiplication rule or the whole chain rule, depending on the book.
+
+## Check yourself
+
+The questions mix the rules on purpose. Name the rule first, then calculate.
+
+<CheckYourself level="standard" question="One draw from the bag. What is P(red or striped)?">
+$3/5$, by inclusion–exclusion: $2/5 + 1/2 - 3/10 = 3/5$. Adding $2/5 + 1/2 = 9/10$ counts the 3 red striped marbles twice. Counting agrees: 4 red marbles and 2 blue striped ones make 6 of 10. See [add, then take the overlap off once](/probability/probability-axioms/#a-or-b-add-then-take-the-overlap-off-once).
+</CheckYourself>
+
+<CheckYourself level="intuition" question="On one draw, are the events 'red' and 'blue' independent?">
+No. They are mutually exclusive: $P(\text{red} \cap \text{blue}) = 0$, but $P(\text{red})\,P(\text{blue}) = 2/5 \times 3/5 = 6/25$. Knowing the marble is red makes blue impossible, the opposite of "tells you nothing". See [independent vs mutually exclusive events](/probability/independence-vs-mutual-exclusivity/).
+</CheckYourself>
+
+<CheckYourself level="standard" question="In the class of 12 on the conditional probability page, what is P(hat | no scarf)?">
+$3/8$. Eight children have no scarf, and 3 of them wear hats. Divide by the 8 without a scarf, not by the 12 in the class and not by the 5 with hats. See [the class on the conditional probability page](/probability/conditional-probability/#divide-by-b-not-by-everything).
+</CheckYourself>
+
+<CheckYourself level="standard" question="Two marbles drawn from the bag without replacement. What is P(both blue)?">
+$1/3$, by the product rule with a conditional: $P(\text{first blue}) = 6/10$, and given that, 5 of the 9 marbles left are blue, so $6/10 \times 5/9 = 1/3$. The plain product $(3/5)^2 = 9/25$ is right only with replacement, where the draws are independent. See [the multiplication rule](/probability/conditional-probability/#the-multiplication-rule).
+</CheckYourself>
+
+<CheckYourself level="standard" question="A fair coin picks bag 1 (8 red of 10) or bag 2 (4 red of 10), and you draw one marble. What is P(red)?">
+$3/5$, by total probability: $1/2 \times 4/5 + 1/2 \times 2/5 = 2/5 + 1/5 = 3/5$. Averaging the two bags' chances works here only because the coin is fair; with an unfair coin the weights change. See [the law of total probability](/probability/law-of-total-probability/).
+</CheckYourself>
+
+<CheckYourself level="standard" question="1 person in 100 has a condition, and a test for it is right 9 times in 10 either way. What does a positive mean?">
+$P(\text{has it} \mid \text{positive}) = 1/12 \approx 0.083$, by Bayes' theorem with total probability in the bottom: $0.009/0.108$. The $9/10$ is $P(\text{positive} \mid \text{has it})$, the other direction. See [the base rate decides a lot](/probability/bayes-theorem/#the-base-rate-decides-a-lot).
+</CheckYourself>
+
+<CheckYourself level="proof" question="If A and B are independent, show that A and the complement of B are independent too.">
+$A$ splits into the disjoint pieces $A \cap B$ and $A \cap B^\complement$, so additivity gives $P(A \cap B^\complement) = P(A) - P(A \cap B)$. Independence turns this into $P(A) - P(A)\,P(B) = P(A)\,(1 - P(B))$, and the complement rule makes it $P(A)\,P(B^\complement)$. The rules used are additivity, the product test and the complement rule.
+</CheckYourself>
+
+<CheckYourself level="standard" question="Same two bags, and the marble you drew is red. What is P(bag 1 | red)?">
+$2/3$, by Bayes' theorem: $(1/2 \times 4/5)/(3/5) = (2/5)/(3/5) = 2/3$. It is not $P(\text{red} \mid \text{bag 1}) = 4/5$, which turns the question the other way. See [turn the question around](/probability/bayes-theorem/#turn-the-question-around).
+</CheckYourself>
+
+<CheckYourself level="proof" question="Draw twice, with replacement, from the bag the coin picked. Show that the two draws are independent given the bag but not overall.">
+Given bag 1, $P(\text{red, red}) = 16/25 = (4/5)^2$, and given bag 2, $4/25 = (2/5)^2$, so the draws multiply inside each bag. Overall, total probability gives $P(\text{red, red}) = 1/2 \times 16/25 + 1/2 \times 4/25 = 2/5$, but $P(\text{red})^2 = (3/5)^2 = 9/25$. Equivalently, $P(\text{second red} \mid \text{first red}) = (2/5)/(3/5) = 2/3$, more than $3/5$: a first red is evidence for bag 1. Independence given the bag does not give independence. See [conditional independence](/probability/conditional-independence/#why-a-common-cause-links-them-overall).
+</CheckYourself>
+
+## Key takeaways
+
+<Takeaways />
+
+## How this connects
+
+<ConceptMap />
+
+Each rule leads on to open questions on the page that teaches it:
+
+- [Sample spaces and events](/probability/sample-spaces-and-events/#research-frontier): tokenization as a choice of sample space.
+- [Probability axioms](/probability/probability-axioms/#research-frontier): language models whose outputs leak probability.
+- [Conditional probability](/probability/conditional-probability/#research-frontier): conditioning on an event of probability 0.
+- [Independent events](/probability/independence/#research-frontier): the i.i.d. assumption under distribution shift.
+- [Bayes' theorem](/probability/bayes-theorem/#research-frontier): a posterior over a network's weights.
+- [The naive Bayes classifier](/probability/naive-bayes-classifier/#research-frontier): why dependent features often leave the decision alone.
+
+## References
+
+<References />
