@@ -27,6 +27,11 @@ export interface DistributionState {
 	stage: Stage;
 	/** The pencil's whole-number position k; it sits at k / W. */
 	pencil: number;
+	/**
+	 * The k the reader pressed "Balance it" at, or null before that. The verdict judges this guess, so moving the
+	 * pencil afterward to explore doesn't rewrite it.
+	 */
+	guess: number | null;
 	/** Whether μ is shown: after "Balance it" on balance setups, from the start on spread setups. */
 	revealed: boolean;
 	spreadShown: boolean;
@@ -83,6 +88,7 @@ export function initialState(setupId: SetupId): DistributionState {
 		goal: null,
 		stage: 'numbers',
 		pencil: parkedPencil(setup),
+		guess: null,
 		revealed: setup.kind === 'spread',
 		spreadShown: false,
 		activePreset: openingPreset(setup),
@@ -159,7 +165,7 @@ function applyPreset(setup: Setup, state: DistributionState, name: string): Dist
 	const next = withValues(state, zipValues(setup, presetValues(setup, name)), name);
 	if (setup.kind === 'balance') {
 		// A new game is a new guess: the pencil parks and μ hides again.
-		return { ...next, pencil: parkedPencil(setup), revealed: false };
+		return { ...next, pencil: parkedPencil(setup), guess: null, revealed: false };
 	}
 	if (setup.kind === 'spread' && state.spreadShown && state.activePreset !== null && state.activePreset !== name) {
 		return { ...next, ghost: { sigma: standardDeviation(distributionNow(state)), preset: state.activePreset } };
@@ -204,7 +210,7 @@ export function reducer(state: DistributionState, action: Action): DistributionS
 		case 'balance': {
 			if (setup.kind !== 'balance') return state;
 			if (state.pencil === parkedPencil(setup)) return { ...state, refusal: { kind: 'parked' } };
-			return { ...state, revealed: true, refusal: null };
+			return { ...state, revealed: true, guess: state.pencil, refusal: null };
 		}
 		case 'spread': {
 			if (setup.kind !== 'spread') return state;

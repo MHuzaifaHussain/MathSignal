@@ -513,6 +513,9 @@ assert.deepEqual({ ...pencilMoved, pencil: balanceFresh.pencil }, balanceFresh);
 const balanced = dist.reducer(pencilMoved, { type: 'balance' });
 assert.equal(balanced.revealed, true);
 assert.equal(balanced.refusal, null);
+assert.equal(balanceFresh.guess, null);
+assert.equal(balanced.guess, 21, 'Balance it keeps the guess');
+assert.equal(dist.reducer(balanced, { type: 'pencil', k: 9 }).guess, 21, 'a pencil move after the reveal leaves the guess');
 const editedAfterReveal = dist.reducer(balanced, { type: 'step', id: '1', direction: 1 });
 assert.equal(editedAfterReveal.values['1'], 2);
 assert.equal(editedAfterReveal.refusal, null);
@@ -525,6 +528,7 @@ assert.equal(dist.reducer(buildFresh, { type: 'balance' }), buildFresh);
 // A preset re-parks the pencil and re-hides μ.
 const newGame = dist.reducer(balanced, { type: 'preset', name: 'One big prize' });
 assert.equal(newGame.revealed, false);
+assert.equal(newGame.guess, null, 'a preset clears the guess');
 assert.equal(newGame.pencil, -3);
 assert.equal(newGame.activePreset, 'One big prize');
 assert.deepEqual(newGame.values, faceValues([0, 0, 0, 0, 0, 6]));
@@ -711,7 +715,7 @@ assert.equal(distSay.pencilLine(pencilMoved), null);
 assert.equal(distSay.announcementFor(pencilMoved, { type: 'pencil', k: 21 }), 'Pencil at 3.50 candies.');
 
 /** candy-balance after Balance it, with the given preset's values and the pencil at k. */
-const balancedAt = (preset, k) => distAt('candy-balance', distSetups.PRESETS[preset], { activePreset: preset, pencil: k, revealed: true });
+const balancedAt = (preset, k) => distAt('candy-balance', distSetups.PRESETS[preset], { activePreset: preset, pencil: k, guess: k, revealed: true });
 assert.equal(distSay.balanceLine(balancedAt('Plain die', 21)), 'Balanced: your pencil at 3.50 is right under the mean, μ = 7/2 = 3.5 candies.');
 assert.equal(distSay.statusLine(balancedAt('Plain die', 21)), '6 equally likely faces. X = candies won. The mean is μ = 7/2 = 3.5 candies.');
 assert.equal(
@@ -747,6 +751,20 @@ assert.equal(distSay.balanceLine(balancedAt('All win 1', 6)), 'Balanced: your pe
 assert.equal(
 	distSay.balanceLine(balancedAt('All win 1', 0)),
 	'The plank tips down on the right, so the balance point is further right. The mean is μ = 1 candy; your pencil was at 0.00.',
+);
+
+// The verdict stays on the reader's guess when the pencil moves after the reveal; the live readout follows the pencil.
+const guessedAtZero = [{ type: 'preset', name: 'One big prize' }, { type: 'pencil', k: 0 }, { type: 'balance' }, { type: 'pencil', k: 9 }].reduce(dist.reducer, balanced);
+assert.equal(guessedAtZero.guess, 0);
+assert.equal(guessedAtZero.pencil, 9);
+assert.equal(
+	distSay.balanceLine(guessedAtZero),
+	'The plank tips down on the right. You put the pencil under the tallest bar, at 0, but the bar out at 6 sits far from the pencil and pulls harder. The balance point is μ = 1 candy.',
+);
+assert.equal(distSay.pencilLine(guessedAtZero), 'Pencil at 1.50: the bars pull 1 − 1.50 = −0.50 candies from it, so the plank tips left.');
+assert.equal(
+	distSay.balanceLine({ ...balancedAt('One big prize', 3), pencil: 30 }),
+	'The plank tips down on the right, so the balance point is further right. The mean is μ = 1 candy; your pencil was at 0.50.',
 );
 
 // The mean, two ways, once revealed.
@@ -853,7 +871,7 @@ let sweptStrings = 0;
 for (const setupId of ['candy-build', 'coins-heads', 'candy-balance', 'candy-spread']) {
 	const setup = distSetups.getSetup(setupId);
 	const presetStates = setup.presets.map((name) =>
-		distAt(setupId, distSetups.presetValues(setup, name), { activePreset: name, checked: true, revealed: true, spreadShown: true, pencil: 6, goal: setup.goalAfterCard ? 'open' : null }),
+		distAt(setupId, distSetups.presetValues(setup, name), { activePreset: name, checked: true, revealed: true, spreadShown: true, pencil: 6, guess: setup.kind === 'balance' ? 6 : null, goal: setup.goalAfterCard ? 'open' : null }),
 	);
 	const starts = [dist.initialState(setupId), ...presetStates];
 	if (setup.card) starts.push(distRun(setupId, { type: 'check' }, { type: 'check' }, { type: 'show-answer' }));

@@ -358,16 +358,21 @@ export function describePencil(setup: Setup, k: number): string {
 
 const tipSide = (sign: -1 | 0 | 1) => (sign > 0 ? 'right' : 'left');
 
-/** The verdict after "Balance it", from classifyGuess. Null until the reveal, so the pencil move stays a guess. */
+/**
+ * The verdict after "Balance it", from classifyGuess. Null until the reveal, so the pencil move stays a guess. It
+ * judges the stored guess, not the live pencil, so exploring afterward never rewrites the verdict.
+ */
 export function balanceLine(state: DistributionState): string | null {
 	const setup = setupOf(state);
 	if (setup.kind !== 'balance' || !state.revealed) return null;
+	const guess = state.guess;
+	if (guess === null) throw new Error(`DistributionBoard: setup "${setup.id}" is revealed with no guess; "Balance it" always stores one.`);
 	const d = distributionNow(state);
 	const center = mean(d);
-	const pencil = formatPencil(setup, state.pencil);
+	const pencil = formatPencil(setup, guess);
 	const mu = `μ = ${withUnit(setup, amountChain(center), center)}`;
-	const side = tipSide(torqueSign(d, state.pencil, setup.stepDenominator));
-	switch (classifyGuess(d, state.pencil, setup.stepDenominator)) {
+	const side = tipSide(torqueSign(d, guess, setup.stepDenominator));
+	switch (classifyGuess(d, guess, setup.stepDenominator)) {
 		case 'balanced':
 			return `Balanced: your pencil at ${pencil} is right under the mean, ${mu}.`;
 		case 'midrange':
