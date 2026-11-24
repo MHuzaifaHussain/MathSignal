@@ -1839,16 +1839,31 @@ const announcerRun = () => {
 	assert.deepEqual(alignPreset('long-b').slice(0, 2), ['a · b = 3 × 2 + 1 × 4 = 10.', 'Exactly 45°.']);
 	assert.equal(alignPreset('short-b', 'long-b').at(-1), 'Before: a · b = 5 at exactly 45°. Same angle, b twice as long, so a · b doubled.');
 	assert.ok(!alignPreset('perpendicular', 'long-b').at(-1).includes('doubled'));
+	// Announcements say the symbols the way the notation registry does, so a screen reader can't drop ‖ or ·; the
+	// visible readouts keep the symbols.
+	const spokenPreset = vd.announcementFor(vst.reducer(alignDone, { type: 'preset', id: 'short-b' }), { type: 'preset', id: 'short-b' });
+	assert.ok(spokenPreset.includes('Shadow of b along a: a dot b ÷ the length of a = 5 ÷ √10 ≈ 1.58.'), spokenPreset);
+	assert.ok(!/[‖·θû]/.test(spokenPreset));
+	assert.equal(vd.announcementFor(alignOpen, { type: 'sign', sign: 'zero' }), 'Your guess: a dot b is zero.');
+	assert.equal(vd.spoken('Along the track: a · û = 3. θ'), 'Along the track: a dot u hat = 3. theta');
+	for (const id of Object.keys(vs.SETUPS)) {
+		for (const action of [{ type: 'check' }, { type: 'reset' }, { type: 'stage', stage: 'arrows' }]) {
+			assert.ok(!/[‖·θû]/.test(vd.announcementFor(runVec(id, action), action)), `${id} ${action.type}`);
+		}
+	}
+	// A zero vector before a preset reads as a sentence, never "at with no angle".
+	const fromZero = vst.reducer({ ...alignDone, activePreset: 'perpendicular', b: [0, 0] }, { type: 'preset', id: 'long-b' });
+	assert.equal(vd.readoutLines(fromZero).at(-1), 'Before: a · b = 0, with no angle.');
 	// The shadow readout uses ‖a‖ for a length and keeps exact roots exact.
 	assert.equal(alignPreset('short-b')[2], 'Shadow of b along a: a · b ÷ ‖a‖ = 5 ÷ √10 ≈ 1.58.');
 	// A zero vector: a · b is 0 and the angle is undefined, never 0° or 90°.
 	const zeroB = runVec('align', { type: 'sign', sign: 'zero' }, { type: 'check' }, moveTo('b', [0, 0]));
 	assert.deepEqual(vd.readoutLines(zeroB), ['a · b = 0 because b is the zero vector. The angle is undefined: b has no direction.']);
 	assertNone(allText(zeroB), ['0°', '90°'], 'align with a zero b');
-	assert.equal(vd.handleAnnouncement(zeroB, 'b'), 'a = (4, 1), b = (0, 0). a · b = 0. The angle is undefined: b has no direction.');
+	assert.equal(vd.handleAnnouncement(zeroB, 'b'), 'a = (4, 1), b = (0, 0). a dot b = 0. The angle is undefined: b has no direction.');
 	assert.equal(vd.ochreElement(zeroB), null);
-	assert.equal(vd.handleAnnouncement(vst.reducer(alignDone, { type: 'preset', id: 'perpendicular' }), 'a'), 'a = (3, 1), b = (−1, 3). a · b = 0. Exactly 90°: perpendicular.');
-	assert.equal(vd.handleAnnouncement(vst.reducer(alignDone, moveTo('b', [4, 1])), 'b'), "a = (4, 1), b = (4, 1). a · b = 17. Exactly 0°: same direction. b can't go further east: its entries stay between −4 and 4. Both handles are at (4, 1).");
+	assert.equal(vd.handleAnnouncement(vst.reducer(alignDone, { type: 'preset', id: 'perpendicular' }), 'a'), 'a = (3, 1), b = (−1, 3). a dot b = 0. Exactly 90°: perpendicular.');
+	assert.equal(vd.handleAnnouncement(vst.reducer(alignDone, moveTo('b', [4, 1])), 'b'), "a = (4, 1), b = (4, 1). a dot b = 17. Exactly 0°: same direction. b can't go further east: its entries stay between −4 and 4. Both handles are at (4, 1).");
 	// b stays within ±4, so its shadow along a never leaves the board.
 	assert.deepEqual(vst.reducer(alignDone, moveTo('b', [5, 5])).b, [4, 4]);
 	assert.equal(vd.refusalText(alignDone, { kind: 'limit', id: 'b', axis: 'y', direction: 1 }), "b can't go further north: its entries stay between −4 and 4.");

@@ -285,7 +285,8 @@ function beforeLine(state: VectorState): string | null {
 	const before = state.before;
 	if (!before) return null;
 	const previousAngle = angleOf(before.a, before.b);
-	const opening = `Before: a · b = ${numberText(dot(before.a, before.b))} at ${angleWords(previousAngle)}.`;
+	const previousDot = numberText(dot(before.a, before.b));
+	const opening = previousAngle ? `Before: a · b = ${previousDot} at ${angleWords(previousAngle)}.` : `Before: a · b = ${previousDot}, with no angle.`;
 	const stretch = stretchFactor(state);
 	if (stretch === null || !sameAngle(previousAngle, angleOf(state.a, state.b))) return opening;
 	if (stretch === 2) return `${opening} Same angle, b twice as long, so a · b doubled.`;
@@ -481,7 +482,7 @@ export interface PlaneLabel {
 	at: Vec2;
 }
 
-const ABOVE: Vec2 = [0, 0];
+const ORIGIN: Vec2 = [0, 0];
 const zeroLabel = (id: string, at: Vec2): PlaneLabel => ({ id, text: 'zero vector', at: labelAnchor(at, at, 1) });
 
 function arrowLabel(id: string, text: string, tail: Vec2, tip: Vec2, side: 1 | -1): PlaneLabel {
@@ -527,15 +528,15 @@ export function planeLabels(state: VectorState): readonly PlaneLabel[] {
 			// b's label goes on the other side of the line from a's. When b runs straight back along a, its direction is
 			// reversed, so the same physical side needs the other sign.
 			const bSide = cross(a, b) === 0 && dot(a, b) < 0 ? 1 : -1;
-			labels.push(arrowLabel('a', trips ? 'trip a' : 'a', ABOVE, a, 1), arrowLabel('b', trips ? 'trip b' : 'b', a, sum, bSide));
+			labels.push(arrowLabel('a', trips ? 'trip a' : 'a', ORIGIN, a, 1), arrowLabel('b', trips ? 'trip b' : 'b', a, sum, bSide));
 			if (!state.checked) labels.push({ id: 'guess', text: 'your guess', at: labelAnchor(state.guess, state.guess, 1) });
-			else labels.push(arrowLabel('sum', trips ? 'both trips' : 'a + b', ABOVE, sum, -1));
+			else labels.push(arrowLabel('sum', trips ? 'both trips' : 'a + b', ORIGIN, sum, -1));
 			break;
 		}
 		case 'scale': {
 			const scaled = scale(state.scalar, a);
-			labels.push(arrowLabel('a', 'a', ABOVE, a, 1));
-			if (!isZero(a)) labels.push(arrowLabel('scaled', 'c a', ABOVE, scaled, -1));
+			labels.push(arrowLabel('a', 'a', ORIGIN, a, 1));
+			if (!isZero(a)) labels.push(arrowLabel('scaled', 'c a', ORIGIN, scaled, -1));
 			break;
 		}
 		case 'cart': {
@@ -544,7 +545,7 @@ export function planeLabels(state: VectorState): readonly PlaneLabel[] {
 			const pushSide = cross(b, a) >= 0 ? 1 : -1;
 			// The push's own label goes on its side away from the track.
 			const pushLabelSide = cross(a, b) > 0 ? -1 : 1;
-			labels.push(arrowLabel('a', 'your push', ABOVE, a, pushLabelSide), arrowLabel('track', `${trackName(state)}, length ${numberText(trackLength)}`, ABOVE, b, pushSide === 1 ? -1 : 1));
+			labels.push(arrowLabel('a', 'your push', ORIGIN, a, pushLabelSide), arrowLabel('track', `${trackName(state)}, length ${numberText(trackLength)}`, ORIGIN, b, pushSide === 1 ? -1 : 1));
 			const goal = setup.goal;
 			if (goal) {
 				const radius = Math.sqrt(goal.targetLengthSquared);
@@ -552,16 +553,16 @@ export function planeLabels(state: VectorState): readonly PlaneLabel[] {
 			}
 			const tip = shadowTip(b, a);
 			if (state.checked && tip && !isZero(a)) {
-				if (!isZero(tip)) labels.push(arrowLabel('shadow', 'moves the cart', ABOVE, tip, pushSide));
+				if (!isZero(tip)) labels.push(arrowLabel('shadow', 'moves the cart', ORIGIN, tip, pushSide));
 				if (!equals(tip, a)) labels.push(arrowLabel('rails', 'into the rails', tip, a, cross(b, a) > 0 ? -1 : 1));
 			}
 			break;
 		}
 		case 'align': {
-			labels.push(arrowLabel('a', 'a', ABOVE, a, 1), arrowLabel('b', 'b', ABOVE, b, -1));
+			labels.push(arrowLabel('a', 'a', ORIGIN, a, 1), arrowLabel('b', 'b', ORIGIN, b, -1));
 			// A shadow shorter than one grid unit sits too close to the center for a label; the readout names it.
 			const tip = state.checked ? shadowTip(a, b) : null;
-			if (tip && lengthSquared(tip) >= 1) labels.push(arrowLabel('shadow', 'shadow of b', ABOVE, tip, cross(a, b) > 0 ? -1 : 1));
+			if (tip && lengthSquared(tip) >= 1) labels.push(arrowLabel('shadow', 'shadow of b', ORIGIN, tip, cross(a, b) > 0 ? -1 : 1));
 			if (showsArc(state)) labels.push({ id: 'theta', text: 'θ', at: bisectorPoint(a, b, THETA_RADIUS) });
 			break;
 		}
@@ -748,18 +749,35 @@ function positionSentence(state: VectorState, handle: HandleId): string {
 	return `a = ${pairText(a)}, b = ${pairText(b)}. a · b = ${numberText(dot(a, b))}. ${alignShort(state)}`;
 }
 
+/**
+ * The live region's wording of the board's symbols. Screen readers at their default punctuation level skip ‖ and ·,
+ * which would turn "a · b ÷ ‖a‖" into "a b divided by a", so announcements say them as the notation registry does:
+ * "a dot b", "the length of a", "u hat", "theta". The visible text keeps the symbols.
+ */
+export function spoken(text: string): string {
+	return text
+		.replace(/‖([^‖]+)‖/g, 'the length of $1')
+		.replace(/ · /g, ' dot ')
+		.replace(/û/g, 'u hat')
+		.replace(/θ/g, 'theta');
+}
+
 /** What a handle's move says when it ends: where things are now, any edge it reached, and stacked handles. */
 export function handleAnnouncement(state: VectorState, handle: HandleId): string {
 	const parts = [positionSentence(state, handle), ...handleRefusals(state, handle).map((refusal) => edgeSentence(state, refusal))];
 	const points = handleIds(state).map((id) => handlePoint(state, id));
 	if (points.length === 2 && equals(points[0], points[1])) parts.push(`Both handles are at ${pairText(points[0])}.`);
-	return parts.join(' ');
+	return spoken(parts.join(' '));
 }
 
 const HANDLE_OF_VECTOR = (state: VectorState, id: VectorId): HandleId => (id === 'b' && setupOf(state).kind === 'add' ? 'sum' : id);
 
-/** What the live region says once an interaction ends. */
+/** What the live region says once an interaction ends, with symbols in their spoken form. */
 export function announcementFor(state: VectorState, action: Action): string {
+	return spoken(announcementText(state, action));
+}
+
+function announcementText(state: VectorState, action: Action): string {
 	switch (action.type) {
 		case 'move':
 			return handleAnnouncement(state, action.id);
