@@ -1,0 +1,111 @@
+---
+// A "Browse by subject" list shown in the search dialog while the search box is empty, so the dialog is
+// never a blank dead end. Built from the registries (subjects in domains.mjs, topics in topics.mjs), so a
+// topic appears here the moment it is released, and planned topics never do.
+// Starlight's dialog is not a slot, so the list is rendered once as a <template> and moved under the
+// search input by the script below. Recheck the `.search-container` hook on every Starlight upgrade.
+import { DOMAINS } from '../design/domains.mjs';
+import { TOPICS, topicHref } from '../data/topics.mjs';
+
+const subjects = DOMAINS.map((domain) => ({
+	label: domain.label,
+	topics: TOPICS.filter((topic) => topic.id.split('/')[0] === domain.directory)
+		.map((topic) => ({ title: topic.title, href: topicHref(topic) }))
+		.filter((topic): topic is { title: string; href: string } => topic.href !== null),
+}));
+---
+
+<template id="ms-search-browse">
+	<nav class="search-browse" aria-label="Browse by subject">
+		<p class="search-browse-title">Browse by subject</p>
+		<ul class="search-browse-subjects">
+			{
+				subjects.map((subject) => (
+					<li>
+						<p class="search-browse-subject">{subject.label}</p>
+						{subject.topics.length > 0 ? (
+							<ul class="search-browse-topics">
+								{subject.topics.map((topic) => (
+									<li>
+										<a href={topic.href}>{topic.title}</a>
+									</li>
+								))}
+							</ul>
+						) : (
+							<p class="search-browse-soon">Coming soon</p>
+						)}
+					</li>
+				))
+			}
+		</ul>
+	</nav>
+</template>
+
+<script>
+	/** Starlight renders Pagefind's input and results inside this element of the search dialog. */
+	const SEARCH_CONTAINER_SELECTOR = 'site-search .search-container';
+
+	const template = document.querySelector<HTMLTemplateElement>('#ms-search-browse');
+	const container = document.querySelector<HTMLElement>(SEARCH_CONTAINER_SELECTOR);
+	const browse = template?.content.firstElementChild?.cloneNode(true);
+
+	// The dev server has no search index and no container; the list only exists where search works.
+	if (container && browse instanceof HTMLElement) {
+		container.append(browse);
+		const dialog = container.closest('dialog');
+		/** Shown only while the box is empty; typing hands the space to the results. */
+		const sync = () => {
+			const input = container.querySelector<HTMLInputElement>('input[type="text"], input[type="search"]');
+			browse.hidden = Boolean(input?.value.trim());
+		};
+		container.addEventListener('input', sync);
+		// Pagefind's clear button empties the box without an input event, so check again after any click.
+		container.addEventListener('click', () => queueMicrotask(sync));
+		if (dialog) new MutationObserver(sync).observe(dialog, { attributes: true, attributeFilter: ['open'] });
+		sync();
+	}
+</script>
+
+<style>
+	.search-browse {
+		margin-block-start: 1.5rem;
+		font-family: var(--ms-font-ui);
+	}
+
+	.search-browse-title {
+		margin: 0 0 0.75rem;
+		font-size: 0.875rem;
+		color: var(--ms-ink-muted);
+	}
+
+	.search-browse ul {
+		margin: 0;
+		padding: 0;
+		list-style: none;
+	}
+
+	.search-browse-subjects {
+		display: grid;
+		gap: 1rem;
+	}
+
+	.search-browse-subject {
+		margin: 0;
+		font-weight: 600;
+		color: var(--ms-ink);
+	}
+
+	.search-browse-topics a {
+		display: inline-flex;
+		align-items: center;
+		min-height: 44px;
+		color: var(--ms-ink);
+	}
+
+	.search-browse-soon {
+		margin: 0.25rem 0 0;
+		font-size: 0.875rem;
+		font-style: italic;
+		color: var(--ms-ink-muted);
+	}
+</style>

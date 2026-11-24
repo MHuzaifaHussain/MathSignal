@@ -147,7 +147,7 @@ Overrides live in `src/components/overrides/` and are registered in `astro.confi
 
 | Override | What it changes |
 |---|---|
-| `Header` | Adds the subject strip (from `src/design/domains.mjs`) with an underline on the active subject. Search and the theme toggle stay Starlight's own; Search takes the space left beside the strip and drops "Ctrl K", then the word "Search", when it is narrow, so it never runs into the icons |
+| `Header` | Adds the subject strip (from `src/design/domains.mjs`) with an underline on the active subject. Search and the theme toggle stay Starlight's own; Search takes the space left beside the strip and drops "Ctrl K", then the word "Search", when it is narrow, so it never runs into the icons. While the search box is empty, the dialog shows "Browse by subject" (`src/components/SearchBrowse.astro`), built from `domains.mjs` and the published topics in `topics.mjs`, so released pages appear in it automatically; it hides as soon as you type |
 | `Sidebar` | Wraps Starlight's own sidebar and adds the subject list at the top of the mobile menu |
 | `TableOfContents` | Wraps Starlight's own "On this page" list and scrolls its panel (never the page) to keep the highlighted section in view when the list is taller than the window; jumps instead of gliding under reduced motion |
 | `Footer` | Wraps Starlight's own footer and adds the author, the licenses (CC BY 4.0 text, MIT code), a prefilled "Report an error on this page" link and a link to the About page |

@@ -9,6 +9,7 @@ import SiteTitle from '@astrojs/starlight/components/SiteTitle.astro';
 import SocialIcons from '@astrojs/starlight/components/SocialIcons.astro';
 import ThemeSelect from '@astrojs/starlight/components/ThemeSelect.astro';
 import DomainNav from './DomainNav.astro';
+import SearchBrowse from '../SearchBrowse.astro';
 ---
 
 <div class="header">
@@ -16,6 +17,7 @@ import DomainNav from './DomainNav.astro';
 	<div class="middle sl-flex print:hidden">
 		<DomainNav variant="strip" />
 		<div class="search-slot"><Search /></div>
+		<SearchBrowse />
 	</div>
 	<div class="sl-hidden md:sl-flex print:hidden right-group">
 		<div class="sl-flex social-icons"><SocialIcons /></div>
