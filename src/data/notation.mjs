@@ -143,6 +143,12 @@ export const NOTATION = [
 	},
 	{ key: 'feature-count', tex: 'N_{y,w}', say: '"N sub y w"', meaning: 'How many times feature w appears in the training examples of class y' },
 	{
+		key: 'log-odds-weights',
+		tex: 'b + \\sum_k w_k x_k',
+		say: '"b plus the sum of w k times x k"',
+		meaning: 'A linear log-odds score: the bias b plus one weight wₖ for each feature xₖ',
+	},
+	{
 		key: 'sigmoid',
 		tex: '\\operatorname{sigmoid}(z)',
 		say: '"sigmoid of z"',

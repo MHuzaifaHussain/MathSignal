@@ -4,17 +4,17 @@ description: "Naive Bayes multiplies one clue at a time into Bayes' theorem. Cla
 topic: probability/naive-bayes-classifier
 type: E
 objectives:
-  - Derive the naive Bayes rule, pick the y that makes P(y) times the product of P(x_k | y) largest, from Bayes' theorem and the assumption that the features are independent given the class.
+  - Derive the naive Bayes rule, pick the y that makes P(y) times the product of P(xₖ | y) largest, from Bayes' theorem and the assumption that the features are independent given the class.
   - Train a naive Bayes text classifier by counting words, with add-one smoothing, and classify a short email by hand.
   - Score classes with sums of logs instead of products, and explain why the product underflows.
   - Use a duplicated clue to explain why naive Bayes can pick the right class while its probabilities are too extreme, and how calibration fixes the probabilities.
   - Show that naive Bayes is a linear classifier in log-odds, and name logistic regression as its discriminative counterpart.
 takeaways:
-  - Naive Bayes is Bayes' theorem plus one assumption, that the features are independent once the class is known, so P(y | x) is proportional to P(y) times the product of the P(x_k | y). In the fruit bowl, "yellow" and "long" give banana 40/43 ≈ 0.930.
+  - Naive Bayes is Bayes' theorem plus one assumption, that the features are independent once the class is known, so P(y | x) is proportional to P(y) times the product of the P(xₖ | y). In the fruit bowl, "yellow" and "long" give banana 40/43 ≈ 0.930.
   - Training is counting. Add-one smoothing stops a single unseen word from ruling a class out. "win money now" is spam with probability 3/4 when smoothed, and exactly 1 without smoothing.
   - Work in logs. Multiplying 1,000 probabilities of 0.001 underflows to 0.0 in floating point, while the sum of their logs is -6907.76.
   - A correlated clue is counted more than once. With one clue seen 5 times, mean confidence rises from 0.784 to 0.970 while accuracy falls from 0.784 to 0.700. The right class often survives; the probabilities do not.
-  - In log-odds, naive Bayes is a linear classifier. Logistic regression fits the same form directly. Its error in the limit is never higher, while naive Bayes can approach its own limit with far fewer examples (Ng and Jordan).
+  - In log-odds, naive Bayes is a linear classifier. Logistic regression fits the same form directly; its error with unlimited data is never higher, while naive Bayes can approach its own limit with far fewer examples (Ng and Jordan).
 references:
   - mitchell2020
   - domingos1997
@@ -52,7 +52,7 @@ import WorkedExample from "../../../components/WorkedExample.astro";
 import BayesTheorem from "../../../components/react/BayesTheorem.tsx";
 
 <ConceptHeader
-  oneLiner="A naive Bayes classifier predicts the class y that makes P(y) ∏ P(x_k | y) largest: it is Bayes' theorem with the assumption that the features are independent once the class is known."
+  oneLiner="A naive Bayes classifier predicts the class whose share of the data, times the chance of each clue within that class, is largest: it is Bayes' theorem with the assumption that the features are independent once the class is known."
   difficulty="intermediate"
 />
 
@@ -69,32 +69,32 @@ The blind spot is clues that repeat each other. Two friends tell you the same ru
 </Analogy>
 
 <WhyThisMatters>
-Naive Bayes is a standard first baseline for text classification. It trains in one pass of counting, needing 2n numbers for n yes-or-no features and two classes where a full table needs 2(2ⁿ − 1) <Cite id="mitchell2020" />. Its scores are usually too extreme, which matters when one feeds a threshold or a cost.
+Naive Bayes is a standard first baseline for text classification. It trains in one pass of counting, with far fewer numbers to estimate than a full table <Cite id="mitchell2020" />. Its probabilities are usually too close to 0 or 1, which matters whenever you act on the number itself, for example by flagging everything above 0.9 or by weighing it against a cost.
 </WhyThisMatters>
 
 ## Count the same clue twice
 
-Make the board count one clue twice, and see whether the verdict changes. Before you touch anything: on the Wet lawn example, the front half of the lawn is wet, then you see the back half is wet too. Both halves always get wet together, so the back half tells you nothing new. Treat it as a second clue anyway: does rain become more likely than not? Sharper: by what factor do the odds of rain change?
+Make the board count one clue twice, and see whether the verdict changes. Before you touch anything: on the Wet lawn example, read the board's B, "the lawn is wet", as "the front half is wet". Then you see the back half is wet too. Both halves always get wet together, so the back half tells you nothing new. Treat it as a second clue anyway: does rain become more likely than not? Sharper: the odds of rain are P(rain) / P(no rain); by what factor do they change?
 
 Arrow keys move the sliders in steps of 0.01.
 
 1. Press Wet lawn. The readout says "P(A | B) = 0.429   P(B) = 0.420", which is 3/7.
-2. Naive Bayes treats the back half as a new clue with the same likelihoods, 0.9 and 0.3, so the posterior becomes the prior. Set the P(A) slider to 0.43, the nearest step to 3/7.
+2. Naive Bayes treats the back half as a new clue with the same rates, P(B | A) = 0.9 and P(B | not A) = 0.3, so leave those two sliders alone. Its starting point is now what you just learned, 3/7. Set the P(A) slider to 0.43, the nearest step to 3/7.
 3. Read P(A | B).
 
 <div class="not-content">
   <BayesTheorem client:visible />
 </div>
 
-Naive Bayes says yes: "P(A | B) = 0.694   P(B) = 0.558". Exactly, the odds go from 3:4 to 9:4, times the likelihood ratio 0.9/0.3 = 3 again, which is 9/13 ≈ 0.692; the board shows 0.694 because 0.43 is a little above 3/7. The truth is still 3/7 ≈ 0.429, yet counting the clue twice crossed 0.5. Tests whose errors really are independent given the condition do multiply, as in [updating twice](/probability/bayes-theorem/#updating-twice).
+Naive Bayes says yes: "P(A | B) = 0.694   P(B) = 0.558". The odds of rain triple. Computed exactly: 3/7 is odds of 3:4, the second clue multiplies them by the likelihood ratio 0.9/0.3 = 3 to give 9:4, and odds of 9:4 are a probability of 9/13 ≈ 0.692. The board shows 0.694 because 0.43 is a little above 3/7. The truth is still 3/7 ≈ 0.429, yet counting the clue twice crossed 0.5. Tests whose errors really are independent given the condition do multiply, as in [updating twice](/probability/bayes-theorem/#updating-twice).
 
 ## From Bayes' theorem to one multiplication per feature
 
-Naive Bayes applies Bayes' theorem to every class and replaces the hard part, P(x₁, …, xₙ | y), with a product of one-feature probabilities.
+Write y for the class (banana, spam) and x₁, …, xₙ for the n features, the clues (yellow, long, each word). Naive Bayes applies Bayes' theorem to every class and replaces the hard part, P(x₁, …, xₙ | y), the chance of seeing all the clues together, with the product P(x₁ | y) × … × P(xₙ | y).
 
-With n yes-or-no features, a full table of P(x | y) for two classes needs 2(2ⁿ − 1) numbers: for n = 30, 2,147,483,646. Naive Bayes needs 2n = 60 (§1.1 and §2.2, equation 1) <Cite id="mitchell2020" />.
+With n yes-or-no features, a full table of P(x | y) for two classes needs 2(2ⁿ − 1) numbers: for n = 30, 2,147,483,646. Naive Bayes needs 2n = 60 for P(x | y), plus the class shares (§1.1 and §2.2, equation 1) <Cite id="mitchell2020" />.
 
-The assumption is that the features are [conditionally independent](/probability/conditional-independence/) given the class: once you know y, one feature says nothing more about another. That is not independence. In the bowl, yellow and long are strongly linked overall, P(yellow and long) = 0.41 against P(yellow) × P(long) = 0.71 × 0.48 = 0.3408. Within bananas they are close to independent: 38 of 50 are both, 0.76, against 0.8 × 0.9 = 0.72.
+The assumption is that the features are [conditionally independent](/probability/conditional-independence/) given the class: once you know y, one feature says nothing more about another. That is not the same as plain independence across the whole bowl. Counting the whole bowl, 71 fruits are yellow (40 + 27 + 4) and 48 are long (45 + 3 + 0), but 41 are both (38 bananas, 3 lemons). So P(yellow and long) = 0.41, against P(yellow) × P(long) = 0.71 × 0.48 = 0.3408: strongly linked. Within bananas they are close to independent: 38 of the 50 are both, 0.76, against 0.8 × 0.9 = 0.72.
 
 <Simpler label="the bowl counted directly, no assumption">
 
@@ -112,30 +112,34 @@ Of the 41 yellow, long fruits, 38 are bananas: exactly 38/41 ≈ 0.927, against 
 
 To train naive Bayes, count each class's share of the training set and how often each feature appears within each class: the maximum-likelihood estimates (§2.3, equations 6 and 8) <Cite id="mitchell2020" />.
 
-One count of 0 vetoes a class: the apple's "long" rate of 0 makes its product 0 whatever else is seen. Mitchell's equation 7 adds l to the count of each of a feature's J values, lJ imagined examples spread evenly, a MAP estimate under a Dirichlet prior; l = 1 is Laplace smoothing <Cite id="mitchell2020" />. Writing α for l, α = 1 gives banana ≈ 0.909, lemon ≈ 0.086, apple ≈ 0.005.
+One count of 0 vetoes a class: the apple's "long" rate of 0 makes its product 0 whatever else is seen. Add-one (Laplace) smoothing adds 1 to every count and adds the number of possible values to the total, here 2 (yes or no). The apple's "long" rate becomes (0 + 1)/(20 + 2) = 1/22 instead of 0, and the banana's "yellow" rate becomes (40 + 1)/(50 + 2) = 41/52. The 1 is called α. With α = 1 the bowl gives banana ≈ 0.909, lemon ≈ 0.086, apple ≈ 0.005 <Cite id="mitchell2020" />.
 
 <GoDeeper label="why the best fit is the relative frequency" id="mle-is-counting">
 
 <StepThrough title="Maximum likelihood gives the relative frequency" rigor="sketch">
 
-1. Fix a class y with at least one training word, and let N(w) be word w's count in it. Maximize Σ N(w) log P(w | y) over the words, subject to Σ P(w | y) = 1.
-2. A Lagrange multiplier λ gives N(w) / P(w | y) = λ for every word with N(w) > 0.
-3. Summing fixes λ as the class's word total, so P(w | y) = N(w) / (all words in class y).
+1. Fix a class y with at least one training word, and let $N_{y,w}$ be word w's count in it. Maximize $\sum_w N_{y,w} \log P(w \mid y)$ over the words, subject to Σ P(w | y) = 1.
+2. A Lagrange multiplier λ gives $N_{y,w} / P(w \mid y) = \lambda$ for every word with $N_{y,w} > 0$.
+3. Summing fixes λ as the class's word total, so $P(w \mid y) = N_{y,w}$ / (all words in class y).
 4. A count of 0 gives probability 0: the veto smoothing removes.
 
 </StepThrough>
+
+Mitchell's equation 7 adds l to the count of each of a feature's J possible values: lJ imagined examples spread evenly. It is a MAP estimate under a Dirichlet prior, and l = 1 is Laplace smoothing; this page writes α for l <Cite id="mitchell2020" />.
 
 </GoDeeper>
 
 ## Add logs instead of multiplying
 
-Real classifiers add log probabilities, because a product of many small numbers rounds to zero: 0.001 multiplied by itself 1,000 times is exactly 0.0 in 64-bit floating point, while 1000 × log 0.001 = −6907.755. Log is increasing, so the winner is unchanged: pick the y with the largest log P(y) + Σₖ log P(xₖ | y). For two classes this is the [odds form](/probability/bayes-theorem/#odds-form) of Bayes' theorem, one log likelihood ratio per feature.
+Real classifiers add log probabilities, because a product of many small numbers rounds to zero: the product of 1,000 factors of 0.001 is exactly 0.0 in 64-bit floating point, while 1000 × log 0.001 = −6907.755 (natural log, as everywhere on this page; any base picks the same winner). Log is increasing, so the winner is unchanged: pick the y with the largest log P(y) + Σₖ log P(xₖ | y). For two classes this is the [odds form](/probability/bayes-theorem/#odds-form) of Bayes' theorem, one log likelihood ratio per feature.
 
-### Right class, wrong probabilities
+## Right class, wrong probabilities
 
 When features are correlated, naive Bayes counts the same evidence more than once, so its probabilities drift toward 0 and 1, while its pick of class often survives.
 
-An exact example: classes + and − each have probability 1/2, and four yes-or-no features are each "yes" with probability 0.7 in class + and 0.3 in class −, independent given the class. Copy feature 1 so the classifier sees it several times, and score all 16 patterns. A fair coin breaks a posterior of exactly 1/2, so it counts as half right.
+An exact example: classes + and − each have probability 1/2, and four yes-or-no features are each "yes" with probability 0.7 in class + and 0.3 in class −, independent given the class. Copy feature 1 so the classifier sees it several times, and score all 16 patterns. Each pattern is weighted by how often it occurs. When the classifier says exactly 1/2, it is scored as half right, as if it flipped a coin.
+
+Accuracy is how often the chosen class is right. Mean confidence is the probability naive Bayes gives its chosen class, on average. Log loss and the Brier score are penalties for the probabilities (lower is better; a confident wrong answer costs most). AUC is the chance that a random + case scores higher than a random − case, counting ties as half.
 
 | Feature 1 seen | Accuracy | Mean confidence | Log loss | Brier score | AUC |
 | --- | --- | --- | --- | --- | --- |
@@ -144,11 +148,11 @@ An exact example: classes + and − each have probability 1/2, and four yes-or-n
 | 3 times | 0.742 | 0.885 | 0.600 | 0.189 | 0.847 |
 | 5 times | 0.700 | 0.970 | 0.998 | 0.262 | 0.842 |
 
-Seen twice, only the probabilities get worse; the changes are ties (true posterior exactly 1/2) that naive Bayes now breaks. Accuracy first drops at three; AUC (ranking) falls with every copy. The email (yes, no, no, no) has true P(+) = 9/58 ≈ 0.155; naive Bayes says 3/10 at two copies, 1/2 at three, and 49/58 ≈ 0.845 at five. Calibration, or dropping redundant features, helps.
+Seen twice, accuracy does not move: the only patterns whose class changes are the ties (two yeses, two nos), where the truth is exactly 1/2. Naive Bayes now picks a side there and is right half the time, the same as the coin. Confidence, log loss, Brier score and AUC all get worse. Accuracy first drops at three copies; AUC (ranking) falls with every copy. Take the pattern (yes, no, no, no). Its true P(+) is 9/58 ≈ 0.155, which naive Bayes matches when feature 1 is seen once. It says 3/10 at two copies, 1/2 at three, and 49/58 ≈ 0.845 at five: the wrong class. Calibration, or dropping redundant features, helps.
 
 ## Notation
 
-<NotationKey symbols={["class-label", "feature-vector", "probability", "conditional", "conditionally-independent", "product", "sum", "proportional", "argmax", "log", "pseudocount", "feature-count", "density", "z"]} />
+<NotationKey symbols={["class-label", "feature-vector", "probability", "conditional", "conditionally-independent", "product", "sum", "proportional", "argmax", "log", "pseudocount", "feature-count", "log-odds-weights", "density", "z"]} />
 
 <PreciseStatement>
 
@@ -164,7 +168,7 @@ $$
 P(y \mid \mathbf{x}) = \frac{P(y) \prod_{k=1}^{n} P(x_k \mid y)}{\sum_{y'} P(y') \prod_{k=1}^{n} P(x_k \mid y')} \propto P(y) \prod_{k=1}^{n} P(x_k \mid y),
 $$
 
-and under 0-1 loss the best prediction is $\arg\max_y P(y) \prod_{k} P(x_k \mid y)$. Continuous features use densities $p(x_k \mid y)$, normal ones in Gaussian naive Bayes. Without the assumption the formula still defines a classifier, not the true posterior. Boundary cases: if every class scores 0 the posterior is 0/0, undefined; a class with a factor of 0 is never predicted; ties are broken arbitrarily.
+and under 0-1 loss the best prediction is $\arg\max_y P(y) \prod_{k} P(x_k \mid y)$. Continuous features use densities $p(x_k \mid y)$, normal ones in Gaussian naive Bayes. Without the assumption the formula still defines a classifier, not the true posterior. Boundary cases, with rates estimated from data: if every class scores 0 the posterior is 0/0, undefined; a class with a 0 factor is never predicted; ties are broken arbitrarily.
 
 </PreciseStatement>
 
@@ -173,7 +177,7 @@ and under 0-1 loss the best prediction is $\arg\max_y P(y) \prod_{k} P(x_k \mid 
 <StepThrough title="The naive Bayes rule from Bayes' theorem" rigor="full">
 
 1. Bayes' theorem over the classes, for $P(\mathbf{x}) > 0$, puts $P(\mathbf{x} \mid y)\,P(y)$ over a sum that does not depend on $y$.
-2. The chain rule: $P(x_1, \ldots, x_n \mid y) = \prod_{k=1}^{n} P(x_k \mid x_1, \ldots, x_{k-1}, y)$.
+2. The chain rule: $P(x_1, \ldots, x_n \mid y) = \prod_{k=1}^{n} P(x_k \mid x_1, \ldots, x_{k-1}, y)$, for a class with $P(\mathbf{x}, y) > 0$; a class with $P(\mathbf{x}, y) = 0$ gets posterior 0 on both sides, so the identity holds trivially.
 3. Conditional independence given $y$ turns each factor into $P(x_k \mid y)$.
 4. The argmax can ignore that sum.
 5. log is strictly increasing, so $\arg\max_y \big[\log P(y) + \sum_k \log P(x_k \mid y)\big]$ picks the same class.
@@ -190,7 +194,7 @@ $$
 \log \frac{P(+ \mid \mathbf{x})}{P(- \mid \mathbf{x})} = b + \sum_{k=1}^{n} w_k x_k, \quad w_k = \log \frac{\theta_k (1 - \phi_k)}{\phi_k (1 - \theta_k)}, \quad b = \log \frac{P(+)}{P(-)} + \sum_{k=1}^{n} \log \frac{1 - \theta_k}{1 - \phi_k}.
 $$
 
-4. "Log-odds > 0" is a straight cut through feature space. Domingos and Pazzani prove the general nominal case (§6, Theorem 4) <Cite id="domingos1997" />, and Ng and Jordan write the same sum as their equation 2 <Cite id="ng2001" />.
+4. "Log-odds > 0" is a straight cut through feature space. Domingos and Pazzani show the same for any nominal attributes in the proof of their Theorem 4 (§6) <Cite id="domingos1997" />, and Ng and Jordan write the same sum as their equation 2 <Cite id="ng2001" />.
 
 </StepThrough>
 
@@ -209,17 +213,17 @@ $$
 
 <WorkedExample number={1} title="The fruit bowl, three classes">
 
-The scores are banana $9/25$, lemon $27/1000$ and apple 0, totaling $387/1000$: naive Bayes gives $40/43$, $3/43$ and 0. The joint counts give exactly $38/41 \approx 0.927$ and $3/41$. Same winner.
+The scores are banana $9/25$, lemon $27/1000$ and apple 0, totaling $387/1000$: naive Bayes gives $40/43$, $3/43$ and 0. Counting the bowl directly, 41 fruits are yellow and long: 38 bananas and 3 lemons, so exactly $38/41 \approx 0.927$ and $3/41$. Same winner.
 
 </WorkedExample>
 
 <WorkedExample number={2} title="A five-email spam filter, with and without smoothing">
 
-Spam: "win money now", "win prize now". Ham: "meeting now", "lunch money", "meeting notes". So $P(\text{spam}) = 2/5$ and $P(\text{ham}) = 3/5$. Spam counts win 2, money 1, now 2, prize 1; ham counts meeting 2, now 1, lunch 1, money 1, notes 1. Each class has 6 words, the vocabulary 7, so with $\alpha = 1$ every denominator is 13.
+Spam: "win money now", "win prize now". Ham: "meeting now", "lunch money", "meeting notes". So $P(\text{spam}) = 2/5$ and $P(\text{ham}) = 3/5$. Spam counts win 2, money 1, now 2, prize 1; ham counts meeting 2, now 1, lunch 1, money 1, notes 1. Each class has 6 words and the vocabulary has 7 different words. With $\alpha = 1$ each word's count gets +1 and each total gets $1 \times 7$, so every denominator is $6 + 7 = 13$ and "win" in spam is $(2 + 1)/13 = 3/13$.
 
 For "win money now", spam scores $\frac{2}{5} \cdot \frac{3}{13} \cdot \frac{2}{13} \cdot \frac{3}{13} = 36/10985$ and ham $\frac{3}{5} \cdot \frac{1}{13} \cdot \frac{2}{13} \cdot \frac{2}{13} = 12/10985$, so $P(\text{spam}) = 3/4$. In logs, $-5.7208$ against $-6.8194$, a gap of $\log 3 = 1.0986$. Unsmoothed, ham never saw "win" and scores 0 against spam's $1/135$, so $P(\text{spam}) = 1$.
 
-For "win prize meeting", unsmoothed, both score 0: $0/0$. Smoothed, $12/10985$ against $9/10985$: $P(\text{spam}) = 4/7 \approx 0.571$.
+For "win prize meeting", unsmoothed, spam never saw "meeting" and ham never saw "win", so both score 0 and the posterior is $0/0$, undefined. Smoothed, $12/10985$ against $9/10985$: $P(\text{spam}) = 4/7 \approx 0.571$.
 
 </WorkedExample>
 
@@ -229,7 +233,7 @@ Banana lengths are normal with mean 18 cm and standard deviation 2 cm, lemon len
 
 <div slot="solution">
 
-Banana has $z = -3$ and lemon $z = 4$, giving densities $0.002216$ and $0.0001338$. The scores are $0.5 \times 0.8 \times 0.002216 = 0.000886$ and $0.3 \times 0.9 \times 0.0001338 = 0.0000361$. The $\sqrt{2\pi}$ cancels in the ratio, leaving $\tfrac{1}{2} e^{-4.5 + 8} = \tfrac{1}{2} e^{3.5}$, so the odds are $\tfrac{20}{27} e^{3.5} \approx 24.53$, the log-odds $\log(20/27) + 3.5 \approx 3.1999$, and $P(\text{banana}) \approx 0.9608$.
+Banana has $z = (12 - 18)/2 = -3$ and lemon $z = (12 - 8)/1 = 4$ (how many standard deviations 12 cm is from each mean), giving densities $0.002216$ and $0.0001338$. The scores are $0.5 \times 0.8 \times 0.002216 = 0.000886$ and $0.3 \times 0.9 \times 0.0001338 = 0.0000361$. In the ratio of densities the $\sqrt{2\pi}$ cancels, the standard deviations give $1/2$, and the exponents give $e^{-(-3)^2/2 + 4^2/2} = e^{-4.5 + 8}$, so the ratio is $\tfrac{1}{2} e^{3.5}$, so the odds are $\tfrac{20}{27} e^{3.5} \approx 24.53$, the log-odds $\log(20/27) + 3.5 \approx 3.1999$, and $P(\text{banana}) \approx 0.9608$.
 
 </div>
 
@@ -259,17 +263,17 @@ $$
 \log \frac{P(+ \mid \mathbf{x})}{P(- \mid \mathbf{x})} = b + \sum_{k=1}^{n} w_k x_k,
 $$
 
-choosing b and the $w_k$ directly instead of from counts (§2, equation 3), a generative-discriminative pair (§1) <Cite id="ng2001" />. Its limiting error is never higher (Proposition 1), and it needs on the order of n examples to approach it (Proposition 2); naive Bayes's parameters settle after on the order of log n (Lemma 3), and under stated conditions its error follows (Theorem 4) <Cite id="ng2001" />. On 15 UCI datasets naive Bayes usually led with few examples and logistic regression caught up or overtook it later, except mainly on very small datasets (§4, Figure 1) <Cite id="ng2001" />. Gaussian naive Bayes with class-independent variances implies exactly the logistic form (§3.1) <Cite id="mitchell2020" />.
+choosing b and the $w_k$ directly instead of from counts (§2, equation 3). Naive Bayes is generative (it models how each class produces features); logistic regression is discriminative (it models P(y | x) directly) (§1) <Cite id="ng2001" />. Its limiting error is never higher (Proposition 1), and it needs on the order of n examples to approach it (Proposition 2); naive Bayes's parameters settle after on the order of log n (Lemma 3), and under stated conditions its error follows (Theorem 4, Corollary 6) <Cite id="ng2001" />. On 15 UCI datasets naive Bayes usually led with few examples and logistic regression caught up or overtook it later; the few datasets where it never caught up were mostly very small (§4, Figure 1) <Cite id="ng2001" />. Gaussian naive Bayes in which each feature has the same variance in every class gives exactly the logistic form (§3.1) <Cite id="mitchell2020" />.
 
 ### Calibrating its scores
 
-Models with unrealistic independence assumptions, such as naive Bayes, push predicted probabilities toward 0 and 1 (abstract) <Cite id="niculescu2005" />. Platt scaling passes a score $s$ through a sigmoid with two numbers $\gamma$ and $\delta$ fitted by maximum likelihood on a separate calibration set (§2.1, equation 1) <Cite id="niculescu2005" />:
+Calibration refits a model's scores so that a predicted 0.8 is right about 80% of the time. Naive Bayes needs it: models with unrealistic independence assumptions, such as naive Bayes, push predicted probabilities toward 0 and 1 (abstract) <Cite id="niculescu2005" />. Platt scaling passes a score $s$ through a sigmoid with two numbers $\gamma$ and $\delta$ fitted by maximum likelihood on a separate calibration set (§2.1, equation 1) <Cite id="niculescu2005" />:
 
 $$
 P(y = 1 \mid s) = \frac{1}{1 + e^{\gamma s + \delta}}.
 $$
 
-For naive Bayes the reliability plots are an inverted sigmoid, so a sigmoid is the wrong correction and isotonic regression does better (§4) <Cite id="niculescu2005" />.
+A reliability plot compares predicted probability with how often the class really occurs. For naive Bayes it bends the opposite way from an S-shaped sigmoid curve, so Platt's S-curve is the wrong correction, and isotonic regression, which fits any increasing curve, does better (§4) <Cite id="niculescu2005" />.
 
 ## Train and score the classifier in code
 
@@ -344,6 +348,7 @@ assert both == 41
 assert Fraction(38, both) == Fraction(38, 41) and readout(Fraction(38, 41)) == "0.927"
 assert Fraction(3, both) == Fraction(3, 41)
 # Linked overall, nearly independent within bananas.
+assert sum(yl + ys for yl, ys, _, _ in joint.values()) == 71 and sum(yl + nl for yl, _, nl, _ in joint.values()) == 48
 assert Fraction(both, 100) == Fraction(41, 100) and Fraction(71, 100) * Fraction(48, 100) == Fraction(3408, 10000)
 assert Fraction(38, 50) == Fraction(76, 100) and Fraction(8, 10) * Fraction(9, 10) == Fraction(72, 100)
 
@@ -355,6 +360,7 @@ smoothed_rates = {
 smoothed_fruit = normalize(nb_scores(priors, smoothed_rates, ["yellow", "long"]))
 for label, expected in (("banana", 0.909), ("lemon", 0.086), ("apple", 0.005)):
     assert abs(float(smoothed_fruit[label]) - expected) < 0.001
+assert smoothed_rates["apple"]["long"] == Fraction(1, 22) and smoothed_rates["banana"]["yellow"] == Fraction(41, 52)
 print("fruit, smoothed:", {label: readout(p) for label, p in smoothed_fruit.items()})
 
 # Parameter counts for n = 30 yes-or-no features and two classes.
@@ -499,7 +505,7 @@ def one_email(copies):
     return odds / (1 + odds)
 
 
-assert [one_email(c) for c in (1, 2, 3, 5)] == [Fraction(9, 58), Fraction(3, 10), Fraction(1, 2), Fraction(49, 58)]
+assert [one_email(c) for c in (1, 2, 3, 4, 5)] == [Fraction(9, 58), Fraction(3, 10), Fraction(1, 2), Fraction(7, 10), Fraction(49, 58)]
 assert readout(Fraction(9, 58)) == "0.155" and readout(Fraction(49, 58)) == "0.845"
 # The same email through the linear form: w_k and b from the second StepThrough.
 weight = math.log((0.7 * 0.7) / (0.3 * 0.3))
@@ -536,11 +542,9 @@ print(f"Gaussian: P(banana) = {odds / (1 + odds):.4f}")
 
 The same model as a PyTorch layer, for your own machine:
 
-```python title="naive_bayes_pytorch.py" {7-9}
+```python title="naive_bayes_pytorch.py" {5-7}
 import math
 import torch
-
-torch.manual_seed(0)  # nothing here is random; kept by convention
 
 # Four yes-or-no features, each "yes" 7 times in 10 in class + and 3 in 10 in class -.
 theta, phi, prior_plus = 0.7, 0.3, 0.5
@@ -560,11 +564,11 @@ print(torch.sigmoid(layer(x)).item())  # P(+ | x): the 9/58 the exact code check
 
 <ResearchFrontier reviewed="2026-11-24">
 
-**Classifying well is not estimating well.** In Domingos and Pazzani's §4, attribute B copies A and the classes are equally likely. For a third attribute C, the optimal choice is + when $P(+ \mid C) > 1 - P(+ \mid A)$; naive Bayes, counting A twice, picks + when $P(+ \mid C) > \frac{(1 - P(+ \mid A))^2}{P(+ \mid A)^2 + (1 - P(+ \mid A))^2}$. They disagree only between the curves of their Figure 1 <Cite id="domingos1997" />, as at $P(+ \mid A) = 0.7$, $P(+ \mid C) = 0.2$, where the naive threshold is $9/58 \approx 0.155$ instead of $0.3$. Their Theorem 1 gives the exact condition for naive Bayes to be optimal on one example under 0-1 loss; by Corollary 1 it holds in half the space of possible probability values, while under squared-error loss it is optimal only where independence holds (§5) <Cite id="domingos1997" />. It beat the C4.5 decision tree on 19 of 28 UCI datasets (79.1% against 77.2% on average), and measured dependence barely predicted the gap, $R^2 = 0.04$ (§3) <Cite id="domingos1997" />.
+**Classifying well is not estimating well.** In Domingos and Pazzani's §4, the classes are equally likely, a third attribute C is independent of A given the class, and attribute B is a copy of A. The optimal choice is + when $P(+ \mid C) > 1 - P(+ \mid A)$; naive Bayes, counting A twice, picks + when $P(+ \mid C) > \frac{(1 - P(+ \mid A))^2}{P(+ \mid A)^2 + (1 - P(+ \mid A))^2}$. They disagree only between the curves of their Figure 1 <Cite id="domingos1997" />, as at $P(+ \mid A) = 0.7$, $P(+ \mid C) = 0.2$, where the naive threshold is $9/58 \approx 0.155$ instead of $0.3$. Their Theorem 1 gives the exact condition for naive Bayes to be optimal on one example under 0-1 loss; by Corollary 1 it holds in half the space of possible probability values, while under squared-error loss it is optimal only where independence holds (§5) <Cite id="domingos1997" />. It beat the C4.5 decision tree on 19 of 28 UCI datasets (79.1% against 77.2% on average), and measured dependence barely predicted the gap, $R^2 = 0.04$ (§3) <Cite id="domingos1997" />.
 
 **Why dependence often leaves the decision alone.** Zhang argues this does not explain why strong dependencies fail to flip the decision (Related Work) <Cite id="zhang2004" />. He writes the true classifier as naive Bayes times a product of local dependence ratios (Theorem 1) and states exactly when the two agree (Theorem 2): dependencies spread evenly across classes, or canceling, leave the decision alone. Theorem 3 gives a correlated Gaussian case where naive Bayes stays optimal; his abstract still calls the true reason open <Cite id="zhang2004" />.
 
-**What stays unsettled.** These are characterizations, not tests: checking the global condition on a test sample is in general not possible without the true class probabilities, and for a whole domain the work grows exponentially with the number of attributes (§6, p. 115) <Cite id="domingos1997" />. Nor do good decisions bring good probabilities: calibration cannot fully correct naive Bayes (§4) <Cite id="niculescu2005" />.
+**What stays unsettled.** These are characterizations, not tests: checking the global condition on a test sample is in general not possible without the true class probabilities, and for a whole domain the work grows exponentially with the number of attributes (§6) <Cite id="domingos1997" />. Nor do good decisions bring good probabilities: calibration cannot fully correct naive Bayes (§4) <Cite id="niculescu2005" />.
 
 </ResearchFrontier>
 
@@ -583,7 +587,7 @@ $1/4$. Spam scores $\frac{2}{5} \cdot \frac{1}{13} \cdot \frac{3}{13} = 6/845$ a
 </CheckYourself>
 
 <CheckYourself level="proof" question="Show that seeing a yes-or-no feature c times multiplies its terms in the log-odds by c, and say when that changes the predicted class.">
-Each copy repeats feature 1's terms: the log-odds becomes $b' + c\,w_1 x_1 + \sum_{k \ge 2} w_k x_k$, with feature 1's share of $b$ counted $c$ times in $b'$. The class flips when the copies change the sign, as (yes, no, no, no) does at $c = 5$: $9/58$ becomes $49/58$.
+Each copy repeats feature 1's terms: the log-odds becomes $b' + c\,w_1 x_1 + \sum_{k \ge 2} w_k x_k$, with feature 1's share of $b$ counted $c$ times in $b'$. The class changes when the copies flip the sign of the log-odds. For (yes, no, no, no) the log-odds reaches 0 at $c = 3$ (posterior $1/2$) and turns positive at $c = 4$ ($7/10$); at $c = 5$ it is $49/58$.
 </CheckYourself>
 
 ## Common mistakes
