@@ -1797,6 +1797,15 @@ const announcerRun = () => {
 		dsay.symbolLines(run('class-spread', { type: 'stage', stage: 'symbols' })).at(-1).text,
 		"÷ 9 counts every child once, as NumPy's np.std does by default. pandas' .std() divides by 8 and gives ≈ 8.49 cm.",
 	);
+	// "=" before an exact number, "≈" alone before a rounded one: never "= ≈" and never "gives =".
+	assert.deepEqual(
+		dsay.symbolLines(run('class-spread', { type: 'select', child: 4 }, { type: 'set-value', value: 145 }, { type: 'stage', stage: 'symbols' })).slice(2).map((line) => line.text),
+		['σ = √σ² ≈ 7.45 cm', "÷ 9 counts every child once, as NumPy's np.std does by default. pandas' .std() divides by 8 and gives ≈ 7.91 cm."],
+	);
+	assert.deepEqual(
+		dsay.symbolLines(run('class-spread', { type: 'preset', id: 'everyone-134' }, { type: 'stage', stage: 'symbols' })).slice(2).map((line) => line.text),
+		['σ = √σ² = 0 cm', "÷ 9 counts every child once, as NumPy's np.std does by default. pandas' .std() divides by 8 and gives 0 cm."],
+	);
 	assert.equal(dsay.meanLabel(sample), 'μ = x̄ = 134');
 	assert.equal(dsay.spreadLabel('s', { exact: false, value: Math.sqrt(72) }), 's ≈ 8.49');
 	// The goal: the mean back at exactly 134 and σ under 8, met only after at least two moves.
@@ -1892,6 +1901,7 @@ const announcerRun = () => {
 				assert.equal(typeof text, 'string');
 				assert.ok(!banned.test(text) && !british.test(text) && !text.includes('—'), `${id} after ${action.type}: ${text}`);
 				assert.ok(!/undefined|NaN|null/.test(text), `${id} after ${action.type}: ${text}`);
+				assert.ok(!/= ≈|gives =/.test(text), `${id} after ${action.type}: ${text}`);
 				swept += 1;
 			}
 		}

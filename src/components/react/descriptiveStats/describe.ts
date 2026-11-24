@@ -88,10 +88,14 @@ export function amount(value: Fraction): string {
 	return isTwoDecimals(value) ? decimal.replace(/\.?0+$/, '') : `≈ ${decimal}`;
 }
 
+/** "= 8" or "≈ 8.49": a written number as the end of an equation, keeping "≈" when it is already there. */
+function withEquals(text: string): string {
+	return text.startsWith('≈') ? text : `= ${text}`;
+}
+
 /** "= 103.6" or "≈ 8.44": the end of an equation. */
 export function equalsAmount(value: Fraction): string {
-	const text = amount(value);
-	return text.startsWith('≈') ? text : `= ${text}`;
+	return withEquals(amount(value));
 }
 
 /** A float that two decimals can only approximate: "≈ 7.68". Whole results are written plainly. */
@@ -308,15 +312,14 @@ function squaredTotal(values: readonly number[]): Fraction {
 
 /** "√64 = 8 cm", "√72 ≈ 8.49 cm", "√(9/4) = 1.5 cm", or "≈ 8.17 cm" when the variance itself was rounded. */
 function rootChain(variance: Fraction, root: Root, setup: Setup): string {
-	if (variance.denominator === 1) return `√${groupThousands(variance.numerator)} ${root.exact ? `= ${amount(root.value)}` : approxNumber(root.value)} ${setup.words.unit}`;
+	if (variance.denominator === 1) return `√${groupThousands(variance.numerator)} ${withEquals(rootAmount(root))} ${setup.words.unit}`;
 	if (root.exact) return `√(${formatFraction(variance)}) = ${amount(root.value)} ${setup.words.unit}`;
 	return `${approxNumber(root.value)} ${setup.words.unit}`;
 }
 
 /** "s = √72 ≈ 8.49 cm" or "s ≈ 8.17 cm". */
 function symbolChain(symbol: 'σ' | 's', variance: Fraction, root: Root, setup: Setup): string {
-	const chain = rootChain(variance, root, setup);
-	return chain.startsWith('≈') ? `${symbol} ${chain}` : `${symbol} = ${chain}`;
+	return `${symbol} ${withEquals(rootChain(variance, root, setup))}`;
 }
 
 /** σ for a list: "8", or "≈ 7.75". The ghost, goal and announcement lines share it. */
@@ -376,8 +379,7 @@ export function goalStatus(state: DescriptiveState): string | null {
 	const { goal } = setupOf(state);
 	if (!goal) return null;
 	const center = mean(state.values);
-	const sigma = sigmaText(state.values);
-	const sigmaPart = sigma.startsWith('≈') ? `σ ${sigma} cm` : `σ = ${sigma} cm`;
+	const sigmaPart = `σ ${withEquals(sigmaText(state.values))} cm`;
 	if (goalMet(state)) return `Done: the mean is still ${goal.mean} cm and ${sigmaPart} is smaller than ${goal.sigmaBelow} cm.`;
 	if (center.denominator !== 1 || center.numerator !== goal.mean) {
 		return `The mean is now ${amount(center)} cm. Move another child to bring it back to ${goal.mean} cm.`;
@@ -452,11 +454,11 @@ function zSentence(test: string, value: number, values: readonly number[]): stri
 	const sigma = populationSD(values);
 	const z = zScore(value, values);
 	if (center.denominator === 1 && sigma.exact && sigma.value.denominator === 1) {
-		return `Test ${test}: (${value} − ${amount(center)}) / ${amount(sigma.value)} ${z.exact ? equalsAmount(z.value) : approxNumber(z.value)}.`;
+		return `Test ${test}: (${value} − ${amount(center)}) / ${amount(sigma.value)} ${withEquals(rootAmount(z))}.`;
 	}
 	const centerText = amount(center).replace('≈ ', '');
 	const sigmaText = rootAmount(sigma).replace('≈ ', '');
-	return `Test ${test}: mean ${amount(center)}, σ ${rootAmount(sigma)}, so z = (${value} − ${centerText}) / ${sigmaText} ${z.exact ? equalsAmount(z.value) : approxNumber(z.value)}.`;
+	return `Test ${test}: mean ${amount(center)}, σ ${rootAmount(sigma)}, so z = (${value} − ${centerText}) / ${sigmaText} ${withEquals(rootAmount(z))}.`;
 }
 
 function verdict(scaleName: string, a: number, b: number): string {
@@ -497,9 +499,8 @@ export function lowMarkChange(state: DescriptiveState): string {
 	const minAfter = minMax(anaB, state.values);
 	const zBefore = zScore(anaB, TEST_B.values);
 	const zAfter = zScore(anaB, state.values);
-	const rootText = (root: Root) => (root.exact ? amount(root.value) : approxNumber(root.value));
 	const rose = (before: number, after: number) => (after > before ? 'rose' : after < before ? 'fell' : 'stayed');
-	return `One mark of ${state.values[changed]} moved both scores for test B: min–max ${rose(toNumber(minBefore), toNumber(minAfter))} from ${amount(minBefore)} to ${minMaxChain(anaB, state.values)}, the z-score ${rose(rootNumber(zBefore), rootNumber(zAfter))} from ${rootText(zBefore)} to ${rootText(zAfter)}. Ana's ${anaB} did not change.`;
+	return `One mark of ${state.values[changed]} moved both scores for test B: min–max ${rose(toNumber(minBefore), toNumber(minAfter))} from ${amount(minBefore)} to ${minMaxChain(anaB, state.values)}, the z-score ${rose(rootNumber(zBefore), rootNumber(zAfter))} from ${rootAmount(zBefore)} to ${rootAmount(zAfter)}. Ana's ${anaB} did not change.`;
 }
 
 // ---- Outliers ----
@@ -518,7 +519,7 @@ function outlierLines(state: DescriptiveState): string[] {
 	const zText = approxNumber(z);
 	const iqrFlagged = compareFractions(fraction(giant, 1), upper) > 0;
 	const onFence = compareFractions(fraction(giant, 1), upper) === 0;
-	const meanText = `Mean ${amount(center)} kg, σ ${rootAmount(sigma).startsWith('≈') ? rootAmount(sigma) : `= ${rootAmount(sigma)}`} kg`;
+	const meanText = `Mean ${amount(center)} kg, σ ${withEquals(rootAmount(sigma))} kg`;
 	const zFlagText = z > 3 ? 'flagged at |z| > 2 and at |z| > 3' : z > 2 ? 'flagged at |z| > 2, not at |z| > 3' : 'not flagged at |z| > 2 or at |z| > 3';
 	const lines = [fenceLine];
 	if (state.giants === 2) {
@@ -594,19 +595,19 @@ export function symbolLines(state: DescriptiveState): SymbolLine[] {
 	const lines: SymbolLine[] = [
 		{ text: `μ = (1/n) Σ xᵢ ${equalsAmount(center)} cm`, spoken: `mu, the mean, is 1 over n times the sum of every x i: ${amount(center)} cm.` },
 		{ text: `σ² = (1/n) Σ (xᵢ − μ)² ${equalsAmount(variance)} cm²`, spoken: `sigma squared, the variance, is 1 over n times the sum of each squared distance from mu: ${amount(variance)} square centimeters.` },
-		{ text: `σ = √σ² = ${sigmaText(values)} cm`, spoken: `sigma, the standard deviation, is the square root of the variance: ${sigmaText(values)} cm.` },
+		{ text: `σ = √σ² ${withEquals(sigmaText(values))} cm`, spoken: `sigma, the standard deviation, is the square root of the variance: ${sigmaText(values)} cm.` },
 	];
 	if (state.sample) {
 		const sampleVar = sampleVariance(values);
 		const s = rootAmount(sampleSD(values));
 		lines.push(
 			{ text: `s² = (1/(n − 1)) Σ (xᵢ − x̄)² ${equalsAmount(sampleVar)} cm²`, spoken: `s squared, the sample variance, is 1 over n minus 1 times the sum of each squared distance from x bar: ${amount(sampleVar)} square centimeters.` },
-			{ text: `s = √s² ${s.startsWith('≈') ? s : `= ${s}`} cm`, spoken: `s, the sample standard deviation, is its square root: ${s} cm.` },
+			{ text: `s = √s² ${withEquals(s)} cm`, spoken: `s, the sample standard deviation, is its square root: ${s} cm.` },
 		);
 	}
 	const s = rootAmount(sampleSD(values));
 	lines.push({
-		text: `÷ ${count} counts every child once, as NumPy's np.std does by default. pandas' .std() divides by ${count - 1} and gives ${s.startsWith('≈') ? s : `= ${s}`} cm.`,
+		text: `÷ ${count} counts every child once, as NumPy's np.std does by default. pandas' .std() divides by ${count - 1} and gives ${s} cm.`,
 		spoken: `Dividing by ${count} counts every child once, as NumPy's np.std does by default. pandas' .std() divides by ${count - 1} and gives ${s} cm.`,
 	});
 	return lines;
@@ -749,7 +750,7 @@ export function meanLabel(state: DescriptiveState): string {
 	const center = amount(mean(valuesNow(state)));
 	const symbol = setupOf(state).kind === 'lineup' || setupOf(state).kind === 'newcomer' ? 'mean' : state.sample ? 'μ = x̄' : 'μ';
 	if (symbol === 'mean') return `mean ${center}`;
-	return center.startsWith('≈') ? `${symbol} ${center}` : `${symbol} = ${center}`;
+	return `${symbol} ${withEquals(center)}`;
 }
 
 export function medianLabel(state: DescriptiveState): string {
@@ -757,8 +758,7 @@ export function medianLabel(state: DescriptiveState): string {
 }
 
 export function spreadLabel(symbol: 'σ' | 's', root: Root): string {
-	const text = rootAmount(root);
-	return text.startsWith('≈') ? `${symbol} ${text}` : `${symbol} = ${text}`;
+	return `${symbol} ${withEquals(rootAmount(root))}`;
 }
 
 export function ghostLabel(sigma: Root): string {
@@ -800,8 +800,7 @@ export function announcementFor(state: DescriptiveState, action: Action): string
 			return `Moving child ${state.selected + 1}, ${state.values[state.selected]} cm.`;
 		case 'set-value':
 			if (setup.kind === 'spread') {
-				const sigma = sigmaText(state.values);
-				return `Child ${state.selected + 1} is now ${state.values[state.selected]} cm. Mean ${amount(mean(state.values))} cm, σ ${sigma.startsWith('≈') ? sigma : `= ${sigma}`} cm. ${goal ?? ''}`.trim();
+				return `Child ${state.selected + 1} is now ${state.values[state.selected]} cm. Mean ${amount(mean(state.values))} cm, σ ${withEquals(sigmaText(state.values))} cm. ${goal ?? ''}`.trim();
 			}
 			if (setup.kind === 'newcomer') return state.newcomer === null ? statusLine(state) : newcomerChange(state);
 			return readouts;
