@@ -1830,6 +1830,14 @@ const announcerRun = () => {
 	assert.deepEqual(vd.readoutLines(alignDone), ['a · b = 4 × (−1) + 1 × 3 = −1.', 'Angle: about 94.4°.', 'Shadow of b along a: a · b ÷ ‖a‖ = −1 ÷ √17 ≈ −0.24.']);
 	assert.ok(vd.planeLabels(alignDone).some((label) => label.text === 'θ'));
 	assert.deepEqual(vd.chalkNote(alignDone), { long: 'wider than a right angle: negative', short: 'past a right angle: negative' });
+	// The note follows the current a and b, so a preset or a drag never leaves a stale "negative" next to the readouts.
+	const alignNoteAfter = (id) => vd.chalkNote(vst.reducer(alignDone, { type: 'preset', id }));
+	assert.ok(!alignNoteAfter('short-b').long.includes('negative') && !alignNoteAfter('short-b').short.includes('negative'));
+	assert.deepEqual(alignNoteAfter('short-b'), { long: 'narrower than a right angle: positive', short: 'under a right angle: positive' });
+	assert.deepEqual(alignNoteAfter('long-b'), { long: 'narrower than a right angle: positive', short: 'under a right angle: positive' });
+	assert.deepEqual(alignNoteAfter('perpendicular'), { long: 'a right angle: zero', short: 'right angle: zero' });
+	assert.deepEqual(alignNoteAfter('opposite'), { long: 'wider than a right angle: negative', short: 'past a right angle: negative' });
+	assert.equal(vd.chalkNote(vst.initialState('align')), null);
 	assert.deepEqual(vd.presetsFor(alignDone).map((preset) => preset.label), ['Perpendicular', 'Opposite', 'Short b', 'Long b']);
 	const alignPreset = (...ids) => vd.readoutLines(ids.reduce((state, id) => vst.reducer(state, { type: 'preset', id }), alignDone));
 	assert.deepEqual(alignPreset('perpendicular').slice(0, 2), ['a · b = 3 × (−1) + 1 × 3 = 0.', 'Exactly 90°: a and b are perpendicular.']);
@@ -1862,6 +1870,7 @@ const announcerRun = () => {
 	assertNone(allText(zeroB), ['0°', '90°'], 'align with a zero b');
 	assert.equal(vd.handleAnnouncement(zeroB, 'b'), 'a = (4, 1), b = (0, 0). a dot b = 0. The angle is undefined: b has no direction.');
 	assert.equal(vd.ochreElement(zeroB), null);
+	assert.equal(vd.chalkNote(zeroB), null);
 	assert.equal(vd.handleAnnouncement(vst.reducer(alignDone, { type: 'preset', id: 'perpendicular' }), 'a'), 'a = (3, 1), b = (−1, 3). a dot b = 0. Exactly 90°: perpendicular.');
 	assert.equal(vd.handleAnnouncement(vst.reducer(alignDone, moveTo('b', [4, 1])), 'b'), "a = (4, 1), b = (4, 1). a dot b = 17. Exactly 0°: same direction. b can't go further east: its entries stay between −4 and 4. Both handles are at (4, 1).");
 	// b stays within ±4, so its shadow along a never leaves the board.

@@ -36,6 +36,7 @@ import {
 	handlePoint,
 	handleRefusals,
 	setupOf,
+	signOf,
 	stepRefusal,
 	steppableVectors,
 	type Action,
@@ -570,8 +571,20 @@ export function planeLabels(state: VectorState): readonly PlaneLabel[] {
 	return labels;
 }
 
+interface ChalkText {
+	long: string;
+	short: string;
+}
+
+/** The align note follows the current a and b, so it never contradicts the readouts after a preset or a drag. */
+const ALIGN_NOTES: Readonly<Record<Sign, ChalkText>> = {
+	positive: { long: 'narrower than a right angle: positive', short: 'under a right angle: positive' },
+	zero: { long: 'a right angle: zero', short: 'right angle: zero' },
+	negative: { long: 'wider than a right angle: negative', short: 'past a right angle: negative' },
+};
+
 /** Notes drawn on the board after Check. Qualitative only, never a number (ChalkNote). */
-export function chalkNote(state: VectorState): { long: string; short: string } | null {
+export function chalkNote(state: VectorState): ChalkText | null {
 	if (!state.checked) return null;
 	switch (setupOf(state).kind) {
 		case 'add':
@@ -579,7 +592,8 @@ export function chalkNote(state: VectorState): { long: string; short: string } |
 		case 'cart':
 			return { long: 'only the part along the track moves it', short: 'only the track part counts' };
 		case 'align':
-			return { long: 'wider than a right angle: negative', short: 'past a right angle: negative' };
+			// A zero vector has no angle, so there is nothing to say about one.
+			return angleOf(state.a, state.b) ? ALIGN_NOTES[signOf(dot(state.a, state.b))] : null;
 		case 'scale':
 			return null;
 	}
