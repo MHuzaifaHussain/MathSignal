@@ -136,6 +136,35 @@ Number format, one rule per kind of number (all in `describe.ts`, plain Unicode,
 
 "≈" appears only when the decimal is rounded. A whole number has no fraction chain ("6/6 = 1").
 
+### Data summaries (DescriptiveStats)
+
+DescriptiveStats draws a short list of numbers as dots on a value-positioned axis ([decision 0015](../decisions/0015-descriptive-stats-board.md)). It is HTML like EventSpace and DistributionBoard and follows the same color rules with these conventions:
+
+| Marking | Meaning |
+|---|---|
+| Ink dots, stacked when values tie or sit closer than a dot | The values. Dots carry no color of their own |
+| `--ms-highlight` fill in an `--ms-attention` ring | Look here: the reader's pick, the child being moved, or Ana's marks. Never text |
+| Pink triangle labeled "mean …" or "μ = …", with a dashed pink guide | The mean, only once it is shown (after Check on `class-lineup`) |
+| Ink diamond and the word "median" | The median, an order statistic, so ink |
+| Blue capped span labeled "σ = …"; a blue double line labeled "s …" | σ (÷ n) and, beside it, the sample s (÷ n − 1) |
+| Dashed ink span labeled "Before: σ …" | The previous preset's σ |
+| 2px ink box, 1px muted whiskers, dashed ink fences | The box plot: Q1 to Q3, the median line, Tukey fences at 1.5 × IQR |
+| Solid ink ring with "IQR"; dashed ink ring with "z" | Flagged by the IQR rule; flagged by the z-score rule |
+| Pink "mean" stub at 0, blue "σ" stubs at ±1 | The z-score row's reference marks |
+| An arrow with its number at the right edge ("1,000 →") | A value past the axis, in the off-chart lane |
+
+Definitions are the same on every statistics page: NumPy's linear quantiles, σ dividing by n (np.std) and s by n − 1 (pandas' .std()), "no mode" when every value appears equally often, and a strict test against the fences. Pages say where readers' tools differ.
+
+Number format (all in `describe.ts`, plain Unicode, never KaTeX):
+
+| Kind | Format | Example |
+|---|---|---|
+| Whole numbers of 1,000 or more | Grouped with commas | "1,206 / 9 = 134 cm" |
+| An exact amount | Trailing zeros dropped | "103.6", "4.5" |
+| A rounded amount | "≈" and two decimals | "σ ≈ 7.68 kg" |
+| A square root | Exact when the variance is a square, otherwise rounded | "√64 = 8 cm", "√72 ≈ 8.49 cm" |
+| A min–max score | Unreduced, reduced, decimal | "15/18 = 5/6 ≈ 0.83" |
+
 ## Code (Expressive Code)
 
 Code uses the **tuned full** palette: familiar editor-style highlighting with every color chosen so it can't be mistaken for μ, σ or "look here", even with color blindness.

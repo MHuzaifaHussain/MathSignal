@@ -104,6 +104,10 @@ Small modules every guided board composes in its tray ([decision 0013](../decisi
 | `PresetButtons` | One labeled group of preset buttons: `label` (the group's name), `caption` (short visible text, hidden from screen readers), `presets`, `onPick`. Pass `activeId` when a preset stays selected (`aria-pressed`); pass `refusalId` while presets are refused |
 | `refusedBy(reasonId)`, `RefusalNote` | A refused control stays focusable and pressable (`aria-disabled`, never `disabled`) and points at a `RefusalNote` with the visible reason through `aria-describedby`. The board's own handler decides what a refused press says. Notes are hidden in print with the controls they explain |
 
+### Chart marks and pointer scrub
+
+`chartMarks.tsx` draws the meaning-colored marks on HTML charts, so μ and σ look the same on every board: `MeanMark` (a pink triangle under its label), `MeanGuide` (the dashed pink line down to the axis) and `SigmaSpan` (`kind` `sigma`: a solid blue capped span; `sample`: a blue double line for s; `ghost`: an earlier σ in dashed ink). Each takes positions in percent across its row and clamps them to the row. `usePointerScrub({ valueAt, onMove, onCommit })` turns pointer drag along a strip into a value; it mirrors a tray slider, which stays the keyboard path, so the strip is `aria-hidden`. DistributionBoard and DescriptiveStats use both.
+
 ### `NormalDistribution`, `LinearRegression`, `BayesTheorem`
 Concept boards. Each composes `Board`, Mafs, `plotColors`, and `TraySlider`s.
 
@@ -166,6 +170,24 @@ Every setup holds its answer until the reader commits with Check. Handles snap t
 - **`align`** (dot product): a = (4, 1) and b = (−1, 3), locked, with no handles until the reader picks Positive, Zero or Negative for a · b and presses Check (one shot: any answer reveals). Check is refused, with a visible reason, until a sign is picked. After Check the ochre shadow of b along a, the angle arc θ (or a right-angle mark at exactly 90°) and the presets Perpendicular, Opposite, Short b and Long b appear; Long b after Short b adds a "Before:" comparison. b's entries stay within ±4, so its shadow never leaves the board.
 - **Limits:** `validateSetup` allows at most 4 presets and refuses openings or presets outside their limits, an a + b or shadow off the board, a scale range that can carry c a off the board, a zero track or one whose length isn't a whole number, a cart goal with no whole-number answer, and an `align` opening with a zero vector.
 - Check, the stages, the presets, the refusal notes and the live region are the guided pieces above. All math and copy live in pure modules (`model.ts`, `setups.ts`, `state.ts`, `describe.ts`) checked by `npm run check:boards`; the Mafs code is `VectorPlane.tsx` and the table `CoordinateTable.tsx`. Island CSS lives under the `.ms-vec-*` section of `components.css`. Try every setup at `/lab/vector-board/` in the dev server.
+
+### `DescriptiveStats`
+A short list of whole numbers as dot plots on a value-positioned axis, with a data table and a summary table ([decision 0015](../decisions/0015-descriptive-stats-board.md)). One prop: `setup`, the id of a configuration in `src/components/react/descriptiveStats/setups.ts` (`class-lineup`, `cafe-millionaire`, `class-spread`, `class-box`, `marks-scaling`, `pumpkin-outliers`); an unknown id, or a setup the board can't draw at 320px, fails the build.
+
+```mdx
+<div class="not-content">
+  <DescriptiveStats client:visible setup="class-lineup" />
+</div>
+```
+
+- **`class-lineup`** (descriptive statistics): 9 children as bars drawn to their height (Pictures), as dots (Numbers), or as order statistics (Symbols, which waits for Check). A "Line them up" switch sorts the bars; the reader picks "Your middle child" (Child 1 to Child 9) and presses **Check**, which says how many children are shorter and taller. Check is refused until a child is picked. The mean, median, mode, the summary table and the "Place in line" column appear only after Check.
+- **`cafe-millionaire`** (mean vs median vs mode): 9 customers' savings in thousands of dollars. "The millionaire walks in" adds a tenth value, set with the "Newcomer's savings" slider (0 to 1,000). Values past the 0–10 axis, and a mean past it, wait in a lane at the right edge as arrows that carry their number ("1,000 →", "mean 103.6 →"). Presets: Nobody new, A neighbor (6), The millionaire (1,000).
+- **`class-spread`** (variance and standard deviation): "Child to move" and a "Height" slider (110 to 160 cm, also a drag strip under the axis) change one child at a time, toward the goal "without changing the mean, make σ smaller than 8 cm". "Show distances" draws each child's distance from the mean; "Also as a sample" adds x̄ and s (÷ n − 1) beside σ. Presets Our class, Tight class and Everyone 134 cm keep the previous preset's σ as a dashed ghost. Stages: Numbers and Symbols.
+- **`class-box`** (box plots): three steps under the legend "Step": Line-up, Quartiles, Box plot. Presets Our class and One very tall child (148 → 162 cm, drawn past the upper fence).
+- **`marks-scaling`** (standardization vs min–max scaling): two tests, out of 50 and out of 80, on a "Scale" choice of Raw marks, Min–max (0 to 1) or z-scores. Ana's marks are ringed in ochre. Presets Two tests and One very low mark on B.
+- **`pumpkin-outliers`** (outlier detection): 9 pumpkins on a 0–30 kg axis with a box plot, μ and σ; a "Giant pumpkin" slider (8 to 60 kg, heavier than 30 in the lane) and a "Flag when |z| is above" choice of 2 or 3. Presets No giant (8 kg), One giant (30 kg), Two giants (30 kg each); the second giant replaces a 7 kg pumpkin, so there are always 9, and the slider moves both.
+- **Limits:** `validateSetup` allows at most 4 presets and refuses a box setup without n = 4k + 1 values, a line-up whose middle child isn't one child, a slider or preset that carries a dot past the axis without a lane, and two different values closer than 5px at 320px.
+- Check, stages, presets, refusals and the live region are the guided pieces above; the μ and σ marks are `chartMarks`. All math, copy and drawing data live in pure modules (`model.ts`, `datasets.ts`, `setups.ts`, `layout.ts`, `state.ts`, `describe.ts`, `chart.ts`) checked by `npm run check:boards`. Island CSS lives under the `.ms-desc-*` section of `components.css`. Try every setup at `/lab/descriptive-stats/` in the dev server.
 
 ## Code
 
