@@ -23,6 +23,7 @@ references:
   - kolmogorov1950
   - goodfellow2016
   - blundell2015
+  - saerens2002
 author: Muhammad Huzaifa Hussain
 reviewedAt: 2026-11-24
 aiAssisted: true
@@ -75,9 +76,11 @@ A trained classifier's output is an estimate of how likely each class is given t
 
 Before you touch anything: 1 person in 100 has a certain condition. A test for it is right 9 times in 10, whether or not you have the condition. You take the test and it comes back positive. Is the chance that you have the condition closer to 90%, 50% or 10%? Make a guess, then test it.
 
-The board is a unit square that stands for everyone. A's column on the left has width P(A), the prior. Inside it, the highlighted block "B and A" rises to the height P(B | A), so its area is P(B | A) times P(A). Across the rest of the square, "not A", the shaded strip "B and not A" rises to the height P(B | not A): the people B catches who are not in A. Everything in B is the two shaded pieces together, and P(A | B) is the highlighted block's share of them.
+Three numbers decide the answer, and the board has a slider for each. P(A) is how common A is before you learn anything: the prior, also called the base rate. For the medical test, A is "has the condition" and P(A) = 0.01. P(B | A) and P(B | not A) are how often a positive shows up with and without A: the likelihoods, 0.9 and 0.1 here.
 
-Under the square, the buttons after "Example:" load a scenario: Any two events, Medical test or Wet lawn. The line under them says what A and B stand for. Three sliders, P(A), P(B | A) and P(B | not A), set the prior and the two likelihoods, and each one also moves with the arrow keys. The readout gives P(A | B) and P(B) to three decimals. The board opens on Any two events, where it reads "P(A | B) = 0.774   P(B) = 0.310", and Reset returns there. As a goal, press Medical test and read P(A | B).
+The board is a unit square that stands for everyone. Read it in three steps. First, find A's column on the left: its width is P(A). Second, find the highlighted block in A's column, labeled "B and A": those are the true positives, and its height is P(B | A). Third, find the shaded strip across the rest of the square, labeled "B and not A": those are the false positives, and its height is P(B | not A). Then compare the two areas. Everything in B is the two pieces together, and P(A | B) is the highlighted block's share of them.
+
+Under the square, the buttons after "Example:" load a scenario: Any two events, Medical test or Wet lawn. The line under them says what A and B stand for. The three sliders, P(A), P(B | A) and P(B | not A), each also move with the arrow keys. The readout gives P(A | B) and P(B) to three decimals. The board opens on Any two events, where it reads "P(A | B) = 0.774   P(B) = 0.310", and Reset returns there. Your task: press Medical test and read P(A | B).
 
 <div class="not-content">
   <BayesTheorem client:visible />
@@ -85,11 +88,21 @@ Under the square, the buttons after "Example:" load a scenario: Any two events, 
 
 Closer to 10%. The line under the presets says "A: has the condition (1 in 100). B: tests positive. The test is right 9 times in 10 either way." and the readout says "P(A | B) = 0.083   P(B) = 0.108". A positive test leaves about an 8% chance of having the condition: 1 in 12.
 
-Counting people shows why. Picture 1,000 people. 10 of them have the condition, and the test catches 9 of those 10. The other 990 don't have it, but the test is wrong for 1 in 10 of them, so 99 of them test positive too. That makes 9 + 99 = 108 positives, and only 9 of the 108 have the condition: 9/108 = 1/12 ≈ 0.083. The 108 positives out of 1,000 are the readout's P(B) = 0.108.
+Counting people shows why. Picture 1,000 people. 10 of them have the condition, and the test catches 9 of those 10. The other 990 don't have it, but the test is wrong for 1 in 10 of them, so 99 of them test positive too. That makes 9 + 99 = 108 positives, and only 9 of the 108 have the condition: 9/108 = 1/12 ≈ 0.083. The 108 positives out of 1,000 are the readout's P(B) = 0.108. As a table:
+
+|  | Tests positive | Tests negative | Total |
+| --- | --- | --- | --- |
+| **Has it** | 9 | 1 | 10 |
+| **Doesn't have it** | 99 | 891 | 990 |
+| **Total** | 108 | 892 | 1,000 |
+
+"Given a positive" means: read only the Tests positive column. Its total is 108, and 9 of those have the condition.
 
 The picture shows the same thing as areas. A's column is only 0.01 wide, so thin that its labels sit beside it, and the highlighted "B and A" block is a sliver of area 0.9 × 0.01 = 0.009. The "B and not A" strip is only 0.1 tall, but it runs across the other 0.99 of the square, so its area is 0.1 × 0.99 = 0.099, eleven times the sliver. Of everything in B, the true positives are the small part.
 
-Now press Wet lawn. The line under the presets says "A: it rained overnight. B: the lawn is wet. A sprinkler can also wet it when it did not rain." Rain happens on 2 nights in 10 and wets the lawn 9 times in 10; the sprinkler wets it on 3 dry nights in 10. The readout says "P(A | B) = 0.429   P(B) = 0.420". Turning the question around: rain makes a wet lawn very likely, 0.9, but a wet lawn makes rain only 3/7 ≈ 0.429 likely, because 0.18 of the 0.42 comes from rain and the other 0.24 from the sprinkler. A wet lawn makes rain more than twice as likely as the prior of 0.2, but leaves it below even odds.
+Now change only how common the condition is. Before you drag, predict: if 1 person in 10 had the condition instead of 1 in 100, with the same test, what would a positive mean? Then, still on Medical test, drag the P(A) slider from 0.01 to 0.10 and watch P(A | B). It climbs from 0.083 to 0.500. At 0.10 the true positives, 0.9 × 0.1 = 0.09, and the false positives, 0.1 × 0.9 = 0.09, are equal, so a positive is an even chance.
+
+Now press Wet lawn. The line under the presets says "A: it rained overnight. B: the lawn is wet. A sprinkler can also wet it when it did not rain." Rain happens on 2 nights in 10, so dry nights are 8 in 10. Rain wets the lawn 9 times in 10; the sprinkler wets it on 3 dry nights in 10. The readout says "P(A | B) = 0.429   P(B) = 0.420". Turning the question around: rain makes a wet lawn very likely, 0.9, but a wet lawn makes rain only 3/7 ≈ 0.429 likely. Of the 0.42, rain gives 0.9 × 0.2 = 0.18 and the sprinkler gives 0.3 × 0.8 = 0.24. A wet lawn makes rain more than twice as likely as the prior of 0.2, but rain is still less likely than not (below 0.5).
 
 Last, keep Wet lawn and drag the P(A) slider from one end to the other while you watch P(A | B). At P(A) = 0.01 the readout shows 0.029, and at 0.99 it shows 0.997. The two likelihoods never changed; only how common rain is did.
 
@@ -109,7 +122,7 @@ For the medical test: P(B) = 0.9 × 0.01 + 0.1 × 0.99 = 0.009 + 0.099 = 0.108. 
 
 ### More than two ways
 
-The same rule works for any number of pieces, as long as they share no outcome and together cover the whole sample space: add P(B | piece) P(piece) over all of them. Grinstead and Snell give it in this form in §4.1, as their equation (4.3) <Cite id="grinstead2003" />, and Kolmogorov states it in Chapter I, §4 as the theorem on total probability <Cite id="kolmogorov1950" />. The accuracy example on the [conditional probability](/probability/conditional-probability/) page used it with two groups: 0.95 × 0.9 + 0.60 × 0.1 = 0.915. The overall accuracy is a weighted average of the accuracy within each group, weighted by each group's share.
+The same rule works for any finite number of pieces, as long as they share no outcome and together cover the whole sample space: add P(B | piece) P(piece) over all of them. Grinstead and Snell give it in this form in §4.1, as their equation (4.3) <Cite id="grinstead2003" />, and Kolmogorov states it in Chapter I, §4 as the theorem on total probability <Cite id="kolmogorov1950" />. By countable additivity the same holds for a countable list of pieces, and pieces of probability 0 can be dropped, since they add nothing to P(B). The accuracy example on the [conditional probability](/probability/conditional-probability/) page used it with two groups: 0.95 × 0.9 + 0.60 × 0.1 = 0.915. The overall accuracy is a weighted average of the accuracy within each group, weighted by each group's share.
 
 ## Turn the question around
 
@@ -117,7 +130,7 @@ Bayes' theorem finds P(A | B) from P(B | A):
 
 P(A | B) = P(B | A) P(A) / P(B).
 
-It follows from the multiplication rule on the [conditional probability](/probability/conditional-probability/) page, written both ways around. P(A and B) = P(A | B) P(B), and also P(A and B) = P(B | A) P(A). The two right-hand sides are equal, and dividing by P(B), which must be greater than 0, gives the theorem. For the medical test, P(A | B) = 0.009 / 0.108 = 1/12.
+It follows from the multiplication rule on the [conditional probability](/probability/conditional-probability/) page, written both ways around. P(A and B) = P(A | B) P(B), and also P(A and B) = P(B | A) P(A). The two right-hand sides are equal, and dividing by P(B), which must be greater than 0, gives the theorem. It also needs P(A) > 0, so that P(B | A) is defined. For the medical test, P(A | B) = 0.009 / 0.108 = 1/12.
 
 ### Prior, likelihood, evidence, posterior
 
@@ -125,7 +138,7 @@ Each part of the formula has a name.
 
 - **Prior**, P(A): how likely A is before you see the evidence. For the medical test, 0.01.
 - **Likelihood**, P(B | A): how likely the evidence is if A is true. 0.9.
-- **Evidence**, P(B): how likely the evidence is at all, found by the law of total probability above. 0.108.
+- **Evidence**, P(B): how likely the evidence is overall, whether or not A is true, found by the law of total probability above. For the medical test, it is how likely a positive result is overall: 0.108.
 - **Posterior**, P(A | B): how likely A is after you see the evidence. 1/12.
 
 Grinstead and Snell call the possible explanations hypotheses, the observed event the evidence, and the probabilities before and after it the prior and posterior probabilities; their §4.1 gives Bayes' formula for any number of hypotheses (pp. 145–146) <Cite id="grinstead2003" />. Kolmogorov proves the same theorem in Chapter I, §4, where P(A) is called the a priori probability <Cite id="kolmogorov1950" />. Putting the law of total probability into the bottom gives the version the board computes:
@@ -134,23 +147,23 @@ P(A | B) = P(B | A) P(A) / (P(B | A) P(A) + P(B | not A) P(not A)).
 
 ### The base rate decides a lot
 
-The posterior is the prior times the likelihood, divided by the total over every explanation. So the prior, also called the base rate, matters as much as the test does. When A is rare, P(not A) is close to 1, and even a small P(B | not A) multiplied by it can outweigh P(B | A) P(A). With the same test, a condition 1 person in 100 has gives a positive a 1/12 chance of being right; a condition 1 person in 10 has gives exactly 1/2, since 0.9 × 0.1 = 0.09 and 0.1 × 0.9 = 0.09 are equal. A test's accuracy alone does not say what a positive means.
+The posterior is the prior times the likelihood, divided by the total over every explanation. So the prior, also called the base rate, matters as much as the test does. When A is rare, P(not A) is close to 1, and even a small P(B | not A) multiplied by it can outweigh P(B | A) P(A). With the same test, a positive means a 1/12 chance of having the condition when 1 person in 100 has it, and exactly 1/2 when 1 in 10 has it, because then the true positives, 0.9 × 0.1 = 0.09, and the false positives, 0.1 × 0.9 = 0.09, are equal. A test's accuracy alone does not say what a positive means.
 
 ### A second test: the posterior becomes the prior
 
-Evidence can come in one piece at a time, and after each piece the posterior becomes the prior for the next. Suppose you test positive, then take a second, different test that is also right 9 times in 10 either way, and it is positive too. Assume the two tests' errors are independent given whether you have the condition: among people who have it, the second test is positive 9 times in 10 whatever the first said, and among people who don't, 1 time in 10 whatever the first said. Then Bayes' theorem with the new prior 1/12 gives
+Evidence can come in one piece at a time, and after each piece the posterior becomes the prior for the next. Suppose you test positive, then take a second, different test that is also right 9 times in 10 either way, and it is positive too. Assume the two tests' errors are independent given whether you have the condition: among people who have it, the second test is positive 9 times in 10 whatever the first said, and among people who don't, 1 time in 10 whatever the first said. Then Bayes' theorem uses the new prior 1/12 for having the condition, and 1 − 1/12 = 11/12 for not having it:
 
-P(has it | both positive) = 0.9 × 1/12 / (0.9 × 1/12 + 0.1 × 11/12) = 0.9 / (0.9 + 1.1) = 9/20 = 0.45.
+$$
+P(\text{has it} \mid \text{both positive}) = \frac{0.9 \times \frac{1}{12}}{0.9 \times \frac{1}{12} + 0.1 \times \frac{11}{12}} = \frac{0.9}{0.9 + 1.1} = \frac{9}{20} = 0.45.
+$$
 
-Two positives move the chance from 1/100 to 1/12 to 9/20, which is still below an even chance. The strength of a piece of evidence can be measured by its likelihood ratio, P(B | A) / P(B | not A): how many times more likely the evidence is if A is true than if it isn't. Each of these tests has a likelihood ratio of 0.9 / 0.1 = 9.
+The middle step multiplies the top and the bottom by 12, which turns $0.1 \times \frac{11}{12}$ into $0.1 \times 11 = 1.1$. Two positives move the chance from 1/100 to 1/12 to 9/20, which is still below an even chance. The second test has to be a different test, or at least a fresh sample: running the same test again on the same sample doesn't count, because its mistakes repeat. The strength of a piece of evidence can be measured by its likelihood ratio, P(B | A) / P(B | not A): how many times more likely the evidence is if A is true than if it isn't. Each of these tests has a likelihood ratio of 0.9 / 0.1 = 9.
 
 <Simpler label="the same 1,000 people as a tree, then flipped">
 
-Draw the 1,000 people as a tree that splits twice. The first split is by the condition: 10 have it, 990 don't. The second is by the test. The 10 split into 9 positive and 1 negative; the 990 split into 99 positive and 891 negative. That gives four groups at the ends: 9, 1, 99 and 891.
+The table's four cells, 9, 1, 99 and 891, can be reached in two orders, and each order is a tree. The first tree splits the 1,000 people by the condition first: 10 have it, 990 don't. Then it splits each branch by the test: the 10 into 9 positive and 1 negative, the 990 into 99 positive and 891 negative. Its branches carry the numbers you are given: 1 in 100, then 9 in 10 and 1 in 10.
 
-Now draw the tree the other way around, splitting by the test first. 9 + 99 = 108 people test positive, and 1 + 891 = 892 test negative. Then split each by the condition: of the 108 positives, 9 have it and 99 don't; of the 892 negatives, 1 has it and 891 don't. The four groups at the ends are the same people as before, only reached in a different order.
-
-The first tree's branches are the test's accuracy, which is what you know. The flipped tree's branches are what you want: 9 out of 108 positives have the condition. Bayes' theorem is the arithmetic of flipping the tree. Grinstead and Snell draw the same picture and call it a reverse tree (§4.1, p. 136) <Cite id="grinstead2003" />.
+The flipped tree splits by the test first: 108 positive, 892 negative. Then it splits each by the condition: of the 108 positives, 9 have it and 99 don't; of the 892 negatives, 1 has it and 891 don't. Its branches carry the numbers you want, such as 9 in 108. The people at the ends are the same; only the order of the questions changed. Bayes' theorem is the arithmetic of flipping the tree, and a tree keeps working when a third or fourth split makes a table awkward. Grinstead and Snell draw the same picture and call it a reverse tree (§4.1, p. 136) <Cite id="grinstead2003" />.
 
 </Simpler>
 
@@ -160,7 +173,7 @@ The odds of A are P(A) / P(not A), written like a bet: a probability of 1/100 is
 
 posterior odds = prior odds × likelihood ratio,
 
-where the likelihood ratio is P(B | A) / P(B | not A), how many times more likely the evidence is under A than under not A. To see why, write Bayes' theorem for A and for not A and divide one by the other. Both have P(B) at the bottom, so it cancels: P(A | B) / P(not A | B) = (P(A) / P(not A)) × (P(B | A) / P(B | not A)).
+with the likelihood ratio from above, P(B | A) / P(B | not A). To see why, write Bayes' theorem for A and for not A and divide one by the other. Both have P(B) at the bottom, so it cancels: P(A | B) / P(not A | B) = (P(A) / P(not A)) × (P(B | A) / P(B | not A)). This needs 0 < P(A) < 1, so that both odds and both likelihoods are defined, and P(B | not A) > 0, so that the ratio is. If P(B | not A) = 0, the evidence never happens without A, and P(A | B) = 1.
 
 For the medical test, the prior odds are 1:99 and the likelihood ratio is 0.9 / 0.1 = 9. The posterior odds are 9:99 = 1:11, and odds of 1:11 mean a probability of 1/(1 + 11) = 1/12. For the wet lawn, prior odds 1:4 times a likelihood ratio of 0.9 / 0.3 = 3 give 3:4, a probability of 3/7. The odds form never needs P(B), and it shows at once how strong a piece of evidence is: a likelihood ratio of 9 multiplies the odds by 9, whatever they were.
 
@@ -170,7 +183,7 @@ For the medical test, the prior odds are 1:99 and the likelihood ratio is 0.9 / 
 
 In odds, the second positive takes 1:11 to 1:11 × 9 = 9:11, a probability of 9/20. Counting agrees. Of 10,000 people, 100 have the condition: 90 test positive the first time and 81 of those test positive again. Of the 9,900 who don't, 990 test positive the first time and 99 of those test positive again. So 81 of the 180 double positives have the condition, 81/180 = 9/20. Doing both updates at once gives the same answer: with prior 0.01 and likelihoods 0.9 × 0.9 = 0.81 and 0.1 × 0.1 = 0.01, the posterior is 0.0081 / (0.0081 + 0.0099) = 9/20.
 
-Every route here leans on the independence assumption above, and it fails if both tests react to the same harmless cause, or if the second test is a rerun on the same sample. Then a false positive tends to repeat, the second positive carries less information, and 9/20 is too high.
+Every route here leans on the independence assumption above, and it fails if both tests react to the same harmless cause, or if the second test is a rerun on the same sample. Then a false positive tends to repeat, the second positive carries less information, and 9/20 is usually too high. In general the second positive multiplies the odds by $P(T_2^+ \mid T_1^+, A) / P(T_2^+ \mid T_1^+, A^\complement)$, where $T_1^+$ and $T_2^+$ are the two positives. That ratio falls below 9 when false positives tend to repeat.
 
 On the board, press Medical test and set the P(A) slider to 0.08, the nearest step to 1/12. The readout shows 0.439, close to 0.45.
 
@@ -178,29 +191,29 @@ On the board, press Medical test and set the P(A) slider to 0.08, the nearest st
 
 ## Notation
 
-<NotationKey symbols={["event", "complement", "intersection", "probability", "conditional"]} />
+<NotationKey symbols={["sample-space", "event-collection", "event", "complement", "intersection", "probability", "conditional", "density"]} />
 
 <PreciseStatement>
 
-Let $(\Omega, \mathcal{F}, P)$ be a probability space, as on the [probability axioms](/probability/probability-axioms/) page, and let $A, B \in \mathcal{F}$ be events with $P(B) > 0$ and $P(A) > 0$. Then
+Let $(\Omega, \mathcal{F}, P)$ be a probability space, as on the [probability axioms](/probability/probability-axioms/) page, and let $A, B \in \mathcal{F}$ be events with $P(B) > 0$. If also $P(A) > 0$, so that $P(B \mid A)$ is defined, then
 
 $$
 P(A \mid B) = \frac{P(B \mid A)\,P(A)}{P(B)}.
 $$
 
-If also $P(A) < 1$, the law of total probability gives $P(B) = P(B \mid A)\,P(A) + P(B \mid A^\complement)\,P(A^\complement)$, so
+If $0 < P(A) < 1$, the law of total probability gives $P(B) = P(B \mid A)\,P(A) + P(B \mid A^\complement)\,P(A^\complement)$, so
 
 $$
 P(A \mid B) = \frac{P(B \mid A)\,P(A)}{P(B \mid A)\,P(A) + P(B \mid A^\complement)\,P(A^\complement)}.
 $$
 
-More generally, let $H_1, \ldots, H_m \in \mathcal{F}$ be events that are pairwise disjoint, cover $\Omega$, and each have $P(H_k) > 0$. Then $P(B) = \sum_{k=1}^{m} P(B \mid H_k)\,P(H_k)$, and whenever $P(B) > 0$,
+More generally, let $H_1, H_2, \ldots \in \mathcal{F}$ be finitely or countably many events that are pairwise disjoint and cover $\Omega$. Then $P(B) = \sum_k P(B \cap H_k)$. Each term with $P(H_k) > 0$ equals $P(B \mid H_k)\,P(H_k)$, and each term with $P(H_k) = 0$ is 0 and can be dropped. So for every $i$ with $P(H_i) > 0$,
 
 $$
-P(H_i \mid B) = \frac{P(B \mid H_i)\,P(H_i)}{\sum_{k=1}^{m} P(B \mid H_k)\,P(H_k)}, \qquad i = 1, \ldots, m.
+P(H_i \mid B) = \frac{P(B \mid H_i)\,P(H_i)}{\sum_{k \,:\, P(H_k) > 0} P(B \mid H_k)\,P(H_k)}.
 $$
 
-Boundary cases. If $P(B) = 0$, then $P(A \mid B)$ is undefined. A prior of 0 or 1 never moves: if $P(A) = 0$, then $P(A \mid B) = 0$, because $A \cap B \subseteq A$; if $P(A) = 1$, then $P(A \mid B) = 1$. If $P(B \mid A) = P(B \mid A^\complement)$ (both positive), the evidence is equally likely either way, and $P(A \mid B) = P(A)$. If $P(B \mid A^\complement) = 0$ (with $P(B) > 0$), so the evidence never happens without $A$, then $P(A \mid B) = 1$.
+Boundary cases. If $P(B) = 0$, then $P(A \mid B)$ is undefined. A prior of 0 or 1 never moves, and both cases follow from the definition $P(A \mid B) = P(A \cap B)/P(B)$, which needs only $P(B) > 0$: if $P(A) = 0$, then $P(A \mid B) = 0$, because $A \cap B \subseteq A$; if $P(A) = 1$, then $P(A \mid B) = 1$, because $P(B \cap A^\complement) \le P(A^\complement) = 0$. The last two cases need $0 < P(A) < 1$, so that both likelihoods are defined. If $P(B \mid A) = P(B \mid A^\complement)$ (both positive), the evidence is equally likely either way, and $P(A \mid B) = P(A)$. If $P(B \mid A^\complement) = 0$, so the evidence never happens without $A$, then $P(A \mid B) = 1$.
 
 </PreciseStatement>
 
@@ -212,7 +225,7 @@ Boundary cases. If $P(B) = 0$, then $P(A \mid B)$ is undefined. A prior of 0 or 
 2. Every outcome is in exactly one of $A$ and $A^\complement$, so $B = (B \cap A) \cup (B \cap A^\complement)$.
 3. The two pieces are disjoint: $(B \cap A) \cap (B \cap A^\complement) \subseteq A \cap A^\complement = \emptyset$.
 4. Additivity (axiom 3) gives $P(B) = P(B \cap A) + P(B \cap A^\complement)$.
-5. The multiplication rule rewrites each term: $P(B \cap A) = P(B \mid A)\,P(A)$ and $P(B \cap A^\complement) = P(B \mid A^\complement)\,P(A^\complement)$. Substituting gives the law. With $m$ pieces $H_1, \ldots, H_m$ instead of two, steps 2 to 5 are the same with a sum of $m$ terms.
+5. The multiplication rule rewrites each term: $P(B \cap A) = P(B \mid A)\,P(A)$ and $P(B \cap A^\complement) = P(B \mid A^\complement)\,P(A^\complement)$. Substituting gives the law. With $m$ pieces $H_1, \ldots, H_m$ instead of two, the pieces $B \cap H_k$ are pairwise disjoint, since $(B \cap H_j) \cap (B \cap H_k) \subseteq H_j \cap H_k = \emptyset$ for $j \ne k$, and finite additivity (proved on the [probability axioms](/probability/probability-axioms/) page) gives the sum of $m$ terms.
 
 </StepThrough>
 
@@ -232,7 +245,7 @@ Boundary cases. If $P(B) = 0$, then $P(A \mid B)$ is undefined. A prior of 0 or 
 | Total probability | $P(B) = P(B \mid A)\,P(A) + P(B \mid A^\complement)\,P(A^\complement)$ | $0.9 \times 0.01 + 0.1 \times 0.99 = 0.108$ |
 | Bayes' theorem | $P(A \mid B) = P(B \mid A)\,P(A) / P(B)$ | $0.009 / 0.108 = 1/12$ |
 | Complement of the posterior | $P(A^\complement \mid B) = 1 - P(A \mid B)$ | $11/12$ of positives don't have it |
-| Odds form | $\dfrac{P(A \mid B)}{P(A^\complement \mid B)} = \dfrac{P(A)}{P(A^\complement)} \cdot \dfrac{P(B \mid A)}{P(B \mid A^\complement)}$ | $1/99 \times 9 = 1/11$ |
+| Odds form, for $0 < P(A) < 1$ and $P(B \mid A^\complement) > 0$ | $\dfrac{P(A \mid B)}{P(A^\complement \mid B)} = \dfrac{P(A)}{P(A^\complement)} \cdot \dfrac{P(B \mid A)}{P(B \mid A^\complement)}$ | $1/99 \times 9 = 1/11$ |
 | Uninformative evidence | $P(B \mid A) = P(B \mid A^\complement)$ gives $P(A \mid B) = P(A)$ | A test positive 1 time in 2 either way leaves $0.01$ |
 | Prior of 0 | $P(A) = 0$ gives $P(A \mid B) = 0$ | No evidence can raise a probability of 0 |
 
@@ -260,7 +273,7 @@ A factory has three machines. Machine 1 makes half of all parts, machine 2 makes
 
 <div slot="solution">
 
-The three machines split the parts into three pieces that share nothing, so the law of total probability gives $P(\text{faulty}) = 0.01 \times 0.5 + 0.02 \times 0.3 + 0.05 \times 0.2 = 0.005 + 0.006 + 0.010 = 0.021$. Bayes' theorem for each machine divides its own term by that total: $P(\text{machine 1} \mid \text{faulty}) = 0.005 / 0.021 = 5/21$, $P(\text{machine 2} \mid \text{faulty}) = 0.006 / 0.021 = 2/7$, and $P(\text{machine 3} \mid \text{faulty}) = 0.010 / 0.021 = 10/21 \approx 0.476$. Machine 3 makes the fewest parts but is the most likely source, because its fault rate is five times machine 1's. The three posteriors add up to $21/21 = 1$, as they must.
+The three machines split the parts into three pieces that share nothing, so the law of total probability gives $P(\text{faulty}) = 0.01 \times 0.5 + 0.02 \times 0.3 + 0.05 \times 0.2 = 0.005 + 0.006 + 0.010 = 0.021$. Bayes' theorem for each machine divides its own term by that total: $P(\text{machine 1} \mid \text{faulty}) = 0.005 / 0.021 = 5/21$, $P(\text{machine 2} \mid \text{faulty}) = 0.006 / 0.021 = 2/7$, and $P(\text{machine 3} \mid \text{faulty}) = 0.010 / 0.021 = 10/21 \approx 0.476$. Machine 3 makes the fewest parts but is the most likely source, and two numbers pull against each other. Its fault rate is five times machine 1's, but machine 1 makes 2.5 times as many parts, so the net ratio is $5 / 2.5 = 2$ to 1: $10/21$ against $5/21$. The three posteriors add up to $21/21 = 1$, as they must.
 
 </div>
 
@@ -273,24 +286,30 @@ The three machines split the parts into three pieces that share nothing, so the 
 A classifier with a softmax output layer produces a vector $\hat{y}$ with $\hat{y}_i = P(y = i \mid x)$: an estimate of the probability of class $i$ given the input $x$ <Cite id="goodfellow2016" />. In Bayes' terms that is a posterior. The theorem connects it to two other quantities:
 
 $$
-P(y = i \mid x) = \frac{P(x \mid y = i)\,P(y = i)}{\sum_{j} P(x \mid y = j)\,P(y = j)},
+P(y = i \mid x) = \frac{p(x \mid y = i)\,P(y = i)}{\sum_{j} p(x \mid y = j)\,P(y = j)},
 $$
 
-where $P(x \mid y = i)$ is how likely an input like $x$ is within class $i$, and $P(y = i)$ is how common class $i$ is. A model trained to output $P(y \mid x)$ directly folds both into one number, including how common each class was in its training data.
+where $p(x \mid y = i)$ is how likely an input like $x$ is within class $i$ (for continuous inputs, such as pixel values, it is a density), and $P(y = i)$ is how common class $i$ is. A model trained to output $P(y \mid x)$ directly folds both into one number, including how common each class was in its training data.
 
 ### When the base rate shifts
 
-The same evidence gives a different posterior when the prior changes. The medical test showed it: with the same test, a positive means $1/12$ when 1 person in 100 has the condition and $1/2$ when 1 in 10 does. A classifier carries the class frequencies of its training data in the same way. A common correction, assuming $P(x \mid y)$ is the same in training and in use and the outputs were calibrated estimates to begin with, multiplies each output by the ratio of the new class frequency to the old one and rescales the results to add up to 1. For example, a model trained on a set that is half positive outputs 0.9 for some input, but in use only 1 case in 100 is positive. The weights become $0.9 \times 0.01/0.5 = 0.018$ for positive and $0.1 \times 0.99/0.5 = 0.198$ for negative, and rescaling gives $0.018 / 0.216 = 1/12$, the medical test's posterior again.
+The same evidence gives a different posterior when the prior changes. The medical test showed it: with the same test, a positive means $1/12$ when 1 person in 100 has the condition and $1/2$ when 1 in 10 does. A classifier carries the class frequencies of its training data in the same way. A common correction multiplies each output by a correction factor, the ratio of the new class frequency to the old one, and rescales the results to add up to 1. Saerens and coauthors derive it from Bayes' theorem (§2.2, equation (4)) <Cite id="saerens2002" />. It rests on three assumptions:
+
+- $p(x \mid y)$ is the same in training and in use;
+- the outputs are calibrated, meaning the scores are honest frequencies: among training inputs that get a score of 0.9 for a class, 9 in 10 belong to it. This must hold for every class's score, not only for the most confident one, so that the scores equal the training-set class probabilities;
+- the new class frequencies are known. In practice they have to be estimated; the same paper does it with the EM algorithm (§2.3).
+
+For example, a model trained on a set that is half positive outputs 0.9 for some input, but in use only 1 case in 100 is positive. The correction factors are $0.01/0.5 = 0.02$ for positive and $0.99/0.5 = 1.98$ for negative. The scores become $0.9 \times 0.02 = 0.018$ and $0.1 \times 1.98 = 0.198$, and rescaling gives $0.018 / 0.216 = 1/12$, the medical test's posterior again.
 
 ### Naive Bayes
 
-A naive Bayes classifier applies Bayes' theorem with many features $x_1, \ldots, x_n$, such as the words in an email, and adds one assumption: the features are independent given the class. Then $P(x_1, \ldots, x_n \mid y) = \prod_k P(x_k \mid y)$, and
+A naive Bayes classifier applies Bayes' theorem with many features $x_1, \ldots, x_n$, such as the words in an email, and adds one assumption: the features are independent given the class. Then $P(x_1, \ldots, x_n \mid y) = \prod_k P(x_k \mid y)$, where $\prod$ means "the product of", and
 
 $$
-P(y \mid x_1, \ldots, x_n) \propto P(y) \prod_{k=1}^{n} P(x_k \mid y).
+P(y \mid x_1, \ldots, x_n) \propto P(y) \prod_{k=1}^{n} P(x_k \mid y),
 $$
 
-Each $P(x_k \mid y)$ is easy to estimate by counting, which makes naive Bayes cheap to train. The independence assumption is usually false for real features, which is where the name comes from. It is the same assumption as the second test above, whose errors were independent of the first's given the condition: each feature then adds its own likelihood as one more factor in the product. Naive Bayes will get a page of its own later.
+where $\propto$ means proportional to: equal up to a factor that doesn't depend on $y$. Each $P(x_k \mid y)$ is easy to estimate by counting (for discrete features; continuous ones get a fitted density), which makes naive Bayes cheap to train. The independence assumption is usually false for real features, which is where the name comes from. It is the same assumption as the second test above, whose errors were independent of the first's given the condition: each feature then multiplies in its own likelihood. When features are correlated, the same evidence is counted twice, which pushes the classifier's probabilities toward 0 and 1 even when the predicted class is right. That is the same mechanism as the correlated second test. Naive Bayes will get a page of its own later.
 
 ## Count a population in code
 
@@ -352,13 +371,17 @@ assert (sliver, strip) == (Fraction(9, 1000), Fraction(99, 1000)) and strip / sl
 assert sliver / evidence(*medical) == Fraction(1, 12) and 1 - posterior(*medical) == Fraction(11, 12)
 assert counts(1000, *medical) == (10, 9, 990, 99)
 assert 9 + 99 == 108 and Fraction(9, 108) == Fraction(1, 12)
+# The 2 x 2 table: the negatives in each row, and the column totals.
+assert (10 - 9, 990 - 99) == (1, 891) and 1 + 891 == 892 and 108 + 892 == 1000
 print("medical test: P(B) =", evidence(*medical), " P(A | B) =", posterior(*medical))
 
-# Wet lawn: 0.18 from rain and 0.24 from the sprinkler.
+# Wet lawn: dry nights are 8 in 10; 0.18 from rain and 0.24 from the sprinkler.
+assert 1 - Fraction(2, 10) == Fraction(8, 10)
 assert Fraction(9, 10) * Fraction(2, 10) == Fraction(18, 100)
 assert Fraction(3, 10) * Fraction(8, 10) == Fraction(24, 100)
 assert evidence(*wet_lawn) == Fraction(42, 100) == Fraction(21, 50)
 assert posterior(*wet_lawn) == Fraction(3, 7) and posterior(*wet_lawn) > 2 * Fraction(2, 10)
+assert posterior(*wet_lawn) < Fraction(1, 2)
 assert (readout(posterior(*wet_lawn)), readout(evidence(*wet_lawn))) == ("0.429", "0.420")
 assert readout(posterior(Fraction(1, 100), Fraction(9, 10), Fraction(3, 10))) == "0.029"
 assert readout(posterior(Fraction(99, 100), Fraction(9, 10), Fraction(3, 10))) == "0.997"
@@ -372,6 +395,9 @@ common = (Fraction(1, 10), Fraction(9, 10), Fraction(1, 10))
 assert posterior(*common) == Fraction(1, 2) and evidence(*common) == Fraction(18, 100)
 assert (readout(posterior(*common)), readout(evidence(*common))) == ("0.500", "0.180")
 assert counts(100, *common) == (10, 9, 90, 9)
+# Dragging P(A) from 0.01 to 0.10 on Medical test: 0.083 to 0.500, with equal true and false positives.
+assert readout(posterior(*medical)) == "0.083" and readout(posterior(*common)) == "0.500"
+assert Fraction(9, 10) * Fraction(1, 10) == Fraction(1, 10) * Fraction(9, 10) == Fraction(9, 100)
 
 # Accuracy within groups, from the conditional probability page.
 assert Fraction(95, 100) * Fraction(9, 10) + Fraction(60, 100) * Fraction(1, 10) == Fraction(915, 1000)
@@ -388,6 +414,11 @@ assert from_odds(Fraction(1, 4) * 3) == Fraction(3, 7)
 # Updating twice: the posterior 1/12 becomes the new prior.
 second = posterior(Fraction(1, 12), Fraction(9, 10), Fraction(1, 10))
 assert second == Fraction(9, 20)
+assert 1 - Fraction(1, 12) == Fraction(11, 12) and Fraction(1, 10) * 11 == Fraction(11, 10)
+top = Fraction(9, 10) * Fraction(1, 12)
+bottom = top + Fraction(1, 10) * Fraction(11, 12)
+assert (12 * top, 12 * bottom) == (Fraction(9, 10), Fraction(9, 10) + Fraction(11, 10))
+assert Fraction(9, 10) / (Fraction(9, 10) + Fraction(11, 10)) == Fraction(9, 20) == Fraction(45, 100)
 assert from_odds(Fraction(1, 11) * 9) == Fraction(9, 20)
 assert posterior(Fraction(1, 100), Fraction(81, 100), Fraction(1, 100)) == Fraction(9, 20)
 assert Fraction(81, 10000) / (Fraction(81, 10000) + Fraction(99, 10000)) == Fraction(9, 20)
@@ -418,13 +449,26 @@ assert total == Fraction(21, 1000)
 machines = [term / total for term in terms]
 assert machines == [Fraction(5, 21), Fraction(2, 7), Fraction(10, 21)] and sum(machines) == 1
 assert readout(machines[2]) == "0.476"
+# Machine 3's fault rate is 5 times machine 1's, machine 1 makes 2.5 times as many parts: net 2 to 1.
+assert faulty[2] / faulty[0] == 5 and shares[0] / shares[2] == Fraction(5, 2)
+assert machines[2] / machines[0] == 5 / Fraction(5, 2) == 2
 
 # A classifier trained on balanced data, used where 1 case in 100 is positive.
-weight_positive = Fraction(9, 10) * Fraction(1, 100) / Fraction(1, 2)
-weight_negative = Fraction(1, 10) * Fraction(99, 100) / Fraction(1, 2)
-assert (weight_positive, weight_negative) == (Fraction(18, 1000), Fraction(198, 1000))
-assert weight_positive + weight_negative == Fraction(216, 1000)
-assert weight_positive / (weight_positive + weight_negative) == Fraction(1, 12)
+factor_positive = Fraction(1, 100) / Fraction(1, 2)
+factor_negative = Fraction(99, 100) / Fraction(1, 2)
+assert (factor_positive, factor_negative) == (Fraction(2, 100), Fraction(198, 100))
+score_positive = Fraction(9, 10) * factor_positive
+score_negative = Fraction(1, 10) * factor_negative
+assert (score_positive, score_negative) == (Fraction(18, 1000), Fraction(198, 1000))
+assert score_positive + score_negative == Fraction(216, 1000)
+assert score_positive / (score_positive + score_negative) == Fraction(1, 12)
+
+# Check yourself: the word "prize" in spam.
+assert evidence(Fraction(2, 10), Fraction(3, 10), Fraction(5, 100)) == Fraction(10, 100)
+assert Fraction(3, 10) * Fraction(2, 10) == Fraction(6, 100) and Fraction(5, 100) * Fraction(8, 10) == Fraction(4, 100)
+assert posterior(Fraction(2, 10), Fraction(3, 10), Fraction(5, 100)) == Fraction(3, 5)
+assert Fraction(3, 10) / Fraction(5, 100) == 6 and odds(Fraction(2, 10)) * 6 == Fraction(3, 2)
+assert from_odds(Fraction(3, 2)) == Fraction(3, 5)
 
 # Boundary cases and Check yourself.
 assert posterior(Fraction(0), Fraction(9, 10), Fraction(1, 10)) == 0
@@ -474,7 +518,27 @@ With 100,000 simulated people the counted shares land within 0.01 of the formula
 
 <ResearchFrontier reviewed="2026-11-24">
 
-**A posterior over a network's weights.** Bayes' theorem applies to a whole model. Take the weights $w$ as the hypothesis and the training data $D$ as the evidence: $P(w \mid D) = P(D \mid w)\,P(w) / P(D)$. Instead of one best set of weights, this gives a probability for every possible set, which says how uncertain the model is. Blundell and coauthors open by noting that plain networks often make overly confident decisions, and that exact Bayesian inference on a network's weights is intractable, because there are very many weights and the network's form does not allow the sums and integrals to be done exactly. They therefore fit a variational approximation, a simpler distribution over the weights chosen to be close to the true posterior, and train it with backpropagation; they call the method Bayes by Backprop (Section 1) <Cite id="blundell2015" />. Even with the posterior in hand, a prediction averages over it, which their Section 3 calls equivalent to an ensemble of infinitely many networks and intractable for networks of any practical size <Cite id="blundell2015" />.
+**A posterior over a network's weights.** Bayes' theorem applies to a whole model. Take the weights $w$ as the hypothesis and the training data $D$, pairs $(x_i, y_i)$, as the evidence. The weights are continuous, so the theorem is written with densities:
+
+$$
+p(w \mid D) = \frac{p(D \mid w)\,p(w)}{p(D)}, \qquad p(D) = \int p(D \mid w)\,p(w)\,dw, \qquad p(D \mid w) = \prod_i P(y_i \mid x_i, w).
+$$
+
+Instead of one best set of weights, this gives a probability distribution (a density) over weight settings, which says how uncertain the model is. It is conditioning on a random variable, the case the [conditional probability frontier](/probability/conditional-probability/#research-frontier) describes. Blundell and coauthors open by noting that plain networks often make overly confident decisions, and that exact Bayesian inference on a network's weights is intractable, because there are very many weights and the network's form does not allow the integrals to be done exactly. They therefore fit a variational approximation $q(w \mid \theta)$, a simpler distribution over the weights chosen to be close to the true posterior, and train it with backpropagation; they call the method Bayes by Backprop (Section 1) <Cite id="blundell2015" />.
+
+The cost they minimize, their equation (1), is the variational free energy. The paper writes it in script; here it is a plain $F$, because $\mathcal{F}$ on this site is the collection of events:
+
+$$
+F(D, \theta) = \mathrm{KL}\big(q(w \mid \theta) \,\|\, p(w)\big) - \mathbb{E}_{q(w \mid \theta)}\big[\log p(D \mid w)\big].
+$$
+
+Writing out the KL divergence from $q$ to the true posterior, and using Bayes' theorem above, turns their equation (1) into the identity
+
+$$
+\log p(D) = -F(D, \theta) + \mathrm{KL}\big(q(w \mid \theta) \,\|\, p(w \mid D)\big).
+$$
+
+The left side does not depend on $\theta$, so making $F$ smaller brings $q$ closer to the posterior. Since a KL divergence is never negative, $-F$ is a lower bound on $\log p(D)$, which the abstract calls the expected lower bound on the marginal likelihood <Cite id="blundell2015" />. The hard part is exactly the denominator $p(D)$, the evidence, an integral over every weight setting; the identity lets the method work without ever computing it. Even with the posterior in hand, a prediction averages over it, which their Section 3 calls equivalent to an ensemble of infinitely many networks and intractable for networks of any practical size <Cite id="blundell2015" />.
 
 **Where the prior comes from.** The same paper notes that choosing the prior's settings from the same data the prior is meant to regularize, called empirical Bayes, is a subject of much debate, and reports that doing so worked poorly for their method (Section 3.3) <Cite id="blundell2015" />. How to pick a sensible prior over millions of weights, and how close a given approximation comes to the exact posterior, are questions a single paper does not settle.
 
@@ -490,8 +554,8 @@ No, but it is very small. A negative is the evidence now, and the test misses 1 
 Halving the false positives. With $P(B \mid A) = 1$: $0.01 / (0.01 + 0.099) = 10/109 \approx 0.092$, barely up from $0.083$. With $P(B \mid A^\complement) = 0.05$: $0.009 / (0.009 + 0.0495) = 2/13 \approx 0.154$. When the condition is rare, the false positives from the large "not A" group make up most of $P(B)$, so cutting them helps most. Try both on the board: P(B | A) at its top, 0.99, gives 0.091; P(B | not A) at 0.05 gives 0.154.
 </CheckYourself>
 
-<CheckYourself level="standard" question="P(A) = 0.5, P(B | A) = 0.6 and P(B | not A) = 0.2. What is P(B), and what is P(A | B)?">
-$P(B) = 0.6 \times 0.5 + 0.2 \times 0.5 = 0.4$ by the law of total probability, and $P(A \mid B) = 0.3 / 0.4 = 3/4$ by Bayes' theorem. These are the bags of worked example 1: with an even prior, the posterior splits in the ratio of the likelihoods, 0.6 to 0.2, which is 3 to 1.
+<CheckYourself level="standard" question='2 emails in 10 are spam. The word "prize" appears in 30% of spam emails and in 5% of the others. An email contains "prize". What is P(spam | prize)?'>
+$3/5 = 0.6$. The law of total probability gives $P(\text{prize}) = 0.3 \times 0.2 + 0.05 \times 0.8 = 0.06 + 0.04 = 0.10$, and Bayes' theorem gives $P(\text{spam} \mid \text{prize}) = 0.06 / 0.10 = 3/5$. In odds: the prior odds of spam are 1:4, the word is $0.3 / 0.05 = 6$ times as likely in spam, and $1:4 \times 6 = 6:4 = 3:2$, a probability of $3/5$. Spam is the rarer kind of email, but the word is strong enough evidence to make it the likelier one.
 </CheckYourself>
 
 <CheckYourself level="proof" question="Show that if 0 < P(A) < 1 and P(B | A) = P(B | not A) > 0, then P(A | B) = P(A).">
