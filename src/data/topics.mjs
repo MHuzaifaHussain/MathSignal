@@ -98,7 +98,7 @@ export const TOPICS = [
 		id: 'probability/naive-bayes-classifier',
 		title: 'Naive Bayes classifier',
 		description: 'A classifier built from Bayes\' theorem and one simplifying assumption, trained by counting.',
-		recap: 'A naive Bayes classifier picks the class y that makes P(y) times the product of P(x_k | y) largest: Bayes\' theorem plus the assumption that the features are independent once the class is known.',
+		recap: 'A naive Bayes classifier picks the class y that makes P(y) times the product of P(xₖ | y) largest: Bayes\' theorem plus the assumption that the features are independent once the class is known.',
 		status: 'planned',
 		prerequisites: ['probability/bayes-theorem', 'probability/conditional-independence'],
 		leadsTo: [],
