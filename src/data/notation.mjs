@@ -239,6 +239,22 @@ export const NOTATION = [
 		meaning: 'Perpendicular (orthogonal): a · b = 0',
 		note: 'The zero vector counts as perpendicular to every vector. Independence of events uses a different symbol, ⫫.',
 	},
+	{ key: 'weight-vector', tex: '\\mathbf{w}', say: '"bold w" or "the weights"', meaning: 'A weight vector: one learned weight per input feature' },
+	{
+		key: 'bias',
+		tex: 'b',
+		say: '"b"',
+		meaning: "A bias: a number added to a neuron's weighted sum",
+		note: 'A whole layer adds a bias vector, written bold.',
+	},
+	{
+		key: 'attention-matrices',
+		tex: '\\mathbf{Q}, \\mathbf{K}, \\mathbf{V}',
+		say: '"Q, K and V"',
+		meaning: 'The queries, keys and values of attention, one vector per row',
+		note: 'Bold capitals are matrices. Vaswani et al. write plain Q, K and V.',
+	},
+	{ key: 'key-dimension', tex: 'd_k', say: '"d k"', meaning: 'The number of entries in each query and each key' },
 ];
 
 const BY_KEY = new Map(NOTATION.map((entry) => [entry.key, entry]));

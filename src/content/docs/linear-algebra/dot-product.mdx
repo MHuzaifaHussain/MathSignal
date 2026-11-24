@@ -1,6 +1,6 @@
 ---
 title: "Dot product"
-description: "The dot product multiplies two vectors entry by entry and adds up the results. Drag two arrows to see how it measures alignment in neurons and attention."
+description: "The dot product multiplies matching entries of two vectors and adds them. Drag arrows to see how it measures alignment, then meet it in neurons and attention."
 sidebar:
   order: 2
 draft: true
@@ -16,7 +16,7 @@ takeaways:
   - The dot product also equals ‖a‖ ‖b‖ cos θ, so its sign gives the direction. It is positive under 90 degrees, 0 at a right angle and negative beyond.
   - Two nonzero vectors are perpendicular exactly when their dot product is 0, as (3, 4) and (−4, 3) are.
   - Length counts as much as direction. Doubling b doubles a · b, which is why cosine similarity divides the lengths out.
-  - Every neuron computes a dot product w · x and adds a bias, and attention scores each query against each key with one.
+  - A fully connected neuron computes a dot product w · x and adds a bias, and attention scores each query against each key with one.
 references:
   - margalit-ila
   - shrivastava2014
@@ -63,43 +63,43 @@ import VectorBoard2D from "../../../components/react/VectorBoard2D.tsx";
 
 <Analogy breaks="The cart picture works only when the track arrow has length 1. With a longer track arrow the dot product grows with it, though the cart moves no further. The picture also gives the push and the track different jobs, while the dot product treats its two vectors the same way: a · b always equals b · a.">
 
-A cart sits on a straight track that runs east across a sheet of squared paper. You push it with an arrow that goes 3 squares east and 4 squares north, a push of length 5. Only the east part, 3 squares, moves the cart. The north part presses into the rails and does nothing. Turn your push to point straight along the track and all 5 count. Push straight across the track and none of it counts. Push back toward the west and the count goes negative: the cart slows down.
+A cart sits on a straight track that runs east across a sheet of squared paper. You push it with an arrow that goes 3 squares east and 4 squares north, a push of length 5. Only the east part, 3 squares, moves the cart. The north part presses into the rails and does nothing. Turn your push to point straight along the track and all 5 count. Push straight across the track and none of it counts. Push back toward the west and the count goes negative: the cart rolls backward.
 
 A shopping bill shows the same sum without any angles. You buy 2 apples, 3 loaves and 1 carton of milk, at 0.5, 2 and 1.5 dollars. The bill is 2 × 0.5 + 3 × 2 + 1 × 1.5 = 8.5 dollars: multiply each count by its price, then add. Swap the roles of the two lists and the bill is the same, and doubling every price doubles the bill.
 
-In symbols, the cart's sum is (3, 4) · (1, 0) = 3 × 1 + 4 × 0 = 3.
+In symbols, the cart works the same way: write the push as (3, 4) and the track direction, one square east, as (1, 0). Multiply matching entries and add: (3, 4) · (1, 0) = 3 × 1 + 4 × 0 = 3, the part that moves the cart.
 
 </Analogy>
 
 <WhyThisMatters>
-Every unit in a neural network starts by computing a dot product of its weights with its inputs, w · x, and then adds a bias. A recommender scores a user against an item with the dot product of two learned vectors, and a transformer scores each query against each key with one. Whether such a score comes out positive or negative, and how much it depends on the vectors' lengths rather than their directions, is what the rest of this page is about.
+Each unit in a fully connected layer starts by computing a dot product of its weights with its inputs, **w** · **x**, and then adds a bias. A recommender scores a user against an item with the dot product of two learned vectors, and a transformer scores each query against each key with one. Whether such a score comes out positive or negative, and how much it depends on the vectors' lengths rather than their directions, is what the rest of this page is about.
 </WhyThisMatters>
 
 ## Push a cart along a track
 
 Before you touch anything: you push with strength 5 but tilt your push away from the track. Does the cart get all 5? Going further: at what angle does it get nothing, and when does it roll backward?
 
-The board draws the track direction as a dashed arrow labeled "û, length 1", pointing east, and your push a as a solid arrow from the origin, starting at (5, 0). A dotted circle marks every push of length 5. Drag the tip of your push; it snaps to whole-number grid points. From the keyboard, use the − and + buttons in the coordinate table, such as "Move your push 1 east". Your task: keep your push at length 5 and tilt it until the cart gets exactly 3, then press Check.
+The board draws the track direction as a dashed arrow labeled "û, length 1", pointing east. **û** (read "u hat") is the usual name for an arrow of length 1 that only gives a direction; when the track arrow is longer, the board calls it **b** instead. Your push **a** is a solid arrow from the origin, starting at (5, 0). A dotted circle marks every push of length 5. Drag the tip of your push; it snaps to whole-number grid points. From the keyboard, use the − and + buttons in the coordinate table, such as "Move your push 1 east". Your task: keep your push at length 5 and tilt it until the cart gets exactly 3, then press Check.
 
 <div class="not-content">
   <VectorBoard2D client:visible setup="cart-push" />
 </div>
 
-No, the cart gets less than 5 once you tilt. The push that works is (3, 4), or its mirror image (3, −4), and Check says "Yes. (3, 4) has length 5, since 3 × 3 + 4 × 4 = 25, and 3 of it points along the track." Then the board shades the part that moves the cart and writes the sum out: "Along the track: a · û = 3 × 1 + 4 × 0 = 3. The cart gets 3 of your push." The other part goes into the rails: "Into the rails: 4. That part doesn't move the cart." A push of (4, 3) also has length 5, but 4 of it points along the track.
+No, the cart gets less than 5 once you tilt. The push that works is (3, 4), or its mirror image (3, −4), and Check says "Yes. (3, 4) has length 5, since 3 × 3 + 4 × 4 = 25, and 3 of it points along the track." Then the board draws the part that moves the cart as an ochre segment labeled "moves the cart" and writes the sum out: "Along the track: a · û = 3 × 1 + 4 × 0 = 3. The cart gets 3 of your push." The other part goes into the rails: "Into the rails: 4. That part doesn't move the cart." A push of (4, 3) also has length 5, but 4 of it points along the track.
 
-Now try the presets. Sideways, (0, 5), gives "The cart doesn't move: your whole push goes into the rails." That is the right angle, where the cart gets nothing. Backward, (−3, 4), gives "Along the track: a · û = (−3) × 1 + 4 × 0 = −3. The cart rolls backward." Any push that leans past the right angle gives a negative number. The last two presets break the picture on purpose. Longer track arrow keeps the push at (3, 4) but makes the track arrow b = (2, 0), and the board says "a · b = 3 × 2 + 4 × 0 = 6. That is twice the part along the track, 3, because b has length 2." Tilted track turns the track to b = (4, 3), length 5, and gives 20 for a part of 4. The dot product equals the part along the track only when the track arrow has length 1.
+Now try the presets. Sideways, (0, 5), gives "The cart doesn't move: your whole push goes into the rails." That is the right angle, where the cart gets nothing. Backward, (−3, 4), gives "Along the track: a · û = (−3) × 1 + 4 × 0 = −3. The cart rolls backward." Any push that leans past the right angle gives a negative number. The last two presets break the picture on purpose. Longer track arrow keeps the push at (3, 4) but makes the track arrow **b** = (2, 0), and the board says "a · b = 3 × 2 + 4 × 0 = 6. That is twice the part along the track, 3, because b has length 2." Tilted track puts your push back at (5, 0) and turns the track to **b** = (4, 3), which has length 5. The board says "a · b = 5 × 4 + 0 × 3 = 20. That is 5 times the part along the track, 4, because b has length 5." The dot product equals the part along the track only when the track arrow has length 1.
 
 ## Multiply matching entries, then add
 
-The dot product of two vectors with the same number of entries is the sum of the products of their matching entries. For two entries, a · b = a₁b₁ + a₂b₂, and with more entries the sum just gets longer. The answer is a single number, not a vector.
+The dot product of two [vectors](/linear-algebra/vectors/) with the same number of entries is the sum of the products of their matching entries. For two entries, **a** · **b** = a₁b₁ + a₂b₂, and with more entries the sum just gets longer. The answer is a single number, not a vector.
 
-The running example on this page is a = (3, 4) and b = (4, 3):
+The running example on this page is **a** = (3, 4) and **b** = (4, 3):
 
-a · b = 3 × 4 + 4 × 3 = 12 + 12 = 24.
+**a** · **b** = 3 × 4 + 4 × 3 = 12 + 12 = 24.
 
-With three entries, (1, 2, 3) · (4, 5, 6) = 4 + 10 + 18 = 32, the example Margalit and Rabinoff use in Section 6.1 of *Interactive Linear Algebra* <Cite id="margalit-ila" />. Their section also notes that the dot product of two vectors is a scalar, a single number. Both vectors need the same number of entries; (1, 2) · (1, 2, 3) has no meaning.
+With three entries, (1, 2, 3) · (4, 5, 6) = 4 + 10 + 18 = 32, the example Margalit and Rabinoff use in Section 6.1 of *Interactive Linear Algebra* <Cite id="margalit-ila" />. Their section also notes that the dot product of two vectors is a scalar, a single number <Cite id="margalit-ila" />. Both vectors need the same number of entries; (1, 2) · (1, 2, 3) has no meaning.
 
-Swapping the two vectors changes nothing, because each product a₁b₁ is the same as b₁a₁. Multiplying one vector by a number multiplies the dot product by that number, and the dot product spreads over a sum: (a + c) · b = a · b + c · b <Cite id="margalit-ila" />. These are the shopping bill's rules: swap the lists and the bill stays put, double the prices and it doubles.
+Swapping the two vectors changes nothing, because each product a₁b₁ is the same as b₁a₁. Multiplying one vector by a number multiplies the dot product by that number, and the dot product spreads over a sum: (**a** + **d**) · **b** = **a** · **b** + **d** · **b** for any third vector **d** <Cite id="margalit-ila" />. These are the shopping bill's rules: swap the lists and the bill stays put, double the prices and it doubles.
 
 <Simpler label="the shopping bill as a table" id="shopping-bill">
 
@@ -122,53 +122,53 @@ In NumPy, `a * b` multiplies matching entries and stops, so for the running pair
 
 ## The sign tells you the angle
 
-The sign of a · b says whether two arrows point roughly the same way, meet at a right angle or point apart. It is positive when the angle between them is under 90 degrees, 0 at exactly 90 degrees and negative when the angle is wider. The cart showed this with a track of length 1; this board lets both arrows move.
+The sign of **a** · **b** says whether two arrows point roughly the same way, meet at a right angle or point apart. It is positive when the angle between them is under 90 degrees, 0 at exactly 90 degrees and negative when the angle is wider. The cart showed this with a track of length 1; this board lets both arrows move.
 
-Before you touch anything: a = (4, 1) and b = (−1, 3) look almost perpendicular. Is a · b positive, zero or negative? Going further: if you double b without turning it, what happens to a · b, and what happens to the angle?
+Before you touch anything: **a** = (4, 1) and **b** = (−1, 3) look almost perpendicular. Is **a** · **b** positive, zero or negative? Going further: if you double **b** without turning it, what happens to **a** · **b**, and what happens to the angle?
 
-The board draws a as a solid arrow and b as a dashed one, both from the origin. Until you commit, the two arrows are the question and stay where they are. Pick your guess under "Your guess: a · b is" (Positive, Zero or Negative) and press Check. After that you can drag both tips, use the − and + buttons in the coordinate table, or press a preset. Your task: pick a sign, press Check, then press Short b and after it Long b, and compare.
+The board draws **a** as a solid arrow and **b** as a dashed one, both from the origin. Until you commit, the two arrows are the question and stay where they are. Pick your guess under "Your guess: a · b is" (Positive, Zero or Negative) and press Check. After that you can drag both tips, use the − and + buttons in the coordinate table, or press a preset. Your task: pick a sign, press Check, then press Short b and after it Long b, and compare.
 
 <div class="not-content">
   <VectorBoard2D client:visible setup="align" />
 </div>
 
-Negative, though only just. The board answers "a · b = 4 × (−1) + 1 × 3 = −1." with "Angle: about 94.4°.": the arrows are a little more than a right angle apart. Your eye can't tell 94 degrees from 90, but the sum can, and it is an exact whole number. An ochre segment along a's line shows the shadow of b on that line, and here it points backward: "Shadow of b along a: a · b ÷ ‖a‖ = −1 ÷ √17 ≈ −0.24."
+Negative, though only just. The board shows "a · b = 4 × (−1) + 1 × 3 = −1." and "Angle: about 94.4°." The arrows are a little more than a right angle apart. Your eye can't tell 94 degrees from 90, but the sum can, and it is an exact whole number. An ochre segment along **a**'s line shows the shadow of **b** on that line, and here it points backward: "Shadow of b along a: a · b ÷ ‖a‖ = −1 ÷ √17 ≈ −0.24." Here ‖**a**‖ means the length of **a**, √17 for **a** = (4, 1); the next sections explain the shadow and the angle θ the board marks.
 
-Short b and Long b answer the second question. Both have a = (3, 1) and an angle of exactly 45 degrees. Short b has b = (1, 2) and a · b = 5. Long b doubles b to (2, 4), and the board says "Before: a · b = 5 at exactly 45°. Same angle, b twice as long, so a · b doubled." The angle stays the same and the dot product doubles.
+Short b and Long b answer the second question. Both have **a** = (3, 1) and an angle of exactly 45 degrees. Short b has **b** = (1, 2) and **a** · **b** = 5. Long b doubles **b** to (2, 4), and the board says "Before: a · b = 5 at exactly 45°. Same angle, b twice as long, so a · b doubled." The angle stays the same and the dot product doubles.
 
-The other presets cover the two extreme cases. Perpendicular, a = (3, 1) and b = (−1, 3), gives "a · b = 3 × (−1) + 1 × 3 = 0." and "Exactly 90°: a and b are perpendicular.", and the board draws a right-angle mark. Opposite, a = (2, 1) and b = (−4, −2), gives −10 at "Exactly 180°: b points the opposite way."
+The other presets cover the two extreme cases. Perpendicular, **a** = (3, 1) and **b** = (−1, 3), gives "a · b = 3 × (−1) + 1 × 3 = 0." and "Exactly 90°: a and b are perpendicular.", and the board draws a right-angle mark. Opposite, **a** = (2, 1) and **b** = (−4, −2), gives −10 at "Exactly 180°: b points the opposite way."
 
-Then build the running pair by hand: drag a to (3, 4) and b to (4, 3). The board reads "a · b = 3 × 4 + 4 × 3 = 24." and "Angle: about 16.3°." Now look for every b that gives 0 with this a. Apart from the zero vector there are two on the board, (−4, 3) and (4, −3), the two directions at a right angle to a. Every b on the far side of the line through those two points gives a negative number. Among the b of length 5 the most negative is −25, at (−3, −4), which points straight back.
+Then build the running pair by hand: drag **a** to (3, 4) and **b** to (4, 3). The board reads "a · b = 3 × 4 + 4 × 3 = 24." and "Angle: about 16.3°." Now look for every **b** that gives 0 with this **a**. Apart from the zero vector there are two on the board, (−4, 3) and (4, −3), the two directions at a right angle to **a**. They lie on one line through the origin, and every **b** on the side of that line away from **a** gives a negative number. Among the **b** of length 5 the most negative is −25, at (−3, −4), which points straight back.
 
 ### Perpendicular arrows give 0
 
-Two nonzero vectors are perpendicular exactly when their dot product is 0. For a = (3, 4) and b = (−4, 3), a · b = 3 × (−4) + 4 × 3 = −12 + 12 = 0. Margalit and Rabinoff take this as the definition: vectors are orthogonal, or perpendicular, when their dot product is 0, written with the symbol ⊥ <Cite id="margalit-ila" />. By that definition the zero vector is perpendicular to every vector, since 0 times anything is 0, but it has no direction and so no angle. Drag b to (0, 0) and the board says "a · b = 0 because b is the zero vector. The angle is undefined: b has no direction."
+Two nonzero vectors are perpendicular exactly when their dot product is 0. For **a** = (3, 4) and **b** = (−4, 3), **a** · **b** = 3 × (−4) + 4 × 3 = −12 + 12 = 0. Margalit and Rabinoff take this as the definition: vectors are orthogonal, or perpendicular, when their dot product is 0, written with the symbol ⊥ <Cite id="margalit-ila" />. By that definition the zero vector is perpendicular to every vector, since 0 times anything is 0, but it has no direction and so no angle. Drag **b** to (0, 0) and the board says "a · b = 0 because b is the zero vector. The angle is undefined: b has no direction."
 
 ## Size: lengths times the cosine
 
-The size of a · b is the product of the two lengths and the cosine of the angle between the arrows:
+The size of **a** · **b** is the product of the two lengths and the cosine of the angle between the arrows:
 
-a · b = ‖a‖ ‖b‖ cos θ,
+**a** · **b** = ‖**a**‖ ‖**b**‖ cos θ,
 
-where ‖a‖ is the length of a and θ is the angle, from 0 to 180 degrees. The cosine is 1 at 0 degrees, 0 at 90 and −1 at 180, which is where the signs in the last section come from. The derivation is in the formal definition below.
+where ‖**a**‖ is the length of **a** and θ is the angle, from 0 to 180 degrees. The cosine is 1 at 0 degrees, 0 at 90 and −1 at 180, which is where the signs in the last section come from. The derivation is in the formal definition below.
 
 ### A vector's length from a · a
 
-A vector's dot product with itself is its length squared. For a = (3, 4), a · a = 9 + 16 = 25, so ‖a‖ = √25 = 5, the Pythagorean theorem in the language of dot products <Cite id="margalit-ila" />. Both running vectors have length 5, so the formula gives cos θ = 24 / (5 × 5) = 24/25 = 0.96, and θ is about 16.26 degrees, the board's 16.3 to one decimal.
+A vector's dot product with itself is its length squared. For **a** = (3, 4), **a** · **a** = 9 + 16 = 25, so ‖**a**‖ = √25 = 5, the Pythagorean theorem in the language of dot products <Cite id="margalit-ila" />. Both running vectors have length 5, so the formula gives cos θ = 24 / (5 × 5) = 24/25 = 0.96. To turn a cosine back into an angle, use the inverse cosine (cos⁻¹ or arccos on a calculator): cos⁻¹(0.96) ≈ 16.26 degrees, the board's 16.3 to one decimal.
 
 ### Longer arrows, bigger numbers
 
-Doubling b doubles a · b: (3, 4) · (8, 6) = 24 + 24 = 48, twice 24, with the same angle. This is the Long b preset in general form. Since lengths multiply the number, a · b on its own can't say how well two arrows line up. Dividing by both lengths removes them and leaves the cosine:
+Doubling **b** doubles **a** · **b**: (3, 4) · (8, 6) = 24 + 24 = 48, twice 24, with the same angle. This is what the Long b preset showed, now with the running pair. Since lengths multiply the number, **a** · **b** on its own can't say how well two arrows line up. Dividing by both lengths removes them and leaves the cosine:
 
-cos θ = a · b / (‖a‖ ‖b‖).
+cos θ = **a** · **b** / (‖**a**‖ ‖**b**‖).
 
 ### The shadow of one arrow on the other
 
-Dividing by one length gives the signed length of a shadow. a · b / ‖a‖ is how far b reaches along a's line: 24 / 5 = 4.8 for the running pair, the board's ochre segment. It is negative when b leans backward, as with the opening −0.24. When the arrow you divide by has length 1, the division does nothing and the dot product is the shadow itself, which is why the cart got exactly 3. A later page on projections turns this length into the shadow vector.
+Dividing by one length gives the signed length of a shadow. **a** · **b** / ‖**a**‖ is how far **b** reaches along **a**'s line: 24 / 5 = 4.8 for the running pair, the board's ochre segment. It is negative when **b** leans backward, as with the opening −0.24. When the arrow you divide by has length 1, the division does nothing and the dot product is the shadow itself, which is why the cart got exactly 3. A later page on projections turns this length into the shadow vector.
 
 <GoDeeper label="why the ratio never leaves the range from −1 to 1" id="cauchy-schwarz">
 
-For the cosine formula to make sense, a · b / (‖a‖ ‖b‖) must lie between −1 and 1. That is the Cauchy–Schwarz inequality, |a · b| ≤ ‖a‖ ‖b‖, and it follows from one fact: a length squared is never negative.
+For the cosine formula to make sense, **a** · **b** / (‖**a**‖ ‖**b**‖) must lie between −1 and 1. That is the Cauchy–Schwarz inequality, |**a** · **b**| ≤ ‖**a**‖ ‖**b**‖, and it follows from one fact: a length squared is never negative.
 
 <StepThrough title="Cauchy–Schwarz from a quadratic that never goes below 0" rigor="full">
 
@@ -186,17 +186,17 @@ For the running pair, $24^2 = 576 \le 625 = 25 \times 25$. In two or three dimen
 
 ## Alignment, or just long arrows?
 
-A larger dot product does not always mean two arrows point more nearly the same way, because length counts too. Take a = (3, 4). Its dot product with itself is 25, but with (6, 8), which points the same way and is twice as long, it is 50. Both pairs have an angle of 0, yet one number is twice the other. To compare directions only, divide by both lengths, which gives the cosine, called cosine similarity in ML. A later comparison page sets the dot product, cosine similarity and Euclidean distance side by side.
+A larger dot product does not always mean two arrows point more nearly the same way, because length counts too. Take **a** = (3, 4). Its dot product with itself is 25, but with (6, 8), which points the same way and is twice as long, it is 50. Both pairs have an angle of 0, yet one number is twice the other. To compare directions only, divide by both lengths, which gives the cosine, called cosine similarity in ML. A later comparison page sets the dot product, cosine similarity and Euclidean distance side by side.
 
-The dot product is also tied to distance. Expanding a length squared gives
+The dot product is also tied to distance. Writing the length squared as a dot product and multiplying it out with the rules above (steps 2 to 4 of the derivation in the formal definition) gives
 
-‖a − b‖² = ‖a‖² + ‖b‖² − 2 a · b.
+‖**a** − **b**‖² = ‖**a**‖² + ‖**b**‖² − 2 **a** · **b**.
 
-For the running pair, a − b = (−1, 1), so ‖a − b‖² = 1 + 1 = 2, and the right side is 25 + 25 − 48 = 2. When every vector in a collection has the same length, the one with the largest dot product with a query is also the nearest one. When lengths differ, the two can disagree, which matters for search in ML below.
+For the running pair, **a** − **b** = (−1, 1), so ‖**a** − **b**‖² = 1 + 1 = 2, and the right side is 25 + 25 − 48 = 2. When every vector in a collection has the same length, the one with the largest dot product with a query is also the nearest one. When lengths differ, the two can disagree, which matters for search in ML below.
 
 ## Notation
 
-<NotationKey symbols={["vector", "vector-entry", "real-space", "dot-product", "dot-product-transpose", "norm", "absolute-value", "angle", "perpendicular", "unit-vector", "zero-vector", "sum", "transpose", "argmax", "softmax"]} />
+<NotationKey symbols={["vector", "vector-entry", "real-space", "dot-product", "dot-product-transpose", "norm", "absolute-value", "angle", "perpendicular", "unit-vector", "zero-vector", "sum", "transpose", "argmax", "softmax", "scalar", "feature-vector", "weight-vector", "bias", "class-label", "attention-matrices", "key-dimension"]} />
 
 <PreciseStatement>
 
@@ -206,7 +206,7 @@ $$
 \mathbf{a} \cdot \mathbf{b} = \mathbf{a}^\top \mathbf{b} = \sum_{i=1}^{n} a_i b_i.
 $$
 
-It is symmetric, $\mathbf{a} \cdot \mathbf{b} = \mathbf{b} \cdot \mathbf{a}$; linear in each vector, $(c\,\mathbf{a} + \mathbf{d}) \cdot \mathbf{b} = c\,(\mathbf{a} \cdot \mathbf{b}) + \mathbf{d} \cdot \mathbf{b}$ for every real $c$; and $\mathbf{a} \cdot \mathbf{a} = \lVert \mathbf{a} \rVert^2 \ge 0$, with equality only for $\mathbf{a} = \mathbf{0}$. For nonzero $\mathbf{a}$ and $\mathbf{b}$, the angle $\theta \in [0, \pi]$ is defined by $\cos\theta = \mathbf{a} \cdot \mathbf{b} / (\lVert \mathbf{a} \rVert\,\lVert \mathbf{b} \rVert)$, which lies in $[-1, 1]$ by the Cauchy–Schwarz inequality $|\mathbf{a} \cdot \mathbf{b}| \le \lVert \mathbf{a} \rVert\,\lVert \mathbf{b} \rVert$. We write $\mathbf{a} \perp \mathbf{b}$ when $\mathbf{a} \cdot \mathbf{b} = 0$.
+It is symmetric, $\mathbf{a} \cdot \mathbf{b} = \mathbf{b} \cdot \mathbf{a}$; linear in the first vector, $(c\,\mathbf{a} + \mathbf{d}) \cdot \mathbf{b} = c\,(\mathbf{a} \cdot \mathbf{b}) + \mathbf{d} \cdot \mathbf{b}$ for every real $c$ and every $\mathbf{d} \in \mathbb{R}^n$, and so, by symmetry, in the second; and $\mathbf{a} \cdot \mathbf{a} = \lVert \mathbf{a} \rVert^2 \ge 0$, with equality only for $\mathbf{a} = \mathbf{0}$. For nonzero $\mathbf{a}$ and $\mathbf{b}$, the angle $\theta \in [0°, 180°]$ (that is, $[0, \pi]$ in radians) is defined by $\cos\theta = \mathbf{a} \cdot \mathbf{b} / (\lVert \mathbf{a} \rVert\,\lVert \mathbf{b} \rVert)$, which lies in $[-1, 1]$ by the Cauchy–Schwarz inequality $|\mathbf{a} \cdot \mathbf{b}| \le \lVert \mathbf{a} \rVert\,\lVert \mathbf{b} \rVert$. We write $\mathbf{a} \perp \mathbf{b}$ when $\mathbf{a} \cdot \mathbf{b} = 0$.
 
 Boundary cases. The zero vector has dot product 0 with every vector and no angle with any. The dot product is defined only for two vectors with the same number of entries. Scope: real vectors only; vectors with complex entries need a complex conjugate in the sum and are not covered here.
 
@@ -218,7 +218,7 @@ Boundary cases. The zero vector has dot product 0 with every vector and no angle
 
 <StepThrough title="From the law of cosines to a · b = ‖a‖ ‖b‖ cos θ" rigor="full">
 
-1. Let $\mathbf{a}$ and $\mathbf{b}$ be nonzero vectors in $\mathbb{R}^2$ or $\mathbb{R}^3$, and let $\theta$ be the angle between them. Draw $\mathbf{a}$ and $\mathbf{b}$ from the origin. With the segment from the tip of $\mathbf{b}$ to the tip of $\mathbf{a}$, which is the vector $\mathbf{a} - \mathbf{b}$, they form a triangle whose angle at the origin is $\theta$.
+1. Let $\mathbf{a}$ and $\mathbf{b}$ be nonzero vectors in $\mathbb{R}^2$ or $\mathbb{R}^3$, and let $\theta$ be the angle between them. Draw $\mathbf{a}$ and $\mathbf{b}$ from the origin. With the segment from the tip of $\mathbf{b}$ to the tip of $\mathbf{a}$, which is the vector $\mathbf{a} - \mathbf{b}$, they form a triangle whose angle at the origin is $\theta$. If $\mathbf{b}$ is a multiple of $\mathbf{a}$, the triangle is flat; the law of cosines in step 5 still holds, since $\cos 0° = 1$ and $\cos 180° = -1$ give $\lVert \mathbf{a} - \mathbf{b} \rVert^2 = (\lVert \mathbf{a} \rVert \mp \lVert \mathbf{b} \rVert)^2$.
 2. A length squared is a dot product: $\lVert \mathbf{a} - \mathbf{b} \rVert^2 = (\mathbf{a} - \mathbf{b}) \cdot (\mathbf{a} - \mathbf{b})$.
 3. The dot product spreads over sums: this equals $\mathbf{a} \cdot \mathbf{a} - \mathbf{a} \cdot \mathbf{b} - \mathbf{b} \cdot \mathbf{a} + \mathbf{b} \cdot \mathbf{b}$.
 4. Symmetry turns the two middle terms into one, and $\mathbf{a} \cdot \mathbf{a} = \lVert \mathbf{a} \rVert^2$: $\lVert \mathbf{a} - \mathbf{b} \rVert^2 = \lVert \mathbf{a} \rVert^2 + \lVert \mathbf{b} \rVert^2 - 2\,\mathbf{a} \cdot \mathbf{b}$.
@@ -229,7 +229,7 @@ Boundary cases. The zero vector has dot product 0 with every vector and no angle
 
 </div>
 
-Check with the running pair: step 4 gives $2 = 25 + 25 - 48$, and step 6 gives $5 \times 5 \times 0.96 = 24$. In $\mathbb{R}^n$ with $n > 3$ there is no triangle to draw, so the order is reversed: the equation in step 6 is taken as the definition of the angle between two vectors, which is how Margalit and Rabinoff define angles in higher dimensions <Cite id="margalit-ila" />. Cauchy–Schwarz guarantees that the cosine it gives lies between −1 and 1.
+Check with the running pair: step 4 gives $2 = 25 + 25 - 48$, and step 6 gives $5 \times 5 \times 0.96 = 24$. In $\mathbb{R}^n$ with $n > 3$ there is no protractor to measure $\theta$ with first, so the order is reversed: the equation in step 6 is taken as the definition of the angle between two vectors, which is how Margalit and Rabinoff define angles in higher dimensions <Cite id="margalit-ila" />. Cauchy–Schwarz guarantees that the cosine it gives lies between −1 and 1.
 
 | Property | Statement | For $\mathbf{a} = (3, 4)$, $\mathbf{b} = (4, 3)$ |
 | --- | --- | --- |
@@ -245,9 +245,9 @@ Check with the running pair: step 4 gives $2 = 25 + 25 - 48$, and step 6 gives $
 
 ## Worked examples
 
-<WorkedExample number={1} title="A shopping bill">
+<WorkedExample number={1} title="A weighted course grade">
 
-The counts are $\mathbf{q} = (2, 3, 1)$ and the prices, in dollars, are $\mathbf{p} = (0.5, 2, 1.5)$. The bill is $\mathbf{q} \cdot \mathbf{p} = 2 \times 0.5 + 3 \times 2 + 1 \times 1.5 = 1 + 6 + 1.5 = 8.5$ dollars. There is no angle to think about here; the dot product is just a weighted sum, with the counts as weights.
+A course counts the final exam for half the grade, the project for 0.3 and the homework for 0.2. A student scores $\mathbf{s} = (80, 90, 70)$ on the three, and the weights are $\mathbf{g} = (0.5, 0.3, 0.2)$. The grade is $\mathbf{s} \cdot \mathbf{g} = 80 \times 0.5 + 90 \times 0.3 + 70 \times 0.2 = 40 + 27 + 14 = 81$. The weights add up to 1, so the grade is an average that leans toward the exam. There is no angle to think about here; the dot product is just a weighted sum.
 
 </WorkedExample>
 
@@ -263,7 +263,7 @@ A neuron has weights $\mathbf{w} = (0.8, -0.5, 0.3)$ and bias $-1$. For the inpu
 
 <div slot="solution">
 
-$\mathbf{w} \cdot \mathbf{x}' = 0.8 \times 1 + (-0.5) \times 3 + 0.3 \times 0 = 0.8 - 1.5 + 0 = -0.7$, and adding the bias gives $-1.7$, a negative score. The second input leans toward the negative weight, the second entry, and the third entry, which had helped the first input, is now 0.
+$\mathbf{w} \cdot \mathbf{x}' = 0.8 \times 1 + (-0.5) \times 3 + 0.3 \times 0 = 0.8 - 1.5 + 0 = -0.7$, and adding the bias gives $-1.7$, a negative score. The second input is large in the second entry, where the weight is negative. Its third entry, which helped the first input, is now 0.
 
 </div>
 
@@ -271,33 +271,33 @@ $\mathbf{w} \cdot \mathbf{x}' = 0.8 \times 1 + (-0.5) \times 3 + 0.3 \times 0 = 
 
 ## Where the dot product shows up in ML
 
-### Every neuron's first step
+### A neuron's first step
 
-A unit in a neural network computes the dot product of its weight vector with its input and adds a number, its bias: $z = \mathbf{w} \cdot \mathbf{x} + b$, where $b$ here is a plain number, not a vector. The sign of $\mathbf{w} \cdot \mathbf{x}$ says whether the input leans toward the weights or away from them. A linear classifier with one weight vector $\mathbf{w}_i$ per class predicts the class whose dot product with the input is largest,
+A unit in a fully connected layer computes the dot product of its weight vector with its input and adds a number, its bias: $z = \mathbf{w} \cdot \mathbf{x} + b$, where $b$ here is a plain number, not a vector. The sign of $\mathbf{w} \cdot \mathbf{x}$ says whether the input leans toward the weights or away from them. A linear classifier with one weight vector $\mathbf{w}_i$ per class predicts the class whose dot product with the input is largest. Papers often write the dot product $\mathbf{x} \cdot \mathbf{w}_i$ as $\mathbf{x}^\top \mathbf{w}_i$ ("x transpose w i"); it is the same number. And $\arg\max$ picks the class $i$ whose score is largest:
 
 $$
 y = \arg\max_{i} \; \mathbf{x}^\top \mathbf{w}_i,
 $$
 
-which Shrivastava and Li write as their equation (6) for multi-class SVMs and logistic regression, noting that the weight vectors do not all have the same length (§1.4) <Cite id="shrivastava2014" />. So a class can win because its weight vector is long, not only because it points along the input.
+This is how Shrivastava and Li write it, as their equation (6) for multi-class SVMs and logistic regression, noting that the weight vectors do not all have the same length (§1.4) <Cite id="shrivastava2014" />. So a class can win because its weight vector is long, not only because it points along the input.
 
 ### Recommenders
 
-A matrix-factorization recommender gives each user $i$ a vector $\mathbf{u}_i$ and each item $j$ a vector $\mathbf{v}_j$, and models the user's rating of the item as $\mathbf{u}_i^\top \mathbf{v}_j$ plus a constant and two bias terms (Shrivastava and Li, §1.1, equation 3). To recommend, it looks for the item with the largest score, $\arg\max_j \mathbf{u}_i^\top \mathbf{v}_j$ (their equation 4), and they note that the item vectors' lengths often vary over a wide range <Cite id="shrivastava2014" />. Long item vectors get high scores from many users.
+A matrix-factorization recommender gives each user $i$ a vector $\mathbf{u}_i$ and each item $j$ a vector $\mathbf{v}_j$, and models the user's rating of the item as $\mathbf{u}_i^\top \mathbf{v}_j$ plus a constant and two bias terms (Shrivastava and Li, §1.1, equation 3) <Cite id="shrivastava2014" />. To recommend, it looks for the item with the largest score, $\arg\max_j \mathbf{u}_i^\top \mathbf{v}_j$ (their equation 4), and they note that the item vectors' lengths often vary over a wide range <Cite id="shrivastava2014" />. Long item vectors get high scores from many users.
 
 ### Attention scores
 
-A transformer's attention compares a query vector $\mathbf{q}$ with each key vector $\mathbf{k}$ through $\mathbf{q} \cdot \mathbf{k}$. Stacking the queries as the rows of a matrix $Q$ and the keys as the rows of $K$ puts every such dot product into $QK^\top$, and Vaswani and coauthors define
+A transformer's attention compares a query vector $\mathbf{q}$ with each key vector $\mathbf{k}$ through $\mathbf{q} \cdot \mathbf{k}$. Stack the queries as the rows of a matrix $\mathbf{Q}$ and the keys as the rows of a matrix $\mathbf{K}$. The matrix product $\mathbf{Q}\mathbf{K}^\top$ is then a table whose entry in row $i$, column $j$ is query $i$ · key $j$. With the values, the rows of a third matrix $\mathbf{V}$, Vaswani and coauthors define
 
 $$
-\operatorname{Attention}(Q, K, V) = \operatorname{softmax}\!\left(\frac{QK^\top}{\sqrt{d_k}}\right) V,
+\operatorname{Attention}(\mathbf{Q}, \mathbf{K}, \mathbf{V}) = \operatorname{softmax}\!\left(\frac{\mathbf{Q}\mathbf{K}^\top}{\sqrt{d_k}}\right) \mathbf{V},
 $$
 
-their equation (1) in §3.2.1, where $d_k$ is the number of entries in each query and key <Cite id="vaswani2017" />. The softmax turns each row of scores into weights that add up to 1, so a key with a larger dot product with the query gets more weight.
+their equation (1) in §3.2.1, where $d_k$ is the number of entries in each query and key <Cite id="vaswani2017" />. They write plain $Q$, $K$ and $V$; this site writes matrices in bold capitals. The softmax turns each row of scores into weights that add up to 1, so a key with a larger dot product with the query gets more weight.
 
 <GoDeeper label="why attention divides by the square root of d_k" id="attention-scale">
 
-The authors suspect that for large $d_k$ the dot products grow large in size and push the softmax into regions with very small gradients, so they divide each one by $\sqrt{d_k}$. Their footnote 4 gives the reason: if the entries of $\mathbf{q}$ and $\mathbf{k}$ are independent random variables with mean 0 and variance 1, then $\mathbf{q} \cdot \mathbf{k} = \sum_{i=1}^{d_k} q_i k_i$ has mean 0 and variance $d_k$ <Cite id="vaswani2017" />. In their base model $d_k = 64$ (§3.2.2), so under that assumption the raw scores have a standard deviation of 8, and dividing by $\sqrt{64} = 8$ brings the variance back to 1. The code below checks this exactly for entries that are $+1$ or $-1$ with equal chance. A later page on scaled dot-product attention derives the variance in general.
+The authors suspect that for large $d_k$ the dot products grow large in size and push the softmax into regions with extremely small gradients, so they divide each one by $\sqrt{d_k}$ <Cite id="vaswani2017" />. Their footnote 4 gives the reason: if the entries of $\mathbf{q}$ and $\mathbf{k}$ are independent random variables with mean 0 and variance 1, then $\mathbf{q} \cdot \mathbf{k} = \sum_{i=1}^{d_k} q_i k_i$ has mean 0 and variance $d_k$ <Cite id="vaswani2017" />. In their base model $d_k = 64$ (§3.2.2), so under that assumption the raw scores have a standard deviation of 8, and dividing by $\sqrt{64} = 8$ brings the variance back to 1. The code below checks this exactly for entries that are $+1$ or $-1$ with equal chance. A later page on scaled dot-product attention derives the variance in general.
 
 </GoDeeper>
 
@@ -313,7 +313,7 @@ where $\lVert \mathbf{q} \rVert^2$ is dropped because it is the same for every c
 
 ## Check every number in code
 
-This runs in your browser with whole numbers and exact fractions, and stops with an error if any number on this page is off. It computes the running pair, the board readouts, the worked examples and the checks below, then tests symmetry, linearity and Cauchy–Schwarz exactly on 10,000 random pairs of whole-number vectors with five entries, and finally computes the mean and variance of an attention score exactly.
+This runs in your browser with whole numbers and exact fractions, and stops with an error if any number on this page is off. It computes the running pair, the board readouts, the worked examples and the checks below, then tests symmetry, linearity and Cauchy–Schwarz exactly on 10,000 random pairs of whole-number vectors with five entries, and finally computes exactly the mean and variance of an attention score from the fold on why attention divides by the square root of d_k.
 
 <PyRunner
   title="dot_product.py"
@@ -335,7 +335,7 @@ def squared_length(a):
 
 
 def cosine(a, b):
-    """cos(theta) = a . b / (|a| |b|), as an exact fraction when both lengths are whole numbers."""
+    """cos(theta) = a . b / (||a|| ||b||), as an exact fraction when both lengths are whole numbers."""
     if squared_length(a) == 0 or squared_length(b) == 0:
         raise ValueError("the angle is undefined: a zero vector has no direction")
     for v in (a, b):
@@ -400,11 +400,16 @@ p, q = (1, 2, 2), (2, -1, 2)
 assert dot(p, q) == 2 - 2 + 4 == 4 and squared_length(p) == 9 and squared_length(q) == 9
 assert cosine(p, q) == F(4, 9) and degrees(F(4, 9)) == 63.61
 
-# Worked example 1: a shopping bill.
+# The shopping bill from the analogy and the table.
 counts, prices = (2, 3, 1), (F(1, 2), F(2), F(3, 2))
 assert dot(counts, prices) == 1 + 6 + F(3, 2) == F(17, 2)
 assert dot(prices, counts) == dot(counts, prices)
 assert dot(counts, tuple(2 * price for price in prices)) == 2 * F(17, 2)
+
+# Worked example 1: a weighted course grade.
+scores, grade_weights = (80, 90, 70), (F(1, 2), F(3, 10), F(1, 5))
+assert sum(grade_weights) == 1
+assert dot(scores, grade_weights) == 40 + 27 + 14 == 81
 
 # Worked example 3: one neuron with bias -1.
 w, bias = (F(8, 10), F(-5, 10), F(3, 10)), -1
@@ -413,7 +418,7 @@ assert dot(w, (2, 1, 4)) + bias == F(13, 10)
 assert dot(w, (1, 3, 0)) == F(8, 10) - F(15, 10) == F(-7, 10)
 assert dot(w, (1, 3, 0)) + bias == F(-17, 10)
 
-# Length and distance: |a - b|^2 = |a|^2 + |b|^2 - 2 a . b.
+# Length and distance: ||a - b||^2 = ||a||^2 + ||b||^2 - 2 a . b.
 difference = (a[0] - b[0], a[1] - b[1])
 assert difference == (-1, 1)
 assert squared_length(difference) == 2 == 25 + 25 - 2 * 24
@@ -459,17 +464,19 @@ print("q . k: mean", mean, " variance", variance, " after dividing by 8:", varia
 `}
 />
 
-The last block needs no simulation. With entries of $+1$ or $-1$, each product $q_i k_i$ is $+1$ or $-1$ with equal chance, so the dot product depends only on how many of the 64 products are $+1$, and the binomial counts give its distribution exactly: mean 0 and variance 64, and variance 1 after dividing by 8.
+The last block checks the claim in the fold on why attention divides by the square root of $d_k$, and it needs no simulation. With entries of $+1$ or $-1$, each product $q_i k_i$ is $+1$ or $-1$ with equal chance, so the dot product depends only on how many of the 64 products are $+1$, and the binomial counts give its distribution exactly: mean 0 and variance 64, and variance 1 after dividing by 8.
 
 ## Research frontier
 
 <ResearchFrontier reviewed="2026-11-25">
 
-**Finding the largest dot product fast.** A recommender or a retrieval system may hold millions of item vectors, and checking the query's dot product with every one of them is too slow. For nearest-neighbor search, locality-sensitive hashing (LSH), which hashes similar points into the same bucket with high probability, gives fast approximate answers. Shrivastava and Li show that this framework cannot work for the largest dot product: there can be no LSH family for maximum inner product search (§1.6). They then allow asymmetric hashing, with different transformations for the stored vectors and for the query, which turns the problem into approximate nearest-neighbor search, and obtain what they call the first provably sublinear-time algorithm for approximate maximum inner product search. They test it on item recommendation with the Netflix and Movielens datasets <Cite id="shrivastava2014" />. The obstacle is the one from the section on alignment: when stored vectors have different lengths, the largest dot product and the nearest point differ.
+**Finding the largest dot product fast.** A recommender or a retrieval system may hold millions of item vectors, and checking the query's dot product with every one of them is too slow. For nearest-neighbor search, locality-sensitive hashing (LSH), which hashes similar points into the same bucket with high probability, gives fast approximate answers. Shrivastava and Li show that this framework cannot work for the largest dot product: there can be no LSH family for maximum inner product search (§1.6) <Cite id="shrivastava2014" />. They then allow asymmetric hashing, with different transformations for the stored vectors and for the query, which turns the problem into approximate nearest-neighbor search <Cite id="shrivastava2014" />. With it they obtain what they call the first provably sublinear-time algorithm for approximate maximum inner product search. They test it on item recommendation with the Netflix and Movielens datasets <Cite id="shrivastava2014" />. The obstacle is the one from the section on alignment: when stored vectors have different lengths, the largest dot product and the nearest point differ.
 
-**Compressing vectors with the dot product in mind.** Systems at this scale usually store compressed vectors. Guo and coauthors argue that ordinary compression, which minimizes how far each compressed point lands from the original, treats every error the same, while for a query the points with the largest dot products matter most. Their anisotropic loss penalizes the part of a point's error that lies along the point itself more than the part perpendicular to it, the same split into "along" and "into the rails" as the cart board, and they report state-of-the-art results on public approximate-nearest-neighbor benchmarks <Cite id="guo2019" />. On the hardware side, Johnson, Douze and Jégou build a k-nearest-neighbor graph over 1 billion vectors in under 12 hours on 4 GPUs, with a nearest-neighbor implementation 8.5 times faster than earlier GPU methods <Cite id="johnson2017" />. That result is for nearest-neighbor search, which equals the largest dot product only when the vectors have equal lengths.
+**Compressing vectors with the dot product in mind.** Guo and coauthors note that quantization, storing compressed vectors, is the current state of the art for scaling maximum inner product search <Cite id="guo2019" />. They argue that ordinary compression, which minimizes how far each compressed point lands from the original, treats every error the same, while for a query the points with the largest dot products matter most <Cite id="guo2019" />. Their anisotropic loss penalizes the part of a point's error that lies along the point itself more than the part perpendicular to it, the same split into "along" and "into the rails" as the cart board, and they report state-of-the-art results on public approximate-nearest-neighbor benchmarks <Cite id="guo2019" />. On the hardware side, Johnson, Douze and Jégou build a k-nearest-neighbor graph over 1 billion vectors in under 12 hours on 4 GPUs, with a nearest-neighbor implementation 8.5 times faster than earlier GPU methods <Cite id="johnson2017" />. That result is for nearest-neighbor search, which equals the largest dot product only when the vectors have equal lengths.
 
 **Where to read further.** Bruch's monograph *Foundations of Vector Retrieval* collects the data structures and algorithms for finding similar vectors, written to lower the barrier of entry to the area <Cite id="bruch2024" />.
+
+**What is open.** In his preface, Bruch notes that none of the existing methods proves easy to scale to a database of billions of high-dimensional vectors, or to one whose records change often <Cite id="bruch2024" />.
 
 </ResearchFrontier>
 
