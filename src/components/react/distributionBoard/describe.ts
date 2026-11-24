@@ -479,9 +479,11 @@ export function spreadLines(state: DistributionState): string[] {
 		const distance = difference(fraction(state.values[outcome.id], 1), center);
 		return fraction(distance.numerator * distance.numerator, distance.denominator * distance.denominator);
 	});
+	// A whole variance is one bare equality, so it gets the definition in words; a fraction chain already reads as a calculation.
+	const definition = isWhole(spread) ? ' the average squared distance.' : '';
 	return [
 		`Distances from the mean: ${distanceText(setup, d, center)}.`,
-		`Variance: the average squared distance. (${squares.map(formatFraction).join(' + ')}) / ${count} = ${averageChain(sumFractions(squares), count)}.`,
+		`Variance:${definition} (${squares.map(formatFraction).join(' + ')}) / ${count} = ${averageChain(sumFractions(squares), count)}.`,
 		`Standard deviation: ${sigmaText(setup, spread)}.`,
 	];
 }

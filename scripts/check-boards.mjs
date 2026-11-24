@@ -781,7 +781,7 @@ assert.equal(distSay.statusLine(spreadFresh), '6 equally likely faces. X = candi
 assert.deepEqual(distSay.spreadLines(spreadFresh), []);
 assert.deepEqual(distSay.spreadLines(spreadOn), [
 	'Distances from the mean: 1 and 3 are 1 candy away; 2 is 0 away.',
-	'Variance: the average squared distance. (1 + 1 + 0 + 0 + 1 + 1) / 6 = 4/6 = 2/3 ≈ 0.67.',
+	'Variance: (1 + 1 + 0 + 0 + 1 + 1) / 6 = 4/6 = 2/3 ≈ 0.67.',
 	'Standard deviation: σ = √(2/3) ≈ 0.82 candies.',
 ]);
 assert.deepEqual(distSay.spreadLines(ghosted), [
