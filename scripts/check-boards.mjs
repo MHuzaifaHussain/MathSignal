@@ -1645,7 +1645,7 @@ const announcerRun = () => {
 	const tripsLists = vst.reducer(tripsDone, { type: 'stage', stage: 'lists' });
 	assert.equal(tripsLists.stage, 'lists');
 	assert.equal(vd.listsLine(tripsLists), 'a + b = (3 + 1, 2 + 3) = (4, 5)');
-	assert.deepEqual(vd.columnVectors(tripsLists).map((column) => column.spoken), ['a: column vector 3, 2', 'b: column vector 1, 3', 'a + b: column vector 4, 5']);
+	assert.deepEqual(vd.columnVectors(tripsLists).map((column) => column.spoken), ['a is the column 3, 2', 'b is the column 1, 3', 'a + b is the column 4, 5']);
 	// Dragging a keeps b: the sum handle follows. Dragging the sum changes b.
 	const aMoved = vst.reducer(tripsArrows, moveTo('a', [2, 2]));
 	assert.deepEqual([aMoved.a, aMoved.b], [[2, 2], [1, 3]]);

@@ -2,7 +2,7 @@ interface ColumnVectorProps {
   name: string;
   x: string;
   y: string;
-  /** "a: column vector 3, 2", read instead of the drawing. */
+  /** "a is the column 3, 2", read instead of the drawing, as the notation registry says a column vector. */
   spoken: string;
 }
 

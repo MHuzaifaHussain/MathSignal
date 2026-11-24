@@ -658,7 +658,7 @@ export function columnVectors(state: VectorState): readonly { name: string; x: s
 	if (state.stage !== 'lists') return [];
 	return tableRows(state)
 		.filter((tableRow) => tableRow.id !== 'guess')
-		.map((tableRow) => ({ name: tableRow.name, x: tableRow.x, y: tableRow.y, spoken: `${tableRow.name}: column vector ${tableRow.x}, ${tableRow.y}` }));
+		.map((tableRow) => ({ name: tableRow.name, x: tableRow.x, y: tableRow.y, spoken: `${tableRow.name} is the column ${tableRow.x}, ${tableRow.y}` }));
 }
 
 /** The Lists stage's sum or scaling, component by component. */
