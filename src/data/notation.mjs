@@ -28,6 +28,13 @@ export const NOTATION = [
 	{ key: 'union', tex: 'A \\cup B', say: '"A or B" or "A union B"', meaning: 'The event that A happens, B happens, or both' },
 	{ key: 'empty-set', tex: '\\emptyset', say: '"the empty set"', meaning: 'The event with no outcomes, which can never happen' },
 	{ key: 'probability', tex: 'P(A)', say: '"the probability of A"', meaning: 'How likely the event A is, from 0 to 1' },
+	{
+		key: 'conditional',
+		tex: 'P(A \\mid B)',
+		say: '"the probability of A given B"',
+		meaning: 'How likely A is once you know B happened',
+		note: 'Undefined when P(B) = 0.',
+	},
 	{ key: 'cardinality', tex: '|A|', say: '"the size of A"', meaning: 'The number of outcomes in A' },
 	{
 		key: 'event-collection',

@@ -175,6 +175,16 @@ export const REFERENCES = [
 		note: 'Sections 2–5: probability mass can leak onto the uncountable set of infinite sequences; a σ-algebra and countable additivity make tightness precise. Transformer language models are always tight; some n-gram and RNN models are not.',
 		checked: '2026-11-24',
 	},
+	{
+		id: 'blundell2015',
+		authors: ['Charles Blundell', 'Julien Cornebise', 'Koray Kavukcuoglu', 'Daan Wierstra'],
+		year: 2015,
+		title: 'Weight uncertainty in neural networks',
+		venue: 'ICML 2015',
+		url: 'https://arxiv.org/abs/1505.05424',
+		note: 'Section 1: exact Bayesian inference on the weights of a neural network is intractable, so the paper uses a variational approximation (Bayes by Backprop).',
+		checked: '2026-11-24',
+	},
 ];
 
 const BY_ID = new Map(REFERENCES.map((reference) => [reference.id, reference]));
