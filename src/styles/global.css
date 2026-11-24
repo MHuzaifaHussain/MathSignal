@@ -231,14 +231,39 @@ starlight-toc a[aria-current='true']:hover {
 	letter-spacing: 0;
 }
 
-.sl-markdown-content h2 {
-	font-size: 1.6rem;
-	line-height: 1.25;
+/* Heading sizes are set once here and read by both the heading and Starlight's wrapper around it. The
+ * wrapper sizes and centers the anchor-link icon from its own font size and --sl-line-height-headings, so
+ * if only the heading changed size, the icon would be sized for a bigger heading and would crowd the text
+ * and sit off-center. */
+.sl-markdown-content {
+	--ms-h2-size: 1.6rem;
+	--ms-h2-leading: 1.25;
+	--ms-h3-size: 1.25rem;
+	--ms-h3-leading: 1.3;
 }
 
-.sl-markdown-content h3 {
-	font-size: 1.25rem;
-	line-height: 1.3;
+.sl-markdown-content h2,
+.sl-markdown-content .sl-heading-wrapper.level-h2 {
+	--sl-line-height-headings: var(--ms-h2-leading);
+	font-size: var(--ms-h2-size);
+	line-height: var(--ms-h2-leading);
+}
+
+.sl-markdown-content h3,
+.sl-markdown-content .sl-heading-wrapper.level-h3 {
+	--sl-line-height-headings: var(--ms-h3-leading);
+	font-size: var(--ms-h3-size);
+	line-height: var(--ms-h3-leading);
+}
+
+/* Inside the wrapper the heading takes the wrapper's size, so the two can never drift apart. */
+.sl-markdown-content .sl-heading-wrapper > :is(h2, h3) {
+	font-size: 1em;
+}
+
+/* A little more air between the heading's last letter and its link icon than Starlight's 0.25em. */
+.sl-markdown-content .sl-heading-wrapper {
+	--sl-anchor-icon-gap: 0.35em;
 }
 
 h1#_top {
