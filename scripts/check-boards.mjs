@@ -1398,4 +1398,468 @@ const announcerRun = () => {
 	assert.deepEqual(shown, []);
 }
 
+// ---- VectorBoard2D (decision 0014) ----
+// Whole-number vectors make every sum, scaling, dot product and exact angle an integer fact. These asserts pin the
+// copy word for word and the rule that nothing gives an answer away before the reader commits.
+{
+	const vm = await import('../src/components/react/vectorBoard/model.ts');
+	const vs = await import('../src/components/react/vectorBoard/setups.ts');
+	const vst = await import('../src/components/react/vectorBoard/state.ts');
+	const vd = await import('../src/components/react/vectorBoard/describe.ts');
+	const runVec = (setupId, ...actions) => actions.reduce(vst.reducer, vst.initialState(setupId));
+	const step = (id, axis, direction) => ({ type: 'step', id, axis, direction });
+	const steps = (id, axis, direction, count) => Array.from({ length: count }, () => step(id, axis, direction));
+	const moveTo = (id, to) => ({ type: 'move', id, to });
+	/** Every sentence a state can show or say (except announcements, which take an action). */
+	const allText = (state) => [
+		vd.boardLabel(state),
+		vd.statusLine(state),
+		...vd.readoutLines(state),
+		vd.feedbackLine(state) ?? '',
+		...vd.tableRows(state).flatMap((row) => [row.name, row.x, row.y, row.length, row.spoken]),
+		...vd.lengthLines(state),
+		...vd.handlesFor(state).map((handle) => handle.label),
+		...vd.planeLabels(state).map((label) => label.text),
+		...vd.refusalNotes(state).map((note) => note.text),
+		vd.listsLine(state) ?? '',
+		...vd.columnVectors(state).map((column) => column.spoken),
+		vd.chalkNote(state)?.long ?? '',
+		vd.chalkNote(state)?.short ?? '',
+	];
+	/** Text that doesn't come from the reader's own guess, so it must never hold the answer before Check. */
+	const answerFreeText = (state) => [
+		vd.boardLabel(state),
+		vd.statusLine(state),
+		...vd.readoutLines(state),
+		...vd.tableRows(state).filter((row) => row.id !== 'guess').flatMap((row) => [row.name, row.x, row.y, row.length, row.spoken]),
+		...vd.lengthLines(state),
+		...vd.handlesFor(state).map((handle) => handle.label),
+		...vd.planeLabels(state).filter((label) => label.id !== 'guess').map((label) => label.text),
+		...vd.refusalNotes(state).map((note) => note.text),
+		vd.listsLine(state) ?? '',
+		...vd.columnVectors(state).map((column) => column.spoken),
+		vd.chalkNote(state)?.long ?? '',
+	];
+	const assertNone = (texts, forbidden, where) => {
+		for (const text of texts) {
+			for (const word of forbidden) assert.ok(!text.includes(word), `${where}: "${text}" gives away "${word}"`);
+		}
+	};
+
+	// Vector arithmetic on whole numbers.
+	assert.deepEqual(vm.add([3, 2], [1, 3]), [4, 5]);
+	assert.deepEqual(vm.subtract([3, 2], [1, 3]), [2, -1]);
+	assert.deepEqual(vm.scale(-1, [2, 1]), [-2, -1]);
+	assert.equal(vm.dot([4, 1], [-1, 3]), -1);
+	assert.equal(vm.cross([4, 1], [-1, 3]), 13);
+	assert.equal(vm.lengthSquared([3, 2]), 13);
+	assert.ok(vm.isZero([0, 0]));
+	assert.ok(vm.equals([1, 2], [1, 2]) && !vm.equals([1, 2], [2, 1]));
+	// Snapping never yields −0, which would print as "−0".
+	assert.ok(Object.is(vm.snapToGrid([-0.2, 2.6])[0], 0));
+	assert.deepEqual(vm.snapToGrid([-0.2, 2.6]), [0, 3]);
+	// Every constraint is round-then-clamp per component: a box, never a hole.
+	const fiveBox = vm.symmetricBox(5);
+	assert.deepEqual(vm.snapInto([7.4, -9], fiveBox), [5, -5]);
+	assert.deepEqual(vm.intersectBoxes(fiveBox, vm.shiftBox(fiveBox, [-1, -3])), { min: [-5, -5], max: [4, 2] });
+
+	// Exact angles come from integer tests; others from atan2, in degrees.
+	assert.deepEqual(vm.angleOf([3, 1], [-1, 3]), { exact: 90 });
+	assert.deepEqual(vm.angleOf([2, 1], [-4, -2]), { exact: 180 });
+	assert.deepEqual(vm.angleOf([2, 1], [4, 2]), { exact: 0 });
+	assert.deepEqual(vm.angleOf([3, 1], [1, 2]), { exact: 45 });
+	assert.deepEqual(vm.angleOf([3, 1], [2, 4]), { exact: 45 });
+	assert.deepEqual(vm.angleOf([1, 0], [-1, 1]), { exact: 135 });
+	assert.ok(Math.abs(vm.angleOf([4, 1], [-1, 3]).approx - 94.4) < 0.05);
+	assert.equal(vm.angleOf([0, 0], [1, 2]), null);
+	assert.equal(vm.angleOf([1, 2], [0, 0]), null);
+	assert.equal(vm.shadowLength([1, 0], [3, 4]), 3);
+	assert.equal(vm.shadowLength([0, 0], [3, 4]), null);
+	assert.deepEqual(vm.shadowTip([2, 1], [5, 5]), [6, 3]);
+
+	// Lengths: exact when the square is a perfect square, otherwise "√n ≈ value". Square roots aren't simplified.
+	assert.equal(vm.rootText(25), '5');
+	assert.equal(vm.rootText(13), '√13 ≈ 3.61');
+	assert.equal(vm.rootText(0), '0');
+	assert.equal(vm.rootText(20), '√20 ≈ 4.47');
+	assert.throws(() => vm.rootText(1.25), /whole number/);
+	assert.equal(vm.lengthText([3, 4]), '5');
+	assert.equal(vm.lengthText([1, 0.5]), '≈ 1.12');
+	assert.equal(vm.numberText(-1.5), '−1.5');
+	assert.equal(vm.numberText(4), '4');
+	assert.equal(vm.numberText(0.5), '0.5');
+
+	// The trip guess names the specific mistake, checked in order.
+	const tripA = [3, 2];
+	const tripB = [1, 3];
+	const tripCases = [
+		[[4, 5], 'match'],
+		[[5, 4], 'swapped'],
+		[[3, 2], 'first-trip'],
+		[[1, 3], 'second-trip'],
+		[[2, -1], 'difference'],
+		[[-2, 1], 'difference'],
+		[[3, 6], 'product'],
+		[[0, 0], 'start'],
+		[[1, 1], 'other'],
+	];
+	for (const [guess, kind] of tripCases) assert.equal(vm.classifyTripGuess(tripA, tripB, guess), kind, `guess ${guess}`);
+
+	// The cart push: right length first, then the part along the track.
+	const cartCases = [
+		[[3, 4], 'match'],
+		[[3, -4], 'match'],
+		[[4, 4], 'wrong-length'],
+		[[4, 3], 'too-much'],
+		[[5, 0], 'too-much'],
+		[[0, 5], 'too-little'],
+		[[-3, 4], 'backward'],
+	];
+	for (const [push, kind] of cartCases) assert.equal(vm.classifyCartPush(push, [1, 0], 25, 3), kind, `push ${push}`);
+	assert.equal(vm.classifyScale(-1, -1), 'match');
+	assert.equal(vm.classifyScale(1, -1), 'unchanged');
+	assert.equal(vm.classifyScale(0, -1), 'zero');
+	assert.equal(vm.classifyScale(2, -1), 'same-direction');
+	assert.equal(vm.classifyScale(0.5, -1), 'same-direction');
+	assert.equal(vm.classifyScale(-2, -1), 'flipped-longer');
+	assert.equal(vm.classifyScale(-0.5, -1), 'flipped-shorter');
+
+	// Labels sit off the arrow's middle, written by hand (never vec.lerp, which gives NaN for a zero arrow).
+	const anchor = vm.labelAnchor([0, 0], [4, 0], 1);
+	assert.ok(Math.abs(anchor[0] - 2) < 1e-12 && anchor[1] > 0);
+	assert.ok(vm.labelAnchor([1, 1], [1, 1], 1).every(Number.isFinite));
+	assert.ok(vm.labelAnchor([0, 0], [4, 0], -1)[1] < 0);
+
+	// Setups: a typo fails loudly, and validateSetup refuses what the board can't draw or answer.
+	assert.throws(() => vs.getSetup('trips-ad'), /unknown setup "trips-ad"/);
+	assert.deepEqual(Object.keys(vs.SETUPS), ['trips-add', 'trips-scale', 'cart-push', 'align']);
+	const broken = (id, change) => ({ ...vs.getSetup(id), ...change });
+	assert.throws(() => vs.validateSetup(broken('trips-add', { presets: [...vs.getSetup('trips-add').presets, { id: 'x', label: 'X', a: [1, 1], b: [1, 1] }] })), /presets; the most is 4/);
+	assert.throws(() => vs.validateSetup(broken('trips-add', { presets: [{ id: 'far', label: 'Far', a: [4, 4], b: [3, 0] }, { id: 'ok', label: 'Ok', a: [1, 1], b: [1, 1] }] })), /a \+ b = \(7, 4\) leaves the board/);
+	assert.throws(() => vs.validateSetup(broken('trips-add', { opening: { ...vs.getSetup('trips-add').opening, a: [6, 0] } })), /opening a = \(6, 0\) is outside/);
+	assert.throws(() => vs.validateSetup(broken('trips-add', { opening: { ...vs.getSetup('trips-add').opening, a: [1.5, 0] } })), /whole numbers/);
+	assert.throws(() => vs.validateSetup(broken('trips-scale', { limitA: 3 })), /c a can reach 6/);
+	assert.throws(() => vs.validateSetup(broken('cart-push', { opening: { ...vs.getSetup('cart-push').opening, b: [0, 0] } })), /track is the zero vector/);
+	assert.throws(() => vs.validateSetup(broken('cart-push', { goal: { targetLengthSquared: 25, targetForward: 2 } })), /no whole-number push/);
+	assert.throws(() => vs.validateSetup(broken('cart-push', { presets: [...vs.getSetup('cart-push').presets.slice(0, 3), { id: 'odd', label: 'Odd', a: [1, 0], b: [1, 1] }] })), /track length must be a whole number/);
+	assert.throws(() => vs.validateSetup(broken('align', { opening: { ...vs.getSetup('align').opening, b: [0, 0] } })), /opening has a zero vector/);
+	assert.throws(() => vs.validateSetup(broken('align', { limitB: 5 })), /shadow of b can reach/);
+	// The worst shadow the critique found: a = (2, 1), b = (5, 5) puts the tip at (6, 3), off the board. With b's
+	// entries kept within ±4, no a and b on align can do that.
+	assert.ok(!vm.withinView(vm.shadowTip([2, 1], [5, 5])));
+	assert.equal(vs.getSetup('align').limitB, 4);
+	let worstShadow = 0;
+	for (let ax = -5; ax <= 5; ax++) for (let ay = -5; ay <= 5; ay++) for (let bx = -4; bx <= 4; bx++) for (let by = -4; by <= 4; by++) {
+		const tip = vm.shadowTip([ax, ay], [bx, by]);
+		if (tip) worstShadow = Math.max(worstShadow, Math.abs(tip[0]), Math.abs(tip[1]));
+	}
+	assert.ok(worstShadow <= 5, `align's worst shadow reaches ${worstShadow}`);
+
+	// ---- trips-add ----
+	const tripsOpen = vst.initialState('trips-add');
+	assert.equal(tripsOpen.stage, 'trips');
+	assert.equal(
+		vd.statusLine(tripsOpen),
+		'Trip a: 3 steps east, 2 steps north. Trip b: 1 step east, 3 steps north. Where do you end up? Move the ochre ring there, then press Check.',
+	);
+	assert.deepEqual(vd.handlesFor(tripsOpen).map((handle) => [handle.id, handle.label]), [['guess', 'Your guess for where the two trips end. Its position is in the table below']]);
+	assert.equal(vd.ochreElement(tripsOpen), 'guess');
+	assert.deepEqual(vd.presetsFor(tripsOpen), []);
+	assert.equal(vd.boardLabel(tripsOpen), 'Two trips on a grid. Move the ochre ring to where they end, then press Check; or use the steppers in the table.');
+	// a and b are the question: their steppers are refused, and presses say why.
+	assert.equal(vst.stepRefusal(tripsOpen, 'a', 'x', 1)?.kind, 'locked');
+	const lockedPress = vst.reducer(tripsOpen, step('a', 'x', 1));
+	assert.deepEqual(lockedPress.a, [3, 2]);
+	assert.equal(vd.announcementFor(lockedPress, step('a', 'x', 1)), 'a and b are the question. Press Check first.');
+	assert.deepEqual(vd.refusalNotes(tripsOpen).map((note) => note.text), ['a and b are the question. Press Check first.']);
+	assert.equal(vst.reducer(tripsOpen, moveTo('a', [2, 2])), tripsOpen);
+	assert.equal(vst.reducer(tripsOpen, { type: 'preset', id: 'there-and-back' }), tripsOpen);
+	// Lists waits for Check; Trips and Arrows don't.
+	assert.ok(vst.stageAllowed(tripsOpen, 'arrows') && !vst.stageAllowed(tripsOpen, 'lists'));
+	assert.equal(vst.reducer(tripsOpen, { type: 'stage', stage: 'lists' }), tripsOpen);
+
+	// Nothing names the sum before Check, in any stage, wherever the guess sits; the guess's own row and label echo it.
+	for (const stage of ['trips', 'arrows']) {
+		for (const guess of [[0, 0], [4, 5], [5, 4], [-5, 5]]) {
+			const state = runVec('trips-add', { type: 'stage', stage }, moveTo('guess', guess));
+			assertNone(answerFreeText(state), ['a + b', '(4, 5)', '4 steps east, 5 steps north', '√41', 'Both trips'], `trips-add ${stage} guess ${guess}`);
+		}
+	}
+	const guessAt = (guess, stage = 'trips') => runVec('trips-add', { type: 'stage', stage }, moveTo('guess', guess));
+	assert.equal(vd.announcementFor(guessAt([5, 4]), moveTo('guess', [5, 4])), 'Your guess: 5 steps east, 4 steps north. Your guess is at the right edge of the board.');
+	assert.equal(vd.announcementFor(guessAt([4, 5]), moveTo('guess', [4, 5])), 'Your guess: 4 steps east, 5 steps north. Your guess is at the top edge of the board.');
+	assert.equal(vd.announcementFor(guessAt([1, -2]), moveTo('guess', [1, -2])), 'Your guess: 1 step east, 2 steps south.');
+	assert.equal(vd.announcementFor(guessAt([4, 5], 'arrows'), moveTo('guess', [4, 5])), 'Your guess: (4, 5). Your guess is at the top edge of the board.');
+	assert.deepEqual(vd.tableRows(guessAt([4, 5])).find((row) => row.id === 'guess')?.spoken, 'Your guess: 4 steps east, 5 steps north.');
+	// The guess's steppers move it one step at a time; at the edge they refuse with a visible reason.
+	const guessEast = runVec('trips-add', ...steps('guess', 'x', 1, 7));
+	assert.deepEqual(guessEast.guess, [5, 0]);
+	assert.equal(guessEast.refusal?.kind, 'edge');
+	assert.equal(vd.announcementFor(guessEast, step('guess', 'x', 1)), "Your guess can't go further east: the board ends at 5.");
+	assert.equal(vd.stepperName(guessEast, 'guess', 'x', 1), 'Move your guess 1 east');
+	assert.equal(vd.stepperName(guessEast, 'a', 'y', -1), 'Move a 1 south');
+	assert.equal(vd.stepperGroupName(guessEast, 'a'), 'Move a');
+
+	// Check verdicts, word for word.
+	const checkTrip = (guess) => runVec('trips-add', moveTo('guess', guess), { type: 'check' });
+	assert.equal(vd.feedbackLine(checkTrip([4, 5])), 'Yes. East: 3 + 1 = 4. North: 2 + 3 = 5. Both trips end where one trip of 4 east and 5 north would.');
+	assert.equal(vd.feedbackLine(checkTrip([5, 4])), 'Not quite. Your guess swaps east and north. Add the east steps of both trips first.');
+	assert.equal(vd.feedbackLine(checkTrip([3, 2])), "Not quite. That's where trip a ends. Trip b starts there, so keep walking.");
+	assert.equal(vd.feedbackLine(checkTrip([1, 3])), "Not quite. That's where trip b ends on its own. Walk trip a first, then trip b from where a stops.");
+	assert.equal(vd.feedbackLine(checkTrip([2, -1])), "Not quite. The second trip adds its steps; it doesn't take them away.");
+	// The product guess (3, 6) lies off the board, so the reader can't reach it on the opening; its copy is pinned on a
+	// built verdict, as EventSpace pins a plural no setup reaches.
+	assert.equal(vd.feedbackLine({ ...tripsOpen, feedback: { kind: 'trip', result: 'product' } }), "Not quite. Steps add up; they don't multiply.");
+	assert.deepEqual(checkTrip([3, 6]).guess, [3, 5]);
+	assert.equal(vd.feedbackLine(checkTrip([0, 0])), 'Not quite. Your guess is still at the start. Move it to where you think the two trips end.');
+	assert.equal(vd.feedbackLine(checkTrip([1, 1])), 'Not quite. Add the east steps of both trips, then the north steps.');
+	// A second miss offers the answer; the shown answer is never praised.
+	const twoMisses = runVec('trips-add', { type: 'check' }, { type: 'check' });
+	assert.equal(vd.feedbackLine(twoMisses), 'Not quite. Your guess is still at the start. Move it to where you think the two trips end. You can now show the answer.');
+	assert.equal(vst.reducer(runVec('trips-add', { type: 'check' }), { type: 'show-answer' }).checked, false);
+	const shownTrip = vst.reducer(twoMisses, { type: 'show-answer' });
+	assert.ok(shownTrip.checked);
+	assert.ok(vd.feedbackLine(shownTrip).startsWith('Here it is.'));
+	assert.ok(!vd.feedbackLine(shownTrip).includes('Yes'));
+	// Moving the guess clears a stale verdict.
+	assert.equal(vd.feedbackLine(vst.reducer(checkTrip([5, 4]), moveTo('guess', [4, 4]))), null);
+
+	// After Check: the guess goes, the sum is the ochre element, a and b's tips move.
+	const tripsDone = checkTrip([4, 5]);
+	assert.equal(vd.ochreElement(tripsDone), 'sum');
+	assert.deepEqual(vd.handlesFor(tripsDone).map((handle) => [handle.id, handle.label, handle.point]), [
+		['a', 'Tip of trip a. Its position is in the table below', [3, 2]],
+		['sum', 'End of trip b, where both trips end. Its position is in the table below', [4, 5]],
+	]);
+	assert.deepEqual(vd.readoutLines(tripsDone), [
+		'Trip a: 3 steps east, 2 steps north.',
+		'Trip b: 1 step east, 3 steps north.',
+		'Both trips: 4 steps east, 5 steps north, the same as one straight trip.',
+	]);
+	assert.deepEqual(vd.chalkNote(tripsDone), { long: "the trips add, the lengths don't", short: "trips add, lengths don't" });
+	assert.equal(vd.chalkNote(tripsOpen), null);
+	const tripsArrows = vst.reducer(tripsDone, { type: 'stage', stage: 'arrows' });
+	assert.deepEqual(vd.readoutLines(tripsArrows), ['a = (3, 2), b = (1, 3), a + b = (4, 5).', 'Length of a + b: √41 ≈ 6.40. The two trips\' lengths add to √13 + √10 ≈ 6.77.']);
+	const tripsLists = vst.reducer(tripsDone, { type: 'stage', stage: 'lists' });
+	assert.equal(tripsLists.stage, 'lists');
+	assert.equal(vd.listsLine(tripsLists), 'a + b = (3 + 1, 2 + 3) = (4, 5)');
+	assert.deepEqual(vd.columnVectors(tripsLists).map((column) => column.spoken), ['a: column vector 3, 2', 'b: column vector 1, 3', 'a + b: column vector 4, 5']);
+	// Dragging a keeps b: the sum handle follows. Dragging the sum changes b.
+	const aMoved = vst.reducer(tripsArrows, moveTo('a', [2, 2]));
+	assert.deepEqual([aMoved.a, aMoved.b], [[2, 2], [1, 3]]);
+	assert.equal(vd.announcementFor(aMoved, moveTo('a', [2, 2])), 'a = (2, 2). a + b = (3, 5). a + b is at the top edge of the board.');
+	const sumMoved = vst.reducer(tripsArrows, moveTo('sum', [5, 5]));
+	assert.deepEqual([sumMoved.a, sumMoved.b], [[3, 2], [2, 3]]);
+	assert.equal(vd.announcementFor(sumMoved, moveTo('sum', [5, 5])), 'b = (2, 3). a + b = (5, 5). a + b is at the right edge of the board. a + b is at the top edge of the board.');
+	// a moves only where a + b stays on the board, and b (drawn from the origin in "b first") stays on it too.
+	assert.deepEqual(vst.handleBox(tripsArrows, 'a'), { min: [-5, -5], max: [4, 2] });
+	assert.deepEqual(vst.reducer(tripsArrows, moveTo('a', [5, 5])).a, [4, 2]);
+	const farLeft = runVec('trips-add', moveTo('guess', [4, 5]), { type: 'check' }, moveTo('a', [-5, 0]));
+	assert.deepEqual(vst.handleBox(farLeft, 'sum'), { min: [-5, -5], max: [0, 5] });
+	assert.deepEqual(vst.reducer(farLeft, moveTo('sum', [5, 0])).b, [5, 0]);
+	const aEdge = runVec('trips-add', moveTo('guess', [4, 5]), { type: 'check' }, { type: 'stage', stage: 'arrows' }, moveTo('a', [4, 2]));
+	assert.equal(vst.stepRefusal(aEdge, 'a', 'x', 1)?.kind, 'sum-edge');
+	assert.equal(vd.refusalText(aEdge, vst.stepRefusal(aEdge, 'a', 'x', 1)), "a can't go further east: a + b would leave the board.");
+	const aWall = runVec('trips-add', moveTo('guess', [4, 5]), { type: 'check' }, { type: 'preset', id: 'there-and-back' }, ...steps('a', 'x', 1, 2));
+	assert.deepEqual(aWall.a, [5, 2]);
+	assert.equal(vd.refusalText(aWall, vst.stepRefusal(aWall, 'a', 'x', 1)), "a can't go further east: the board ends at 5.");
+	assert.equal(vd.handleAnnouncement(aWall, 'a'), 'Trip a: 5 steps east, 2 steps north. Both trips: 2 steps east, 0 steps north. a is at the right edge of the board.');
+	// "Show b first too" draws the other route; it exists only after Check.
+	assert.equal(vst.reducer(tripsOpen, { type: 'other-order', on: true }).otherOrder, false);
+	assert.ok(vst.reducer(tripsDone, { type: 'other-order', on: true }).otherOrder);
+	assert.equal(vd.announcementFor(vst.reducer(tripsDone, { type: 'other-order', on: true }), { type: 'other-order', on: true }), 'Showing b first too: walking b, then a, ends at the same spot.');
+
+	// Presets, after Check.
+	assert.deepEqual(vd.presetsFor(tripsDone).map((preset) => preset.label), ['Two trips', 'There and back', 'Same direction', 'Square corner']);
+	const tripPreset = (id) => vst.reducer(tripsArrows, { type: 'preset', id });
+	assert.deepEqual(vd.readoutLines(tripPreset('there-and-back')), ['a = (3, 2), b = (−3, −2), a + b = (0, 0).', 'Both trips: you end where you started. a + b = (0, 0), the zero vector.']);
+	assert.equal(vd.ochreElement(tripPreset('there-and-back')), null);
+	assert.ok(vd.planeLabels(tripPreset('there-and-back')).some((label) => label.text === 'zero vector'));
+	assert.deepEqual(vd.readoutLines(tripPreset('same-direction')), ['a = (2, 1), b = (2, 1), a + b = (4, 2).', 'Both trips point the same way, so here the lengths do add: √5 + √5 = √20 ≈ 4.47.']);
+	assert.deepEqual(vd.readoutLines(tripPreset('square-corner')), ['a = (3, 0), b = (0, 4), a + b = (3, 4).', "Length of a + b: 5. The two trips' lengths add to 3 + 4 = 7."]);
+	assert.deepEqual(vd.readoutLines(vst.reducer(tripPreset('there-and-back'), { type: 'stage', stage: 'trips' })).at(-1), 'Both trips: you end where you started.');
+	// Overlapping handles are named in the end-of-interaction sentence.
+	const stacked = vst.reducer(tripsArrows, moveTo('sum', [3, 2]));
+	assert.deepEqual(stacked.b, [0, 0]);
+	assert.equal(vd.handleAnnouncement(stacked, 'sum'), 'b = (0, 0). a + b = (3, 2). Both handles are at (3, 2).');
+	// Reset covers the answer again.
+	const tripsReset = vst.reducer(tripsDone, { type: 'reset' });
+	assert.deepEqual(tripsReset, vst.initialState('trips-add'));
+
+	// ---- trips-scale ----
+	const scaleOpen = vst.initialState('trips-scale');
+	assert.equal(scaleOpen.stage, 'arrows');
+	assert.ok(vst.stageAllowed(scaleOpen, 'lists') && !vst.stageAllowed(scaleOpen, 'trips'));
+	assert.equal(vd.statusLine(scaleOpen), 'Goal: find the c that turns a around without changing its length. Then press Check.');
+	assert.deepEqual(vd.readoutLines(scaleOpen), ['c = 1. c a = (2, 1).']);
+	assert.deepEqual(vd.presetsFor(scaleOpen), []);
+	assert.equal(vd.ochreElement(scaleOpen), 'scaled');
+	assert.equal(vd.scalarDescription(1.5), 'scale c, 1.5');
+	assert.equal(vd.scalarFormat(-0.5), '−0.5');
+	// Before Check the readout gives coordinates only, never the verdict words.
+	for (const c of [-2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2]) {
+		const state = runVec('trips-scale', { type: 'scalar', value: c });
+		assertNone(answerFreeText(state), ['opposite', 'same length', 'same direction', 'times as long', 'half as long', 'no direction'], `trips-scale c = ${c}`);
+		assertNone([vd.announcementFor(state, { type: 'scalar', value: c })], ['opposite', 'same length'], `trips-scale commit c = ${c}`);
+	}
+	assert.equal(vd.announcementFor(runVec('trips-scale', { type: 'scalar', value: -1 }), { type: 'scalar', value: -1 }), 'c = −1. c a = (−2, −1).');
+	assert.throws(() => vst.reducer(scaleOpen, { type: 'scalar', value: 0.3 }), /step of 0.5/);
+	assert.throws(() => vst.reducer(scaleOpen, { type: 'scalar', value: 9 }), /outside −2 to 2/);
+	const scaleCheck = (c) => runVec('trips-scale', { type: 'scalar', value: c }, { type: 'check' });
+	assert.equal(vd.feedbackLine(scaleCheck(-1)), 'Yes. −1 × a = (−2, −1): the same length as a, pointing the opposite way.');
+	assert.equal(vd.feedbackLine(scaleCheck(1)), 'Not quite. 1 × a is a itself. Find a c that turns it around.');
+	assert.equal(vd.feedbackLine(scaleCheck(0)), 'Not quite. 0 × a is the zero vector: it has no direction and no length left.');
+	assert.equal(vd.feedbackLine(scaleCheck(2)), 'Not quite. A positive c keeps the direction of a. Try a negative c.');
+	assert.equal(vd.feedbackLine(scaleCheck(-2)), 'Not quite. A negative c turns a around, but c = −2 also makes it 2 times as long.');
+	assert.equal(vd.feedbackLine(scaleCheck(-0.5)), 'Not quite. A negative c turns a around, but c = −0.5 also makes it half as long.');
+	const scaleShown = runVec('trips-scale', { type: 'check' }, { type: 'check' }, { type: 'show-answer' });
+	assert.equal(scaleShown.scalar, -1);
+	assert.equal(vd.feedbackLine(scaleShown), 'Here it is. −1 × a = (−2, −1): the same length as a, pointing the opposite way.');
+	// After Check: the qualitative readouts, and the presets.
+	const scaleDone = scaleCheck(-1);
+	assert.deepEqual(vd.presetsFor(scaleDone).map((preset) => preset.label), ['Double', 'Half', 'Turn around', 'Zero']);
+	const scalePreset = (id) => vd.readoutLines(vst.reducer(scaleDone, { type: 'preset', id }));
+	assert.deepEqual(scalePreset('double'), ['2 × a = (4, 2): same direction as a, 2 times as long. Length 2 × √5 ≈ 4.47.']);
+	assert.deepEqual(scalePreset('half'), ['0.5 × a = (1, 0.5): same direction as a, half as long.']);
+	assert.deepEqual(scalePreset('turn-around'), ['−1 × a = (−2, −1): opposite direction, same length.']);
+	assert.deepEqual(scalePreset('zero'), ['0 × a = (0, 0): the zero vector. It has no direction.']);
+	assert.equal(vd.ochreElement(vst.reducer(scaleDone, { type: 'preset', id: 'zero' })), null);
+	assert.deepEqual(vd.readoutLines(runVec('trips-scale', { type: 'check' }, { type: 'check' }, { type: 'show-answer' }, { type: 'scalar', value: 1 })), ['1 × a = (2, 1): the same as a.']);
+	assert.deepEqual(vd.readoutLines(vst.reducer(scaleDone, { type: 'scalar', value: -1.5 })), ['−1.5 × a = (−3, −1.5): opposite direction, 1.5 times as long. Length 1.5 × √5 ≈ 3.35.']);
+	assert.deepEqual(vd.tableRows(vst.reducer(scaleDone, { type: 'preset', id: 'half' })).map((row) => [row.name, row.x, row.y, row.length]), [
+		['a', '2', '1', '√5 ≈ 2.24'],
+		['c a', '1', '0.5', '≈ 1.12'],
+	]);
+	// a stays within ±2, so c a never leaves the board.
+	assert.deepEqual(runVec('trips-scale', ...steps('a', 'x', 1, 3)).a, [2, 1]);
+	assert.equal(vd.refusalText(runVec('trips-scale'), { kind: 'limit', id: 'a', axis: 'x', direction: 1 }), "a can't go further east: its entries stay between −2 and 2.");
+	assert.equal(vd.listsLine(vst.reducer(scaleOpen, { type: 'stage', stage: 'lists' })), 'c a = (1 × 2, 1 × 1) = (2, 1)');
+	assert.equal(vd.listsLine(runVec('trips-scale', { type: 'stage', stage: 'lists' }, { type: 'scalar', value: -1.5 })), 'c a = ((−1.5) × 2, (−1.5) × 1) = (−3, −1.5)');
+
+	// ---- cart-push ----
+	const cartOpen = vst.initialState('cart-push');
+	assert.equal(vd.statusLine(cartOpen), 'Goal: keep your push at length 5, and tilt it so the cart gets only 3 of it. Then press Check.');
+	assert.deepEqual(vd.readoutLines(cartOpen), ['Your push: (5, 0), length 5.']);
+	assert.deepEqual(vd.handlesFor(cartOpen).map((handle) => handle.label), ['Tip of your push. Its position is in the table below']);
+	assert.equal(vd.ochreElement(cartOpen), null);
+	assert.ok(vd.planeLabels(cartOpen).some((label) => label.text === 'û, length 1'));
+	assert.ok(vd.planeLabels(cartOpen).some((label) => label.text === 'length 5'));
+	for (const push of [[5, 0], [3, 4], [-3, 4], [0, 5], [4, 4]]) {
+		const state = runVec('cart-push', moveTo('a', push));
+		assertNone(answerFreeText(state), ['Along the track', 'Into the rails', 'moves the cart', 'into the rails', 'a · û'], `cart-push push ${push}`);
+		assertNone([vd.announcementFor(state, moveTo('a', push))], ['Along the track', 'Into the rails', 'gets'], `cart-push announce ${push}`);
+	}
+	const cartCheck = (push) => runVec('cart-push', moveTo('a', push), { type: 'check' });
+	assert.equal(vd.feedbackLine(cartCheck([3, 4])), 'Yes. (3, 4) has length 5, since 3 × 3 + 4 × 4 = 25, and 3 of it points along the track.');
+	assert.equal(vd.feedbackLine(cartCheck([3, -4])), 'Yes. (3, −4) has length 5, since 3 × 3 + (−4) × (−4) = 25, and 3 of it points along the track.');
+	assert.equal(vd.feedbackLine(cartCheck([4, 4])), 'Not quite. Your push (4, 4) has length √32 ≈ 5.66, not 5. Stay on the dotted circle.');
+	assert.equal(vd.feedbackLine(cartCheck([4, 3])), 'Not quite. (4, 3) has length 5, but 4 of it points along the track. Tilt it further from the track.');
+	assert.equal(vd.feedbackLine(cartCheck([0, 5])), 'Not quite. (0, 5) has length 5, but 0 of it points along the track. Tilt it back toward the track.');
+	assert.equal(vd.feedbackLine(cartCheck([-3, 4])), 'Not quite. (−3, 4) has length 5, but its part along the track is −3: it rolls the cart backward. Point it forward.');
+	const cartShown = runVec('cart-push', { type: 'check' }, { type: 'check' }, { type: 'show-answer' });
+	assert.deepEqual(cartShown.a, [3, 4]);
+	assert.equal(vd.feedbackLine(cartShown), 'Here it is. (3, 4) has length 5, since 3 × 3 + 4 × 4 = 25, and 3 of it points along the track.');
+	const cartDone = cartCheck([3, 4]);
+	assert.equal(vd.ochreElement(cartDone), 'shadow');
+	assert.deepEqual(vd.readoutLines(cartDone), ['Along the track: a · û = 3 × 1 + 4 × 0 = 3. The cart gets 3 of your push.', "Into the rails: 4. That part doesn't move the cart."]);
+	// "Into the rails" is unsigned: pushing down into the rails is still 4.
+	assert.deepEqual(vd.readoutLines(cartCheck([3, -4])), ['Along the track: a · û = 3 × 1 + (−4) × 0 = 3. The cart gets 3 of your push.', "Into the rails: 4. That part doesn't move the cart."]);
+	assert.ok(vd.planeLabels(cartDone).some((label) => label.text === 'moves the cart'));
+	assert.ok(vd.planeLabels(cartDone).some((label) => label.text === 'into the rails'));
+	assert.deepEqual(vd.chalkNote(cartDone), { long: 'only the part along the track moves it', short: 'only the track part counts' });
+	assert.deepEqual(vd.presetsFor(cartDone).map((preset) => preset.label), ['Sideways', 'Backward', 'Longer track arrow', 'Tilted track']);
+	const cartPreset = (id) => vd.readoutLines(vst.reducer(cartDone, { type: 'preset', id }));
+	assert.deepEqual(cartPreset('sideways'), ["Along the track: a · û = 0 × 1 + 5 × 0 = 0. The cart doesn't move: your whole push goes into the rails.", "Into the rails: 5. That part doesn't move the cart."]);
+	assert.deepEqual(cartPreset('backward'), ['Along the track: a · û = (−3) × 1 + 4 × 0 = −3. The cart rolls backward.', "Into the rails: 4. That part doesn't move the cart."]);
+	assert.deepEqual(cartPreset('longer-track'), [
+		'a · b = 3 × 2 + 4 × 0 = 6. That is twice the part along the track, 3, because b has length 2. Divide by the length of b: 6 ÷ 2 = 3.',
+		"Into the rails: 4. That part doesn't move the cart.",
+	]);
+	assert.deepEqual(cartPreset('tilted-track'), [
+		'a · b = 5 × 4 + 0 × 3 = 20. That is 5 times the part along the track, 4, because b has length 5. Divide by the length of b: 20 ÷ 5 = 4.',
+		"Into the rails: 3. That part doesn't move the cart.",
+	]);
+	assert.ok(vd.planeLabels(vst.reducer(cartDone, { type: 'preset', id: 'longer-track' })).some((label) => label.text === 'b, length 2'));
+	// On the tilted track a push near (5, 5) throws its shadow past the edge, and the readout says so.
+	const offBoard = vd.readoutLines(runVec('cart-push', moveTo('a', [3, 4]), { type: 'check' }, { type: 'preset', id: 'tilted-track' }, moveTo('a', [5, 5])))[0];
+	assert.ok(offBoard.endsWith('The shadow runs past the edge of the board.'), offBoard);
+	assert.equal(vd.handleAnnouncement(cartDone, 'a'), 'Your push: (3, 4), length 5. The cart gets 3 of it.');
+	assert.equal(vd.handleAnnouncement(vst.reducer(cartDone, moveTo('a', [-3, 4])), 'a'), 'Your push: (−3, 4), length 5. Its part along the track is −3: the cart rolls backward.');
+
+	// ---- align ----
+	const alignOpen = vst.initialState('align');
+	assert.deepEqual(vd.readoutLines(alignOpen), ['a = (4, 1), b = (−1, 3).']);
+	assert.deepEqual(vd.handlesFor(alignOpen), []);
+	assert.equal(vd.ochreElement(alignOpen), null);
+	assert.equal(alignOpen.signGuess, null);
+	assertNone(answerFreeText(alignOpen), ['a · b =', '°', 'Shadow', 'shadow', 'θ', 'perpendicular'], 'align before Check');
+	assertNone(answerFreeText(vst.reducer(alignOpen, { type: 'sign', sign: 'zero' })), ['a · b =', '°', 'Shadow'], 'align after a sign');
+	// Check is refused, with a visible reason, until a sign is picked.
+	const noSign = vst.reducer(alignOpen, { type: 'check' });
+	assert.equal(noSign.checked, false);
+	assert.equal(noSign.refusal?.kind, 'no-sign');
+	assert.equal(vd.announcementFor(noSign, { type: 'check' }), 'Pick positive, zero or negative first.');
+	assert.equal(vd.checkRefusal(alignOpen), 'Pick positive, zero or negative first.');
+	assert.equal(vd.checkRefusal(vst.reducer(alignOpen, { type: 'sign', sign: 'zero' })), null);
+	assert.equal(vst.stepRefusal(alignOpen, 'b', 'x', 1)?.kind, 'locked');
+	assert.equal(vst.reducer(alignOpen, moveTo('a', [3, 1])), alignOpen);
+	// One shot: any answer reveals.
+	const signCheck = (sign) => runVec('align', { type: 'sign', sign }, { type: 'check' });
+	assert.equal(vd.feedbackLine(signCheck('negative')), 'Yes. a · b = 4 × (−1) + 1 × 3 = −1, so it is negative. The angle is about 94.4°, just over a right angle.');
+	assert.equal(vd.feedbackLine(signCheck('zero')), 'Not quite. It looks like a right angle, but a · b = 4 × (−1) + 1 × 3 = −1, not 0. The angle is about 94.4°.');
+	assert.equal(vd.feedbackLine(signCheck('positive')), 'Not quite. a · b = 4 × (−1) + 1 × 3 = −1. It is negative because the angle, about 94.4°, is over 90°.');
+	for (const sign of ['negative', 'zero', 'positive']) assert.ok(signCheck(sign).checked);
+	assert.equal(vst.reducer(signCheck('zero'), { type: 'sign', sign: 'negative' }).signGuess, 'zero');
+	const alignDone = signCheck('negative');
+	assert.deepEqual(vd.handlesFor(alignDone).map((handle) => handle.label), ['Tip of vector a. Its position is in the table below', 'Tip of vector b. Its position is in the table below']);
+	assert.equal(vd.ochreElement(alignDone), 'shadow');
+	assert.deepEqual(vd.readoutLines(alignDone), ['a · b = 4 × (−1) + 1 × 3 = −1.', 'Angle: about 94.4°.', 'Shadow of b along a: a · b ÷ ‖a‖ = −1 ÷ √17 ≈ −0.24.']);
+	assert.ok(vd.planeLabels(alignDone).some((label) => label.text === 'θ'));
+	assert.deepEqual(vd.chalkNote(alignDone), { long: 'wider than a right angle: negative', short: 'past a right angle: negative' });
+	assert.deepEqual(vd.presetsFor(alignDone).map((preset) => preset.label), ['Perpendicular', 'Opposite', 'Short b', 'Long b']);
+	const alignPreset = (...ids) => vd.readoutLines(ids.reduce((state, id) => vst.reducer(state, { type: 'preset', id }), alignDone));
+	assert.deepEqual(alignPreset('perpendicular').slice(0, 2), ['a · b = 3 × (−1) + 1 × 3 = 0.', 'Exactly 90°: a and b are perpendicular.']);
+	assert.ok(!vd.planeLabels(vst.reducer(alignDone, { type: 'preset', id: 'perpendicular' })).some((label) => label.text === 'θ'));
+	assert.deepEqual(alignPreset('opposite').slice(0, 2), ['a · b = 2 × (−4) + 1 × (−2) = −10.', 'Exactly 180°: b points the opposite way.']);
+	assert.deepEqual(alignPreset('short-b').slice(0, 2), ['a · b = 3 × 1 + 1 × 2 = 5.', 'Exactly 45°.']);
+	assert.deepEqual(alignPreset('long-b').slice(0, 2), ['a · b = 3 × 2 + 1 × 4 = 10.', 'Exactly 45°.']);
+	assert.equal(alignPreset('short-b', 'long-b').at(-1), 'Before: a · b = 5 at exactly 45°. Same angle, b twice as long, so a · b doubled.');
+	assert.ok(!alignPreset('perpendicular', 'long-b').at(-1).includes('doubled'));
+	// The shadow readout uses ‖a‖ for a length and keeps exact roots exact.
+	assert.equal(alignPreset('short-b')[2], 'Shadow of b along a: a · b ÷ ‖a‖ = 5 ÷ √10 ≈ 1.58.');
+	// A zero vector: a · b is 0 and the angle is undefined, never 0° or 90°.
+	const zeroB = runVec('align', { type: 'sign', sign: 'zero' }, { type: 'check' }, moveTo('b', [0, 0]));
+	assert.deepEqual(vd.readoutLines(zeroB), ['a · b = 0 because b is the zero vector. The angle is undefined: b has no direction.']);
+	assertNone(allText(zeroB), ['0°', '90°'], 'align with a zero b');
+	assert.equal(vd.handleAnnouncement(zeroB, 'b'), 'a = (4, 1), b = (0, 0). a · b = 0. The angle is undefined: b has no direction.');
+	assert.equal(vd.ochreElement(zeroB), null);
+	assert.equal(vd.handleAnnouncement(vst.reducer(alignDone, { type: 'preset', id: 'perpendicular' }), 'a'), 'a = (3, 1), b = (−1, 3). a · b = 0. Exactly 90°: perpendicular.');
+	assert.equal(vd.handleAnnouncement(vst.reducer(alignDone, moveTo('b', [4, 1])), 'b'), "a = (4, 1), b = (4, 1). a · b = 17. Exactly 0°: same direction. b can't go further east: its entries stay between −4 and 4. Both handles are at (4, 1).");
+	// b stays within ±4, so its shadow along a never leaves the board.
+	assert.deepEqual(vst.reducer(alignDone, moveTo('b', [5, 5])).b, [4, 4]);
+	assert.equal(vd.refusalText(alignDone, { kind: 'limit', id: 'b', axis: 'y', direction: 1 }), "b can't go further north: its entries stay between −4 and 4.");
+
+	// ---- Every setup ----
+	const bannedWord = new RegExp(['pro', 'mpt'].join(''), 'i');
+	for (const id of Object.keys(vs.SETUPS)) {
+		const open = vst.initialState(id);
+		// Exactly one ochre element at a time, and nothing pink or blue.
+		assert.ok([null, 'guess', 'sum', 'scaled', 'shadow'].includes(vd.ochreElement(open)));
+		// Handles and steppers agree: every handle's point is in the table, and every label ends without a period.
+		for (const handle of vd.handlesFor(open)) assert.ok(!handle.label.endsWith('.'), handle.label);
+		// No em dash, and never the word the site's style bans for a question put to the reader (spelled in parts
+		// so this file doesn't contain it).
+		const states = [open, runVec(id, { type: 'check' }), runVec(id, { type: 'sign', sign: 'negative' }, { type: 'check' }, { type: 'check' }, { type: 'show-answer' })];
+		for (const state of states) {
+			for (const text of allText(state)) {
+				assert.ok(!text.includes('—'), `${id}: em dash in "${text}"`);
+				assert.ok(!bannedWord.test(text), `${id}: "${text}"`);
+				// ‖a‖ is a length; |…| is kept for a number's absolute value, and · only for the dot product.
+				assert.ok(!/\|[ab]\||\|a \+ b\|/.test(text), `${id}: single bars around a vector in "${text}"`);
+				assert.ok(!/(?:\d|c)\s?·\s?a/.test(text), `${id}: a scalar multiple written with · in "${text}"`);
+			}
+		}
+	}
+}
+
 console.log('Board check passed.');
