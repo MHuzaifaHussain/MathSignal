@@ -62,6 +62,7 @@ export default defineConfig({
 				Header: './src/components/overrides/Header.astro',
 				Sidebar: './src/components/overrides/Sidebar.astro',
 				Footer: './src/components/overrides/Footer.astro',
+				TableOfContents: './src/components/overrides/TableOfContents.astro',
 			},
 			// Expressive Code is configured in ec.config.mjs.
 			social: [

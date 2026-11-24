@@ -1,0 +1,53 @@
+---
+// Starlight TableOfContents override: Starlight's own "On this page" list, plus keeping the highlighted entry
+// in view. Starlight marks the section being read (aria-current) but never scrolls its fixed, scrollbar-less
+// panel, so on a long page or a short window the highlighted entry can sit below the panel's edge.
+// Only the panel scrolls, never the page. Recheck on every Starlight upgrade (panel class, aria-current).
+import DefaultTableOfContents from '@astrojs/starlight/components/TableOfContents.astro';
+---
+
+<DefaultTableOfContents />
+
+<script>
+	/** The desktop panel that holds the list; it scrolls on its own, with a hidden scrollbar. */
+	const PANEL_SELECTOR = '.right-sidebar';
+	/** Room kept between the highlighted entry and the panel's edges, so it never sits flush against them. */
+	const EDGE_MARGIN_PX = 24;
+
+	function keepCurrentEntryInView(toc: HTMLElement, panel: HTMLElement): void {
+		const current = toc.querySelector<HTMLElement>('a[aria-current="true"]');
+		if (!current || panel.scrollHeight <= panel.clientHeight) return;
+
+		// The panel's top padding sits under the fixed site header, so the visible part starts below it.
+		const coveredTop = parseFloat(getComputedStyle(panel).paddingTop) || 0;
+		const panelTop = panel.getBoundingClientRect().top;
+		const entryTop = current.getBoundingClientRect().top - panelTop + panel.scrollTop;
+		const entryBottom = entryTop + current.offsetHeight;
+		const visibleTop = panel.scrollTop + coveredTop + EDGE_MARGIN_PX;
+		const visibleBottom = panel.scrollTop + panel.clientHeight - EDGE_MARGIN_PX;
+
+		// Back at the first section, return to the very top so the "On this page" heading shows again.
+		const isFirstEntry = current === toc.querySelector('a');
+		let target: number | null = null;
+		if (isFirstEntry && panel.scrollTop > 0) target = 0;
+		else if (entryTop < visibleTop) target = entryTop - coveredTop - EDGE_MARGIN_PX;
+		else if (entryBottom > visibleBottom) target = entryBottom - panel.clientHeight + EDGE_MARGIN_PX;
+		if (target === null) return;
+
+		const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		panel.scrollTo({ top: Math.max(0, target), behavior: reduceMotion ? 'auto' : 'smooth' });
+	}
+
+	for (const toc of document.querySelectorAll<HTMLElement>('starlight-toc')) {
+		// Phones show the list in a dropdown instead, which has no such panel; nothing to do there.
+		const panel = toc.closest<HTMLElement>(PANEL_SELECTOR);
+		if (!panel) continue;
+		new MutationObserver(() => keepCurrentEntryInView(toc, panel)).observe(toc, {
+			subtree: true,
+			attributes: true,
+			attributeFilter: ['aria-current'],
+		});
+		// A page opened at an anchor (#references) starts with its entry already highlighted.
+		keepCurrentEntryInView(toc, panel);
+	}
+</script>
