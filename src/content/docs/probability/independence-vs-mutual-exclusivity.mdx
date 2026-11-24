@@ -63,19 +63,19 @@ Pick a day of a school holiday at random. "Rain all day" and "sun all day" can't
 
 Add a friend who tossed a coin that morning. Hearing that it rained tells you nothing about whether the coin came up heads. Rain and heads are independent, and they can easily happen together on the same day.
 
-That second picture covers the first one's blind spot: events that overlap can still be independent. Toss two separate coins. "First is heads" and "second is heads" both happen on HH, yet neither coin tells you anything about the other.
+The weather picture only shows events that can't happen together. The coin shows the other case: events that happen together can still be independent.
 
 </Analogy>
 
 <WhyThisMatters>
-Choosing between one softmax and one sigmoid per label is choosing between these two ideas. Softmax builds in that the classes are mutually exclusive, so a higher "cat" must lower "dog". One sigmoid per label predicts each label on its own, treating the labels as independent given the input. The wrong choice forces exclusivity on tags that go together, such as "dog" and "outdoor", or treats two labels as unlinked once the input is known when they always appear together.
+Choosing between one softmax and one sigmoid per label is choosing between these two ideas. The wrong choice either forces tags that go together, such as "dog" and "outdoor", to compete, or scores each label alone when two labels always come as a pair.
 </WhyThisMatters>
 
-## Overlap is not the same as dependence
+## Two pairs of events on two dice
 
-Before you touch anything: event A is "the sum is 7" and event B is "the first die is 6". They share one roll, (6,1). Are they independent? Going further: doubles and "the sum is 7" share no roll at all. Does that make them independent?
+Event A is "the sum is 7" and event B is "the first die is 6". They share one roll, (6,1): the first die shows 6 and the second shows 1. A second pair: doubles and "the sum is 7" share no roll at all.
 
-The board shows the 36 rolls of two dice, with A's squares tagged "A" and B's tagged "B". The rows labeled "A:" and "B:" hold presets. Under the grid the board gives only P(A) and P(B), starting with "A = sum is 7: 6 of 36 = 1/6 (≈ 0.17)". The switch Compare A and B reveals the verdict, and Shrink the world to B is refused until Compare is on. Your task: for both pairs above, write down P(A) × P(B) and your verdict before you press anything. Then press Compare A and B for the opening pair, and press Doubles in the "B:" row for the second.
+The board shows the 36 rolls of two dice, with A's squares tagged "A" and B's tagged "B". The rows labeled "A:" and "B:" hold presets. Under the grid the board gives only P(A) and P(B), starting with "A = sum is 7: 6 of 36 = 1/6 (≈ 0.17)". The switch Compare A and B reveals the verdict. Before you press anything, work out P(A and B) and P(A) × P(B) for each pair. Are they equal? Checking this is the product test. Then press Compare A and B for the opening pair, and press Doubles in the "B:" row for the second.
 
 <div class="not-content">
   <EventSpace client:visible setup="dice-independence" />
@@ -83,11 +83,11 @@ The board shows the 36 rolls of two dice, with A's squares tagged "A" and B's ta
 
 The overlapping pair is independent. The board says "Independent: yes.", "Mutually exclusive: no, A and B share 1 outcome, \{(6,1)\}." and "P(A and B) = 1/36, and P(A) × P(B) = 1/6 × 1/6 = 1/36: equal." Six rolls make 7, one from each first face, so learning that the first die is 6 leaves exactly one way in six.
 
-The pair with no overlap is dependent: "Independent: no.", "Mutually exclusive: yes, A and B share no outcome." and "P(A and B) = 0, but P(A) × P(B) = 1/6 × 1/6 = 1/36 (≈ 0.03): not equal." Once you know the roll is a double, a sum of 7 is impossible: "P(A | B) = 0, while P(A) = 1/6 (≈ 0.17)".
+The pair with no overlap is dependent: "Independent: no.", "Mutually exclusive: yes, A and B share no outcome." and "P(A and B) = 0, but P(A) × P(B) = 1/6 × 1/6 = 1/36 (≈ 0.03): not equal." Once you know the roll is a double, a sum of 7 is impossible. The chance of A once you know B happened, written P(A | B), drops to 0: "P(A | B) = 0, while P(A) = 1/6 (≈ 0.17)".
 
-Overlap doesn't settle it either. Press Sum is at least 10 for A and First die is 6 for B. They share three rolls, and the board says "P(A and B) = 1/12 (≈ 0.08), but P(A) × P(B) = 1/6 × 1/6 = 1/36 (≈ 0.03): not equal." with "P(A | B) = 1/2 (0.50)". Finally press Sum is 7 for A and Clear for B. An event that can't happen is "Independent: yes, but only because B can't happen." The product test passes, 0 = 1/6 × 0, while the board also says "P(A | B) is undefined, because B can't happen.": there is nothing left to divide by.
+Overlapping pairs can also be dependent. Press Sum is at least 10 for A and First die is 6 for B. They share three rolls, and the board says "P(A and B) = 1/12 (≈ 0.08), but P(A) × P(B) = 1/6 × 1/6 = 1/36 (≈ 0.03): not equal." with "P(A | B) = 1/2 (0.50)". Finally press Sum is 7 for A and Clear for B, so B can't happen. The board says "Independent: yes, but only because B can't happen." The product test passes, 0 = 1/6 × 0, while the board also says "P(A | B) is undefined, because B can't happen.": there is nothing left to divide by.
 
-Whether two events overlap is visible in the grid. Whether they are independent needs the two numbers.
+Overlap is not the same as dependence. Whether two events overlap is visible in the grid. Whether they are independent needs the two numbers.
 
 ## Two different questions about the same pair of events
 
@@ -95,14 +95,14 @@ Mutual exclusivity asks whether A and B share an outcome. Independence asks whet
 
 | | Mutually exclusive | Independent |
 | --- | --- | --- |
-| Definition | A ∩ B = ∅ | P(A ∩ B) = P(A) P(B) |
+| Definition | A ∩ B = ∅ (no shared outcome) | P(A ∩ B) = P(A) P(B) |
 | Depends on | Only the sets | The probabilities |
 | P(A and B) | 0 | P(A) P(B) |
 | P(A or B) | P(A) + P(B) | P(A) + P(B) − P(A) P(B) |
 | Learning B happened, P(B) > 0 | P(A \| B) = 0 | P(A \| B) = P(A) |
 | Seen in the grid? | Yes: no shared square | No: you must compute |
-| Dice | Doubles; sum 7 | First die 6; sum 7 |
-| Cards | Hearts; spades | King; diamond |
+| Dice | Doubles and sum 7 | First die 6 and sum 7 |
+| Cards | Hearts and spades | King and diamond |
 | ML | Softmax classes | One sigmoid per label, given the input |
 
 The "or" row comes from [adding, then taking the overlap off once](/probability/probability-axioms/#a-or-b-add-then-take-the-overlap-off-once). For doubles and sum 7 it gives 1/6 + 1/6 = 1/3; for first die 6 and sum 7, 1/6 + 1/6 − 1/36 = 11/36.
@@ -123,8 +123,6 @@ Only when P(A) = 0 or P(B) = 0. Grinstead and Snell's Definition 4.1 counts two 
 
 - Use exclusivity to add probabilities, as in [events that can't happen together add up](/probability/probability-axioms/#events-that-cant-happen-together-add-up), and for one-of-K labels.
 - Use independence to multiply probabilities: separate dice, coins or devices, and draws with replacement.
-- Exclusivity is a question about the sets, answered by listing outcomes. Independence is a question about the probabilities, answered by numbers from data or from how the experiment works.
-
 <SideNote>De Moivre defined independent events as ones where "the happening of one neither forwards nor obstructs" the other (quoted in Grinstead and Snell, p. 148) <Cite id="grinstead2003" />. Exclusive events obstruct each other completely.</SideNote>
 
 ## Load the die, keep the sets
@@ -139,11 +137,11 @@ This board shows one die as a list of six faces, each with its share of 12 units
 
 The overlap stays and the independence goes. On the fair die the board says "P(A and B) = 1/6, and P(A) × P(B) = 1/3 × 1/2 = 1/6: equal." Loaded toward six, the faces carry 1, 1, 1, 1, 1 and 7 units, and it says "Independent: no." with "P(A and B) = 1/12 (≈ 0.08), but P(A) × P(B) = 1/6 × 3/4 = 1/8 (≈ 0.13): not equal." and "P(A | B) = 1/9 (≈ 0.11), while P(A) = 1/6 (≈ 0.17)". The line "Mutually exclusive: no, A and B share 1 outcome, \{2\}." never changes: the sets did not move.
 
-Now press 5 or 6 for B. "At most 2" and "5 or 6" are exclusive, and dependent under both dice, 0 against 1/9. Even against odd stays exclusive however the die is loaded. Last, press Clear for A: the board says "Independent: yes, but only because A can't happen." and "Mutually exclusive: yes, A and B share no outcome.", the one pair that is both.
+Now press 5 or 6 for B. "At most 2" and "5 or 6" are exclusive. They are dependent on the loaded die, 0 against 1/9, and switching the Die choice back to Fair die gives the same 1/9. Even and odd, which aren't on the board, stay exclusive however the die is loaded. Last, press Clear for A: the board says "Independent: yes, but only because A can't happen." and "Mutually exclusive: yes, A and B share no outcome.", the one pair that is both.
 
 ## Notation
 
-<NotationKey symbols={["sample-space", "event-collection", "event", "intersection", "union", "empty-set", "complement", "probability", "conditional", "independent", "softmax", "sigmoid"]} />
+<NotationKey symbols={["sample-space", "event-collection", "event", "intersection", "union", "empty-set", "probability", "conditional", "independent", "sigmoid"]} />
 
 <PreciseStatement>
 
@@ -201,19 +199,19 @@ Of 200 photos, 60 show a dog, 120 are outdoor and the other 80 indoor, 20 are be
 
 ## Exclusive classes and independent labels in ML
 
-A classifier's output layer commits to one of the two ideas. The [probability axioms page](/probability/probability-axioms/#softmax-outputs) shows why softmax outputs form one distribution and why [one sigmoid per label](/probability/probability-axioms/#one-sigmoid-per-label) does not; this section uses the same logits, $(2, 1, 0)$ for cat, dog and bird, to look at dependence.
+A classifier's output layer commits to one of the two ideas. The [probability axioms page](/probability/probability-axioms/#softmax-outputs) shows why softmax outputs form one distribution and why [one sigmoid per label](/probability/probability-axioms/#one-sigmoid-per-label) does not; this section uses the same logits, the raw scores the model gives before softmax or sigmoid: $(2, 1, 0)$ for cat, dog and bird, to look at dependence.
 
 ### Softmax: classes that exclude each other
 
-Softmax turns the logits into $(0.665, 0.245, 0.090)$, which add up to 1. "The class is cat" and "the class is dog" are mutually exclusive by construction, so $P(\text{cat and dog} \mid x) = 0$ and the classes are dependent. Raise the cat logit from 2 to 3 and the output becomes $(0.844, 0.114, 0.042)$: dog falls although its own score did not change. Goodfellow and coauthors note that because the outputs sum to 1, an increase in one must lower the others (§6.2.2.3) <Cite id="goodfellow2016" />.
+Softmax turns the logits into $(0.665, 0.245, 0.090)$, which add up to 1. "The class is cat" and "the class is dog" are mutually exclusive by construction, so for an input image $x$, $P(\text{cat and dog} \mid x) = 0$ and the classes are dependent. Raise the cat logit from 2 to 3 and the output becomes $(0.844, 0.114, 0.042)$: dog falls although its own score did not change. Goodfellow and coauthors note that because the outputs sum to 1, an increase in one must lower the others (§6.2.2.3) <Cite id="goodfellow2016" />.
 
 ### One sigmoid per label: labels that are independent given the input
 
-The same logits through $\operatorname{sigmoid}(z) = 1/(1 + e^{-z})$ give $(0.881, 0.731, 0.500)$. Raise cat to 3 and the outputs become $(0.953, 0.731, 0.500)$: dog doesn't move. Read as one joint distribution, the model multiplies, so $P(\text{cat and dog} \mid x) = 0.881 \times 0.731 = 0.644$, $P(\text{no label} \mid x) = 0.016$ and $P(\text{exactly one label} \mid x) = 0.178$. That is independence given the input $x$, which is [conditional independence](/probability/conditional-independence/), not independence over the whole dataset.
+The same logits through $\operatorname{sigmoid}(z) = 1/(1 + e^{-z})$ give $(0.881, 0.731, 0.500)$. Raise cat to 3 and the outputs become $(0.953, 0.731, 0.500)$: dog doesn't move. Treating each label as its own yes-or-no that ignores the others for this input means multiplying: $P(\text{cat and dog} \mid x) = 0.881 \times 0.731 = 0.644$, $P(\text{no label} \mid x) = 0.016$ and $P(\text{exactly one label} \mid x) = 0.178$. That is independence given the input $x$, which is [conditional independence](/probability/conditional-independence/), not independence over the whole dataset.
 
 ### When the labels are linked
 
-Over a dataset, labels can be dependent, like beach and outdoor in worked example 3. scikit-learn describes multiclass classification as giving each sample one and only one label (§1.12.1), and fitting one binary classifier per label as treating each label independently (§1.12.2). Classifier chains instead combine binary classifiers into a model that can exploit correlations among targets (§1.12.2.3) <Cite id="sklearn-multiclass" />. Shared features still let per-label outputs move together across images; what the product can't express is a link that remains once $x$ is known.
+Over a dataset, labels can be dependent, like beach and outdoor in worked example 3. scikit-learn describes multiclass classification as giving each sample one and only one label (§1.12.1), and fitting one binary classifier per label as treating each label independently (§1.12.2). Classifier chains instead combine binary classifiers into a model that can exploit correlations among targets (§1.12.2.3) <Cite id="sklearn-multiclass" />. Two sigmoid outputs can still rise together across many images, because they look at the same picture. What one sigmoid per label can't capture is a link between labels for one fixed image.
 
 ## Check every pair in code
 
