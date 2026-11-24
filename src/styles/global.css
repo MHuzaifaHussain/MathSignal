@@ -287,6 +287,14 @@ mark {
 	color: inherit;
 }
 
+/* A display formula wider than a phone scrolls inside its own box instead of widening the whole page.
+ * The small vertical padding keeps tall pieces (integrals, fractions) from being clipped by the overflow. */
+.katex-display {
+	overflow-x: auto;
+	overflow-y: hidden;
+	padding-block: 0.5rem;
+}
+
 .ms-mu {
 	color: var(--ms-mu);
 }
