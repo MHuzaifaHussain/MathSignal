@@ -501,9 +501,15 @@ assert.equal(describe.announcementFor(reducer(noBCompared, { type: 'shrink', on:
 // A burst of toggles while Compare is on ends in one announcement with the verdict.
 const sum8Toggled = run('dice-independence', { type: 'compare', on: true }, presetA('sum-8'), ...toggles('1-1', '1-1'));
 assert.equal(describe.announcementFor(sum8Toggled, { type: 'toggle', id: '1-1' }), 'A: 5 of 36 outcomes, P of A = 5/36. Independent: no. Mutually exclusive: no.');
-// The comparison page quotes its pairs the other way round (A = first die 6, B = sum 7, and so on). Both events in
-// each pair hold 6 of 36 outcomes, so swapping A and B changes no number and no verdict the board shows.
+// The comparison page quotes its pairs the other way round (A = first die 6, B = sum 7, and so on). Swapping A and B
+// changes no number and no verdict the board shows, and each swapped pair loads from presets. Its fourth pair, first
+// die 6 with second die 6, is left out on purpose: neither event is an A preset and A is at the four-preset cap
+// (its presets serve the independence page), so that page makes the same point with sum 7 and first die 6.
+// The preset lists are pinned so that any change to them is a deliberate one.
+assert.deepEqual(diceCompareSetup.events.A.presets, ['sum-7', 'sum-8', 'double', 'sum-at-least-10']);
+assert.deepEqual(diceCompareSetup.events.B.presets, ['first-6', 'second-6', 'double', 'clear']);
 for (const [a, b] of [['sum-7', 'first-6'], ['sum-7', 'double'], ['sum-at-least-10', 'first-6']]) {
+	assert.ok(diceCompareSetup.events.A.presets.includes(a) && diceCompareSetup.events.B.presets.includes(b), `${a} with ${b} loads from presets`);
 	assert.deepEqual(model.compareEvents(ids(dice, a), ids(dice, b), dice.outcomes), model.compareEvents(ids(dice, b), ids(dice, a), dice.outcomes));
 }
 
