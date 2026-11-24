@@ -6,7 +6,7 @@ import CupRow from "./eventSpace/CupRow.tsx";
 import OutcomeGrid from "./eventSpace/OutcomeGrid.tsx";
 import WrongModelTiles from "./eventSpace/WrongModelTiles.tsx";
 import { simulate } from "./eventSpace/model.ts";
-import { SHRINK_REFUSAL, additivityLine, announcementFor, feedbackLine, jugLine, markedLine, presetLabel, readoutLines, setsLine, statusLine, tossLine, totalLine } from "./eventSpace/describe.ts";
+import { SHRINK_REFUSAL, STAGE_LABELS, additivityLine, announcementFor, feedbackLine, jugLine, markedLine, presetLabel, readoutLines, setsLine, statusLine, tossLine, totalLine } from "./eventSpace/describe.ts";
 import { SCENARIOS } from "./eventSpace/scenarios.ts";
 import { getSetup, type SetupId } from "./eventSpace/setups.ts";
 import { CHECKS_BEFORE_ANSWER, initialState, isLocked, reducer, shrinkBlocked, stageAllowed, type Action, type EventKey, type LookAt, type Stage } from "./eventSpace/state.ts";
@@ -17,11 +17,7 @@ const REANNOUNCE_GAP_MS = 50;
 /** Tosses per press of "Toss 100". */
 const TOSS_BATCH = 100;
 const CUPS_NOTE = "The cups are drawn the same size. The water in them is the probability, not the cup.";
-const STAGE_OPTIONS: readonly { value: Stage; label: string }[] = [
-  { value: "picture", label: "Pictures" },
-  { value: "letters", label: "Letters" },
-  { value: "sets", label: "Sets" },
-];
+const STAGE_OPTIONS: readonly { value: Stage; label: string }[] = (["picture", "letters", "sets"] as const).map((value) => ({ value, label: STAGE_LABELS[value] }));
 const LOOK_AT_OPTIONS: readonly { value: LookAt; label: string }[] = [
   { value: "everything", label: "Everything" },
   { value: "A and B", label: "A and B" },
@@ -179,7 +175,7 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
         </button>
       )}
       {locked && (
-        <p id={lockedReasonId} className="ms-event-note-line">
+        <p id={lockedReasonId} className="ms-event-note-line ms-event-locked-note">
           {LOCKED_REASON}: presets and readouts unlock when your answer is right.
         </p>
       )}

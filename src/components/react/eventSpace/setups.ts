@@ -128,6 +128,10 @@ export function validateSetup(setup: Setup): Setup {
 		if (setup.lookAt) throw new Error(`EventSpace: condition setup "${setup.id}" can't use "Look at"; shrinking to B replaces it.`);
 	}
 	if (setup.goal && !scenario.events[setup.goal]) throw new Error(`EventSpace: setup "${setup.id}" has an unknown goal "${setup.goal}".`);
+	// The "missed" outline after Check and the strike on cells outside "Look at" or B are drawn by the same pseudo-element.
+	if (setup.goal && (setup.lookAt || setup.mode === 'condition')) {
+		throw new Error(`EventSpace: goal setup "${setup.id}" can't use "Look at" or conditioning; a missed square would lose its outline.`);
+	}
 	for (const [name, fills] of Object.entries(setup.weightPresets ?? {})) {
 		if (fills.length !== scenario.outcomes.length) throw new Error(`EventSpace: setup "${setup.id}" weight preset "${name}" has ${fills.length} cups; scenario "${scenario.id}" has ${scenario.outcomes.length}.`);
 		if (!fills.every((units) => Number.isInteger(units) && units >= 0)) throw new Error(`EventSpace: setup "${setup.id}" weight preset "${name}" needs whole numbers of units, 0 or more.`);

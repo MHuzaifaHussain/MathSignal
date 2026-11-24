@@ -1,12 +1,9 @@
 import type { CSSProperties } from "react";
 import { cellName, focusSet, missedOutcome } from "./describe.ts";
 import type { Scenario } from "./scenarios.ts";
-import type { EventSpaceState } from "./state.ts";
+import { SMALL_GRID_MAX_CELLS, type EventSpaceState } from "./state.ts";
 import { useRovingGrid } from "./useRovingGrid.ts";
 import type { OutcomeId } from "./model.ts";
-
-/** Grids up to this size show toss counts inside the cells. */
-const MAX_CELLS_WITH_TALLIES = 12;
 
 interface OutcomeGridProps {
   state: EventSpaceState;
@@ -31,7 +28,7 @@ export default function OutcomeGrid({ state, scenario, describedBy, editable, on
   const focus = focusSet(state);
   const missed = missedOutcome(state);
   // Counts fit inside cells only on small grids; larger ones show them in the readout.
-  const showTallies = state.tossCount > 0 && scenario.outcomes.length <= MAX_CELLS_WITH_TALLIES;
+  const showTallies = state.tossCount > 0 && scenario.outcomes.length <= SMALL_GRID_MAX_CELLS;
 
   return (
     <>
@@ -44,7 +41,6 @@ export default function OutcomeGrid({ state, scenario, describedBy, editable, on
     <table
       className="ms-event-grid"
       role="grid"
-      aria-multiselectable={editable || undefined}
       aria-label={
         isList
           ? `Outcomes of ${scenario.describeSpace}.`

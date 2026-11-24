@@ -75,7 +75,10 @@ const mirrorMiss = run('coins-build', ...toggles('HH', 'HT'), { type: 'check' })
 assert.equal(describe.feedbackLine(mirrorMiss), 'Not yet. You have HT but not TH. First coin tails, second coin heads is a different way to land from first coin heads, second coin tails.');
 assert.equal(describe.missedOutcome(mirrorMiss), 'TH');
 assert.equal(describe.feedbackLine(run('coins-build', ...toggles('HH', 'HT', 'TH', 'TT'), { type: 'check' })), 'TT has no head; remove it.');
-assert.equal(describe.feedbackLine(run('coins-build', ...toggles('TT'), { type: 'check' })), "You have 0 of the squares A needs, and 1 that don't belong.");
+assert.equal(describe.feedbackLine(run('coins-build', ...toggles('TT'), { type: 'check' })), "You have 0 of the squares A needs, and 1 that doesn't belong.");
+assert.equal(describe.feedbackLine(run('coins-build', ...toggles('HH', 'TT'), { type: 'check' })), "You have 1 of the squares A needs, and 1 that doesn't belong.");
+// No goal setup today has two wrong squares to mark, so the plural is pinned on a built feedback value.
+assert.equal(describe.feedbackLine({ ...fresh, feedback: { kind: 'partial', found: 1, needed: 3, wrong: 2 } }), "You have 1 of the squares A needs, and 2 that don't belong.");
 assert.equal(describe.cellName(passed, coinsOutcome('HT')), 'HT. First coin heads, second coin tails. In A.');
 
 // presets locked before Check: a refused action returns the same state object.
@@ -95,6 +98,9 @@ assert.equal(reducer(oneFail, { type: 'show-answer' }), oneFail);
 const shown = run('coins-build', ...toggles('TT'), { type: 'check' }, { type: 'check' }, { type: 'show-answer' });
 assert.equal(shown.checked, true);
 assert.deepEqual([...shown.events.A], ['HH', 'HT', 'TH']);
+// A shown answer isn't praised with "Yes".
+assert.equal(describe.feedbackLine(shown), 'The answer: HH, HT and TH. 3 of 4 squares, so P(A) = 3/4 = 0.75.');
+assert.equal(describe.announcementFor(shown, { type: 'show-answer' }), 'The answer: HH, HT and TH. 3 of 4 squares, so P(A) = 3/4 = 0.75.');
 
 // editing B leaves A alone.
 const operations = initialState('dice-operations');
@@ -132,6 +138,8 @@ assert.equal(pourBlocked(pourFresh, '3', -1), null);
 assert.equal(pourBlocked(startedOver, '3', -1), 'cup-empty');
 assert.equal(pourBlocked(startedOver, '3', 1), null);
 assert.equal(describe.cupName(pourFresh, die.outcomes[2]), 'Cup 3: 2 of 12 units.');
+// A pour naming a cup the die doesn't have changes nothing.
+assert.equal(reducer(startedOver, { type: 'pour', id: '7', direction: 1 }), startedOver);
 // The pour announcement agrees in number ("1 unit", "2 units").
 const onePoured = run('die-pour', { type: 'pour', id: '1', direction: -1 });
 assert.equal(describe.announcementFor(onePoured, { type: 'pour', id: '1', direction: -1 }), 'Cup 1: 1 of 12 units. 1 unit left in the jug.');
@@ -180,7 +188,9 @@ const diceFresh = initialState('dice-count');
 assert.equal(reducer(diceFresh, { type: 'stage', stage: 'picture' }), diceFresh); // no stages on dice-count
 const { stageAllowed } = await import('../src/components/react/eventSpace/state.ts');
 assert.equal(stageAllowed(diceFresh, 'picture'), false);
-assert.equal(stageAllowed(fresh, 'picture'), true); // 36 cells are too many for pictures
+assert.equal(stageAllowed(fresh, 'picture'), true); // the 4 coin outcomes are few enough to draw
+// The view change is announced by the name on its button.
+assert.equal(describe.announcementFor(reducer(fresh, { type: 'stage', stage: 'picture' }), { type: 'stage', stage: 'picture' }), 'Showing pictures.');
 
 // ---- Final review fixes ----
 // Critical: after Check passes, changing A clears the "Yes" so the board never approves a wrong event.
@@ -188,8 +198,8 @@ assert.equal(describe.feedbackLine(reducer(passed, { type: 'toggle', id: 'TH' })
 assert.equal(describe.feedbackLine(reducer(passed, { type: 'preset', event: 'A', preset: 'both-same' })), null);
 // A second wrong Check says the answer can now be shown, so it isn't a silent repeat.
 const twoFails = run('coins-build', ...toggles('TT'), { type: 'check' }, { type: 'check' });
-assert.equal(describe.announcementFor(twoFails, { type: 'check' }), "You have 0 of the squares A needs, and 1 that don't belong. You can now show the answer.");
-assert.equal(describe.announcementFor(oneFail, { type: 'check' }), "You have 0 of the squares A needs, and 1 that don't belong.");
+assert.equal(describe.announcementFor(twoFails, { type: 'check' }), "You have 0 of the squares A needs, and 1 that doesn't belong. You can now show the answer.");
+assert.equal(describe.announcementFor(oneFail, { type: 'check' }), "You have 0 of the squares A needs, and 1 that doesn't belong.");
 // Weight presets fail loudly when they can't be a jug of 12.
 const { validateSetup } = await import('../src/components/react/eventSpace/setups.ts');
 const pourSetup = getSetup('die-pour');
@@ -229,6 +239,10 @@ const conditionSetup = getSetup('dice-condition');
 assert.throws(() => validateSetup({ ...conditionSetup, events: { A: conditionSetup.events.A } }), /needs an event B/);
 assert.throws(() => validateSetup({ ...conditionSetup, toss: true }), /can't toss yet/);
 assert.throws(() => validateSetup({ ...conditionSetup, lookAt: true }), /can't use "Look at"/);
+// A goal setup keeps its "missed" outline free: no "Look at" strike or shrinking drawn over it.
+const goalSetup = getSetup('coins-build');
+assert.throws(() => validateSetup({ ...goalSetup, lookAt: true }), /goal setup "coins-build" can't use "Look at" or conditioning/);
+assert.throws(() => validateSetup({ ...conditionSetup, goal: 'double' }), /goal setup "dice-condition"/);
 assert.equal(describe.cellName(shrunk, dice.outcomes[1]), '1,2. First die 1, second die 2. Ruled out.');
 assert.equal(describe.cellName(shrunk, dice.outcomes[0]), '1,1. First die 1, second die 1. In B.');
 assert.equal(describe.announcementFor(reducer(shrunk, { type: 'shrink', on: false }), { type: 'shrink', on: false }), 'Back to all outcomes.');

@@ -356,7 +356,10 @@
 	.ms-board-button,
 	.ms-slider-control,
 	.ms-choice,
-	.ms-runner-bar {
+	.ms-runner-bar,
+	.ms-cup-buttons,
+	.ms-event-presets,
+	.ms-event-locked-note {
 		display: none;
 	}
 }
@@ -418,7 +421,8 @@
 	cursor: pointer;
 }
 
-.ms-choice-option:has(input:checked) {
+.ms-choice-option:has(input:checked),
+.ms-board-switch[aria-checked='true'] {
 	border-color: var(--ms-board-ink);
 	background-color: var(--ms-board);
 	font-weight: 600;
@@ -435,7 +439,8 @@
 	font-weight: 600;
 }
 
-.ms-board-button[aria-disabled='true'] {
+.ms-board-button[aria-disabled='true'],
+.ms-cup-button[aria-disabled='true'] {
 	color: var(--ms-board-ink-muted);
 	border-style: dashed;
 	cursor: not-allowed;
@@ -525,7 +530,9 @@
 	background-color: var(--ms-highlight);
 }
 
-.ms-event-cell.is-b::after {
+/* B's dashed outline and the missed square's dotted one share one inset frame, told apart by line style. */
+.ms-event-cell.is-b::after,
+.ms-event-cell.is-missed::before {
 	content: '';
 	position: absolute;
 	inset: 3px;
@@ -562,12 +569,7 @@
 
 /* Missed after Check: dotted, so it can't be mistaken for B's dashes. */
 .ms-event-cell.is-missed::before {
-	content: '';
-	position: absolute;
-	inset: 3px;
-	border: 2px dotted var(--ms-board-ink);
-	border-radius: 2px;
-	pointer-events: none;
+	border-style: dotted;
 }
 
 /* Outside the set "Look at" focuses on: no fill, muted text, a thin strike. Never opacity on text. */
@@ -670,12 +672,6 @@
 	font-size: 0.875rem;
 }
 
-.ms-board-switch[aria-checked='true'] {
-	border-color: var(--ms-board-ink);
-	background-color: var(--ms-board);
-	font-weight: 600;
-}
-
 /* ── EventSpace weights mode: six cups of 12 unit slots ── */
 .ms-cup-row {
 	inline-size: 100%;
@@ -751,28 +747,6 @@
 	cursor: pointer;
 }
 
-.ms-cup-button[aria-disabled='true'] {
-	color: var(--ms-board-ink-muted);
-	border-style: dashed;
-	cursor: not-allowed;
-}
-
-@media print {
-	.ms-cup-buttons {
-		display: none;
-	}
-}
-
-@media (forced-colors: active) {
-	.ms-cup-slot.is-filled {
-		background-color: CanvasText;
-	}
-
-	.ms-cup-row td.is-a {
-		border-color: CanvasText;
-	}
-}
-
 @container (max-width: 399px) {
 	.ms-event-grid {
 		--ms-event-header: 24px;
@@ -811,6 +785,14 @@
 
 	.ms-event-cell.is-b::after,
 	.ms-event-cell.is-missed::before {
+		border-color: CanvasText;
+	}
+
+	.ms-cup-slot.is-filled {
+		background-color: CanvasText;
+	}
+
+	.ms-cup-row td.is-a {
 		border-color: CanvasText;
 	}
 }

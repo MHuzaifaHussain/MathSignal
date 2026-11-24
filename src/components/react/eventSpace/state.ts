@@ -9,6 +9,8 @@ export type EventKey = 'A' | 'B';
 export type LookAt = 'everything' | 'A and B' | 'A or B' | 'not A';
 export type Stage = 'picture' | 'letters' | 'sets';
 export type Refusal = { id: OutcomeId; reason: 'cup-empty' | 'jug-empty' };
+/** Check's verdict, or `shown` when the reader gave up and pressed "Show the answer" (no "Yes" for that). */
+export type Feedback = GoalResult | { kind: 'shown' };
 
 export interface EventSpaceState {
 	setupId: SetupId;
@@ -18,7 +20,7 @@ export interface EventSpaceState {
 	/** True once Check has passed (or the answer was shown) on a goal setup. */
 	checked: boolean;
 	failedChecks: number;
-	feedback: GoalResult | null;
+	feedback: Feedback | null;
 	weights: Record<OutcomeId, number>;
 	refusal: Refusal | null;
 	tallies: Record<OutcomeId, number>;
@@ -49,8 +51,8 @@ export type Action =
 
 /** Wrong Checks before the "Show the answer" button appears. */
 export const CHECKS_BEFORE_ANSWER = 2;
-/** Grids up to this size can be drawn as pictures (coin faces); bigger ones stay letters. */
-export const MAX_CELLS_FOR_PICTURES = 12;
+/** Grids up to this size are small enough to draw as pictures (coin faces) and to show toss counts in the cells. */
+export const SMALL_GRID_MAX_CELLS = 12;
 const EMPTY: ReadonlySet<OutcomeId> = new Set();
 
 export function setupOf(state: EventSpaceState): Setup {
@@ -59,6 +61,11 @@ export function setupOf(state: EventSpaceState): Setup {
 
 export function scenarioOf(state: EventSpaceState): Scenario {
 	return SCENARIOS[setupOf(state).scenario];
+}
+
+/** Guards actions that name an outcome, so an id from outside the scenario changes nothing. */
+function hasOutcome(scenario: Scenario, id: OutcomeId): boolean {
+	return scenario.outcomes.some((outcome) => outcome.id === id);
 }
 
 function presetMembers(scenario: Scenario, preset: string | null): ReadonlySet<OutcomeId> {
@@ -107,7 +114,7 @@ export function stageAllowed(state: EventSpaceState, stage: Stage): boolean {
 	const setup = setupOf(state);
 	if (!setup.stages) return false;
 	const scenario = SCENARIOS[setup.scenario];
-	return stage !== 'picture' || (Boolean(scenario.pictureFaces) && scenario.outcomes.length <= MAX_CELLS_FOR_PICTURES);
+	return stage !== 'picture' || (Boolean(scenario.pictureFaces) && scenario.outcomes.length <= SMALL_GRID_MAX_CELLS);
 }
 
 /** Why a pour would be refused right now, or null if it would go through. */
@@ -136,7 +143,7 @@ export function reducer(state: EventSpaceState, action: Action): EventSpaceState
 	switch (action.type) {
 		case 'toggle': {
 			const event = setup.events[state.editing];
-			if (!(setup.mode === 'count' || setup.mode === 'condition') || !event?.editable || !scenario.outcomes.some((outcome) => outcome.id === action.id)) return state;
+			if (!(setup.mode === 'count' || setup.mode === 'condition') || !event?.editable || !hasOutcome(scenario, action.id)) return state;
 			return withEvent(state, state.editing, toggled(state.events[state.editing], action.id));
 		}
 		case 'preset': {
@@ -157,12 +164,12 @@ export function reducer(state: EventSpaceState, action: Action): EventSpaceState
 		}
 		case 'show-answer': {
 			if (!setup.goal || state.checked || state.failedChecks < CHECKS_BEFORE_ANSWER) return state;
-			return { ...state, events: { ...state.events, A: eventMembers(scenario, setup.goal) }, checked: true, feedback: { kind: 'correct' } };
+			return { ...state, events: { ...state.events, A: eventMembers(scenario, setup.goal) }, checked: true, feedback: { kind: 'shown' } };
 		}
 		case 'reset':
 			return initialState(state.setupId);
 		case 'pour': {
-			if (setup.mode !== 'weights') return state;
+			if (setup.mode !== 'weights' || !hasOutcome(scenario, action.id)) return state;
 			const result = pour(state.weights, action.id, action.direction);
 			return result.ok ? { ...state, weights: result.weights, refusal: null } : { ...state, refusal: { id: action.id, reason: result.reason } };
 		}

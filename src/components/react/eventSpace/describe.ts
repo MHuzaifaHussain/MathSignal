@@ -3,8 +3,11 @@
 import { complement, conditionalProbability, formatFraction, fraction, intersect, probability, union, WEIGHT_TOTAL, type Fraction, type Outcome, type OutcomeId } from './model.ts';
 import { eventMembers, type Scenario } from './scenarios.ts';
 import { CLEAR_PRESET } from './setups.ts';
-import { CHECKS_BEFORE_ANSWER, isLocked, scenarioOf, setupOf, type Action, type EventKey, type EventSpaceState, type Refusal } from './state.ts';
+import { CHECKS_BEFORE_ANSWER, isLocked, scenarioOf, setupOf, type Action, type EventKey, type EventSpaceState, type Refusal, type Stage } from './state.ts';
 import { formatNumber } from '../plotColors.ts';
+
+/** The "Show as" options' names, shown on the buttons and spoken when the view changes. */
+export const STAGE_LABELS: Readonly<Record<Stage, string>> = { picture: 'Pictures', letters: 'Letters', sets: 'Sets' };
 
 /** Member lists longer than this show the first ones and "and k more". */
 const MAX_LISTED = 8;
@@ -80,12 +83,10 @@ export function feedbackLine(state: EventSpaceState): string | null {
 	const scenario = scenarioOf(state);
 	const byId = (id: OutcomeId) => scenario.outcomes.find((outcome) => outcome.id === id) as Outcome;
 	switch (feedback.kind) {
-		case 'correct': {
-			const marked = outcomesIn(scenario, state.events.A);
-			const total = scenario.outcomes.length;
-			const share = fraction(marked.length, total);
-			return `Yes: ${joinWords(marked.map((outcome) => outcome.label))}. ${marked.length} of ${total} squares, so P(A) = ${formatFraction(share)} ${equalsDecimal(marked.length, total)}.`;
-		}
+		case 'correct':
+			return `Yes: ${answerText(state)}`;
+		case 'shown':
+			return `The answer: ${answerText(state)}`;
 		case 'missed-mirror': {
 			const have = byId(feedback.have);
 			const missing = byId(feedback.missing);
@@ -98,8 +99,16 @@ export function feedbackLine(state: EventSpaceState): string | null {
 			return `${joinWords(labels)} don't belong in A; remove them.`;
 		}
 		case 'partial':
-			return `You have ${feedback.found} of the squares A needs, and ${feedback.wrong} that don't belong.`;
+			return `You have ${feedback.found} of the squares A needs, and ${feedback.wrong} that ${feedback.wrong === 1 ? "doesn't" : "don't"} belong.`;
 	}
+}
+
+/** "HH, HT and TH. 3 of 4 squares, so P(A) = 3/4 = 0.75.": event A spelled out, after a pass or a shown answer. */
+function answerText(state: EventSpaceState): string {
+	const scenario = scenarioOf(state);
+	const marked = outcomesIn(scenario, state.events.A);
+	const total = scenario.outcomes.length;
+	return `${joinWords(marked.map((outcome) => outcome.label))}. ${marked.length} of ${total} squares, so P(A) = ${formatFraction(fraction(marked.length, total))} ${equalsDecimal(marked.length, total)}.`;
 }
 
 /** The outcome to outline as "missed" after a Check that found the HT/TH mistake. */
@@ -312,7 +321,7 @@ export function announcementFor(state: EventSpaceState, action: Action): string 
 		case 'wrong-model':
 			return state.wrongModel ? scenario.wrongModel?.caption ?? '' : 'Back to the real outcomes.';
 		case 'stage':
-			return setsLine(state) ?? `Showing ${state.stage}.`;
+			return setsLine(state) ?? `Showing ${STAGE_LABELS[state.stage].toLowerCase()}.`;
 		case 'shrink':
 			if (state.shrinkRefused) return SHRINK_REFUSAL;
 			return state.shrink ? conditionalLine(state) : 'Back to all outcomes.';
