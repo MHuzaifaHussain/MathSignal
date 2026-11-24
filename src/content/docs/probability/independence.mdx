@@ -64,21 +64,21 @@ import EventSpace from "../../../components/react/EventSpace.tsx";
 
 <Analogy breaks="Separate objects are a good reason to expect independence, not a proof of it, and one die can give two independent events. The picture also breaks once someone chooses what to tell you: if your friend mentions the coin only when the die shows a six, then hearing about the coin is itself a clue, and the share changes.">
 
-You hold a coin in one hand and a die in the other. A friend takes both behind a screen, flips the coin, rolls the die, and tells you only one thing: the coin landed heads. Is a six now more likely, less likely, or neither? The die never saw the coin, so a six is still one face in six. Picture all 12 coin-and-die results in a table with 2 rows and 6 columns. "Heads" keeps the top row, and the six is still 1 of the 6 squares left: the same share as in the whole table, where it is 2 of 12.
+You hold a coin in one hand and a die in the other. A friend takes both behind a screen, flips the coin, rolls the die, and tells you only one thing: the coin landed heads. Is a six now more likely, less likely, or neither? The die never saw the coin, and nothing about heads seems able to push the die toward one face or away from it. Hold that thought; the board below lets you count it.
 
 That picture leans on two separate objects, which is its blind spot. Take one die and ask two questions about the same roll: is it even, and is it at most 2? Learning "at most 2" leaves only the faces 1 and 2, and one of those two is even. So the chance of even is still 1 in 2, exactly as before you learned anything. Independence is about shares, not about separate objects.
 
 </Analogy>
 
 <WhyThisMatters>
-Most training objectives multiply probabilities. They treat the training examples as independent draws, so the probability of the whole data set is a product, and its logarithm is a sum: the familiar average loss. Dropout switches units off independently of each other. When independence fails, as with copies of the same example, or with [two tests whose mistakes repeat](/probability/bayes-theorem/#updating-twice), multiplying counts the same evidence twice and makes a model more confident than the data allow.
+Many training objectives multiply probabilities. They treat the training examples as independent draws, so the probability of the whole data set is a product, and its logarithm is a sum, which is where the average training loss comes from. Dropout, a training trick, switches parts of a network off independently of each other. When independence fails, as with copies of the same example, or with [two tests whose mistakes repeat](/probability/bayes-theorem/#updating-twice), multiplying counts the same evidence twice and makes a model more confident than the data allow.
 </WhyThisMatters>
 
 ## Flip a coin, roll a die
 
-Before you touch anything: you learn that the coin landed heads. Is a six now more likely, less likely, or exactly as likely as before? Going further: write P(six | heads) as a share of the 6 heads squares and P(six) as a share of all 12 squares, and compare the two fractions.
+Before you touch anything: you learn that the coin landed heads. Is a six now more likely, less likely, or exactly as likely as before? Going further: write P(six | heads), the [conditional probability](/probability/conditional-probability/) of a six given that the coin landed heads, as a share of the 6 heads squares and P(six) as a share of all 12 squares, and compare the two fractions.
 
-The board lists the 12 outcomes of flipping a coin and rolling a die, H1 to H6 in the top row and T1 to T6 in the bottom one. Event A starts as "die is 6" and event B as "coin is heads". A square in A has a solid border and an "A" tag, a square in B a dashed outline and a "B" tag. Under the grid the board reads "A = die is 6: 2 of 12 = 1/6 (≈ 0.17)" and "B = coin is heads: 6 of 12 = 1/2 (0.50)", and nothing else yet: how much of A lies inside B is for you to count.
+The board lists the 12 outcomes of flipping a coin and rolling a die, H1 to H6 in the top row and T1 to T6 in the bottom one. Event A starts as "die is 6" and event B as "coin is heads". A square in A has a solid border and an "A" tag, a square in B a dashed outline and a "B" tag. Under the grid the board reads "A = die is 6: 2 of 12 = 1/6 (≈ 0.17)" and "B = coin is heads: 6 of 12 = 1/2 (0.50)", with no A-and-B line yet, only a note asking you to turn on Compare A and B: how much of A lies inside B is for you to count.
 
 Your task: turn on Compare A and B, then press Shrink the world to B, and check whether P(A | B) and P(A) agree. Shrinking is refused until Compare is on, because it would answer the question for you.
 
@@ -86,7 +86,7 @@ Your task: turn on Compare A and B, then press Shrink the world to B, and check 
   <EventSpace client:visible setup="coin-die-independence" />
 </div>
 
-Exactly as likely. Compare A and B adds the line "A and B = \{H6\}: 1 of 12" and a verdict, "Independent: yes.", with "P(A and B) = 1/12, and P(A) × P(B) = 1/6 × 1/2 = 1/12: equal." It also says the two events are not mutually exclusive, because they share H6. Shrunk to B, the tails row is struck out and the board says "Inside B: 6 outcomes, 1 of them also in A, \{H6\}. P(A | B) = 1/6 ≈ 0.17, while P(A) = 2/12 = 1/6 ≈ 0.17." The six holds 1 of the 6 heads squares and 2 of all 12 squares, and both shares are 1/6.
+Exactly as likely. Compare A and B adds the line "A and B = \{H6\}: 1 of 12" and a verdict, "Independent: yes.", with "P(A and B) = 1/12, and P(A) × P(B) = 1/6 × 1/2 = 1/12: equal." It also says the two events are not mutually exclusive (events that can never happen together), because they share H6. Shrunk to B, the tails row is struck out and the board says "Inside B: 6 outcomes, 1 of them also in A, \{H6\}. P(A | B) = 1/6 ≈ 0.17, while P(A) = 2/12 = 1/6 ≈ 0.17." The six holds 1 of the 6 heads squares and 2 of all 12 squares, and both shares are 1/6.
 
 Now press Die is even in the row labeled "A:". Still shrunk, the board says "Inside B: 6 outcomes, 3 of them also in A, \{H2, H4, H6\}. P(A | B) = 3/6 = 1/2 = 0.50, while P(A) = 6/12 = 1/2 = 0.50." and the product line reads "P(A and B) = 1/4, and P(A) × P(B) = 1/2 × 1/2 = 1/4: equal." Any event about the die alone is independent of any event about the coin alone, because the die's share is the same in both rows.
 
@@ -94,7 +94,7 @@ Last, press Heads and a six. That event is built from the coin as well as the di
 
 ## When knowing B tells you nothing about A
 
-Events A and B are independent when learning that B happened leaves the probability of A unchanged: P(A | B) = P(A).
+Events A and B are independent when learning that B happened leaves the probability of A unchanged, P(A | B) = P(A). The official definition is the equivalent product form below, P(A and B) = P(A) P(B).
 
 ### Two ways to say it
 
@@ -102,7 +102,7 @@ The conditional form and the product form say the same thing whenever P(B) > 0. 
 
 P(A and B) = P(A) P(B).
 
-For the coin and the die, P(heads and six) = 1/2 × 1/6 = 1/12, the single square H6 out of 12. Kolmogorov uses the product form as the definition, his equation (5) in Chapter I, §5 <Cite id="kolmogorov1950" />. Grinstead and Snell define independence through the conditional form, with a separate clause for an event of probability 0, and their Theorem 4.1 (§4.1, p. 140) proves that it holds exactly when the product form does <Cite id="grinstead2003" />. The product form is the one most books take as the definition, for two reasons: it treats A and B the same way, and it still makes sense when P(B) = 0, where P(A | B) has no value.
+For the coin and the die, P(heads and six) = 1/2 × 1/6 = 1/12, the single square H6 out of 12. For two events, Kolmogorov's definition comes down to the product form <Cite id="kolmogorov1950" />. Grinstead and Snell start from the conditional form and prove that the two forms agree whenever P(B) > 0 <Cite id="grinstead2003" />. The product form is the one most books take as the definition, for two reasons: it treats A and B the same way, and it still makes sense when P(B) = 0, where P(A | B) has no value.
 
 <SideNote>
 Kolmogorov's definition uses no conditional probability at all. He notes this, and only afterward connects independence to conditional probabilities in his Theorem III (Chapter I, §5, pp. 11–12) <Cite id="kolmogorov1950" />.
@@ -128,13 +128,13 @@ If knowing B doesn't change the chance of A, then knowing A doesn't change the c
 
 ### Multiplying is a rule you earn
 
-The product P(A) P(B) gives the chance of both only when A and B are independent. In general the chance of both is P(A | B) P(B), the multiplication rule from the [conditional probability](/probability/conditional-probability/#the-multiplication-rule) page. In the class of 12 on that page, 5 children wear hats, 4 wear scarves and 2 wear both. So P(hat and scarf) = 2/12 = 1/6 ≈ 0.167, while P(hat) P(scarf) = 5/12 × 4/12 = 20/144 = 5/36 ≈ 0.139. Multiplying would undercount the children who wear both, because hats and scarves tend to go together: cold weather brings out both. That kind of shared cause, and what happens once you hold it fixed, is the subject of a later page on conditional independence.
+The product P(A) P(B) gives the chance of both only when A and B are independent. In general the chance of both is P(A | B) P(B), the multiplication rule from the [conditional probability](/probability/conditional-probability/#the-multiplication-rule) page. In the class of 12 on that page, 5 children wear hats, 4 wear scarves and 2 wear both. So P(hat and scarf) = 2/12 = 1/6 ≈ 0.167, while P(hat) P(scarf) = 5/12 × 4/12 = 20/144 = 5/36 ≈ 0.139. Multiplying would undercount the children who wear both, because in this class hats and scarves tend to go together, as they would if, say, cold weather brought out both. That kind of shared cause, and what happens once you hold it fixed, is the subject of the [conditional independence](/probability/conditional-independence/) page.
 
 ## Test pairs of events on two dice
 
 Before you look: is "the sum is 7" independent of "the first die is 6"? Going further: work out P(sum is 7 | first die is 6) before you press anything. Many people expect the two to be dependent, because the first die is part of the sum.
 
-The board shows the 36 outcomes of rolling two dice, with A = sum is 7 and B = first die is 6 already marked in the same style as above. It opens with "A = sum is 7: 6 of 36 = 1/6 (≈ 0.17)" and "B = first die is 6: 6 of 36 = 1/6 (≈ 0.17)". The presets after "A:" are Sum is 7, Sum is 8, Doubles and Sum is at least 10; after "B:" they are First die is 6, Second die is 6, Doubles and Clear. "Editing" chooses which event a tap changes, the arrow keys move between squares, and Space toggles one. Your task: turn on Compare A and B and read the verdict.
+The board shows the 36 outcomes of rolling two dice, with A = sum is 7 and B = first die is 6 already marked in the same style as above. It opens with "A = sum is 7: 6 of 36 = 1/6 (≈ 0.17)" and "B = first die is 6: 6 of 36 = 1/6 (≈ 0.17)". The presets after "A:" are Sum is 7, Sum is 8, Doubles and Sum is at least 10; after "B:" they are First die is 6, Second die is 6, Doubles and Clear. "Editing" chooses which event a tap changes, the arrow keys move between squares, and Space toggles one. Your task: turn on Compare A and B, read the verdict, then press Shrink the world to B to see P(A | B) beside P(A).
 
 <div class="not-content">
   <EventSpace client:visible setup="dice-independence" />
@@ -145,8 +145,8 @@ Independent. The board says "Independent: yes." and "P(A and B) = 1/36, and P(A)
 Now try three more pairs with Compare still on.
 
 1. Press Sum is 8. The board says "Independent: no." and "P(A and B) = 1/36 (≈ 0.03), but P(A) × P(B) = 5/36 × 1/6 = 5/216 (≈ 0.02): not equal." Here P(sum is 8 | first die is 6) = 1/6, which is more than P(sum is 8) = 5/36. A first die of 6 leaves one way to make 8, a 2, while a first die of 1 leaves no way at all. The first die now matters.
-2. Press Doubles, keeping B = first die is 6. The verdict is "Independent: yes." again, with 1/36 on both sides: whatever the first die shows, one face of the second die matches it.
-3. Press Sum is 7 for A and Doubles for B. These two can't happen together, and the board says "Mutually exclusive: yes, A and B share no outcome." and "P(A and B) = 0, but P(A) × P(B) = 1/6 × 1/6 = 1/36 (≈ 0.03): not equal." Learning that the roll is a double rules out a 7 completely, a strong form of dependence. The [probability axioms](/probability/probability-axioms/) page lists this as a common mistake, and a later page compares the two ideas side by side.
+2. Press Doubles in the row labeled "A:", keeping B = first die is 6. The verdict is "Independent: yes." again, with 1/36 on both sides: whatever the first die shows, one face of the second die matches it.
+3. Press Sum is 7 for A and Doubles for B. These two can't happen together, and the board says "Mutually exclusive: yes, A and B share no outcome." and "P(A and B) = 0, but P(A) × P(B) = 1/6 × 1/6 = 1/36 (≈ 0.03): not equal." Learning that the roll is a double rules out a 7 completely, a strong form of dependence. Mixing up mutually exclusive and independent is a common mistake, listed on the [probability axioms](/probability/probability-axioms/) page, and [independent vs mutually exclusive events](/probability/independence-vs-mutual-exclusivity/) compares the two ideas side by side.
 
 Last, press Clear for B. B now holds no outcome, and the board says "Independent: yes, but only because B can't happen.", "P(A and B) = 0, and P(A) × P(B) = 1/6 × 0 = 0: equal." and "P(A | B) is undefined, because B can't happen." Shrink the world to B is refused with "Undefined: B can't happen (probability 0)." This is where the two forms part ways. The product form calls an event that can't happen independent of everything, while the conditional form has no value to compare. That is why the product form is the definition.
 
@@ -158,7 +158,7 @@ No. A double happens whenever a double happens, so P(doubles and doubles) = P(do
 
 Whether two events are independent depends on the probabilities, not on the sets alone. Take one die with A = even, \{2, 4, 6\}, and B = at most 2, \{1, 2\}. On a fair die, P(A) = 1/2, P(B) = 1/3 and P(A and B) = P(\{2\}) = 1/6 = 1/2 × 1/3, so they are independent, as in the everyday picture above.
 
-Now load the die toward six, with the same fill as the jug board on the [probability axioms](/probability/probability-axioms/) page: faces 1 to 5 carry 1 unit each and face 6 carries 7, out of 12.
+Now load the die toward six: faces 1 to 5 each have probability 1/12 and face 6 has 7/12 (the same loaded die as on the [probability axioms](/probability/probability-axioms/) page).
 
 |  | P(A) | P(B) | P(A and B) | P(A) P(B) | P(A \| B) |
 | --- | --- | --- | --- | --- | --- |
@@ -173,7 +173,7 @@ Three or more events are mutually independent when every group of two or more of
 
 P(A and B) = P(A) P(B), P(A and C) = P(A) P(C), P(B and C) = P(B) P(C), and P(A and B and C) = P(A) P(B) P(C).
 
-For n events it is 2ⁿ − n − 1 equations, one for every group of two or more: 1 for two events, 4 for three, 11 for four. Kolmogorov states this count with his Definition II, equation (4), in Chapter I, §5 <Cite id="kolmogorov1950" />. Checking only the pairs is not enough, and checking only the product of all of them is not enough either.
+For n events it is 2ⁿ − n − 1 equations, one for every group of two or more: 1 for two events, 4 for three, 11 for four. Kolmogorov states this count with his Definition II, equation (4), in Chapter I, §5 <Cite id="kolmogorov1950" />. Mutually independent is a different idea from mutually exclusive: it means every group multiplies. Checking only the pairs is not enough, and checking only the product of all of them is not enough either. On two fair coins, "first is heads", "second is heads" and "both the same" are independent in every pair, yet all three happen together with probability 1/4, not 1/8; the fold below works it out, along with a case where the triple product holds but no pair does.
 
 <GoDeeper label="independent in pairs, not all together" id="pairwise-not-mutual">
 
@@ -194,7 +194,7 @@ The failure runs the other way too. Grinstead and Snell's Exercise 8 (p. 151) ta
 
 ## Notation
 
-<NotationKey symbols={["sample-space", "event-collection", "event", "intersection", "complement", "empty-set", "probability", "conditional", "independent", "product"]} />
+<NotationKey symbols={["sample-space", "event-collection", "event", "intersection", "union", "complement", "empty-set", "probability", "conditional", "independent", "product", "argmax", "log"]} />
 
 <PreciseStatement>
 
@@ -221,7 +221,7 @@ Boundary cases. An event with probability 0 or 1 is independent of every event, 
 
 </StepThrough>
 
-<StepThrough title="If A ⫫ B, then A is independent of not B" rigor="full">
+<StepThrough title="If A and B are independent, so are A and not B" rigor="full">
 
 1. Assume $P(A \cap B) = P(A)\,P(B)$.
 2. $A$ splits into $A \cap B$ and $A \cap B^\complement$, which share no outcome, so additivity gives $P(A) = P(A \cap B) + P(A \cap B^\complement)$.
@@ -260,7 +260,7 @@ On two dice, sum is 7 and "the first die is not 6" give $P = 5/36 = 1/6 \times 5
 
 <WorkedExample number={1} title="Heads and a six">
 
-Flip a fair coin and roll a fair die. The two events here are "heads" and "six"; the board's Heads and a six preset is their intersection. The coin and the die don't affect each other, so heads and six are independent and $P(\text{heads and six}) = 1/2 \times 1/6 = 1/12$. Counting agrees: 1 of the 12 equally likely outcomes, H6. The chance of heads or a six then follows from the union rule on the [probability axioms](/probability/probability-axioms/) page: $1/2 + 1/6 - 1/12 = 7/12$, which is 7 of the 12 squares (H1 to H6, and T6).
+Flip a fair coin and roll a fair die. The two events here are "heads" and "six". They are independent, because the coin and the die don't affect each other. (On the board, the event "heads and a six", where both happen, was not independent of heads, because it is partly about the coin.) So $P(\text{heads and six}) = 1/2 \times 1/6 = 1/12$. Counting agrees: 1 of the 12 equally likely outcomes, H6. The chance of heads or a six then follows from the union rule on the [probability axioms](/probability/probability-axioms/) page: $1/2 + 1/6 - 1/12 = 7/12$, which is 7 of the 12 squares (H1 to H6, and T6).
 
 </WorkedExample>
 
@@ -276,7 +276,7 @@ A class makes up 1% of a large data set. A training batch of 64 examples is draw
 
 <div slot="solution">
 
-Each draw misses the class with probability $0.99$, and the draws are independent, so the product rule gives $P(\text{none in 64}) = 0.99^{64} \approx 0.5256$. The complement is $P(\text{at least one}) \approx 0.4744$, under half. "At least one" passes 1/2 once $0.99^n < 1/2$, that is $n > \ln 0.5 / \ln 0.99 \approx 68.97$, so it takes 69 draws. The assumption is that the draws are independent. Batches drawn by shuffling and taking examples without replacement are not exactly independent, but from a large data set they come close.
+Each draw misses the class with probability $0.99$, and the draws are independent, so the product rule gives $P(\text{none in 64}) = 0.99^{64} \approx 0.5256$. The complement is $P(\text{at least one}) \approx 0.4744$, under half. "At least one" passes 1/2 once $0.99^n < 1/2$, that is $n > \log 0.5 / \log 0.99 \approx 68.97$, so it takes 69 draws. The assumption is that the draws are independent. Batches drawn by shuffling and taking examples without replacement are not exactly independent, but from a large data set they come close.
 
 </div>
 
@@ -286,17 +286,19 @@ Each draw misses the class with probability $0.99$, and the draws are independen
 
 ### A likelihood becomes a product
 
-Independent training examples turn the probability of a whole data set into a product. Goodfellow and coauthors name the i.i.d. assumptions: the examples in each data set are independent of each other, and the training and test sets are identically distributed (§5.2) <Cite id="goodfellow2016ml" />. Under the first, the maximum likelihood estimate for $m$ examples $x^{(1)}, \ldots, x^{(m)}$ is
+Independent training examples turn the probability of a whole data set into a product. Goodfellow and coauthors name the i.i.d. assumptions: the examples in each data set are independent of each other, and the training and test sets are identically distributed (§5.2) <Cite id="goodfellow2016ml" />.
+
+Say a coin has an unknown heads probability $\theta$ and you see H, H, T. Independence makes the chance of that sequence $\theta \times \theta \times (1 - \theta) = \theta^2 (1 - \theta)$, and the best guess for $\theta$ is the value that makes this product largest: it is $4/27 \approx 0.148$ at $\theta = 2/3$, against $1/8 = 0.125$ at $\theta = 1/2$, and $2/3$ is where it peaks. In general, with $m$ examples $x^{(1)}, \ldots, x^{(m)}$ and a model that gives example $x$ the probability $p_{\text{model}}(x; \theta)$, the maximum likelihood estimate is
 
 $$
 \theta_{\text{ML}} = \arg\max_{\theta} \prod_{i=1}^{m} p_{\text{model}}(x^{(i)}; \theta),
 $$
 
-their equation (5.57). They point out that this product is prone to numerical underflow, and that taking the logarithm turns it into a sum with the same maximizer, equation (5.58) <Cite id="goodfellow2016ml" />. For three coin flips H, H, T and a coin with heads probability $\theta$, the likelihood is $\theta^2 (1 - \theta)$: $4/27 \approx 0.148$ at $\theta = 2/3$, against $1/8 = 0.125$ at $\theta = 1/2$, and $2/3$ is where it peaks. Underflow is easy to reach. A thousand examples that each get probability $0.01$ have likelihood $10^{-2000}$, which a 64-bit float stores as 0, while the log-likelihood $1000 \ln 0.01 \approx -4605.17$ is an ordinary number.
+where $\arg\max_{\theta}$ means "the $\theta$ that makes this largest". This is Goodfellow and coauthors' equation (5.57). They point out that the product is prone to numerical underflow, and that taking the logarithm turns it into a sum with the same maximizer, equation (5.58) <Cite id="goodfellow2016ml" />. Underflow is easy to reach. A thousand examples that each get probability $0.01$ have likelihood $10^{-2000}$, which a 64-bit float stores as 0, while the log-likelihood $1000 \log 0.01 \approx -4605.17$ is an ordinary number.
 
 ### Dropout drops each unit on its own
 
-Dropout uses independence on purpose. Srivastava and coauthors keep each unit with a fixed probability $p$, independent of the other units, and note that a network with $n$ units can be seen as a collection of $2^n$ thinned networks that share weights (§1, pp. 1930–1931) <Cite id="srivastava2014" />. In their model each unit $j$ of layer $l$ gets its own mask $r^{(l)}_j \sim \text{Bernoulli}(p)$, a vector of independent Bernoulli variables (§4, pp. 1933–1934) <Cite id="srivastava2014" />. With $p = 0.5$, a given pair of units is kept together with probability $1/2 \times 1/2 = 1/4$, all 4 units of a 4-unit layer are dropped at once with probability $1/16$, and that layer has $2^4 = 16$ possible thinned versions.
+Dropout uses independence on purpose. A unit is one number-producing node in a layer of a network, and dropout flips a separate weighted coin for each unit during training, keeping the unit with probability $p$. Srivastava and coauthors keep each unit with a fixed probability $p$, independent of the other units, and note that a network with $n$ units can be seen as a collection of $2^n$ thinned networks (the smaller networks left once some units are dropped) that share weights (§1, pp. 1930–1931) <Cite id="srivastava2014" />. In their model each such coin flip is a Bernoulli($p$) variable, independent of the flips for the other units (§4, pp. 1933–1934) <Cite id="srivastava2014" />. With $p = 0.5$, a given pair of units is kept together with probability $1/2 \times 1/2 = 1/4$, all 4 units of a 4-unit layer are dropped at once with probability $1/16$, and that layer has $2^4 = 16$ possible thinned versions.
 
 <SideNote>
 This page uses Srivastava's $p$, the probability of keeping a unit. PyTorch's [nn.Dropout](https://docs.pytorch.org/docs/stable/generated/torch.nn.Dropout.html) uses $p$ for the probability of zeroing an element, and scales the kept outputs by $1/(1 - p)$ during training.
@@ -304,11 +306,11 @@ This page uses Srivastava's $p$, the probability of keeping a unit. PyTorch's [n
 
 ### When the examples share information
 
-The product counts each example as a separate piece of evidence, which is only right when the examples are independent. If a data set holds copies or near-copies of one example, the product counts that one example several times, and the model grows more certain than the data allow. The same happens with evidence: a second test whose mistakes repeat the first test's adds less than an independent one, as the [Bayes' theorem](/probability/bayes-theorem/#updating-twice) page shows with numbers. Naive Bayes classifiers multiply word probabilities on purpose, assuming the words are independent once the class is known; that assumption, conditional independence, gets its own page later in this subject.
+The product counts each example as a separate piece of evidence, which is only right when the examples are independent. If a data set holds copies or near-copies of one example, the product counts that one example several times, and the model grows more certain than the data allow. The same happens with evidence: a second test whose mistakes repeat the first test's adds less than an independent one, as the [Bayes' theorem](/probability/bayes-theorem/#updating-twice) page shows with numbers. Naive Bayes classifiers multiply word probabilities on purpose, assuming the words are independent once the class is known; that assumption, [conditional independence](/probability/conditional-independence/), gets its own page.
 
 ## Test the product rule in code
 
-This runs in your browser with exact fractions and stops with an error if any number on this page is off. Its helper decides independence the way the board does, by comparing P(A and B) with P(A) P(B) exactly. At the end it simulates the boards: 100,000 coin-and-die trials, where the share of heads with a six must land within 0.005 of 1/12, and 100,000 rolls of two dice, keeping only those with a first die of 6, where the share with a sum of 7 must land within 0.02 of 1/6.
+This runs in your browser with exact fractions and stops with an error if any number on this page is off. Its helper decides independence the way the board does, by comparing P(A and B) with P(A) P(B) exactly. At the end it runs three seeded simulations: 100,000 coin-and-die trials, where the share of heads with a six must land within 0.005 of 1/12; 100,000 dropout masks on four units, where the share with all four dropped must land within 0.005 of 1/16; and 100,000 rolls of two dice, keeping only those with a first die of 6, where the share with a sum of 7 must land within 0.02 of 1/6.
 
 <PyRunner
   title="independence.py"
@@ -435,6 +437,7 @@ die = set(range(1, 7))
 fair = {face: Fraction(2, 12) for face in die}
 loaded = {face: Fraction(units, 12) for face, units in zip(range(1, 7), (1, 1, 1, 1, 1, 7))}
 assert sum(fair.values()) == 1 and sum(loaded.values()) == 1
+assert all(loaded[face] == Fraction(1, 12) for face in range(1, 6)) and loaded[6] == Fraction(7, 12)
 die_even, at_most_2 = {2, 4, 6}, {1, 2}
 assert (probability(die_even, fair), probability(at_most_2, fair), probability(die_even & at_most_2, fair)) == (Fraction(1, 2), Fraction(1, 3), Fraction(1, 6))
 assert independent(die_even, at_most_2, fair)
@@ -546,15 +549,15 @@ Each simulated trial flips the coin and rolls the die separately, so independenc
 
 **Deciding that real events are independent.** Kolmogorov wrote that independence is the concept that gave probability theory its own character, and he called the question of which premises let us treat real events as independent one of the most important problems in the philosophy of the natural sciences, beyond the scope of his book (Chapter I, §5) <Cite id="kolmogorov1950" />. The math defines independence for a given $P$; no data set certifies it.
 
-**The i.i.d. assumption under distribution shift.** Machine learning assumes two things at once: examples are independent, and training and test data come from the same distribution (§5.2) <Cite id="goodfellow2016ml" />. Liu and coauthors write the second half as $P_{\text{tr}}(X, Y) = P_{\text{te}}(X, Y)$ and note that it often fails in deployment (§2.1) <Cite id="liu2021" />. Recht and coauthors rebuilt the CIFAR-10 and ImageNet test sets by closely following the original collection process and found accuracy drops of 3% to 15% on CIFAR-10 and 11% to 14% on ImageNet. Accuracy on the new sets followed a linear function of accuracy on the old ones with slope 1.7 and 1.1, so progress on the old test sets carried over, and their leading explanation is a gap between the distributions, not overfitting to the reused test sets (Figure 1, §5.1–5.2) <Cite id="recht2019" />. WILDS gathers 10 data sets with shifts that arise in practice, such as across hospitals, camera traps, and time and place in satellite images. On each, standard training gives substantially lower performance out of distribution than in distribution, and the gap remains with methods built for distribution shift <Cite id="koh2020" />. These results test the "identically distributed" half. The "independent" half is what turns a likelihood into a product, and this page does not claim that these papers show it failing. Recht and coauthors note that one remaining test would need a new test set that is "truly i.i.d." (§5.1) <Cite id="recht2019" />.
+**The i.i.d. assumption under distribution shift.** Machine learning assumes two things at once: examples are independent, and training and test data come from the same distribution (§5.2) <Cite id="goodfellow2016ml" />. Liu and coauthors write the second half as $P_{\text{tr}}(X, Y) = P_{\text{te}}(X, Y)$ (§2.1) and note in their abstract that it often fails once a model is deployed <Cite id="liu2021" />. Recht and coauthors rebuilt the CIFAR-10 and ImageNet test sets by closely following the original collection process and found accuracy drops of 3% to 15% on CIFAR-10 and 11% to 14% on ImageNet. Accuracy on the new sets followed a linear function of accuracy on the old ones with slope 1.7 and 1.1, so progress on the old test sets carried over, and their leading explanation is a gap between the distributions, not overfitting to the reused test sets (Figure 1, §5.1–5.2) <Cite id="recht2019" />. WILDS gathers 10 data sets with shifts that arise in practice, such as across hospitals, camera traps, and time and place in satellite images. On each, standard training gives substantially lower performance out of distribution than in distribution, and the gap remains with methods built for distribution shift <Cite id="koh2020" />. These results test the "identically distributed" half. The "independent" half is what turns a likelihood into a product, and this page does not claim that these papers show it failing.
 
-**What is still open.** Liu and coauthors list the theoretical characterization of a learnable out-of-distribution problem as open: it "remains vague in recent literature", because no model can generalize to arbitrary unknown shifts, so deciding which shifts to allow comes first (§9) <Cite id="liu2021" />. Recht and coauthors call finding a test set that could detect a constant drop from test-set reuse a direction for future research (§5.1) <Cite id="recht2019" />.
+**What is still open.** Liu and coauthors list the theoretical characterization of a learnable out-of-distribution problem as open: it "remains vague in recent literature", because no model can generalize to arbitrary unknown shifts, so deciding which shifts to allow comes first (§9) <Cite id="liu2021" />. Recht and coauthors note that a constant accuracy drop from reusing a test set would need a new test set that is "truly i.i.d." to detect, and call finding one a direction for future research (§5.1) <Cite id="recht2019" />.
 
 </ResearchFrontier>
 
 ## Check yourself
 
-<CheckYourself level="intuition" question="One fair die: are 'even' and 'at most 2' independent? What if the die is loaded toward six, with faces 1 to 5 carrying 1 unit each and face 6 carrying 7, out of 12?">
+<CheckYourself level="intuition" question="One fair die: are 'even' and 'at most 2' independent? What if the die is loaded toward six, with faces 1 to 5 each having probability 1/12 and face 6 having 7/12?">
 On the fair die, yes: $P(\text{even and at most 2}) = P(\{2\}) = 1/6 = 1/2 \times 1/3$. On the loaded die, no: $P(\{2\}) = 1/12$, while $P(\text{even})\,P(\text{at most 2}) = 3/4 \times 1/6 = 1/8$. The sets did not change; the probabilities did.
 </CheckYourself>
 
