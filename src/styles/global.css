@@ -72,12 +72,16 @@ header.header {
 }
 
 /* Starlight sized this button at 32px with a 16px icon in its padding; at our 44px tap target the icon
- * sat in the top-left corner. Center it and match the search icon's 20px so the two read as a pair. */
-.sl-menu-button {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	padding: 0;
+ * sat in the top-left corner. Center it and match the search icon's 20px so the two read as a pair.
+ * Only below 50rem: Starlight hides the button on wider screens with its md:sl-hidden utility, which is
+ * in a lower-priority layer, so an unscoped display rule here would show it on desktop too. */
+@media (max-width: 49.99rem) {
+	.sl-menu-button {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 0;
+	}
 }
 
 .sl-menu-button svg {
