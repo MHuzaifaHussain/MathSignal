@@ -1714,6 +1714,11 @@ const announcerRun = () => {
 		dsay.feedbackLine(run('class-lineup', { type: 'line-up', on: true }, { type: 'pick', child: 4 }, { type: 'check' })),
 		'Child 5 stands in the middle of the arrival line, but 8 children are shorter and none is taller. Try a shorter child.',
 	);
+	// The verdict reads the line-up switch live, so "Line them up first." goes once they are lined up.
+	assert.equal(
+		dsay.feedbackLine(run('class-lineup', { type: 'pick', child: 4 }, { type: 'check' }, { type: 'line-up', on: true })),
+		'Child 5 stands in the middle of the arrival line, but 8 children are shorter and none is taller. Try a shorter child.',
+	);
 	assert.equal(dsay.feedbackLine(run('class-lineup', { type: 'pick', child: 6 }, { type: 'check' })), 'Child 7 (137 cm) has 5 children shorter and 3 taller. Try a shorter child.');
 	assert.equal(dsay.feedbackLine(run('class-lineup', { type: 'pick', child: 1 }, { type: 'check' })), 'Child 2 (122 cm) has 0 children shorter and 8 taller. Try a taller child.');
 	const found = run('class-lineup', { type: 'pick', child: 0 }, { type: 'check' });
