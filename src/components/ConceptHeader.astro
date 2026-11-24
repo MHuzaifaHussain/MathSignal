@@ -3,6 +3,8 @@
 // recap of each prerequisite from src/data/topics.mjs), what the page teaches, and a skip line for experts.
 import { getTopic, topicHref } from '../data/topics.mjs';
 
+const RESEARCH_FRONTIER_SLUG = 'research-frontier';
+
 const DIFFICULTY_LABELS = {
 	beginner: 'Beginner',
 	intermediate: 'Intermediate',
@@ -16,7 +18,11 @@ interface Props {
 }
 
 const { oneLiner, difficulty } = Astro.props;
-const { topic: topicId, objectives = [] } = Astro.locals.starlightRoute.entry.data;
+const { entry, headings } = Astro.locals.starlightRoute;
+const { topic: topicId, objectives = [] } = entry.data;
+// C, D and F pages, and spine-depth pages, have no frontier section. Reading the page's own headings links the
+// section exactly when the anchor check in scripts/check-links.mjs would find it.
+const hasResearchFrontier = headings.some((heading) => heading.slug === RESEARCH_FRONTIER_SLUG);
 const prerequisites = topicId ? getTopic(topicId).prerequisites.map(getTopic) : [];
 ---
 
@@ -58,7 +64,12 @@ const prerequisites = topicId ? getTopic(topicId).prerequisites.map(getTopic) : 
 
 	<p class="skip-line">
 		Know the basics already? Jump to the <a href="#precise-statement">precise statement</a>, the{' '}
-		<a href="#formal-definition">derivations</a>, the <a href="#research-frontier">research frontier</a>{' '}
+		<a href="#formal-definition">derivations</a>
+		{hasResearchFrontier && (
+			<>
+				, the <a href={`#${RESEARCH_FRONTIER_SLUG}`}>research frontier</a>
+			</>
+		)}{' '}
 		or the <a href="#references">references</a>.
 	</p>
 </div>
