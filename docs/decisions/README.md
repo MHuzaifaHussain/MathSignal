@@ -17,3 +17,4 @@ Format: context, decision, consequences, alternatives considered. Number them in
 | [0009](0009-single-sources-of-truth.md) | Single sources of truth for topics, notation and references | Accepted |
 | [0010](0010-american-english.md) | American English | Accepted |
 | [0011](0011-eventspace-html-board.md) | EventSpace, the first HTML board | Accepted |
+| [0012](0012-distribution-board.md) | DistributionBoard, the second HTML board | Accepted |
