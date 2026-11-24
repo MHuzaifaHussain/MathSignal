@@ -125,6 +125,7 @@ export const NOTATION = [
 		meaning: 'The features of one example, such as which words an email contains',
 		note: 'Bold lower case is a vector.',
 	},
+	{ key: 'selection', tex: 's', say: '"s"', meaning: 'Whether an example is selected into the training sample: 1 if selected, 0 if not' },
 	{ key: 'proportional', tex: '\\propto', say: '"is proportional to"', meaning: 'Equal up to a positive factor that does not depend on the variable of interest' },
 	{
 		key: 'argmax',

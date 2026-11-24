@@ -56,7 +56,7 @@ import WorkedExample from "../../../components/WorkedExample.astro";
 
 ## In everyday terms
 
-<Analogy breaks="The cups only work because your friend peeked and always lifts an empty cup. If they knocked a cup over by accident and it happened to be empty, swapping would win only half the time. And if they always lifted the right-hand cup when they could, the answer would change again.">
+<Analogy breaks="The cups only work because your friend peeked and always lifts an empty cup. If they knocked a cup over by accident and it happened to be empty, swapping would win only half the time.">
 
 Three cups sit upside down, and one hides a sweet. You point at the left cup. Your friend peeked earlier, so they know where the sweet is. They always lift an empty cup from the other two, and when both are empty they flip a coin to choose. Keep your cup or swap?
 
@@ -65,16 +65,16 @@ Now picture 100 cups. You point at one, and your friend lifts 98 empty cups, lea
 </Analogy>
 
 <WhyThisMatters>
-A model only sees the data that some process chose to show it, and whether that process knew the answer decides what the data proves. The host's door is the smallest example: an open door means one thing when he chose it knowing where the car is, and another when he fell against it. Reading it takes [Bayes' theorem](/probability/bayes-theorem/) and an account of how the evidence arose.
+A model only sees the data that some process chose to show it, and whether that process knew the answer decides what the data proves. The host's door is the smallest example: an open door means one thing when he chose it knowing where the car is, and another when he opened it by accident. Reading it takes [Bayes' theorem](/probability/bayes-theorem/) and an account of how the evidence arose.
 </WhyThisMatters>
 
 ## Six equally likely games, shrunk to the door the host opened
 
 A car is behind one of three doors, each equally likely, with goats behind the others. You pick door 1. The host knows where the car is, always opens another door hiding a goat, and offers the switch. He tosses a coin in every game, but it decides only when both other doors hide goats: heads he opens door 2, tails door 3.
 
-Before you count: you picked door 1 and the host opened door 3. Switch, stick, or does it not matter? And as a number: of all the games where he opens door 3, what share have the car behind door 1?
+Before you count: of all the games where the host opens door 3, what share have the car behind door 1? Guess, then count.
 
-Your goal: shrink the world to "host opens door 3", then read P(A | B) as on the [conditional probability](/probability/conditional-probability/) page, with A set to "car behind door 1", then "car behind door 2". Each cell is one game, with probability 1/3 × 1/2 = 1/6, and names the door the host opens.
+Your goal: shrink the world to B = "host opens door 3", then read P(A | B) as on the [conditional probability](/probability/conditional-probability/) page, with A set to "car behind door 1", then "car behind door 2". Each cell is one game, with probability 1/3 × 1/2 = 1/6, and names the door the host opens.
 
 | Car behind | Coin heads | Coin tails |
 | --- | --- | --- |
@@ -82,9 +82,9 @@ Your goal: shrink the world to "host opens door 3", then read P(A | B) as on the
 | **door 2** | opens 3 | opens 3 |
 | **door 3** | opens 2 | opens 2 |
 
-Switch. B holds 3 of the 6 cells, and 1 has the car behind door 1, so P(car 1 | opens 3) = 1/3. For door 2 it is 2 of 3, so P(car 2 | opens 3) = 2/3; the car-3 row has no cell in B. If he opens door 2, the count gives 1/3 for door 1 and 2/3 for door 3.
+Switch. B holds 3 of the 6 cells, and one of them has the car behind door 1, so P(car 1 | opens 3) = 1/3. Two have the car behind door 2, so P(car 2 | opens 3) = 2/3, and the car-3 row has no cell in B. If he opens door 2, the count gives 1/3 for door 1 and 2/3 for door 3.
 
-Now read the rows. The host opens door 3 in 1 of 2 cells of row 1, both cells of row 2, and neither of row 3. Those shares, 1/2, 1 and 0, are how likely his action is for each place the car could be, and they are the whole puzzle. The coin column is his tie-break.
+Now read the rows. The host opens door 3 in 1 of 2 cells of row 1, both cells of row 2, and neither of row 3. Those shares, 1/2, 1 and 0, are the likelihoods: how likely his action is for each place the car could be. They are the whole puzzle. The coin only matters in row 1, where both other doors hide goats; that is his tie-break.
 
 ## Decide before the host moves: stick wins 1 game in 3
 
@@ -100,59 +100,59 @@ Bayes' theorem gives the same 2/3 with three hypotheses. Write C₁, C₂ and C�
 
 1. Priors: P(C₁) = P(C₂) = P(C₃) = 1/3.
 2. Likelihoods: P(O₃ | C₁) = 1/2 (the coin), P(O₃ | C₂) = 1 (his only goat door), P(O₃ | C₃) = 0 (he never shows the car).
-3. Total probability: P(O₃) = 1/6 + 1/3 + 0 = 1/2.
+3. Total probability: P(O₃) = 1/3 × 1/2 + 1/3 × 1 + 1/3 × 0 = 1/6 + 1/3 + 0 = 1/2.
 4. Posteriors: P(C₁ | O₃) = (1/6)/(1/2) = 1/3 and P(C₂ | O₃) = (1/3)/(1/2) = 2/3.
 
 </StepThrough>
 
-Grinstead and Snell's tree also includes your pick of door 1, so its two surviving paths have probabilities 1/18 and 1/9, and the car-2 path is twice as likely (Figures 4.3 and 4.4, pp. 138–139) <Cite id="grinstead2003" />.
-
-Your door stays at 1/3 because the host opens door 3 half the time either way: if the car isn't behind door 1, it is behind door 2 or 3 with probability 1/2 each, so P(O₃ | not C₁) = 1 × 1/2 + 0 × 1/2 = 1/2. That is the uninformative case on the [Bayes' theorem](/probability/bayes-theorem/) page.
+Your door stays at 1/3 because the host opens door 3 half the time either way: if the car isn't behind door 1, it is behind door 2 or 3 with probability 1/2 each, so P(O₃ | not C₁) = 1 × 1/2 + 0 × 1/2 = 1/2. Evidence equally likely either way leaves your door's chance where it was.
 
 <Simpler label="the same answer as a ratio">
 
-With equal priors, the posteriors are proportional to the likelihoods, 1/2 : 1 : 0. Divide by their total, 3/2, and they become 1/3 : 2/3 : 0. Rosenthal calls this the proportionality principle (§3), and his appendix shows that it is Bayes' theorem restated <Cite id="rosenthal2008" />. In the [odds form](/probability/bayes-theorem/#odds-form), door 2 against door 1 starts at 1 : 1, the likelihood ratio is 1 ÷ 1/2 = 2, and 2 : 1 is a probability of 2/3.
+With equal priors, the posteriors are proportional to the likelihoods, 1/2 : 1 : 0. Divide by their total, 3/2, and they become 1/3 : 2/3 : 0. Rosenthal calls this the proportionality principle (§3), and his appendix shows that it is Bayes' theorem restated <Cite id="rosenthal2008" />.
 
 </Simpler>
 
 ## Why the host's rule decides the answer
 
-The answer depends on how the open door was chosen. Grinstead and Snell list the assumptions behind 2/3: each door equally likely for the car, a host who knows where it is and always opens a goat door, and, when he has a choice, each door with probability 1/2 (p. 137) <Cite id="grinstead2003" />. Each fold below changes one rule; worked examples 3 and 4 repeat them.
+The answer depends on how the open door was chosen. Grinstead and Snell list the assumptions behind 2/3: each door equally likely for the car, a host who knows where it is and always opens a goat door, and, when he has a choice, each door with probability 1/2 (p. 137) <Cite id="grinstead2003" />. An accidental door that shows a goat leaves 1/2 each (worked example 3). A host who opens door 3 three times in four when he can choose makes switching after it win 4/7 (worked example 4).
 
 <GoDeeper label="a host who opens a door by accident" id="falling-host">
 
-In Rosenthal's Monty Fall, the host slips and pushes open a door that happens to hide a goat (§2) <Cite id="rosenthal2008" />. If he falls against door 3, the likelihoods that it shows a goat are 1, 1 and 0, so the posteriors are 1/2, 1/2 and 0 (§4) <Cite id="rosenthal2008" />. The argument that your door keeps 1/3 because the host's action changes nothing works for the knowing host but fails here, which is why Rosenthal calls it shaky.
+In Rosenthal's Monty Fall, the host slips and pushes open a door that happens to hide a goat (§2) <Cite id="rosenthal2008" />. If he falls against door 3, the likelihoods that it shows a goat are 1, 1 and 0, so the posteriors are 1/2, 1/2 and 0 (§4) <Cite id="rosenthal2008" />. The argument that your door keeps 1/3 because the host's action changes nothing is right only for the classic 50/50 tie-break; it fails here and for any other tie-break, which is why Rosenthal calls it shaky.
 
 </GoDeeper>
 
 <GoDeeper label="a host who prefers door 3" id="tie-break">
 
-If the host, given a choice, opens door 3 with probability q, the likelihoods of O₃ become q, 1, 0, and switching after door 3 wins 1/(1 + q). Rosenthal works this as Monty Small, with p for the tie-break (§4) <Cite id="rosenthal2008" />; this page writes q, since p belongs to densities. With q = 3/4, switching after door 3 wins 4/7, while the switch strategy decided in advance still wins 2/3 (Grinstead and Snell, p. 139) <Cite id="grinstead2003" />.
+If the host, given a choice, opens door 3 with probability q, the likelihoods of O₃ become q, 1, 0, and switching after door 3 wins 1/(1 + q). Rosenthal works this as Monty Small, with p for the tie-break (§4) <Cite id="rosenthal2008" />. With q = 3/4, switching after door 3 wins 4/7, while the switch strategy decided in advance still wins 2/3 (Grinstead and Snell, p. 139) <Cite id="grinstead2003" />.
 
 </GoDeeper>
 
 ## Notation
 
-<NotationKey symbols={["sample-space", "outcome", "event", "intersection", "complement", "probability", "conditional", "cardinality", "car-behind", "host-opens", "host-tie-break", "class-label"]} />
+<NotationKey symbols={["sample-space", "outcome", "event", "intersection", "complement", "probability", "conditional", "cardinality", "car-behind", "host-opens", "host-tie-break", "class-label", "feature-vector", "selection"]} />
 
 <PreciseStatement>
 
-You pick door 1. An outcome $\omega = (c, o) \in \Omega$ records the car's door $c \in \{1, 2, 3\}$ and the door $o \in \{2, 3\}$ the host opens; $C_i = \{c = i\}$ and $O_j = \{o = j\}$. Assume (i) $P(C_i) = 1/3$; (ii) the host never opens door 1 or the car's door, and always offers the switch; (iii) when $c = 1$, he opens door 3 with probability $q \in [0, 1]$. So $P(1, 2) = (1 - q)/3$, $P(1, 3) = q/3$, $P(2, 3) = P(3, 2) = 1/3$, and
+You pick door 1. An outcome $\omega = (c, o) \in \Omega$ records the car's door $c \in \{1, 2, 3\}$ and the door $o \in \{2, 3\}$ the host opens; $C_i = \{c = i\}$ and $O_j = \{o = j\}$. Assume (i) $P(C_i) = 1/3$; (ii) the host never opens door 1 or the car's door, and always offers the switch; (iii) when $c = 1$, he opens door 3 with probability $q \in [0, 1]$. Writing $P(c, o)$ for $P(\{(c, o)\})$, $P(1, 2) = (1 - q)/3$, $P(1, 3) = q/3$, $P(2, 3) = P(3, 2) = 1/3$, and
 
 $$
 P(C_2 \mid O_3) = \frac{1}{1 + q}, \quad P(C_1 \mid O_3) = \frac{q}{1 + q}, \quad P(C_3 \mid O_2) = \frac{1}{2 - q}, \quad P(C_1 \mid O_2) = \frac{1 - q}{2 - q}.
 $$
 
-Boundary cases. $P(O_3) = (1 + q)/3$ and $P(O_2) = (2 - q)/3$ are at least $1/3$, so both conditionals exist. With $q = 1/2$, switching wins $2/3$, and on the six equally likely (car, coin) cells of the table, $|O_3| = 3$ and $|C_1 \cap O_3| = 1$; with $q = 1$, $O_3$ leaves $1/2$ each; with $q = 0$, $O_3$ makes $C_2$ certain. If the host doesn't know where the car is, (ii) fails: given that an accidental door 3 shows a goat, $C_1$ and $C_1^\complement$ have $1/2$ each.
+Boundary cases. $P(O_3) = (1 + q)/3$ and $P(O_2) = (2 - q)/3$ are at least $1/3$, so both conditionals exist. With $q = 1/2$, switching wins $2/3$, as the table's count shows; with $q = 1$, $O_3$ leaves $1/2$ each; with $q = 0$, $O_3$ makes $C_2$ certain. If the host doesn't know where the car is, (ii) fails: given that an accidental door 3 shows a goat, $C_1$ and $C_1^\complement$ have $1/2$ each.
 
 </PreciseStatement>
 
 <FormalDefinition>
 
+Write $q$ for the chance that the host opens door 3 when the car is behind door 1 and he has a choice; the classic coin is $q = 1/2$.
+
 <StepThrough title="Switching wins 1/(1 + q) after door 3, and 2/3 overall, for every q" rigor="full">
 
-1. $C_1, C_2, C_3$ split $\Omega$, each with probability $1/3 > 0$.
-2. By (ii) and (iii): $P(O_3 \mid C_1) = q$, $P(O_3 \mid C_2) = 1$, $P(O_3 \mid C_3) = 0$.
+1. The car is behind exactly one door, so $C_1, C_2, C_3$ cover every game without overlap, each with probability $1/3 > 0$.
+2. The host never opens door 1 or the car's door, and with a choice opens door 3 with probability $q$, so $P(O_3 \mid C_1) = q$, $P(O_3 \mid C_2) = 1$, $P(O_3 \mid C_3) = 0$.
 3. Total probability: $P(O_3) = (1 + q)/3 > 0$.
 4. Bayes' theorem: $P(C_2 \mid O_3) = (1/3) \big/ \big((1 + q)/3\big) = 1/(1 + q)$. With $O_2$, likelihoods $1 - q$, $0$, $1$, the same steps give $P(C_3 \mid O_2) = 1/(2 - q)$.
 5. Overall: $P(O_3) \cdot \frac{1}{1 + q} + P(O_2) \cdot \frac{1}{2 - q} = \frac{1}{3} + \frac{1}{3} = \frac{2}{3}$.
@@ -186,19 +186,19 @@ A student writes: (a) "Two doors are left, so each has 1/2." (b) "The host picks
 
 <WorkedExample number={3} title="The falling host gives 1/2">
 
-The host falls against door 2 or door 3 with probability 1/2 each, whatever is behind them. In 600 games he falls against door 3 in 300, 100 per car position. In 100 he reveals the car, so they are not your game; the other 200 split 100 and 100: $1/2$ each. An accidental door reveals the car $100/300 = 1/3$ of the time.
+The host falls against door 2 or door 3 with probability 1/2 each, whatever is behind them. In 600 games he falls against door 3 in 300, 100 per car position. In 100 he reveals the car, so they are not your game; the other 200 split 100 and 100: $1/2$ each.
 
 </WorkedExample>
 
 <WorkedExample number={4} title="A host who prefers door 3, q = 3/4">
 
-After door 3: $P(O_3) = (1 + 3/4)/3 = 7/12$, switching wins $1/(1 + 3/4) = 4/7$ and sticking $3/7$. After door 2: $P(O_2) = (2 - 3/4)/3 = 5/12$, and switching wins $1/(2 - 3/4) = 4/5$. Overall, $7/12 \times 4/7 + 5/12 \times 4/5 = 1/3 + 1/3 = 2/3$, as for the classic host.
+With the car behind door 1, this host opens door 3 with probability $q = 3/4$, not $1/2$. The likelihoods of door 3 are $3/4$, $1$ and $0$, so $P(O_3) = (1/3)(3/4) + (1/3)(1) + 0 = 7/12$, and switching wins $(1/3)/(7/12) = 4/7$, sticking $(1/4)/(7/12) = 3/7$. After door 2 the likelihoods are $1/4$, $0$ and $1$: $P(O_2) = 5/12$, and switching wins $(1/3)/(5/12) = 4/5$. Overall, $7/12 \times 4/7 + 5/12 \times 4/5 = 1/3 + 1/3 = 2/3$, as for the classic host.
 
 </WorkedExample>
 
 <WorkedExample number={5} title="Unequal doors: find the wrong step">
 
-In Grinstead and Snell's Exercise 63(b) (pp. 161–162), the car is behind door A 45% of the time, B 40% and C 15%, and you pick A <Cite id="grinstead2003" />. A student says "always switch". If the host opens C, the products are $0.45 \times 1/2 = 0.225$ and $0.40$, total $0.625$: sticking wins $0.36$, switching $0.64$. If he opens B, they are $0.225$ and $0.15$, total $0.375$: sticking wins $0.6$, switching $0.4$, so the step fails. Better still, pick C and then switch: that wins $1 - 0.15 = 0.85$, against $0.55$ for picking A and switching.
+In Grinstead and Snell's Exercise 63(b) (pp. 161–162), the car is behind door A 45% of the time, B 40% and C 15%, and you pick A; the host still opens a goat door and, when he has a choice, picks each with probability 1/2 <Cite id="grinstead2003" />. A student says "always switch". If the host opens C, prior × likelihood is $0.45 \times 1/2 = 0.225$ for A and $0.40 \times 1 = 0.40$ for B, total $0.625$: sticking wins $0.36$, switching $0.64$. If he opens B, they are $0.225$ for A and $0.15 \times 1 = 0.15$ for C, total $0.375$: sticking wins $0.6$, switching $0.4$, so "always switch" fails after B. Since switching wins exactly when your first pick was wrong, picking C and switching wins $1 - 0.15 = 0.85$, against $1 - 0.45 = 0.55$ from A.
 
 </WorkedExample>
 
@@ -216,11 +216,11 @@ Divide by $1/3$: $1/4$, $3/8$, $3/8$, $0$. Sticking wins $1/4$, and switching to
 
 ## Who chose the data: Monty Hall and selection bias
 
-The host's door is data chosen by a process that depends on the unknown answer, and training data can be chosen that way too. Zadrozny gives each example $(x, y)$ a selection variable $s$, where only examples with $s = 1$ are seen. When $s$ depends only on the label $y$ (her case 3), the selected sample has different class priors (§2) <Cite id="zadrozny2004" />.
+The host's door is data chosen by a process that depends on the unknown answer, and training data can be chosen that way too. Zadrozny gives each example, with features $\mathbf{x}$ and label $y$ (the right answer), a selection variable $s$; only examples with $s = 1$ are seen. When $s$ depends only on $y$ (her case 3), as the host's door depends on the car, the share of each class in the sample changes (§2) <Cite id="zadrozny2004" />.
 
 Take 1,000 examples with 200 positives, a share of 0.2. Keep positives with probability 0.9 and negatives with 0.3: on average 180 + 240 = 420 are kept, and the positive share becomes 180/420 = 3/7 ≈ 0.429. Weighting each kept example by 1 over its label's keep probability gives 180/0.9 = 200 and 240/0.3 = 800, recovering 0.2. The correction for a shifted class share is on the [Bayes' theorem](/probability/bayes-theorem/#when-the-base-rate-shifts) page.
 
-When $s$ depends only on $x$ instead (case 2), a model of $P(y \mid x)$ such as logistic regression is unaffected (§3.2), while naive Bayes is affected (§3.1.1) <Cite id="zadrozny2004" />.
+When $s$ depends only on $\mathbf{x}$ instead (case 2), labels at each $\mathbf{x}$ keep their true rates, so a model of $P(y \mid \mathbf{x})$ such as logistic regression is unaffected in the limit, if every $\mathbf{x}$ can be selected (§3.2) <Cite id="zadrozny2004" />. A [naive Bayes classifier](/probability/naive-bayes-classifier/), which learns $P(y)$ and $P(\mathbf{x} \mid y)$, is affected (§3.1.1) <Cite id="zadrozny2004" />.
 
 ## Play the game in code
 
@@ -281,16 +281,12 @@ assert classic_3 == [F(1, 3), F(2, 3), F(0)]
 assert F(1, 6) / half == F(1, 3) and F(1, 3) / half == F(2, 3)
 classic_2, p_open_2 = posterior(uniform, knowing_host(half, 2))
 assert classic_2 == [F(1, 3), F(0), F(2, 3)] and p_open_2 == half
-# The tree paths include your pick of door 1 (probability 1/3).
-path_1 = F(1, 3) * F(1, 3) * half
-path_2 = F(1, 3) * F(1, 3) * 1
-assert (path_1, path_2) == (F(1, 18), F(1, 9)) and path_2 / path_1 == 2
 # Your door: P(O3 | not C1) = 1 x 1/2 + 0 x 1/2 = 1/2, the same as P(O3 | C1).
 assert 1 * half + 0 * half == half == knowing_host(half, 3)[0]
-# The ratio: likelihoods 1/2 : 1 : 0, total 3/2; odds 1 : 1 times 2 gives 2 : 1.
+assert F(1, 3) * half + F(1, 3) * 1 + F(1, 3) * 0 == F(1, 6) + F(1, 3) + 0 == half
+# The ratio: likelihoods 1/2 : 1 : 0, total 3/2.
 assert sum(knowing_host(half, 3)) == F(3, 2)
 assert [x / F(3, 2) for x in knowing_host(half, 3)] == classic_3
-assert F(1) / half == 2 and F(2, 2 + 1) == F(2, 3)
 
 # The falling host: likelihoods 1, 1, 0 that door 3 shows a goat.
 fall, _ = posterior(uniform, [F(1), F(1), F(0)])
@@ -338,6 +334,8 @@ assert kept == 200 and F(100, kept) == half and F(100, 300) == F(1, 3)
 q = F(3, 4)
 after_3, p3 = posterior(uniform, knowing_host(q, 3))
 after_2, p2 = posterior(uniform, knowing_host(q, 2))
+assert F(1, 3) * q + F(1, 3) * 1 + 0 == F(7, 12) and 1 - q == F(1, 4)
+assert F(1, 3) / F(7, 12) == F(4, 7) and F(1, 4) / F(7, 12) == F(3, 7) and F(1, 3) / F(5, 12) == F(4, 5)
 assert p3 == F(7, 12) and after_3[1] == F(4, 7) and after_3[0] == F(3, 7)
 assert p2 == F(5, 12) and after_2[2] == F(4, 5)
 assert F(7, 12) * F(4, 7) + F(5, 12) * F(4, 5) == F(1, 3) + F(1, 3) == F(2, 3)
@@ -346,6 +344,7 @@ assert F(7, 12) * F(4, 7) + F(5, 12) * F(4, 5) == F(1, 3) + F(1, 3) == F(2, 3)
 doors = [F(45, 100), F(40, 100), F(15, 100)]
 open_c, p_open_c = posterior(doors, [half, F(1), F(0)])
 assert [d * l for d, l in zip(doors, [half, F(1)])] == [F(225, 1000), F(40, 100)]
+assert F(225, 1000) + F(40, 100) == F(625, 1000) and F(225, 1000) + F(15, 100) == F(375, 1000)
 assert p_open_c == F(625, 1000) == F(5, 8)
 assert (open_c[0], open_c[1]) == (F(9, 25), F(16, 25))
 assert (decimal(open_c[0], 2), decimal(open_c[1], 2)) == ("0.36", "0.64")
@@ -392,10 +391,6 @@ assert F(180, 420) == F(3, 7) and decimal(F(3, 7), 3) == "0.429"
 weighted_pos, weighted_neg = kept_pos / F(9, 10), kept_neg / F(3, 10)
 assert (weighted_pos, weighted_neg) == (200, 800)
 assert weighted_pos / (weighted_pos + weighted_neg) == F(1, 5)
-
-# Check yourself: a host who doesn't know opens door 2, 600 games.
-falls_on_2 = [games * half * p for p in uniform]
-assert falls_on_2 == [100, 100, 100] and F(100, 100 + 100) == half
 
 try:
     posterior(uniform, [F(0), F(0), F(0)])
@@ -446,10 +441,6 @@ Yes: switching wins 99 times in 100, because your pick was right only 1 time in 
 After door 2, it doesn't matter: likelihoods 1, 0, 1 leave $1/2$ each. After door 3, switching wins for certain, since he opens door 3 only when door 2 holds the car.
 </CheckYourself>
 
-<CheckYourself level="standard" question="A host who doesn't know where the car is opens door 2 by accident, and it shows a goat. How often does switching win?">
-$1/2$. In 600 games he falls against door 2 in 300, 100 per car position. In 100 he shows the car; the other 200 split evenly between doors 1 and 3.
-</CheckYourself>
-
 <CheckYourself level="proof" question="Show that always switching wins 2/3 for every q in [0, 1], and that P(C₂ | O₃) is at least 1/2.">
 Switching wins $P(C_2 \cap O_3) + P(C_3 \cap O_2) = 1/3 + 1/3 = 2/3$, since $C_2 \subseteq O_3$ and $C_3 \subseteq O_2$; $q$ never enters. And $P(C_2 \mid O_3) = 1/(1 + q) \ge 1/2$ because $1 + q \le 2$.
 </CheckYourself>
@@ -458,16 +449,13 @@ Switching wins $P(C_2 \cap O_3) + P(C_3 \cap O_2) = 1/3 + 1/3 = 2/3$, since $C_2
 
 <CommonMistakes>
   <Mistake wrong="Two doors are left, so it's 50/50.">
-    The host's action has likelihood $1/2$ under your door and $1$ under the other, so the other door ends at $2/3$.
+    The host opens his door half the time when the car is behind your door, but every time when it is behind the other one, so the other door ends at $2/3$.
   </Mistake>
   <Mistake wrong="The host's reveal never changes the chance of your own door.">
     It stays $1/3$ for the classic host, but is $1/2$ for a falling host and $3/7$ after door 3 when $q = 3/4$.
   </Mistake>
   <Mistake wrong="Switching wins 2/3, whatever the host does.">
     Only the strategy decided in advance wins $2/3$ for every tie-break. After door 3 with $q = 3/4$ switching wins $4/7$, and with unequal doors sticking wins $0.6$ after the host opens B.
-  </Mistake>
-  <Mistake wrong="The host picks one of three doors, so P(host opens door 3) = 1/3.">
-    He never opens your door, so $P(O_3) = 1/6 + 1/3 = 1/2$. Using $1/3$ makes the posteriors add up to $3/2$.
   </Mistake>
 </CommonMistakes>
 

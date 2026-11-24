@@ -426,7 +426,7 @@ export const REFERENCES = [
 		title: 'Learning and evaluating classifiers under sample selection bias',
 		venue: 'ICML 2004',
 		url: 'https://mlanthology.org/icml/2004/zadrozny2004icml-learning/',
-		note: 'Full text read in a third-party copy (math.kth.se). Section 1: learning methods usually assume training and test examples come from the same distribution; econometrics calls the violation sample selection bias. Section 2: when selection depends only on the label, the label priors change. Section 3.1: Bayesian classifiers and logistic regression are unaffected when selection depends only on x; Section 3.1.1: naive Bayes is affected. Section 4, Theorem 1: correcting by reweighting.',
+		note: 'Full text read in a third-party copy (math.kth.se). Section 1: learning methods usually assume training and test examples come from the same distribution; econometrics calls the violation sample selection bias. Section 2: when selection depends only on the label, the label priors change. Section 3.1: Bayesian classifiers are unaffected when selection depends only on x; Section 3.1.1: naive Bayes is affected; Section 3.2: logistic regression (any model of P(y | x)) is unaffected asymptotically, as long as P(s = 1 | x) > 0 for all x. Section 4, Theorem 1: correcting by reweighting.',
 		checked: '2026-11-24',
 	},
 	{
