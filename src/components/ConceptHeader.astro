@@ -2,8 +2,13 @@
 // Opens every concept page: the definition in one sentence, the level, what to know first (with a short
 // recap of each prerequisite from src/data/topics.mjs), what the page teaches, and a skip line for experts.
 import { getTopic, topicHref } from '../data/topics.mjs';
+import { FORMAL_DEFINITION_ID, PRECISE_STATEMENT_ID } from './sectionAnchors';
 
 const RESEARCH_FRONTIER_SLUG = 'research-frontier';
+const REFERENCES_SLUG = 'references';
+// Opening tags only, so an import line alone doesn't count as the section being on the page.
+const PRECISE_STATEMENT_TAG = /<PreciseStatement[\s/>]/;
+const FORMAL_DEFINITION_TAG = /<FormalDefinition[\s/>]/;
 
 const DIFFICULTY_LABELS = {
 	beginner: 'Beginner',
@@ -20,10 +25,29 @@ interface Props {
 const { oneLiner, difficulty } = Astro.props;
 const { entry, headings } = Astro.locals.starlightRoute;
 const { topic: topicId, objectives = [] } = entry.data;
-// C, D and F pages, and spine-depth pages, have no frontier section. Reading the page's own headings links the
-// section exactly when the anchor check in scripts/check-links.mjs would find it.
-const hasResearchFrontier = headings.some((heading) => heading.slug === RESEARCH_FRONTIER_SLUG);
+if (typeof entry.body !== 'string') {
+	throw new Error(`<ConceptHeader>: no MDX source for "${entry.id}", so the skip line can't tell which sections exist.`);
+}
+const pageSource = entry.body;
 const prerequisites = topicId ? getTopic(topicId).prerequisites.map(getTopic) : [];
+
+// The skip line links a section only when its anchor is on the page, which is what scripts/check-links.mjs checks.
+// The research frontier and references anchors are heading slugs (C, D and F pages, and spine-depth pages, have no
+// frontier). The precise statement and derivations anchors are ids on their components, which render after this
+// header, so the page source tells whether they are used.
+const hasHeading = (slug: string) => headings.some((heading) => heading.slug === slug);
+const skipLinks = [
+	{ label: 'precise statement', id: PRECISE_STATEMENT_ID, isOnPage: PRECISE_STATEMENT_TAG.test(pageSource) },
+	{ label: 'derivations', id: FORMAL_DEFINITION_ID, isOnPage: FORMAL_DEFINITION_TAG.test(pageSource) },
+	{ label: 'research frontier', id: RESEARCH_FRONTIER_SLUG, isOnPage: hasHeading(RESEARCH_FRONTIER_SLUG) },
+	{ label: 'references', id: REFERENCES_SLUG, isOnPage: hasHeading(REFERENCES_SLUG) },
+].filter((link) => link.isOnPage);
+
+/** "the X", "the X or the Y", "the X, the Y or the Z": the text before the link at `index`. */
+const separatorBefore = (index: number, count: number) => {
+	if (index === 0) return '';
+	return index === count - 1 ? ' or ' : ', ';
+};
 ---
 
 <div class="not-content concept-header">
@@ -62,16 +86,20 @@ const prerequisites = topicId ? getTopic(topicId).prerequisites.map(getTopic) : 
 		)
 	}
 
-	<p class="skip-line">
-		Know the basics already? Jump to the <a href="#precise-statement">precise statement</a>, the{' '}
-		<a href="#formal-definition">derivations</a>
-		{hasResearchFrontier && (
-			<>
-				, the <a href={`#${RESEARCH_FRONTIER_SLUG}`}>research frontier</a>
-			</>
-		)}{' '}
-		or the <a href="#references">references</a>.
-	</p>
+	{
+		skipLinks.length > 0 && (
+			<p class="skip-line">
+				Know the basics already? Jump to{' '}
+				{skipLinks.map((link, index) => (
+					<>
+						{`${separatorBefore(index, skipLinks.length)}the `}
+						<a href={`#${link.id}`}>{link.label}</a>
+					</>
+				))}
+				.
+			</p>
+		)
+	}
 </div>
 
 <style>

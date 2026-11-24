@@ -1,9 +1,10 @@
 ---
 // The exact claim, always visible, so an expert never has to open a fold to find it (decision 0008).
-// Linked from the expert skip line in ConceptHeader as #precise-statement.
+// Linked from the expert skip line in ConceptHeader through PRECISE_STATEMENT_ID.
+import { PRECISE_STATEMENT_ID } from './sectionAnchors';
 ---
 
-<div class="precise-statement" id="precise-statement">
+<div class="precise-statement" id={PRECISE_STATEMENT_ID}>
 	<p class="ms-ui-label">Precise statement</p>
 	<slot />
 </div>

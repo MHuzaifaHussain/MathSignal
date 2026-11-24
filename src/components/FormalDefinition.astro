@@ -1,8 +1,10 @@
 ---
 // The formal math for a concept, closed by default. Use \vmu and \vsigma inside.
+// Linked from the expert skip line in ConceptHeader through FORMAL_DEFINITION_ID.
+import { FORMAL_DEFINITION_ID } from './sectionAnchors';
 ---
 
-<details class="formal-definition" id="formal-definition">
+<details class="formal-definition" id={FORMAL_DEFINITION_ID}>
 	<summary>
 		Formal definition, derivations and properties
 	</summary>
