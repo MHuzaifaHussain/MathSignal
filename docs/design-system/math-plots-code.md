@@ -87,6 +87,32 @@ Discrete sample spaces are HTML tables, not Mafs plots (decision 0011). They fol
 
 Pink and blue never appear: an event is not μ or σ. Tags and words double every marking, so nothing depends on color. Probabilities are shown as an unreduced count, then the reduced fraction, then two decimals ("3 of 4 outcomes. P(A) = 3/4 = 0.75"), in plain Unicode, never KaTeX.
 
+### Discrete distributions (DistributionBoard)
+
+DistributionBoard draws a random variable as stacked tiles, one tile per outcome, in columns by value ([decision 0012](../decisions/0012-distribution-board.md)). It is HTML like EventSpace and follows the same color rules with these conventions:
+
+| Marking | Meaning |
+|---|---|
+| Ink tiles, ink plank, ink axis | The outcomes, grouped by the number each one gets. Bars carry no color of their own |
+| Ochre wedge under the axis, labeled "your pencil" | The reader's guess for the mean. Ochre because it is "look here", never pink: a guess is not μ |
+| `--ms-attention` border and `--ms-highlight` fill on a tile and its stepper row | The outcome the reader is pointing at, from stepper focus or hover |
+| Pink triangle labeled "μ = …" and a dashed pink guide to the axis | The mean, drawn only once it is shown (after "Balance it", or from the start on a spread setup) |
+| Blue span labeled "σ = …", with dotted ink arms labeled "1 away" | The standard deviation and each bar's distance from μ, only while "Show the spread" is on |
+| Dashed ink span labeled "Before: σ …" | The previous preset's σ, for comparison |
+
+Pink and blue appear only on the setups that are teaching μ and σ. `candy-build` and `coins-heads` use neither, because they come before μ and σ are taught. Every marking has a label or a word beside it, and the plank's tilt is always stated in a sentence ("The plank tips down on the right"). Tilt is a fixed 6 degrees toward the heavy side; the pencil never tips the plank until "Balance it". Tiles are die pips or coin faces in the Pictures view and the outcome's label otherwise, and the chart itself is `aria-hidden`.
+
+Number format, one rule per kind of number (all in `describe.ts`, plain Unicode, never KaTeX):
+
+| Kind | Format | Example |
+|---|---|---|
+| A chance in a readout or the table | Count, reduced fraction, two decimals | "3/6 = 1/2 = 0.50" |
+| A chance in a Check or goal sentence | Count and reduced fraction; the decimal only when nothing reduces | "3/6 = 1/2", "1/6 ≈ 0.17" |
+| An amount computed from the bars (μ, variance, σ, distances) | Reduced fraction, then the decimal with trailing zeros dropped | "μ = 7/2 = 3.5 candies", "σ = 2 candies" |
+| The pencil, and anything measured from it | Two decimals, the same as the slider's readout | "your pencil at 3.50", "1 − 1.50 = −0.50" |
+
+"≈" appears only when the decimal is rounded. A whole number has no fraction chain ("6/6 = 1").
+
 ## Code (Expressive Code)
 
 Code uses the **tuned full** palette: familiar editor-style highlighting with every color chosen so it can't be mistaken for μ, σ or "look here", even with color blindness.

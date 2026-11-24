@@ -112,6 +112,24 @@ A sample space as a table of outcomes (decision 0011). One prop: `setup`, the id
 - **Condition mode** (`dice-condition`, `kids-condition`): a "Shrink the world to B" switch rules out every outcome outside B (muted, struck through, "Ruled out" in its name), and the readout gives P(A | B) beside P(A). The switch is refused while B is empty, with the visible reason "Undefined: B can't happen (probability 0)." `kids-condition` is fixed data (a class of 12 children in a list layout without headers), so its cells can be read but not toggled.
 - All math and copy live in pure modules (`model.ts`, `describe.ts`, `state.ts`) checked by `npm run check:boards`. Try every setup at `/lab/event-space/` in the dev server.
 
+### `DistributionBoard`
+A random variable as a bar chart ([decision 0012](../decisions/0012-distribution-board.md)). One prop: `setup`, the id of a configuration in `src/components/react/distributionBoard/setups.ts` (`candy-build`, `coins-heads`, `candy-balance`, `candy-spread`); an unknown id, or a setup whose values, presets or range can't work, fails the build.
+
+```mdx
+<div class="not-content">
+  <DistributionBoard client:visible setup="candy-build" />
+</div>
+```
+
+The reader gives each outcome a number with a − / + pair. Outcomes that share a number stack into one bar, and their chances add. The bars, the readout sentences and a table (`Value`, `Faces` or `Outcomes`, `P(X = x)`) all say the same thing.
+
+- **Goal setups** (`candy-build`, `coins-heads`): a die whose faces win candies, or two coins counted by heads. The chart, fractions and table start covered, and only the − / + steppers work. The reader sets a value for each outcome and presses **Check**, which names the wrong faces; "Show the answer" appears after two wrong Checks. Once Check passes, the chart appears and the bars merge live as values change. A "Show as" choice offers Pictures and Numbers from the start; Symbols, which writes X as a function, and the presets wait for the match. `candy-build` then sets a follow-up goal, "make P(X = 1) = 1/2", with a **Check goal** button.
+- **Balance setup** (`candy-balance`): an ochre pencil under the chart, moved by dragging the strip under the axis or with the tray's "Pencil position" slider. The plank stays level while the pencil moves. **"Balance it"** locks in the guess, shows the pink μ and tips the plank a fixed 6 degrees toward the heavy side, and a sentence always says which way and why. The − / + steppers are refused until then. Presets start a new game: the pencil parks and μ hides again.
+- **Spread setup** (`candy-spread`): fixed values, with μ shown from the start. A "Show the spread" switch draws the distance arms and the blue σ. Switching presets while it is on keeps the previous σ as a dashed ghost for comparison.
+- **Limits:** at most 7 tile columns, 21 bar columns and 4 presets, so the board fits at 375px. `validateSetup` enforces these, and also that every preset's mean is a step the pencil can land on and that μ ± σ stays on the axis.
+- **HTML board rules:** the board renders HTML inside the unchanged `Board`, never passes `onInteractionEnd` or `handleLabels`, and owns its live region. Discrete pages never load Mafs. Island CSS lives under the `.ms-dist-*` section of `components.css`.
+- All math and copy live in pure modules (`model.ts`, `describe.ts`, `state.ts`) checked by `npm run check:boards`. Try every setup at `/lab/distribution-board/` in the dev server.
+
 ## Code
 
 ### Fenced code blocks
