@@ -158,45 +158,74 @@ function wearWords(wear: { hat: boolean; scarf: boolean }): string {
 	return 'no hat or scarf';
 }
 
-function kids(): Scenario {
-	if (KIDS_WEAR.length % KIDS_PER_ROW !== 0) {
+interface FixedListSpec<Item> {
+	id: ScenarioId;
+	describeSpace: string;
+	/** Outcome ids are this prefix and the item's number, e.g. "child-3". */
+	idPrefix: string;
+	items: readonly Item[];
+	perRow: number;
+	/** The words after the item's number in its cell's name, e.g. "hat and scarf". */
+	spokenOf: (item: Item) => string;
+	events: Record<string, { label: string; has: (item: Item) => boolean }>;
+}
+
+/**
+ * Fixed data, such as a class of children: numbered items laid out in rows with no headers, because rows and
+ * columns mean nothing. Each item's facts are looked up by its outcome id.
+ */
+function fixedList<Item>({ id, describeSpace, idPrefix, items, perRow, spokenOf, events }: FixedListSpec<Item>): Scenario {
+	if (items.length % perRow !== 0) {
 		// A short last row would leave grid slots with no cell, and the roving focus could land on one.
-		throw new Error(`EventSpace: the class of ${KIDS_WEAR.length} children doesn't fill rows of ${KIDS_PER_ROW}.`);
+		throw new Error(`EventSpace: scenario "${id}" has ${items.length} items, which don't fill rows of ${perRow}.`);
 	}
-	const wearById = new Map<OutcomeId, { hat: boolean; scarf: boolean }>();
-	const outcomes = KIDS_WEAR.map((wear, index) => {
-		const id = `child-${index + 1}`;
-		wearById.set(id, wear);
+	const itemById = new Map<OutcomeId, Item>();
+	const outcomes = items.map((item, index) => {
+		const outcomeId = `${idPrefix}-${index + 1}`;
+		itemById.set(outcomeId, item);
 		return {
-			id,
-			row: Math.floor(index / KIDS_PER_ROW),
-			col: index % KIDS_PER_ROW,
+			id: outcomeId,
+			row: Math.floor(index / perRow),
+			col: index % perRow,
 			label: String(index + 1),
-			// The label already says the child's number, and the grid's name says these are children.
-			spoken: wearWords(wear),
+			// The label already says the item's number, and the grid's name says what the items are.
+			spoken: spokenOf(item),
 		};
 	});
-	const wearOf = (outcome: Outcome) => {
-		const wear = wearById.get(outcome.id);
-		if (!wear) throw new Error(`EventSpace: "${outcome.id}" is not a child in the class.`);
-		return wear;
+	const itemOf = (outcome: Outcome) => {
+		const item = itemById.get(outcome.id);
+		if (item === undefined) throw new Error(`EventSpace: "${outcome.id}" is not an item of scenario "${id}".`);
+		return item;
 	};
-	const rowCount = KIDS_WEAR.length / KIDS_PER_ROW;
 	return {
-		id: 'kids',
-		describeSpace: `a class of ${KIDS_WEAR.length} children, one picked at random`,
+		id,
+		describeSpace,
 		layout: 'list',
 		rowLabel: 'Row',
-		colLabel: 'Seat',
-		rowValues: Array.from({ length: rowCount }, (_, row) => String(row + 1)),
-		colValues: Array.from({ length: KIDS_PER_ROW }, (_, col) => String(col + 1)),
+		colLabel: 'Column',
+		rowValues: Array.from({ length: items.length / perRow }, (_, row) => String(row + 1)),
+		colValues: Array.from({ length: perRow }, (_, col) => String(col + 1)),
 		outcomes,
-		events: {
-			scarf: { label: 'wears a scarf', members: (outcome) => wearOf(outcome).scarf },
-			hat: { label: 'wears a hat', members: (outcome) => wearOf(outcome).hat },
-		},
+		events: Object.fromEntries(
+			Object.entries(events).map(([eventId, { label, has }]) => [eventId, { label, members: (outcome: Outcome) => has(itemOf(outcome)) }]),
+		),
 		mirrorOf: () => undefined,
 	};
+}
+
+function kids(): Scenario {
+	return fixedList({
+		id: 'kids',
+		describeSpace: `a class of ${KIDS_WEAR.length} children, one picked at random`,
+		idPrefix: 'child',
+		items: KIDS_WEAR,
+		perRow: KIDS_PER_ROW,
+		spokenOf: wearWords,
+		events: {
+			scarf: { label: 'wears a scarf', has: (wear) => wear.scarf },
+			hat: { label: 'wears a hat', has: (wear) => wear.hat },
+		},
+	});
 }
 
 function checked(scenario: Scenario): Scenario {
