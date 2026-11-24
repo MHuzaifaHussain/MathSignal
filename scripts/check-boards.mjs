@@ -624,6 +624,10 @@ assert.deepEqual(distSay.symbolLines(symbolsView), [
 	'The event X = 0 is the set {1, 2, 3}, so P(X = 0) = P({1, 2, 3}) = 3/6.',
 ]);
 assert.deepEqual(distSay.STAGE_LABELS, { pictures: 'Pictures', numbers: 'Numbers', symbols: 'Symbols' });
+assert.deepEqual(distSay.CONTROL_LABELS, {
+	check: 'Check', showAnswer: 'Show the answer', showAs: 'Show as', pencil: 'Pencil position',
+	balance: 'Balance it', spread: 'Show the spread', presets: 'Presets', checkGoal: 'Check goal',
+});
 
 // coins-heads: the same pattern in the "X = k" form.
 const coinsFresh = dist.initialState('coins-heads');
@@ -907,7 +911,7 @@ const everyString = (state) => {
 		...distSay.tableRows(state).flatMap((row) => Object.values(row)), ...Object.values(distSay.tableHeaders(setup)),
 		...outcomeIdsOf(setup).flatMap((id) => [distSay.rowText(state, id), distSay.stepperName(state, id, 1), distSay.stepperName(state, id, -1)]),
 		...['below-range', 'above-range', 'locked', 'parked', 'not-editable'].map((kind) => distSay.refusalText(setup, { kind })),
-		...Object.values(distSay.STAGE_LABELS),
+		...Object.values(distSay.STAGE_LABELS), ...Object.values(distSay.CONTROL_LABELS),
 		...['pictures', 'numbers', 'symbols'].flatMap((stage) => Object.values(distSay.stepperHeaders(setup, stage))),
 		...chartStrings(distSay.chartLabels(state)),
 	].filter((text) => text !== null);

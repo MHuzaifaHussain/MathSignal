@@ -7,6 +7,7 @@ import BarChart from "./distributionBoard/BarChart.tsx";
 import DistributionTable from "./distributionBoard/DistributionTable.tsx";
 import ValueSteppers from "./distributionBoard/ValueSteppers.tsx";
 import {
+  CONTROL_LABELS,
   STAGE_LABELS,
   announcementFor,
   balanceLine,
@@ -131,18 +132,18 @@ export default function DistributionBoard({ setup: setupId }: DistributionBoardP
     <>
       {setup.kind === "goal" && !state.checked && (
         <button type="button" className="ms-board-button ms-board-button-primary" onClick={() => send({ type: "check" })}>
-          Check
+          {CONTROL_LABELS.check}
         </button>
       )}
       {setup.kind === "goal" && !state.checked && state.failedChecks >= CHECKS_BEFORE_ANSWER && (
         <button type="button" className="ms-board-button" onClick={() => send({ type: "show-answer" })}>
-          Show the answer
+          {CONTROL_LABELS.showAnswer}
         </button>
       )}
-      {stageOptions.length > 1 && <TrayChoice legend="Show as" options={stageOptions} value={state.stage} onChange={(stage) => send({ type: "stage", stage })} />}
+      {stageOptions.length > 1 && <TrayChoice legend={CONTROL_LABELS.showAs} options={stageOptions} value={state.stage} onChange={(stage) => send({ type: "stage", stage })} />}
       {setup.kind === "balance" && (
         <TraySlider
-          label="Pencil position"
+          label={CONTROL_LABELS.pencil}
           value={state.pencil}
           min={parkedPencil(setup)}
           max={setup.range[1] * setup.stepDenominator}
@@ -162,7 +163,7 @@ export default function DistributionBoard({ setup: setupId }: DistributionBoardP
             aria-describedby={parked ? parkedReasonId : undefined}
             onClick={() => send({ type: "balance" })}
           >
-            Balance it
+            {CONTROL_LABELS.balance}
           </button>
           {parked && (
             <p id={parkedReasonId} className="ms-dist-note">
@@ -179,13 +180,13 @@ export default function DistributionBoard({ setup: setupId }: DistributionBoardP
           className="ms-board-button ms-board-switch"
           onClick={() => send({ type: "spread", on: !state.spreadShown })}
         >
-          Show the spread
+          {CONTROL_LABELS.spread}
         </button>
       )}
       {!covered && setup.presets.length > 0 && (
-        <div className="ms-dist-presets" role="group" aria-label="Presets">
+        <div className="ms-dist-presets" role="group" aria-label={CONTROL_LABELS.presets}>
           <span className="ms-dist-presets-label" aria-hidden="true">
-            Presets:
+            {CONTROL_LABELS.presets}:
           </span>
           {setup.presets.map((name) => (
             <button key={name} type="button" className="ms-board-button" aria-pressed={state.activePreset === name} onClick={() => send({ type: "preset", name })}>
@@ -210,7 +211,7 @@ export default function DistributionBoard({ setup: setupId }: DistributionBoardP
             </p>
             {state.goal !== "passed" && (
               <button type="button" className="ms-board-button ms-board-button-primary" onClick={() => send({ type: "check-goal" })}>
-                Check goal
+                {CONTROL_LABELS.checkGoal}
               </button>
             )}
           </div>

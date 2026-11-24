@@ -21,7 +21,19 @@ import { CHECKS_BEFORE_ANSWER, distributionNow, isCovered, setupOf, type Action,
 /** The "Show as" options' names, shown on the buttons and spoken when the view changes. */
 export const STAGE_LABELS: Readonly<Record<Stage, string>> = { pictures: 'Pictures', numbers: 'Numbers', symbols: 'Symbols' };
 
-const NEW_GAME_LINE = 'New game. Slide the pencil and press Balance it.';
+/** The board's control names. Sentences that tell the reader to press a control quote these, so the two can't drift. */
+export const CONTROL_LABELS = {
+	check: 'Check',
+	showAnswer: 'Show the answer',
+	showAs: 'Show as',
+	pencil: 'Pencil position',
+	balance: 'Balance it',
+	spread: 'Show the spread',
+	presets: 'Presets',
+	checkGoal: 'Check goal',
+} as const;
+
+const NEW_GAME_LINE = `New game. Slide the pencil and press ${CONTROL_LABELS.balance}.`;
 const NUMBER_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
 const DECIMALS = 2;
 /** Below this, a decimal is taken as exact rather than rounded. */
@@ -72,7 +84,7 @@ const SOURCE_COPY: Readonly<Record<SourceId, SourceCopy>> = {
 		name: facesName,
 		assigned: (label, valueText) => `${capitalize(facesName([label]))} wins ${valueText}.`,
 		barName: (value) => `${value}-${CANDIES.one} bar`,
-		coveredStatus: (setup) => `${cardName(setup)}: ${cardText(setup)}. Set each face to match, then press Check.`,
+		coveredStatus: (setup) => `${cardName(setup)}: ${cardText(setup)}. Set each face to match, then press ${CONTROL_LABELS.check}.`,
 		coveredText: 'The chart appears when your values match the card.',
 		oneWrong: (label, setText, card) => `Not yet. ${capitalize(facesName([label]))} wins ${setText}; the card says ${card}.`,
 		severalWrong: (labels) => `Not yet. ${capitalize(facesName(labels))} don't match the card.`,
@@ -95,7 +107,7 @@ const SOURCE_COPY: Readonly<Record<SourceId, SourceCopy>> = {
 		name: joinWords,
 		assigned: (label, valueText) => `${valueText} for ${label}.`,
 		barName: (value) => `X = ${value} bar`,
-		coveredStatus: () => 'Let X count the heads. Set X for each outcome, then press Check.',
+		coveredStatus: () => `Let X count the heads. Set X for each outcome, then press ${CONTROL_LABELS.check}.`,
 		coveredText: 'The chart appears when every outcome has its number of heads.',
 		oneWrong: (label, setText, card) => `Not yet. ${label} has ${plural(card, 'head', 'heads')}; you set ${setText}.`,
 		severalWrong: (labels) => `Not yet. ${joinWords(labels)} don't match.`,
@@ -241,7 +253,7 @@ export function statusLine(state: DistributionState): string {
 		case 'goal':
 			return isCovered(state) ? `${baseStatus(setup)} ${copy.coveredStatus(setup)}` : described;
 		case 'balance':
-			return state.revealed ? `${described} ${meanSentence(state)}` : `${described} Slide the pencil to where you think the bars balance, then press Balance it.`;
+			return state.revealed ? `${described} ${meanSentence(state)}` : `${described} Slide the pencil to where you think the bars balance, then press ${CONTROL_LABELS.balance}.`;
 		case 'spread':
 			return `${described} ${meanSentence(state)}`;
 	}
@@ -591,7 +603,7 @@ export function refusalText(setup: Setup, refusal: Refusal): string {
 			return `${setup.wording.valueText(highest)} is the most this board shows.`;
 		case 'locked':
 			// A goal setup locks its presets until Check passes; candy-balance locks its steppers until the reveal.
-			return setup.kind === 'goal' ? 'The presets open once Check passes.' : 'Press Balance it first, then change the values.';
+			return setup.kind === 'goal' ? `The presets open once ${CONTROL_LABELS.check} passes.` : `Press ${CONTROL_LABELS.balance} first, then change the values.`;
 		case 'parked':
 			return 'Move the pencil under the bars first.';
 		case 'not-editable':
