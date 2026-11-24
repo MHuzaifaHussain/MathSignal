@@ -13,7 +13,7 @@ objectives:
   - Update a probability twice, using the posterior from one piece of evidence as the prior for the next, and say what that assumes.
   - Explain why a classifier's outputs depend on how common each class is, and what naive Bayes assumes.
 takeaways:
-  - Bayes' theorem turns one direction of a conditional probability into the other. P(A | B) = P(B | A) P(A) / P(B), and it needs P(B) > 0.
+  - Bayes' theorem turns one direction of a conditional probability into the other. P(A | B) = P(B | A) P(A) / P(B), and it needs P(B) > 0, plus P(A) > 0 for P(B | A) to be defined.
   - P(B) adds up every way B can happen, P(B) = P(B | A) P(A) + P(B | not A) P(not A). For the medical test that is 0.9 × 0.01 + 0.1 × 0.99 = 0.108.
   - For a condition 1 in 100 people have and a test right 9 times in 10, a positive gives P(has it | positive) = 9/108 = 1/12 ≈ 0.083, because the 99 false positives among 990 healthy people outnumber the 9 true positives.
   - The same test means different things at different base rates. If 1 in 10 people have the condition, a positive gives exactly 1/2.
@@ -157,7 +157,7 @@ $$
 P(\text{has it} \mid \text{both positive}) = \frac{0.9 \times \frac{1}{12}}{0.9 \times \frac{1}{12} + 0.1 \times \frac{11}{12}} = \frac{0.9}{0.9 + 1.1} = \frac{9}{20} = 0.45.
 $$
 
-The middle step multiplies the top and the bottom by 12, which turns $0.1 \times \frac{11}{12}$ into $0.1 \times 11 = 1.1$. Two positives move the chance from 1/100 to 1/12 to 9/20, which is still below an even chance. The second test has to be a different test, or at least a fresh sample: running the same test again on the same sample doesn't count, because its mistakes repeat. The strength of a piece of evidence can be measured by its likelihood ratio, P(B | A) / P(B | not A): how many times more likely the evidence is if A is true than if it isn't. Each of these tests has a likelihood ratio of 0.9 / 0.1 = 9.
+The middle step multiplies the top and the bottom by 12, which turns $0.1 \times \frac{11}{12}$ into $0.1 \times 11 = 1.1$. Two positives move the chance from 1/100 to 1/12 to 9/20, which is still below an even chance. The second test has to make its mistakes independently of the first: running the same test again on the same sample doesn't count, because its mistakes repeat, and even a fresh sample isn't enough if the mistakes come from the person rather than the sample. The strength of a piece of evidence can be measured by its likelihood ratio, P(B | A) / P(B | not A): how many times more likely the evidence is if A is true than if it isn't. Each of these tests has a likelihood ratio of 0.9 / 0.1 = 9.
 
 <Simpler label="the same 1,000 people as a tree, then flipped">
 
@@ -293,10 +293,10 @@ where $p(x \mid y = i)$ is how likely an input like $x$ is within class $i$ (for
 
 ### When the base rate shifts
 
-The same evidence gives a different posterior when the prior changes. The medical test showed it: with the same test, a positive means $1/12$ when 1 person in 100 has the condition and $1/2$ when 1 in 10 does. A classifier carries the class frequencies of its training data in the same way. A common correction multiplies each output by a correction factor, the ratio of the new class frequency to the old one, and rescales the results to add up to 1. Saerens and coauthors derive it from Bayes' theorem (§2.2, equation (4)) <Cite id="saerens2002" />. It rests on three assumptions:
+The same evidence gives a different posterior when the prior changes. The medical test showed it: with the same test, a positive means $1/12$ when 1 person in 100 has the condition and $1/2$ when 1 in 10 does. A classifier carries the class frequencies of its training data in the same way. A common correction multiplies each output by a correction factor, the ratio of the new class frequency to the old one, and rescales the results to add up to 1. Saerens and coauthors derive it from Bayes' theorem (§2.2) <Cite id="saerens2002" />. It rests on three assumptions:
 
 - $p(x \mid y)$ is the same in training and in use;
-- the outputs are calibrated, meaning the scores are honest frequencies: among training inputs that get a score of 0.9 for a class, 9 in 10 belong to it. This must hold for every class's score, not only for the most confident one, so that the scores equal the training-set class probabilities;
+- the outputs are calibrated, meaning the scores are honest frequencies: among training inputs that get a score of 0.9 for a class, 9 in 10 belong to it. This must hold for every class's score, not only for the most confident one, so that each score equals the training-set probability of that class given all the scores;
 - the new class frequencies are known. In practice they have to be estimated; the same paper does it with the EM algorithm (§2.3).
 
 For example, a model trained on a set that is half positive outputs 0.9 for some input, but in use only 1 case in 100 is positive. The correction factors are $0.01/0.5 = 0.02$ for positive and $0.99/0.5 = 1.98$ for negative. The scores become $0.9 \times 0.02 = 0.018$ and $0.1 \times 1.98 = 0.198$, and rescaling gives $0.018 / 0.216 = 1/12$, the medical test's posterior again.
@@ -524,7 +524,7 @@ $$
 p(w \mid D) = \frac{p(D \mid w)\,p(w)}{p(D)}, \qquad p(D) = \int p(D \mid w)\,p(w)\,dw, \qquad p(D \mid w) = \prod_i P(y_i \mid x_i, w).
 $$
 
-Instead of one best set of weights, this gives a probability distribution (a density) over weight settings, which says how uncertain the model is. It is conditioning on a random variable, the case the [conditional probability frontier](/probability/conditional-probability/#research-frontier) describes. Blundell and coauthors open by noting that plain networks often make overly confident decisions, and that exact Bayesian inference on a network's weights is intractable, because there are very many weights and the network's form does not allow the integrals to be done exactly. They therefore fit a variational approximation $q(w \mid \theta)$, a simpler distribution over the weights chosen to be close to the true posterior, and train it with backpropagation; they call the method Bayes by Backprop (Section 1) <Cite id="blundell2015" />.
+The product assumes the training examples are independent given the weights, with the inputs taken as given. Instead of one best set of weights, this gives a probability distribution (a density) over weight settings, which says how uncertain the model is. It is conditioning on a random variable, the case the [conditional probability frontier](/probability/conditional-probability/#research-frontier) describes. Blundell and coauthors open by noting that plain networks often make overly confident decisions, and that exact Bayesian inference on a network's weights is intractable, because there are very many weights and the network's form does not allow the integrals to be done exactly. They therefore fit a variational approximation $q(w \mid \theta)$, a simpler distribution over the weights chosen to be close to the true posterior, and train it with backpropagation; they call the method Bayes by Backprop (Section 1) <Cite id="blundell2015" />.
 
 The cost they minimize, their equation (1), is the variational free energy. The paper writes it in script; here it is a plain $F$, because $\mathcal{F}$ on this site is the collection of events:
 

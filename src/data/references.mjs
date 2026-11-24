@@ -192,7 +192,7 @@ export const REFERENCES = [
 		title: 'Adjusting the outputs of a classifier to new a priori probabilities: a simple procedure',
 		venue: 'Neural Computation 14(1):21–41',
 		url: 'https://doi.org/10.1162/089976602753284446',
-		note: 'Section 2.2, equation (4): reweighting a classifier\'s outputs by the ratio of new to training class priors when the new priors are known. Section 2.3: estimating unknown new priors with the EM algorithm.',
+		note: 'Section 2.2: reweighting a classifier\'s outputs by the ratio of new to training class priors when the new priors are known. Section 2.3: estimating unknown new priors with the EM algorithm.',
 		checked: '2026-11-24',
 	},
 ];

@@ -233,7 +233,7 @@ Draw two cards from a shuffled 52-card deck without putting the first back. What
 
 <div slot="solution">
 
-Let $A_1$ be "the first card is an ace" and $A_2$ be "the second card is an ace". $P(A_1) = 4/52$. Given $A_1$, 51 cards are left and 3 of them are aces, so $P(A_2 \mid A_1) = 3/51$. The multiplication rule gives $P(A_1 \cap A_2) = 4/52 \times 3/51 = 12/2652 = 1/221$. Counting agrees: there are $\binom{52}{2} = 1326$ equally likely pairs of cards, the number of ways to choose 2 cards from 52, and $\binom{4}{2} = 6$ of them are two aces, so the probability is $6/1326 = 1/221$.
+Let $A_1$ be "the first card is an ace" and $A_2$ be "the second card is an ace". $P(A_1) = 4/52$. Given $A_1$, 51 cards are left and 3 of them are aces, so $P(A_2 \mid A_1) = 3/51$. The multiplication rule gives $P(A_1 \cap A_2) = 4/52 \times 3/51 = 12/2652 = 1/221$. Counting agrees: there are $\binom{52}{2} = 1326$ equally likely pairs of cards, the number of ways to choose 2 cards from 52, and $\binom{4}{2} = 6$ of them (the ways to choose 2 of the 4 aces) are two aces, so the probability is $6/1326 = 1/221$.
 
 </div>
 
