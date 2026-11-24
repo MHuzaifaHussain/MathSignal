@@ -93,7 +93,7 @@ A labeled slider for the tray, built on Base UI's Slider. Props: `label`, `value
 A segmented choice for the tray: a fieldset of native radios styled as buttons, so arrow keys and screen readers work natively. Props: `legend`, `options` (`{ value, label }[]`), `value`, `onChange`. The selected option is shown by fill and weight, never by color alone.
 
 ### Guided pieces (`src/components/react/guided/`)
-Small modules every guided board composes in its tray ([decision 0013](../decisions/0013-shared-board-modules.md)), so Check, stages, presets, refusals and announcements behave the same on every board. `Board` itself knows nothing about them. None of them holds wording: labels, legends and reasons come from the board's `describe.ts`.
+Small modules every guided board composes in its tray ([decision 0013](../decisions/0013-shared-board-modules.md)), so Check, stages, presets, refusals and announcements behave the same on every board. `Board` itself knows nothing about them. None of them holds wording: labels, legends and reasons come from each board's own copy.
 
 | Piece | What it does |
 |---|---|

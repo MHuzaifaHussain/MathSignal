@@ -19,6 +19,7 @@ The plan also named this work as a Board API with a `stages[]` prop, and later a
 - **The pieces own no wording.** Labels, legends and refusal sentences come from each board's own copy, as before.
 - **Each board keeps its state shape and its own rules.** Reducers spread `recordCheck` into their state and call `stageAllowed`, and they still decide what is locked, covered or refused and why. EventSpace keeps its small-grid rule for pictures; DistributionBoard keeps Symbols waiting for the match.
 - **Goal sentences stay with each board**, because each board states its goal differently (a status line, a goal line with its own Check). Presets are lifted as a component, not as a `presets[]` prop on `Board`.
+- **The plan's "minimal Board API" item (goal, `presets[]`, predict, describe/table) is superseded by these modules.** Goal, predict and the describe and table text stay with each board, in its own `describe.ts` and components.
 - **EventSpace and DistributionBoard now use the modules.** Every existing board check passes unchanged, and the rendered markup of both lab pages is the same apart from the unified class names below.
 
 ## Consequences
