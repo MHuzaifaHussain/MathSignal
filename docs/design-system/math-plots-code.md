@@ -27,6 +27,10 @@ A broken formula fails the build. rehype-katex on its own only logs a warning an
 
 Color a variable only where the page is teaching it. In a long derivation, color the first and the key occurrences, not every one.
 
+### Independence and perpendicular
+
+Write independence with the `\indep` macro, which renders ⫫: `A \indep B`, or `A \indep B \mid C` for conditional independence. A single `\perp` (⊥) means perpendicular vectors only, as in `\mathbf{a} \perp \mathbf{b}`. Some books use ⊥ for independence; this site doesn't.
+
 ### Variables in prose
 
 Use the `Var` component, so prose matches the formulas:

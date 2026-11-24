@@ -1,10 +1,14 @@
 // KaTeX options for rehype-katex, plus a guard that fails the build on broken formulas.
 // Rules: docs/design-system/math-plots-code.md
 
-/** Meaning-colored variables. Write \vmu and \vsigma in formulas, never \color{}. */
+/**
+ * Meaning-colored variables: write \vmu and \vsigma in formulas, never \color{}.
+ * Independence: write \indep (⫫), because a single \perp (⊥) is kept for perpendicular vectors.
+ */
 export const katexMacros = {
 	'\\vmu': '\\htmlClass{ms-mu}{\\mu}',
 	'\\vsigma': '\\htmlClass{ms-sigma}{\\sigma}',
+	'\\indep': '\\perp\\!\\!\\!\\perp',
 };
 
 /** Only \htmlClass is trusted, so \href, \url, \includegraphics and friends stay disabled. */

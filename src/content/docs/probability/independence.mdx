@@ -198,7 +198,7 @@ The failure runs the other way too. Grinstead and Snell's Exercise 8 (p. 151) ta
 
 <PreciseStatement>
 
-Let $(\Omega, \mathcal{F}, P)$ be a probability space, as on the [probability axioms](/probability/probability-axioms/) page, and let $A, B \in \mathcal{F}$. The events $A$ and $B$ are independent, written $A \perp\!\!\!\perp B$, if
+Let $(\Omega, \mathcal{F}, P)$ be a probability space, as on the [probability axioms](/probability/probability-axioms/) page, and let $A, B \in \mathcal{F}$. The events $A$ and $B$ are independent, written $A \indep B$, if
 
 $$
 P(A \cap B) = P(A)\,P(B).
@@ -227,7 +227,7 @@ Boundary cases. An event with probability 0 or 1 is independent of every event, 
 2. $A$ splits into $A \cap B$ and $A \cap B^\complement$, which share no outcome, so additivity gives $P(A) = P(A \cap B) + P(A \cap B^\complement)$.
 3. Rearrange and use step 1: $P(A \cap B^\complement) = P(A) - P(A)\,P(B) = P(A)\,(1 - P(B))$.
 4. By the complement rule $1 - P(B) = P(B^\complement)$, so $P(A \cap B^\complement) = P(A)\,P(B^\complement)$.
-5. Applying the same steps with the roles of $A$ and $B^\complement$ swapped gives $A^\complement \perp\!\!\!\perp B^\complement$, and likewise $A^\complement \perp\!\!\!\perp B$. Kolmogorov's footnote 11 in Chapter I, §5 is this one-line argument <Cite id="kolmogorov1950" />.
+5. Applying the same steps with the roles of $A$ and $B^\complement$ swapped gives $A^\complement \indep B^\complement$, and likewise $A^\complement \indep B$. Kolmogorov's footnote 11 in Chapter I, §5 is this one-line argument <Cite id="kolmogorov1950" />.
 
 </StepThrough>
 
@@ -236,9 +236,9 @@ On two dice, sum is 7 and "the first die is not 6" give $P = 5/36 = 1/6 \times 5
 <StepThrough title="An event with probability 0 or 1 is independent of every event" rigor="full">
 
 1. Let $P(B) = 0$. Since $A \cap B \subseteq B$, monotonicity gives $0 \le P(A \cap B) \le P(B) = 0$.
-2. So $P(A \cap B) = 0 = P(A) \times 0 = P(A)\,P(B)$, and $A \perp\!\!\!\perp B$ for every event $A$.
-3. Now let $P(B) = 1$. Then $P(B^\complement) = 0$, so by step 2, $A \perp\!\!\!\perp B^\complement$.
-4. By the complement result above, $A \perp\!\!\!\perp B$ as well.
+2. So $P(A \cap B) = 0 = P(A) \times 0 = P(A)\,P(B)$, and $A \indep B$ for every event $A$.
+3. Now let $P(B) = 1$. Then $P(B^\complement) = 0$, so by step 2, $A \indep B^\complement$.
+4. By the complement result above, $A \indep B$ as well.
 
 </StepThrough>
 
@@ -246,11 +246,11 @@ On two dice, sum is 7 and "the first die is not 6" give $P = 5/36 = 1/6 \times 5
 | --- | --- | --- |
 | Definition | $P(A \cap B) = P(A)\,P(B)$ | Coin heads, die 6: $1/12 = 1/2 \times 1/6$ |
 | Conditional form | $P(A \mid B) = P(A)$, when $P(B) > 0$ | Sum 7 given first die 6: $1/6$ |
-| Symmetric | $A \perp\!\!\!\perp B$ exactly when $B \perp\!\!\!\perp A$ | $P(\text{heads} \mid \text{six}) = 1/2$ |
-| Complements | $A \perp\!\!\!\perp B$ gives $A \perp\!\!\!\perp B^\complement$ | Sum 7, first die not 6: $5/36$ |
+| Symmetric | $A \indep B$ exactly when $B \indep A$ | $P(\text{heads} \mid \text{six}) = 1/2$ |
+| Complements | $A \indep B$ gives $A \indep B^\complement$ | Sum 7, first die not 6: $5/36$ |
 | Probability 0 or 1 | Independent of every event | Clear B: "Independent: yes, but only because B can't happen." |
 | Disjoint, both positive | Dependent | Sum 7 and doubles: $0$ against $1/36$ |
-| Itself | $A \perp\!\!\!\perp A$ only if $P(A) \in \{0, 1\}$ | Doubles with doubles: $1/6$ against $1/36$ |
+| Itself | $A \indep A$ only if $P(A) \in \{0, 1\}$ | Doubles with doubles: $1/6$ against $1/36$ |
 | Mutual independence | $2^n - n - 1$ equations | 4 for three events |
 | Pairs are not enough | Pairwise does not give mutual | Two coins: $1/4$ against $1/8$ |
 
@@ -570,7 +570,7 @@ No. Disjoint means $P(A \cap B) = 0$, but $P(A)\,P(B) = 1/36$. Knowing that A ha
 </CheckYourself>
 
 <CheckYourself level="proof" question="Show that an event A is independent of itself only if P(A) is 0 or 1.">
-$A \cap A = A$, so $A \perp\!\!\!\perp A$ means $P(A) = P(A)^2$, that is $P(A)\,(1 - P(A)) = 0$. A product is 0 only when a factor is 0, so $P(A) = 0$ or $P(A) = 1$. Both values work, since $0 = 0^2$ and $1 = 1^2$.
+$A \cap A = A$, so $A \indep A$ means $P(A) = P(A)^2$, that is $P(A)\,(1 - P(A)) = 0$. A product is 0 only when a factor is 0, so $P(A) = 0$ or $P(A) = 1$. Both values work, since $0 = 0^2$ and $1 = 1^2$.
 </CheckYourself>
 
 ## Common mistakes

@@ -46,14 +46,14 @@ export const NOTATION = [
 	{ key: 'density', tex: 'p(x)', say: '"p of x"', meaning: 'A probability density: probability per unit, for continuous quantities' },
 	{
 		key: 'independent',
-		tex: 'A \\perp\\!\\!\\!\\perp B',
+		tex: 'A \\indep B',
 		say: '"A is independent of B"',
 		meaning: 'Knowing whether B happened leaves the probability of A unchanged: P(A ∩ B) = P(A) P(B)',
 		note: 'Some books write a single ⊥; on this site ⊥ is kept for perpendicular vectors.',
 	},
 	{
 		key: 'conditionally-independent',
-		tex: 'A \\perp\\!\\!\\!\\perp B \\mid C',
+		tex: 'A \\indep B \\mid C',
 		say: '"A is independent of B given C"',
 		meaning: 'Once you know C happened, B tells you nothing more about A: P(A ∩ B | C) = P(A | C) P(B | C)',
 		note: 'Needs P(C) > 0. For a variable Z, it must hold for every value z with P(Z = z) > 0. It neither implies nor follows from independence without C.',
