@@ -524,7 +524,10 @@ export function planeLabels(state: VectorState): readonly PlaneLabel[] {
 	switch (setup.kind) {
 		case 'add': {
 			const sum = add(a, b);
-			labels.push(arrowLabel('a', trips ? 'trip a' : 'a', ABOVE, a, 1), arrowLabel('b', trips ? 'trip b' : 'b', a, sum, -1));
+			// b's label goes on the other side of the line from a's. When b runs straight back along a, its direction is
+			// reversed, so the same physical side needs the other sign.
+			const bSide = cross(a, b) === 0 && dot(a, b) < 0 ? 1 : -1;
+			labels.push(arrowLabel('a', trips ? 'trip a' : 'a', ABOVE, a, 1), arrowLabel('b', trips ? 'trip b' : 'b', a, sum, bSide));
 			if (!state.checked) labels.push({ id: 'guess', text: 'your guess', at: labelAnchor(state.guess, state.guess, 1) });
 			else labels.push(arrowLabel('sum', trips ? 'both trips' : 'a + b', ABOVE, sum, -1));
 			break;
@@ -537,7 +540,11 @@ export function planeLabels(state: VectorState): readonly PlaneLabel[] {
 		}
 		case 'cart': {
 			const trackLength = Math.sqrt(lengthSquared(b));
-			labels.push(arrowLabel('a', 'your push', ABOVE, a, 1), arrowLabel('track', `${trackName(state)}, length ${numberText(trackLength)}`, ABOVE, b, -1));
+			// The shadow's label goes inside the triangle the push makes with the track; the track's goes outside it.
+			const pushSide = cross(b, a) >= 0 ? 1 : -1;
+			// The push's own label goes on its side away from the track.
+			const pushLabelSide = cross(a, b) > 0 ? -1 : 1;
+			labels.push(arrowLabel('a', 'your push', ABOVE, a, pushLabelSide), arrowLabel('track', `${trackName(state)}, length ${numberText(trackLength)}`, ABOVE, b, pushSide === 1 ? -1 : 1));
 			const goal = setup.goal;
 			if (goal) {
 				const radius = Math.sqrt(goal.targetLengthSquared);
@@ -545,15 +552,16 @@ export function planeLabels(state: VectorState): readonly PlaneLabel[] {
 			}
 			const tip = shadowTip(b, a);
 			if (state.checked && tip && !isZero(a)) {
-				if (!isZero(tip)) labels.push(arrowLabel('shadow', 'moves the cart', ABOVE, tip, -1));
+				if (!isZero(tip)) labels.push(arrowLabel('shadow', 'moves the cart', ABOVE, tip, pushSide));
 				if (!equals(tip, a)) labels.push(arrowLabel('rails', 'into the rails', tip, a, cross(b, a) > 0 ? -1 : 1));
 			}
 			break;
 		}
 		case 'align': {
 			labels.push(arrowLabel('a', 'a', ABOVE, a, 1), arrowLabel('b', 'b', ABOVE, b, -1));
+			// A shadow shorter than one grid unit sits too close to the center for a label; the readout names it.
 			const tip = state.checked ? shadowTip(a, b) : null;
-			if (tip && !isZero(tip)) labels.push(arrowLabel('shadow', 'shadow of b', ABOVE, tip, cross(a, b) > 0 ? -1 : 1));
+			if (tip && lengthSquared(tip) >= 1) labels.push(arrowLabel('shadow', 'shadow of b', ABOVE, tip, cross(a, b) > 0 ? -1 : 1));
 			if (showsArc(state)) labels.push({ id: 'theta', text: 'θ', at: bisectorPoint(a, b, THETA_RADIUS) });
 			break;
 		}
@@ -587,38 +595,39 @@ export interface TableRow {
 	length: string;
 	/** The row as one sentence, for screen readers. */
 	spoken: string;
-	steppable: boolean;
+	/** The vector this row's − / + buttons move, or null when the row has none. */
+	stepId: VectorId | null;
 }
 
 export function tableHeaders(state: VectorState) {
-	return isTrips(state)
-		? { caption: 'Where each trip goes', vector: 'Trip', x: 'Steps east', y: 'Steps north', length: 'Length' }
-		: { caption: 'The vectors on the board', vector: 'Vector', x: 'x (east)', y: 'y (north)', length: 'Length' };
+	if (isTrips(state)) return { caption: 'Where each trip goes', vector: 'Trip', x: 'Steps east', y: 'Steps north', length: 'Length' };
+	const caption = setupOf(state).kind === 'cart' ? `Your push a and the track ${trackName(state)}` : 'The vectors on the board';
+	return { caption, vector: 'Vector', x: 'x (east)', y: 'y (north)', length: 'Length' };
 }
 
-function row(state: VectorState, id: TableRow['id'], name: string, v: Vec2, steppable: boolean): TableRow {
+function row(state: VectorState, id: TableRow['id'], name: string, v: Vec2, stepId: VectorId | null): TableRow {
 	const spoken = isTrips(state) ? `${name}: ${stepsWords(v)}.` : id === 'guess' ? `${name}: ${pairText(v)}.` : `${name} = ${pairText(v)}.`;
-	return { id, name, x: numberText(v[0]), y: numberText(v[1]), length: id === 'guess' ? '' : lengthText(v), spoken, steppable };
+	return { id, name, x: numberText(v[0]), y: numberText(v[1]), length: id === 'guess' ? '' : lengthText(v), spoken, stepId };
 }
 
 /** The rows of the coordinate table, in order. The a + b row exists only after Check. */
 export function tableRows(state: VectorState): readonly TableRow[] {
 	const kind = setupOf(state).kind;
 	const steppable = steppableVectors(state);
-	const can = (id: VectorId) => steppable.includes(id);
+	const can = (id: VectorId) => (steppable.includes(id) ? id : null);
 	const trips = isTrips(state);
 	switch (kind) {
 		case 'add': {
 			const rows = [row(state, 'a', trips ? 'Trip a' : 'a', state.a, can('a')), row(state, 'b', trips ? 'Trip b' : 'b', state.b, can('b'))];
-			if (!state.checked) return [row(state, 'guess', 'Your guess', state.guess, true), ...rows];
-			return [...rows, row(state, 'sum', trips ? 'Both trips' : 'a + b', add(state.a, state.b), false)];
+			if (!state.checked) return [row(state, 'guess', 'Your guess', state.guess, 'guess'), ...rows];
+			return [...rows, row(state, 'sum', trips ? 'Both trips' : 'a + b', add(state.a, state.b), null)];
 		}
 		case 'scale':
-			return [row(state, 'a', 'a', state.a, true), row(state, 'scaled', 'c a', scale(state.scalar, state.a), false)];
+			return [row(state, 'a', 'a', state.a, 'a'), row(state, 'scaled', 'c a', scale(state.scalar, state.a), null)];
 		case 'cart':
-			return [row(state, 'a', 'a, your push', state.a, true), row(state, 'track', `${trackName(state)}, the track`, state.b, false)];
+			return [row(state, 'a', 'a', state.a, 'a'), row(state, 'track', trackName(state), state.b, null)];
 		case 'align':
-			return [row(state, 'a', 'a', state.a, true), row(state, 'b', 'b', state.b, true)];
+			return [row(state, 'a', 'a', state.a, 'a'), row(state, 'b', 'b', state.b, 'b')];
 	}
 }
 
@@ -658,8 +667,9 @@ export function stepperName(state: VectorState, id: VectorId, axis: Axis, direct
 	return `Move ${shortName(state, id)} 1 ${DIRECTION_WORDS[axis][direction]}`;
 }
 
-export function stepperGroupName(state: VectorState, id: VectorId): string {
-	return `Move ${shortName(state, id)}`;
+/** One group per table cell, since a table row can't be a group: "Move a east or west". */
+export function stepperGroupName(state: VectorState, id: VectorId, axis: Axis): string {
+	return `Move ${shortName(state, id)} ${axis === 'x' ? 'east or west' : 'north or south'}`;
 }
 
 export function refusalText(state: VectorState, refusal: Refusal): string {

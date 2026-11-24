@@ -369,7 +369,8 @@
 	.ms-board-refusal,
 	.ms-event-compare-note,
 	.ms-dist-step,
-	.ms-dist-strip {
+	.ms-dist-strip,
+	.ms-vec-step {
 		display: none;
 	}
 }
@@ -1258,6 +1259,154 @@
 	text-align: start;
 }
 
+/* ── VectorBoard2D: vectors on a whole-number grid (decision 0014) ──
+ * Arrows are ink, told apart by label and line style (a solid, b dashed). Exactly one element is ochre at a time,
+ * drawn in Mafs code; pink and blue never appear. The plane stays square so a right angle looks like one. */
+.ms-vec {
+	padding: 0.75rem 8px 1rem;
+}
+
+.ms-vec-status,
+.ms-vec-feedback {
+	margin: 0 0 0.75rem;
+	font-size: 0.9375rem;
+	line-height: 1.5;
+	color: var(--ms-board-ink);
+}
+
+.ms-vec-feedback {
+	margin: 0.75rem 0 0;
+	font-weight: 600;
+}
+
+/* The plane, then the readouts and the table: the content column is never wide enough for both side by side. */
+.ms-vec-body {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 1rem;
+}
+
+/* Square, so Mafs' "contain" aspect ratio draws 90° as 90°; the CSS reserves the height before hydration. */
+.ms-vec-plane {
+	position: relative;
+	inline-size: 100%;
+	max-inline-size: 440px;
+	aspect-ratio: 1;
+}
+
+.ms-vec-side {
+	display: grid;
+	align-content: start;
+	gap: 0.75rem;
+	min-inline-size: 0;
+}
+
+.ms-vec-readouts .ms-board-readout,
+.ms-vec-lists .ms-board-readout {
+	margin: 0.15rem 0;
+}
+
+.ms-vec-table {
+	margin: 0;
+	border-collapse: collapse;
+	font-size: 0.9375rem;
+	font-variant-numeric: tabular-nums;
+	color: var(--ms-board-ink);
+}
+
+.ms-vec-table caption {
+	padding-block-end: 0.25rem;
+	font-weight: 600;
+	text-align: start;
+}
+
+.ms-vec-table th,
+.ms-vec-table td {
+	padding: 0.2rem 0.5rem 0.2rem 0;
+	border-block-end: 1px solid var(--ms-board-axis);
+	text-align: start;
+	white-space: nowrap;
+}
+
+/* The row linked to its arrow on the plane: weight and an underline, not ochre, which the plane keeps for one element. */
+.ms-vec-table tr.is-linked th {
+	text-decoration: underline;
+	text-decoration-thickness: 2px;
+	text-underline-offset: 3px;
+}
+
+.ms-vec-stepper {
+	display: inline-grid;
+	grid-template-columns: 44px 2.25rem 44px;
+	align-items: center;
+	gap: 2px;
+}
+
+.ms-vec-value {
+	font: 600 1rem var(--ms-font-mono);
+	text-align: center;
+}
+
+.ms-vec-step {
+	inline-size: 44px;
+	block-size: 44px;
+	padding: 0;
+	border: 1px solid var(--ms-board-edge);
+	border-radius: 4px;
+	background: transparent;
+	color: var(--ms-board-ink);
+	font: 600 1.125rem var(--ms-font-ui);
+	cursor: pointer;
+}
+
+.ms-vec-step:hover {
+	border-color: var(--ms-board-ink);
+}
+
+.ms-vec-step[aria-disabled='true'] {
+	color: var(--ms-board-ink-muted);
+	border-style: dashed;
+	cursor: not-allowed;
+}
+
+/* Shown instead of the Length column on narrow boards (the 399px container rule). */
+.ms-vec-length-lines {
+	display: none;
+	font-size: 0.875rem;
+}
+
+.ms-vec-length-lines p {
+	margin: 0.15rem 0;
+}
+
+.ms-vec-table-wrap {
+	display: grid;
+	gap: 0.35rem;
+}
+
+/* Lists stage: column vectors with bracket sides. The brackets are notation, not a decorative rule. */
+.ms-vec-columns {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem 1.25rem;
+}
+
+.ms-vec-column {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	font-family: var(--ms-font-mono);
+}
+
+.ms-vec-column-body {
+	display: inline-grid;
+	justify-items: center;
+	padding: 0.1rem 0.45rem;
+	border-inline: 2px solid var(--ms-board-ink);
+	border-radius: 6px;
+	line-height: 1.35;
+}
+
 @container (max-width: 399px) {
 	.ms-event-grid {
 		--ms-event-header: 24px;
@@ -1275,6 +1424,33 @@
 
 	.ms-dist-step {
 		inline-size: 40px;
+	}
+
+	/* VectorBoard2D: the table never scrolls sideways. Steppers keep 44px at a 375px viewport and narrow toward
+	   36px at 320px (13cqi of the board), and the Length column moves into sentences under the table. */
+	.ms-vec-stepper {
+		grid-template-columns: clamp(36px, 13cqi, 44px) 1.5rem clamp(36px, 13cqi, 44px);
+	}
+
+	.ms-vec-step {
+		inline-size: clamp(36px, 13cqi, 44px);
+	}
+
+	.ms-vec-table th,
+	.ms-vec-table td {
+		padding-inline-end: 0.25rem;
+	}
+
+	.ms-vec-table tbody th {
+		white-space: normal;
+	}
+
+	.ms-vec-table .ms-vec-length {
+		display: none;
+	}
+
+	.ms-vec-length-lines {
+		display: block;
 	}
 }
 
@@ -1308,8 +1484,24 @@
 	.ms-choice-option:has(input:focus-visible),
 	.ms-dist-step:focus-visible,
 	.ms-dist-goal-line:focus-visible,
-	.ms-dist-feedback:focus-visible {
+	.ms-dist-feedback:focus-visible,
+	.ms-vec-step:focus-visible,
+	.ms-vec-feedback:focus-visible {
 		outline-color: Highlight;
+	}
+
+	/* SVG strokes aren't forced, so the vector plane maps its tokens to system colors; Mafs' variables follow. */
+	.ms-vec {
+		--ms-board-ink: CanvasText;
+		--ms-board-ink-muted: GrayText;
+		--ms-attention: Highlight;
+		--ms-board: Canvas;
+		--ms-board-grid: GrayText;
+		--ms-board-axis: CanvasText;
+	}
+
+	.ms-vec-column-body {
+		border-color: CanvasText;
 	}
 
 	.ms-event-cell.is-a {

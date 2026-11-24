@@ -1406,6 +1406,7 @@ const announcerRun = () => {
 	const vs = await import('../src/components/react/vectorBoard/setups.ts');
 	const vst = await import('../src/components/react/vectorBoard/state.ts');
 	const vd = await import('../src/components/react/vectorBoard/describe.ts');
+	const { readFileSync, readdirSync } = await import('node:fs');
 	const runVec = (setupId, ...actions) => actions.reduce(vst.reducer, vst.initialState(setupId));
 	const step = (id, axis, direction) => ({ type: 'step', id, axis, direction });
 	const steps = (id, axis, direction, count) => Array.from({ length: count }, () => step(id, axis, direction));
@@ -1598,7 +1599,8 @@ const announcerRun = () => {
 	assert.equal(vd.announcementFor(guessEast, step('guess', 'x', 1)), "Your guess can't go further east: the board ends at 5.");
 	assert.equal(vd.stepperName(guessEast, 'guess', 'x', 1), 'Move your guess 1 east');
 	assert.equal(vd.stepperName(guessEast, 'a', 'y', -1), 'Move a 1 south');
-	assert.equal(vd.stepperGroupName(guessEast, 'a'), 'Move a');
+	assert.equal(vd.stepperGroupName(guessEast, 'a', 'x'), 'Move a east or west');
+	assert.equal(vd.stepperGroupName(guessEast, 'guess', 'y'), 'Move your guess north or south');
 
 	// Check verdicts, word for word.
 	const checkTrip = (guess) => runVec('trips-add', moveTo('guess', guess), { type: 'check' });
@@ -1678,6 +1680,10 @@ const announcerRun = () => {
 	assert.deepEqual(vd.readoutLines(tripPreset('there-and-back')), ['a = (3, 2), b = (−3, −2), a + b = (0, 0).', 'Both trips: you end where you started. a + b = (0, 0), the zero vector.']);
 	assert.equal(vd.ochreElement(tripPreset('there-and-back')), null);
 	assert.ok(vd.planeLabels(tripPreset('there-and-back')).some((label) => label.text === 'zero vector'));
+	// When b runs straight back along a, their labels sit on opposite sides of the shared line.
+	const backLabels = vd.planeLabels(tripPreset('there-and-back'));
+	const labelAt = (labels, id) => labels.find((label) => label.id === id).at;
+	assert.ok(vm.cross([3, 2], labelAt(backLabels, 'a')) * vm.cross([3, 2], labelAt(backLabels, 'b')) < 0);
 	assert.deepEqual(vd.readoutLines(tripPreset('same-direction')), ['a = (2, 1), b = (2, 1), a + b = (4, 2).', 'Both trips point the same way, so here the lengths do add: √5 + √5 = √20 ≈ 4.47.']);
 	assert.deepEqual(vd.readoutLines(tripPreset('square-corner')), ['a = (3, 0), b = (0, 4), a + b = (3, 4).', "Length of a + b: 5. The two trips' lengths add to 3 + 4 = 7."]);
 	assert.deepEqual(vd.readoutLines(vst.reducer(tripPreset('there-and-back'), { type: 'stage', stage: 'trips' })).at(-1), 'Both trips: you end where you started.');
@@ -1783,6 +1789,11 @@ const announcerRun = () => {
 		"Into the rails: 3. That part doesn't move the cart.",
 	]);
 	assert.ok(vd.planeLabels(vst.reducer(cartDone, { type: 'preset', id: 'longer-track' })).some((label) => label.text === 'b, length 2'));
+	// On the tilted track the push's label goes below it, away from the track, and the shadow's label sits inside the
+	// triangle the push makes with the track.
+	const tiltedLabels = vd.planeLabels(vst.reducer(cartDone, { type: 'preset', id: 'tilted-track' }));
+	assert.ok(labelAt(tiltedLabels, 'a')[1] < 0);
+	assert.ok(vm.cross([4, 3], labelAt(tiltedLabels, 'shadow')) < 0);
 	// On the tilted track a push near (5, 5) throws its shadow past the edge, and the readout says so.
 	const offBoard = vd.readoutLines(runVec('cart-push', moveTo('a', [3, 4]), { type: 'check' }, { type: 'preset', id: 'tilted-track' }, moveTo('a', [5, 5])))[0];
 	assert.ok(offBoard.endsWith('The shadow runs past the edge of the board.'), offBoard);
@@ -1862,6 +1873,13 @@ const announcerRun = () => {
 				assert.ok(!/(?:\d|c)\s?·\s?a/.test(text), `${id}: a scalar multiple written with · in "${text}"`);
 			}
 		}
+	}
+	// The board's files never use the μ or σ colors, and never render KaTeX.
+	const vectorFiles = ['src/components/react/VectorBoard2D.tsx', ...readdirSync('src/components/react/vectorBoard').map((name) => `src/components/react/vectorBoard/${name}`)];
+	for (const file of vectorFiles) {
+		const source = readFileSync(file, 'utf8');
+		assert.ok(!/\bmu\b|sigma|--ms-mu|--ms-sigma/.test(source), `${file} uses a μ or σ color`);
+		assert.ok(!source.includes('<LaTeX'), `${file} renders KaTeX`);
 	}
 }
 
