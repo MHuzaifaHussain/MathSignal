@@ -92,6 +92,18 @@ A labeled slider for the tray, built on Base UI's Slider. Props: `label`, `value
 ### `TrayChoice`
 A segmented choice for the tray: a fieldset of native radios styled as buttons, so arrow keys and screen readers work natively. Props: `legend`, `options` (`{ value, label }[]`), `value`, `onChange`. The selected option is shown by fill and weight, never by color alone.
 
+### Guided pieces (`src/components/react/guided/`)
+Small modules every guided board composes in its tray ([decision 0013](../decisions/0013-shared-board-modules.md)), so Check, stages, presets, refusals and announcements behave the same on every board. `Board` itself knows nothing about them. None of them holds wording: labels, legends and reasons come from the board's `describe.ts`.
+
+| Piece | What it does |
+|---|---|
+| `guided.ts` | Pure rules, checked by `npm run check:boards`. `recordCheck(progress, passed, mode)` returns the new `{ checked, failedChecks }` to spread into the board's state: `'retry'` counts a miss and lets the reader try again, `'once'` reveals on any committed answer (a one-shot guess). It throws if Check has already passed. `canShowAnswer` is true after `CHECKS_BEFORE_ANSWER` (2) wrong Checks. `stageAllowed(stage, { stages, waitsForCheck, covered })` holds back stages that would give the answer away |
+| `useAnnouncer()` | Returns `[announcement, announce]`: pass `announcement` to `Board`, and call `announce(text)` when an interaction ends, or `announce(text, KEYBOARD_COMMIT_DELAY_MS)` for a burst of key presses. The region empties and refills 50 ms later, so a repeated message is spoken again, and a newer message replaces one still waiting. The timing lives in the pure `announcer.ts` |
+| `CheckButtons` | Check until it passes, then nothing; "Show the answer" once `canShowAnswer` is true. Props: `progress`, `checkLabel`, `showAnswerLabel`, `onCheck`, `onShowAnswer`. Move focus to the verdict sentence when they disappear |
+| `StageChoice` | A `TrayChoice` (usually legend "Show as") that offers only the stages `isAllowed` lets through, and draws nothing when fewer than two are left. Stages are left out, never shown disabled |
+| `PresetButtons` | One labeled group of preset buttons: `label` (the group's name), `caption` (short visible text, hidden from screen readers), `presets`, `onPick`. Pass `activeId` when a preset stays selected (`aria-pressed`); pass `refusalId` while presets are refused |
+| `refusedBy(reasonId)`, `RefusalNote` | A refused control stays focusable and pressable (`aria-disabled`, never `disabled`) and points at a `RefusalNote` with the visible reason through `aria-describedby`. The board's own handler decides what a refused press says. Notes are hidden in print with the controls they explain |
+
 ### `NormalDistribution`, `LinearRegression`, `BayesTheorem`
 Concept boards. Each composes `Board`, Mafs, `plotColors`, and `TraySlider`s.
 
@@ -110,6 +122,7 @@ A sample space as a table of outcomes (decision 0011). One prop: `setup`, the id
 - **Goal setups** (`coins-build`): presets and readouts stay locked until the reader passes **Check**, which names the specific mistake (HT marked without TH). "Show the answer" appears after two wrong Checks.
 - **Weights mode** (`die-pour`): six cups poured from a jug of 12 units, for the probability axioms. Impossible pours are refused with a visible reason.
 - **Condition mode** (`dice-condition`, `kids-condition`): a "Shrink the world to B" switch rules out every outcome outside B (muted, struck through, "Ruled out" in its name), and the readout gives P(A | B) beside P(A). The switch is refused while B is empty, with the visible reason "Undefined: B can't happen (probability 0)." `kids-condition` is fixed data (a class of 12 children in a list layout without headers), so its cells can be read but not toggled.
+- Check, "Show the answer", the "Show as" choice, the presets, the refusal notes and the live region are the guided pieces above.
 - All math and copy live in pure modules (`model.ts`, `describe.ts`, `state.ts`) checked by `npm run check:boards`. Try every setup at `/lab/event-space/` in the dev server.
 
 ### `DistributionBoard`
@@ -127,7 +140,7 @@ The reader gives each outcome a number with a − / + pair. Outcomes that share 
 - **Balance setup** (`candy-balance`): an ochre pencil under the chart, moved by dragging the strip under the axis or with the tray's "Pencil position" slider. The plank stays level while the pencil moves. **"Balance it"** locks in the guess, shows the pink μ and tips the plank a fixed 6 degrees toward the heavy side, and a sentence always says which way and why. The − / + steppers are refused until then. Presets start a new game: the pencil parks and μ hides again.
 - **Spread setup** (`candy-spread`): fixed values, with μ shown from the start. A "Show the spread" switch draws the distance arms and the blue σ. Switching presets while it is on keeps the previous σ as a dashed ghost for comparison.
 - **Limits:** `validateSetup` allows at most 7 tile columns and 4 presets, so the board fits at 375px. On balance setups it also requires every preset's mean (and the opening values') to be a step the pencil can land on, and on spread setups that μ ± σ stays on the axis.
-- **HTML board rules:** the board renders HTML inside the unchanged `Board`, never passes `onInteractionEnd` or `handleLabels`, and owns its live region. Discrete pages never load Mafs. Island CSS lives under the `.ms-dist-*` section of `components.css`.
+- **HTML board rules:** the board renders HTML inside the unchanged `Board`, never passes `onInteractionEnd` or `handleLabels`, and owns its live region through `useAnnouncer`. Check, stages, presets and refusals use the guided pieces above, as on EventSpace. Discrete pages never load Mafs. Island CSS lives under the `.ms-dist-*` section of `components.css`.
 - All math and copy live in pure modules (`model.ts`, `describe.ts`, `state.ts`) checked by `npm run check:boards`. Try every setup at `/lab/distribution-board/` in the dev server.
 
 ## Code

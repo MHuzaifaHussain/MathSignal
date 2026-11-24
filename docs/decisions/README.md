@@ -18,3 +18,4 @@ Format: context, decision, consequences, alternatives considered. Number them in
 | [0010](0010-american-english.md) | American English | Accepted |
 | [0011](0011-eventspace-html-board.md) | EventSpace, the first HTML board | Accepted |
 | [0012](0012-distribution-board.md) | DistributionBoard, the second HTML board | Accepted |
+| [0013](0013-shared-board-modules.md) | Shared guided board modules | Accepted |
