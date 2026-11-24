@@ -368,6 +368,7 @@
 	.ms-event-locked-note,
 	.ms-dist-step,
 	.ms-dist-presets,
+	.ms-dist-note,
 	.ms-dist-strip {
 		display: none;
 	}
