@@ -2486,9 +2486,9 @@ const announcerRun = () => {
 	assert.deepEqual(vst.reducer(alignDone, moveTo('b', [5, 5])).b, [4, 4]);
 	assert.equal(vd.refusalText(alignDone, { kind: 'limit', id: 'b', axis: 'y', direction: 1 }), "b can't go further north: its entries stay between −4 and 4.");
 
-	// Plane labels stay inside the plane at every position the handles can reach, at the narrowest plane (a 320px
-	// phone) and the widest (440px). fitLabel moves a label that would cross the edge, never the arrow it names.
-	const PLANE_SIZES = [280, 440];
+	// Plane labels stay inside the plane at every position the handles can reach, at the narrowest plane (about 270px
+	// on a 320px phone) and the widest (440px). fitLabel moves a label that would cross the edge, never the arrow it names.
+	const PLANE_SIZES = [270, 440];
 	const labelFits = (label, size) => {
 		const fitted = vm.fitLabel(label.at, label.away, label.text, size);
 		const [left, right] = vm.fittedLabelSpan(fitted, label.text, size);
