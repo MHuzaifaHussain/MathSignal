@@ -20,7 +20,7 @@ The week-3 probability pages (random variables and distributions, then expectati
 
 ## Consequences
 - The site has three kinds of board: Mafs plots, EventSpace tables and DistributionBoard bar charts with steppers. `components.md`, `math-plots-code.md` and `accessibility.md` document the new one.
-- Stage and lock code now exists in two boards. A third board must lift it into `Board` first, rather than copy it again.
+- Stage and lock code now exists in two boards. A third board must lift it into `Board` first, rather than copy it again. (Superseded: the shared pieces became composable modules instead of `Board` props, see [0013](0013-shared-board-modules.md).)
 - Exact fractions hold only while every intermediate stays a safe integer. A page that outgrows that, such as a binomial with a large `n`, switches its readouts to "≈" decimals by design, and the guard throws if a setup reaches the limit by mistake.
 - The covered chart and the level plank make the board harder to explore casually. That is intended: the lesson is the reader's prediction, and the answer waits for it.
 - Buttons in normal tab order, not `role="grid"`, carry the steppers, which avoids the open screen-reader question recorded in 0011. A manual pass with NVDA and VoiceOver is still needed before the week-3 pages ship.
