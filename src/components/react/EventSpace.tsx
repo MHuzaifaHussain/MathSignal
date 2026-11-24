@@ -1,7 +1,12 @@
-import { useCallback, useEffect, useId, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useReducer, useRef } from "react";
 import Board from "./Board";
 import TrayChoice from "./TrayChoice";
 import { KEYBOARD_COMMIT_DELAY_MS } from "./boardTiming";
+import CheckButtons from "./guided/CheckButtons.tsx";
+import PresetButtons from "./guided/PresetButtons.tsx";
+import { RefusalNote, refusedBy } from "./guided/refusal.tsx";
+import StageChoice from "./guided/StageChoice.tsx";
+import useAnnouncer from "./guided/useAnnouncer.ts";
 import CupRow from "./eventSpace/CupRow.tsx";
 import OutcomeGrid from "./eventSpace/OutcomeGrid.tsx";
 import WrongModelTiles from "./eventSpace/WrongModelTiles.tsx";
@@ -9,11 +14,9 @@ import { simulate } from "./eventSpace/model.ts";
 import { SHRINK_REFUSAL, STAGE_LABELS, additivityLine, announcementFor, feedbackLine, jugLine, markedLine, presetLabel, readoutLines, setsLine, statusLine, tossLine, totalLine } from "./eventSpace/describe.ts";
 import { SCENARIOS } from "./eventSpace/scenarios.ts";
 import { getSetup, type SetupId } from "./eventSpace/setups.ts";
-import { CHECKS_BEFORE_ANSWER, initialState, isLocked, reducer, shrinkBlocked, stageAllowed, type Action, type EventKey, type LookAt, type Stage } from "./eventSpace/state.ts";
+import { initialState, isLocked, reducer, shrinkBlocked, stageAllowed, type Action, type EventKey, type LookAt, type Stage } from "./eventSpace/state.ts";
 
 const LOCKED_REASON = "Check your answer first";
-/** Gap between emptying and refilling the live region, so a repeated message is spoken again. */
-const REANNOUNCE_GAP_MS = 50;
 /** Tosses per press of "Toss 100". */
 const TOSS_BATCH = 100;
 const CUPS_NOTE = "The cups are drawn the same size. The water in them is the probability, not the cup.";
@@ -39,25 +42,12 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
   const setup = getSetup(setupId);
   const scenario = SCENARIOS[setup.scenario];
   const [state, dispatch] = useReducer(reducer, setupId, initialState);
-  const [announcement, setAnnouncement] = useState("");
+  const [announcement, announce] = useAnnouncer();
   const statusId = useId();
   const lockedReasonId = useId();
   const shrinkReasonId = useId();
   const lastAction = useRef<Action | null>(null);
-  const announceTimer = useRef<number | undefined>(undefined);
-  const repeatTimer = useRef<number | undefined>(undefined);
   const feedbackRef = useRef<HTMLParagraphElement>(null);
-
-  /** Says `text` in the live region, even when it matches the last message (a repeat would otherwise be silent). */
-  const announce = useCallback((text: string, delay = 0) => {
-    window.clearTimeout(announceTimer.current);
-    window.clearTimeout(repeatTimer.current);
-    announceTimer.current = window.setTimeout(() => {
-      // Empty the region first, then fill it a moment later, so screen readers treat it as new text.
-      setAnnouncement("");
-      repeatTimer.current = window.setTimeout(() => setAnnouncement(text), REANNOUNCE_GAP_MS);
-    }, delay);
-  }, []);
 
   const send = useCallback((action: Action) => {
     lastAction.current = action;
@@ -73,13 +63,6 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
     // Check and "Show the answer" disappear once the answer is in, so keyboard focus moves to the feedback.
     if ((action.type === "check" || action.type === "show-answer") && state.checked) feedbackRef.current?.focus();
   }, [state, announce]);
-  useEffect(
-    () => () => {
-      window.clearTimeout(announceTimer.current);
-      window.clearTimeout(repeatTimer.current);
-    },
-    [],
-  );
 
   const locked = isLocked(state);
   const feedback = feedbackLine(state);
@@ -91,41 +74,29 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
   const cannotShrink = setup.mode === "condition" && shrinkBlocked(state);
   const tosses = tossLine(state);
   const sets = setsLine(state);
-  const stageOptions = STAGE_OPTIONS.filter((option) => stageAllowed(state, option.value));
   const showWrongModel = state.wrongModel && Boolean(scenario.wrongModel);
-  /** A button that is shown but refused until Check passes on a goal setup. */
-  const lockable = (onPress: () => void) => ({
-    "aria-disabled": locked || undefined,
-    "aria-describedby": locked ? lockedReasonId : undefined,
-    onClick: () => (locked ? announce(`${LOCKED_REASON}.`) : onPress()),
-  });
-
-  const presetButtons = (key: EventKey) => (
-    <div className="ms-event-presets" role="group" aria-label={`Presets for event ${key}`}>
-      <span className="ms-event-presets-label">{key}:</span>
-      {setup.events[key]?.presets.map((preset) => (
-        <button key={preset} type="button" className="ms-board-button" {...lockable(() => send({ type: "preset", event: key, preset }))}>
-          {presetLabel(scenario, preset)}
-        </button>
-      ))}
-    </div>
-  );
+  /** Refused until Check passes on a goal setup: the button stays pressable, and a press only says why. */
+  const lockedRefusalId = locked ? lockedReasonId : null;
+  const unlessLocked = (onPress: () => void) => (locked ? announce(`${LOCKED_REASON}.`) : onPress());
 
   const tray = (
     <>
-      {setup.goal && !state.checked && (
-        <button type="button" className="ms-board-button ms-board-button-primary" onClick={() => send({ type: "check" })}>
-          Check
-        </button>
+      {setup.goal && (
+        <CheckButtons
+          progress={state}
+          checkLabel="Check"
+          showAnswerLabel="Show the answer"
+          onCheck={() => send({ type: "check" })}
+          onShowAnswer={() => send({ type: "show-answer" })}
+        />
       )}
-      {setup.goal && !state.checked && state.failedChecks >= CHECKS_BEFORE_ANSWER && (
-        <button type="button" className="ms-board-button" onClick={() => send({ type: "show-answer" })}>
-          Show the answer
-        </button>
-      )}
-      {stageOptions.length > 1 && (
-        <TrayChoice legend="Show as" options={stageOptions} value={state.stage} onChange={(stage) => send({ type: "stage", stage })} />
-      )}
+      <StageChoice
+        legend="Show as"
+        options={STAGE_OPTIONS}
+        isAllowed={(stage) => stageAllowed(state, stage)}
+        value={state.stage}
+        onChange={(stage) => send({ type: "stage", stage })}
+      />
       {editableKeys.length > 1 && (
         <TrayChoice
           legend="Editing"
@@ -136,7 +107,15 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
       )}
       {setup.lookAt && <TrayChoice legend="Look at" options={LOOK_AT_OPTIONS} value={state.lookAt} onChange={(lookAt) => send({ type: "look", lookAt })} />}
       {presetKeys.map((key) => (
-        <div key={key}>{presetButtons(key)}</div>
+        <div key={key}>
+          <PresetButtons
+            label={`Presets for event ${key}`}
+            caption={key}
+            presets={(setup.events[key]?.presets ?? []).map((preset) => ({ id: preset, label: presetLabel(scenario, preset) }))}
+            refusalId={lockedRefusalId}
+            onPick={(preset) => unlessLocked(() => send({ type: "preset", event: key, preset }))}
+          />
+        </div>
       ))}
       {setup.mode === "condition" && (
         <>
@@ -144,22 +123,22 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
             type="button"
             role="switch"
             aria-checked={state.shrink}
-            aria-disabled={cannotShrink || undefined}
-            aria-describedby={cannotShrink ? shrinkReasonId : undefined}
+            {...refusedBy(cannotShrink ? shrinkReasonId : null)}
             className="ms-board-button ms-board-switch"
             onClick={() => send({ type: "shrink", on: !state.shrink })}
           >
             Shrink the world to B
           </button>
-          {cannotShrink && (
-            <p id={shrinkReasonId} className="ms-event-note-line">
-              {SHRINK_REFUSAL}
-            </p>
-          )}
+          {cannotShrink && <RefusalNote id={shrinkReasonId}>{SHRINK_REFUSAL}</RefusalNote>}
         </>
       )}
       {setup.toss && (
-        <button type="button" className="ms-board-button" {...lockable(() => send({ type: "toss", results: simulate(scenario.outcomes, TOSS_BATCH, Math.random) }))}>
+        <button
+          type="button"
+          className="ms-board-button"
+          {...refusedBy(lockedRefusalId)}
+          onClick={() => unlessLocked(() => send({ type: "toss", results: simulate(scenario.outcomes, TOSS_BATCH, Math.random) }))}
+        >
           Toss {TOSS_BATCH}
         </button>
       )}
@@ -169,27 +148,22 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
           role="switch"
           aria-checked={state.wrongModel}
           className="ms-board-button ms-board-switch"
-          {...lockable(() => send({ type: "wrong-model", on: !state.wrongModel }))}
+          {...refusedBy(lockedRefusalId)}
+          onClick={() => unlessLocked(() => send({ type: "wrong-model", on: !state.wrongModel }))}
         >
           {scenario.wrongModel.switchLabel}
         </button>
       )}
-      {locked && (
-        <p id={lockedReasonId} className="ms-event-note-line ms-event-locked-note">
-          {LOCKED_REASON}: presets and readouts unlock when your answer is right.
-        </p>
-      )}
+      {locked && <RefusalNote id={lockedReasonId}>{LOCKED_REASON}: presets and readouts unlock when your answer is right.</RefusalNote>}
       {setup.mode === "weights" && (
         <>
           <p className="ms-board-readout">{jugLine(state)}</p>
-          <div className="ms-event-presets" role="group" aria-label="Fill the cups">
-            <span className="ms-event-presets-label">Fill:</span>
-            {Object.keys(setup.weightPresets ?? {}).map((name) => (
-              <button key={name} type="button" className="ms-board-button" onClick={() => send({ type: "weight-preset", name })}>
-                {name}
-              </button>
-            ))}
-          </div>
+          <PresetButtons
+            label="Fill the cups"
+            caption="Fill"
+            presets={Object.keys(setup.weightPresets ?? {}).map((name) => ({ id: name, label: name }))}
+            onPick={(name) => send({ type: "weight-preset", name })}
+          />
           <div className="ms-event-readouts">
             <p className="ms-board-readout">{totalLine(state)}</p>
             <p className="ms-board-readout">{additivityLine(state)}</p>

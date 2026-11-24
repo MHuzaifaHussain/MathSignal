@@ -951,4 +951,103 @@ for (const setupId of ['candy-build', 'coins-heads', 'candy-balance', 'candy-spr
 }
 assert.ok(sweptStrings > 1000, `swept ${sweptStrings} strings`);
 
+// ---- Shared guided pieces (guided/guided.ts and guided/announcer.ts, decision 0013) ----
+const guided = await import('../src/components/react/guided/guided.ts');
+const { createAnnouncer, REANNOUNCE_GAP_MS } = await import('../src/components/react/guided/announcer.ts');
+
+// Check: a retry Check counts misses until it passes; a one-shot Check reveals on any answer.
+const notChecked = { checked: false, failedChecks: 0 };
+assert.equal(guided.CHECKS_BEFORE_ANSWER, 2);
+assert.deepEqual(guided.recordCheck(notChecked, true, 'retry'), { checked: true, failedChecks: 0 });
+assert.deepEqual(guided.recordCheck(notChecked, false, 'retry'), { checked: false, failedChecks: 1 });
+assert.deepEqual(guided.recordCheck({ checked: false, failedChecks: 1 }, true, 'retry'), { checked: true, failedChecks: 1 });
+assert.deepEqual(guided.recordCheck(notChecked, false, 'once'), { checked: true, failedChecks: 1 });
+assert.deepEqual(guided.recordCheck(notChecked, true, 'once'), { checked: true, failedChecks: 0 });
+// Checking again after a pass is a reducer bug, so it fails loudly instead of counting.
+assert.throws(() => guided.recordCheck({ checked: true, failedChecks: 0 }, false, 'retry'), /already passed/);
+
+// "Show the answer" is offered after two wrong Checks, and never once the answer is in.
+assert.equal(guided.canShowAnswer({ checked: false, failedChecks: 1 }), false);
+assert.equal(guided.canShowAnswer({ checked: false, failedChecks: 2 }), true);
+assert.equal(guided.canShowAnswer({ checked: false, failedChecks: 3 }), true);
+assert.equal(guided.canShowAnswer({ checked: true, failedChecks: 2 }), false);
+
+// Stages: none without stages; a stage that would give the answer away waits while the answer is covered.
+const symbolsWait = { stages: true, waitsForCheck: ['symbols'], covered: true };
+assert.equal(guided.stageAllowed('numbers', symbolsWait), true);
+assert.equal(guided.stageAllowed('symbols', symbolsWait), false);
+assert.equal(guided.stageAllowed('symbols', { ...symbolsWait, covered: false }), true);
+assert.equal(guided.stageAllowed('numbers', { ...symbolsWait, stages: false, covered: false }), false);
+
+// The announcer empties the live region, then refills it a moment later, so a repeated message is spoken again.
+const fakeClock = () => {
+	let now = 0;
+	let nextId = 1;
+	const timers = new Map();
+	return {
+		setTimeout: (run, ms) => {
+			timers.set(nextId, { run, at: now + ms });
+			return nextId++;
+		},
+		clearTimeout: (id) => timers.delete(id),
+		advance(ms) {
+			const end = now + ms;
+			for (;;) {
+				const due = [...timers.entries()].filter(([, timer]) => timer.at <= end).sort((a, b) => a[1].at - b[1].at)[0];
+				if (!due) break;
+				timers.delete(due[0]);
+				now = due[1].at;
+				due[1].run();
+			}
+			now = end;
+		},
+		pending: () => timers.size,
+	};
+};
+const announcerRun = () => {
+	const clock = fakeClock();
+	const shown = [];
+	return { clock, shown, announcer: createAnnouncer((text) => shown.push(text), clock) };
+};
+{
+	const { clock, shown, announcer } = announcerRun();
+	announcer.announce('P(A) = 3/4.');
+	clock.advance(0);
+	assert.deepEqual(shown, ['']);
+	clock.advance(REANNOUNCE_GAP_MS);
+	assert.deepEqual(shown, ['', 'P(A) = 3/4.']);
+	announcer.announce('P(A) = 3/4.');
+	clock.advance(REANNOUNCE_GAP_MS);
+	assert.deepEqual(shown, ['', 'P(A) = 3/4.', '', 'P(A) = 3/4.']);
+}
+{
+	// A burst waits for its pause, and a newer message replaces one still waiting: only the last is spoken.
+	const { clock, shown, announcer } = announcerRun();
+	announcer.announce('Marked 1.', 600);
+	clock.advance(300);
+	announcer.announce('Marked 2.', 600);
+	clock.advance(599);
+	assert.deepEqual(shown, []);
+	clock.advance(1 + REANNOUNCE_GAP_MS);
+	assert.deepEqual(shown, ['', 'Marked 2.']);
+}
+{
+	// A button pressed between emptying and refilling wins; the older text never appears.
+	const { clock, shown, announcer } = announcerRun();
+	announcer.announce('Old.');
+	clock.advance(REANNOUNCE_GAP_MS / 2);
+	announcer.announce('New.');
+	clock.advance(REANNOUNCE_GAP_MS * 2);
+	assert.deepEqual(shown, ['', '', 'New.']);
+}
+{
+	// Unmounting cancels whatever is still waiting.
+	const { clock, shown, announcer } = announcerRun();
+	announcer.announce('Never said.', 600);
+	announcer.cancel();
+	assert.equal(clock.pending(), 0);
+	clock.advance(1000);
+	assert.deepEqual(shown, []);
+}
+
 console.log('Board check passed.');

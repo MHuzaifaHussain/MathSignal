@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useId, useReducer, useRef, useState } from "react";
 import Board from "./Board";
-import TrayChoice from "./TrayChoice";
 import TraySlider from "./TraySlider";
 import { KEYBOARD_COMMIT_DELAY_MS } from "./boardTiming";
 import BarChart from "./distributionBoard/BarChart.tsx";
@@ -27,10 +26,13 @@ import {
   symbolLines,
 } from "./distributionBoard/describe.ts";
 import { getSetup, type SetupId } from "./distributionBoard/setups.ts";
-import { CHECKS_BEFORE_ANSWER, initialState, isCovered, parkedPencil, reducer, stageAllowed, type Action, type Stage } from "./distributionBoard/state.ts";
+import { initialState, isCovered, parkedPencil, reducer, stageAllowed, type Action, type Stage } from "./distributionBoard/state.ts";
+import CheckButtons from "./guided/CheckButtons.tsx";
+import PresetButtons from "./guided/PresetButtons.tsx";
+import { RefusalNote, refusedBy } from "./guided/refusal.tsx";
+import StageChoice from "./guided/StageChoice.tsx";
+import useAnnouncer from "./guided/useAnnouncer.ts";
 
-/** Gap between emptying and refilling the live region, so a repeated message is spoken again. */
-const REANNOUNCE_GAP_MS = 50;
 const STAGE_OPTIONS: readonly { value: Stage; label: string }[] = (["pictures", "numbers", "symbols"] as const).map((value) => ({ value, label: STAGE_LABELS[value] }));
 
 interface DistributionBoardProps {
@@ -46,7 +48,7 @@ interface DistributionBoardProps {
 export default function DistributionBoard({ setup: setupId }: DistributionBoardProps) {
   const setup = getSetup(setupId);
   const [state, dispatch] = useReducer(reducer, setupId, initialState);
-  const [announcement, setAnnouncement] = useState("");
+  const [announcement, announce] = useAnnouncer();
   const [linkedId, setLinkedId] = useState<string | null>(null);
   const statusId = useId();
   const parkedReasonId = useId();
@@ -54,22 +56,8 @@ export default function DistributionBoard({ setup: setupId }: DistributionBoardP
   /** True while the latest change is a pencil move, so a late slider commit can't talk over a button pressed since. */
   const pencilMoving = useRef(false);
   const stateRef = useRef(state);
-  const announceTimer = useRef<number | undefined>(undefined);
-  const repeatTimer = useRef<number | undefined>(undefined);
   const feedbackRef = useRef<HTMLParagraphElement>(null);
   const goalRef = useRef<HTMLParagraphElement>(null);
-
-  // A copy of EventSpace's announcer (its twin in EventSpace.tsx); the two are shared after a screen-reader pass.
-  /** Says `text` in the live region, even when it matches the last message (a repeat would otherwise be silent). */
-  const announce = useCallback((text: string, delay = 0) => {
-    window.clearTimeout(announceTimer.current);
-    window.clearTimeout(repeatTimer.current);
-    announceTimer.current = window.setTimeout(() => {
-      // Empty the region first, then fill it a moment later, so screen readers treat it as new text.
-      setAnnouncement("");
-      repeatTimer.current = window.setTimeout(() => setAnnouncement(text), REANNOUNCE_GAP_MS);
-    }, delay);
-  }, []);
 
   const send = useCallback((action: Action) => {
     pencilMoving.current = false;
@@ -110,13 +98,6 @@ export default function DistributionBoard({ setup: setupId }: DistributionBoardP
     if (answered || (action.type === "balance" && state.revealed)) feedbackRef.current?.focus();
     if (action.type === "check-goal" && state.goal === "passed") goalRef.current?.focus();
   }, [state, announce]);
-  useEffect(
-    () => () => {
-      window.clearTimeout(announceTimer.current);
-      window.clearTimeout(repeatTimer.current);
-    },
-    [],
-  );
 
   const covered = isCovered(state);
   const goal = goalLine(state);
@@ -125,22 +106,26 @@ export default function DistributionBoard({ setup: setupId }: DistributionBoardP
   const ghost = ghostLine(state);
   const readouts = [...readoutLines(state), ...meanLines(state), ...(pencil ? [pencil] : []), ...spreadLines(state), ...(ghost ? [ghost] : [])];
   const symbols = symbolLines(state);
-  const stageOptions = STAGE_OPTIONS.filter((option) => stageAllowed(state, option.value));
   const parked = state.pencil === parkedPencil(setup);
 
   const tray = (
     <>
-      {setup.kind === "goal" && !state.checked && (
-        <button type="button" className="ms-board-button ms-board-button-primary" onClick={() => send({ type: "check" })}>
-          {CONTROL_LABELS.check}
-        </button>
+      {setup.kind === "goal" && (
+        <CheckButtons
+          progress={state}
+          checkLabel={CONTROL_LABELS.check}
+          showAnswerLabel={CONTROL_LABELS.showAnswer}
+          onCheck={() => send({ type: "check" })}
+          onShowAnswer={() => send({ type: "show-answer" })}
+        />
       )}
-      {setup.kind === "goal" && !state.checked && state.failedChecks >= CHECKS_BEFORE_ANSWER && (
-        <button type="button" className="ms-board-button" onClick={() => send({ type: "show-answer" })}>
-          {CONTROL_LABELS.showAnswer}
-        </button>
-      )}
-      {stageOptions.length > 1 && <TrayChoice legend={CONTROL_LABELS.showAs} options={stageOptions} value={state.stage} onChange={(stage) => send({ type: "stage", stage })} />}
+      <StageChoice
+        legend={CONTROL_LABELS.showAs}
+        options={STAGE_OPTIONS}
+        isAllowed={(stage) => stageAllowed(state, stage)}
+        value={state.stage}
+        onChange={(stage) => send({ type: "stage", stage })}
+      />
       {setup.kind === "balance" && (
         <TraySlider
           label={CONTROL_LABELS.pencil}
@@ -159,17 +144,12 @@ export default function DistributionBoard({ setup: setupId }: DistributionBoardP
           <button
             type="button"
             className="ms-board-button ms-board-button-primary"
-            aria-disabled={parked || undefined}
-            aria-describedby={parked ? parkedReasonId : undefined}
+            {...refusedBy(parked ? parkedReasonId : null)}
             onClick={() => send({ type: "balance" })}
           >
             {CONTROL_LABELS.balance}
           </button>
-          {parked && (
-            <p id={parkedReasonId} className="ms-dist-note">
-              {refusalText(setup, { kind: "parked" })}
-            </p>
-          )}
+          {parked && <RefusalNote id={parkedReasonId}>{refusalText(setup, { kind: "parked" })}</RefusalNote>}
         </>
       )}
       {setup.kind === "spread" && (
@@ -184,16 +164,13 @@ export default function DistributionBoard({ setup: setupId }: DistributionBoardP
         </button>
       )}
       {!covered && setup.presets.length > 0 && (
-        <div className="ms-dist-presets" role="group" aria-label={CONTROL_LABELS.presets}>
-          <span className="ms-dist-presets-label" aria-hidden="true">
-            {CONTROL_LABELS.presets}:
-          </span>
-          {setup.presets.map((name) => (
-            <button key={name} type="button" className="ms-board-button" aria-pressed={state.activePreset === name} onClick={() => send({ type: "preset", name })}>
-              {name}
-            </button>
-          ))}
-        </div>
+        <PresetButtons
+          label={CONTROL_LABELS.presets}
+          caption={CONTROL_LABELS.presets}
+          presets={setup.presets.map((name) => ({ id: name, label: name }))}
+          activeId={state.activePreset}
+          onPick={(name) => send({ type: "preset", name })}
+        />
       )}
     </>
   );

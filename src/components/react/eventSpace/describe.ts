@@ -2,10 +2,11 @@
 // from the same functions, so what a screen reader hears always matches the screen.
 import { formatFraction, fraction, type Fraction } from '../boardMath.ts';
 import { approx, capitalize, equalsDecimal, joinWords, plural } from '../boardText.ts';
+import { CHECKS_BEFORE_ANSWER } from '../guided/guided.ts';
 import { complement, conditionalProbability, intersect, probability, union, WEIGHT_TOTAL, type Outcome, type OutcomeId } from './model.ts';
 import { eventMembers, type Scenario } from './scenarios.ts';
 import { CLEAR_PRESET } from './setups.ts';
-import { CHECKS_BEFORE_ANSWER, isLocked, scenarioOf, setupOf, type Action, type EventKey, type EventSpaceState, type Refusal, type Stage } from './state.ts';
+import { isLocked, scenarioOf, setupOf, type Action, type EventKey, type EventSpaceState, type Refusal, type Stage } from './state.ts';
 
 /** The "Show as" options' names, shown on the buttons and spoken when the view changes. */
 export const STAGE_LABELS: Readonly<Record<Stage, string>> = { picture: 'Pictures', letters: 'Letters', sets: 'Sets' };

@@ -2,6 +2,7 @@
 // (what stays covered before Check, when steppers are locked, what a preset re-parks) are all here, so they are
 // checked by scripts/check-boards.mjs.
 import type { OutcomeId } from '../eventSpace/model.ts';
+import * as guided from '../guided/guided.ts';
 import { distributionOf, standardDeviation, type Distribution } from './model.ts';
 import { outcomesOf } from './sources.ts';
 import { getSetup, presetValues, zipValues, type Setup, type SetupId } from './setups.ts';
@@ -54,8 +55,6 @@ export type Action =
 	| { type: 'spread'; on: boolean }
 	| { type: 'reset' };
 
-/** Wrong Checks before the "Show the answer" button appears. */
-export const CHECKS_BEFORE_ANSWER = 2;
 /** Where the parked pencil sits, under no bar: half a step left of 0. Its k is −W/2. */
 export const PARKED = -0.5;
 
@@ -108,7 +107,7 @@ export function distributionNow(state: DistributionState): Distribution {
 
 /** Symbols comes last on goal setups, so it waits for the match. */
 export function stageAllowed(state: DistributionState, stage: Stage): boolean {
-	return setupOf(state).stages && !(stage === 'symbols' && isCovered(state));
+	return guided.stageAllowed(stage, { stages: setupOf(state).stages, waitsForCheck: ['symbols'], covered: isCovered(state) });
 }
 
 /** Why a − / + would be refused right now, or null if it would go through. */
@@ -155,9 +154,10 @@ function checkCard(setup: Setup, state: DistributionState, card: readonly number
 	const wrong = outcomesOf(setup.source)
 		.map((outcome, index) => ({ id: outcome.id, set: state.values[outcome.id], card: card[index] }))
 		.filter((entry) => entry.set !== entry.card);
-	if (wrong.length === 0) return { ...state, checked: true, feedback: { kind: 'match' }, goal: openedGoal(setup), refusal: null };
+	const progress = guided.recordCheck(state, wrong.length === 0, 'retry');
+	if (wrong.length === 0) return { ...state, ...progress, feedback: { kind: 'match' }, goal: openedGoal(setup), refusal: null };
 	const feedback: Feedback = wrong.length === 1 ? { kind: 'one-wrong', ...wrong[0] } : { kind: 'several-wrong', ids: wrong.map((entry) => entry.id) };
-	return { ...state, failedChecks: state.failedChecks + 1, feedback, refusal: null };
+	return { ...state, ...progress, feedback, refusal: null };
 }
 
 function applyPreset(setup: Setup, state: DistributionState, name: string): DistributionState {
@@ -198,7 +198,7 @@ export function reducer(state: DistributionState, action: Action): DistributionS
 		case 'check':
 			return setup.card && !state.checked ? checkCard(setup, state, setup.card) : state;
 		case 'show-answer': {
-			if (!setup.card || state.checked || state.failedChecks < CHECKS_BEFORE_ANSWER) return state;
+			if (!setup.card || !guided.canShowAnswer(state)) return state;
 			return { ...withValues(state, zipValues(setup, setup.card), null), checked: true, feedback: { kind: 'shown' }, goal: openedGoal(setup) };
 		}
 		case 'check-goal':

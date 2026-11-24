@@ -365,10 +365,9 @@
 	.ms-runner-bar,
 	.ms-cup-buttons,
 	.ms-event-presets,
-	.ms-event-locked-note,
+	.ms-board-presets,
+	.ms-board-refusal,
 	.ms-dist-step,
-	.ms-dist-presets,
-	.ms-dist-note,
 	.ms-dist-strip {
 		display: none;
 	}
@@ -433,7 +432,7 @@
 
 .ms-choice-option:has(input:checked),
 .ms-board-switch[aria-checked='true'],
-.ms-dist-presets .ms-board-button[aria-pressed='true'] {
+.ms-board-presets .ms-board-button[aria-pressed='true'] {
 	border-color: var(--ms-board-ink);
 	background-color: var(--ms-board);
 	font-weight: 600;
@@ -601,7 +600,7 @@
 }
 
 .ms-event-presets,
-.ms-dist-presets {
+.ms-board-presets {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
@@ -609,13 +608,13 @@
 }
 
 .ms-event-presets-label,
-.ms-dist-presets-label {
+.ms-board-presets-label {
 	font-size: 0.9375rem;
 	font-weight: 600;
 }
 
 .ms-event-note-line,
-.ms-dist-note {
+.ms-board-refusal {
 	flex-basis: 100%;
 	margin: 0;
 	font-size: 0.875rem;
@@ -1280,7 +1279,7 @@
 	/* The selected option and an "on" switch keep a visible state when fills are dropped. */
 	.ms-choice-option:has(input:checked),
 	.ms-board-switch[aria-checked='true'],
-	.ms-dist-presets .ms-board-button[aria-pressed='true'] {
+	.ms-board-presets .ms-board-button[aria-pressed='true'] {
 		forced-color-adjust: none;
 		border-color: Highlight;
 		background-color: Highlight;

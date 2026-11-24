@@ -12,11 +12,12 @@
 import { addFractions, compareFractions, formatFraction, fraction, toNumber, type Fraction } from '../boardMath.ts';
 import { capitalize, equalsDecimal, joinWords, plural } from '../boardText.ts';
 import type { OutcomeId } from '../eventSpace/model.ts';
+import { CHECKS_BEFORE_ANSWER } from '../guided/guided.ts';
 import { formatNumber } from '../plotColors.ts';
 import { classifyGuess, mean, standardDeviation, torqueSign, variance, type Bar, type Distribution } from './model.ts';
 import { ALL_ZERO, presetValues, type Setup } from './setups.ts';
 import { outcomesOf, type SourceId } from './sources.ts';
-import { CHECKS_BEFORE_ANSWER, distributionNow, isCovered, setupOf, type Action, type DistributionState, type Refusal, type Stage } from './state.ts';
+import { distributionNow, isCovered, setupOf, type Action, type DistributionState, type Refusal, type Stage } from './state.ts';
 
 /** The "Show as" options' names, shown on the buttons and spoken when the view changes. */
 export const STAGE_LABELS: Readonly<Record<Stage, string>> = { pictures: 'Pictures', numbers: 'Numbers', symbols: 'Symbols' };

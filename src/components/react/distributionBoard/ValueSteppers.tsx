@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { RefusalNote, refusedBy } from "../guided/refusal.tsx";
 import { OutcomeFace } from "./BarChart.tsx";
 import { refusalText, rowText, stepperHeaders, stepperName } from "./describe.ts";
 import type { Setup } from "./setups.ts";
@@ -44,8 +45,7 @@ export default function ValueSteppers({ setup, state, describedBy, linkedId, onL
         type="button"
         className="ms-dist-step"
         aria-label={stepperName(state, id, direction)}
-        aria-disabled={reason ? true : undefined}
-        aria-describedby={reason ? reasonIds[reason] : undefined}
+        {...refusedBy(reason ? reasonIds[reason] : null)}
         onClick={() => send({ type: "step", id, direction })}
       >
         <span aria-hidden="true">{STEP_SYMBOLS[direction]}</span>
@@ -91,9 +91,9 @@ export default function ValueSteppers({ setup, state, describedBy, linkedId, onL
         );
       })}
       {shownReasons.map((kind) => (
-        <p key={kind} id={reasonIds[kind]} className="ms-dist-note">
+        <RefusalNote key={kind} id={reasonIds[kind]}>
           {refusalText(setup, { kind })}
-        </p>
+        </RefusalNote>
       ))}
     </div>
   );

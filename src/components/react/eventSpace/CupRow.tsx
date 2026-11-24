@@ -1,4 +1,5 @@
 import { useId } from "react";
+import { RefusalNote, refusedBy } from "../guided/refusal.tsx";
 import { WEIGHT_TOTAL } from "./model.ts";
 import { cupName, refusalText } from "./describe.ts";
 import type { Scenario } from "./scenarios.ts";
@@ -29,8 +30,7 @@ export default function CupRow({ state, scenario, send }: CupRowProps) {
         type="button"
         className="ms-cup-button"
         aria-label={`${direction === 1 ? "Pour one unit into" : "Pour one unit out of"} cup ${label}`}
-        aria-disabled={reason ? true : undefined}
-        aria-describedby={reason ? reasonIds[reason] : undefined}
+        {...refusedBy(reason ? reasonIds[reason] : null)}
         onClick={() => send({ type: "pour", id: outcomeId, direction })}
       >
         <span aria-hidden="true">{symbol}</span>
@@ -76,10 +76,10 @@ export default function CupRow({ state, scenario, send }: CupRowProps) {
         </tbody>
       </table>
       {shownReasons.map((reason) => (
-        <p key={reason} id={reasonIds[reason]} className="ms-event-note-line">
+        <RefusalNote key={reason} id={reasonIds[reason]}>
           {reason === "cup-empty" ? "Empty cups can't be poured out: " : "Nothing left to pour in: "}
           {refusalText(reason)}
-        </p>
+        </RefusalNote>
       ))}
       {state.refusal && (
         <p className="ms-event-feedback">

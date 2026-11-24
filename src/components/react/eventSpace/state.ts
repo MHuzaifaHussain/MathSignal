@@ -1,6 +1,7 @@
 // EventSpace's state and every transition, as a pure reducer. React only stores the result; the rules
 // (what is locked before Check, what Reset restores, which pours are refused) are all here, so they are
 // checked by scripts/check-boards.mjs.
+import * as guided from '../guided/guided.ts';
 import { checkGoal, pour, type GoalResult, type OutcomeId } from './model.ts';
 import { SCENARIOS, eventMembers, type Scenario } from './scenarios.ts';
 import { CLEAR_PRESET, getSetup, type Setup, type SetupId } from './setups.ts';
@@ -49,8 +50,6 @@ export type Action =
 	| { type: 'stage'; stage: Stage }
 	| { type: 'shrink'; on: boolean };
 
-/** Wrong Checks before the "Show the answer" button appears. */
-export const CHECKS_BEFORE_ANSWER = 2;
 /** Grids up to this size are small enough to draw as pictures (coin faces) and to show toss counts in the cells. */
 export const SMALL_GRID_MAX_CELLS = 12;
 const EMPTY: ReadonlySet<OutcomeId> = new Set();
@@ -112,7 +111,7 @@ export function isLocked(state: EventSpaceState): boolean {
 /** Whether this setup offers a view: only setups with stages, and pictures only on small grids. */
 export function stageAllowed(state: EventSpaceState, stage: Stage): boolean {
 	const setup = setupOf(state);
-	if (!setup.stages) return false;
+	if (!guided.stageAllowed(stage, { stages: setup.stages, waitsForCheck: [], covered: isLocked(state) })) return false;
 	const scenario = SCENARIOS[setup.scenario];
 	return stage !== 'picture' || (Boolean(scenario.pictureFaces) && scenario.outcomes.length <= SMALL_GRID_MAX_CELLS);
 }
@@ -158,12 +157,10 @@ export function reducer(state: EventSpaceState, action: Action): EventSpaceState
 		case 'check': {
 			if (!setup.goal || state.checked) return state;
 			const feedback = checkGoal(state.events.A, eventMembers(scenario, setup.goal), scenario.mirrorOf);
-			return feedback.kind === 'correct'
-				? { ...state, checked: true, feedback }
-				: { ...state, failedChecks: state.failedChecks + 1, feedback };
+			return { ...state, ...guided.recordCheck(state, feedback.kind === 'correct', 'retry'), feedback };
 		}
 		case 'show-answer': {
-			if (!setup.goal || state.checked || state.failedChecks < CHECKS_BEFORE_ANSWER) return state;
+			if (!setup.goal || !guided.canShowAnswer(state)) return state;
 			return { ...state, events: { ...state.events, A: eventMembers(scenario, setup.goal) }, checked: true, feedback: { kind: 'shown' } };
 		}
 		case 'reset':
