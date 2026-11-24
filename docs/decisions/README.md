@@ -20,3 +20,4 @@ Format: context, decision, consequences, alternatives considered. Number them in
 | [0012](0012-distribution-board.md) | DistributionBoard, the second HTML board | Accepted |
 | [0013](0013-shared-board-modules.md) | Shared guided board modules | Accepted |
 | [0014](0014-vector-board.md) | VectorBoard2D, a Mafs board for vectors | Accepted |
+| [0015](0015-descriptive-stats-board.md) | DescriptiveStats, the third HTML board | Accepted |

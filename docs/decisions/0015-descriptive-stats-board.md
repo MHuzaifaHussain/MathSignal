@@ -1,0 +1,38 @@
+# 0015: DescriptiveStats, the third HTML board
+
+Status: accepted, 2026-11-25
+
+## Context
+The descriptive statistics pages (descriptive statistics; mean, median and mode; variance and standard deviation; box plots and the IQR; standardization against min–max scaling; outliers by z-score against the IQR rule) need one board for short lists of whole numbers: 9 children's heights, 9 cafe customers' savings, two tests' marks, 9 pumpkins. The lessons are ordering and counting ("who is in the middle"), what one extreme value does to each summary, and how two definitions of "unusual" disagree. Six pages also need the same definitions everywhere, because NumPy, pandas and spreadsheets disagree on several of them.
+
+## Decision
+- **An HTML board on a linear, value-positioned axis.** Like EventSpace (0011) and DistributionBoard (0012), it renders HTML inside `Board` and owns its announcements. Dots sit at their value, not in one column per value, because heights from 110 to 170 cm would not fit at 320px as columns. Ties stack; two values closer than a dot's width at 320px step up a row, so nothing overlaps and the layout is the same at every width. The chart is `aria-hidden`; a native data table, a summary table (Statistic, Value, How it is computed) and full-sentence readouts are its equivalents, and all of them print.
+- **Six setups**, chosen with one `setup` prop and validated while the page renders: `class-lineup`, `cafe-millionaire`, `class-spread`, `class-box`, `marks-scaling`, `pumpkin-outliers`. `validateSetup` refuses a box setup without n = 4k + 1 values (so the quartiles land on children), a line-up whose middle child isn't one child, a slider or preset that would carry a dot past the axis unless the setup declares an off-chart lane, more than 4 presets, and any two different values closer than 5px on a 320px screen, where they could no longer be told apart. That last rule is why the pumpkin axis runs 0–30 kg, with a lane for heavier giants, and not 0–60.
+- **The guided pieces come from decision 0013**, which settled the stage, Check, preset, refusal and announcer lift that 0012 asked the third board to make. Two more pieces are shared now that a third board draws them: `usePointerScrub` (DistributionBoard's pencil drag, renamed) and `chartMarks` (`MeanMark`, `MeanGuide`, `SigmaSpan`), so μ and σ look identical on every HTML board. `isPerfectSquare` and an exact fraction `squareRoot` moved into `boardMath`, replacing two copies.
+- **Nothing gives the answer away before the reader commits.** On `class-lineup` the mean, median, mode, the summary table and the "Place in line" column are not rendered until Check finds the middle child; Symbols waits for Check by being left out of the stage choice. Check is refused, with a visible reason, until a child is picked, and "Show the answer" appears after two misses. The "Line them up" switch stays; the spec's "As they arrived" and "Lined up" presets are dropped, because they set the same boolean.
+- **Definitions pinned for every statistics page**, all in the pure `model.ts`:
+  - quantiles use NumPy's default linear method (Hyndman and Fan type 7, also pandas' `describe()`);
+  - σ divides by n, as `np.std` does; s divides by n − 1, as pandas' `.std()` does;
+  - "no mode" when every value appears equally often (pandas' `mode()` lists every value instead);
+  - Tukey fences at 1.5 × IQR, with a strict test: a value on a fence is not flagged;
+  - the z cutoff is 2 or 3;
+  - with σ dividing by n, no |z| among n values reaches √(n − 1), so with 9 pumpkins |z| > 3 can never flag anything. `check-boards` asserts the bound for every giant from 8 to 60 kg rather than citing it.
+- **Exact where the answer is a fraction.** Statistics are fractions; a square root is exact when the variance is a square of a fraction ("√64 = 8 cm", z = 1) and otherwise a rounded float written with "≈" ("σ ≈ 7.68 kg").
+- **Notation (owner decision, 2026-11-24).** μ and σ, dividing by n, describe the whole group in view, in pink and blue. `class-spread` has an "Also as a sample" switch that adds x̄ and s, dividing by n − 1, beside σ, never instead of it, for the variance page that explains why there are two versions. x̄ is pink and s is blue because pink means the mean and blue the spread everywhere on the site; s is drawn as a blue double line and labeled "s", so it never relies on color to differ from σ.
+- **Color.** No new tokens. Pink is only the mean (the triangle, its guide, a "mean … →" edge arrow, the z row's 0); blue is only σ and s (spans and the z row's ±1). Order statistics are ink and told apart by shape: the median is a diamond and the word "median", quartiles a 2px box, whiskers 1px muted ink, fences dashed, the IQR flag a solid ring with an "IQR" tag, the z flag a dashed ring with a "z" tag. Ochre marks one "look here" dot (the pick, the child being moved, Ana's marks) and is never used for text or a statistic. `class-lineup` shows pink only after Check and no blue.
+- **One number format.** Whole numbers of 1,000 or more are grouped ("1,206 / 9"); an exact amount drops trailing zeros ("103.6"); a rounded one shows two decimals after "≈"; a min–max score reads unreduced, reduced, then rounded ("15/18 = 5/6 ≈ 0.83").
+
+## Consequences
+- The site has four kinds of board: Mafs plots, EventSpace tables, DistributionBoard bar charts and DescriptiveStats dot plots. `components.md`, `math-plots-code.md` and `accessibility.md` document the new one.
+- Every board breaks foundations.md's "about 480px tall" limit at 1280px, mostly because of the two tables. This is an open deviation for the owner, as for VectorBoard2D: accept it, or fold the tables into a "Show as table" disclosure.
+- The narrow-tray fix that lets every tray slider fit at 320px (the tray is now a size container and the slider's label takes its own line under 400px) came out of this board's checks and applies to every board.
+- The notation registry still lacks median, Q1, Q3, IQR, n, x̄ and s. The board's labels use those plain names; the entries are page work. The registry's `selection` entry also uses `s`, which will clash with the sample standard deviation when that entry is added.
+- The descriptive statistics cheat sheet can import `model.ts` at build time for its tables, so its numbers match the board without shipping an island.
+- A manual NVDA and VoiceOver pass over all four HTML boards is still owed.
+
+## Alternatives considered
+- **A Mafs plot with movable points.** No table semantics, prints and reflows worse, about 31 KB gzip more, and nine or more draggable handles each need a name.
+- **A DistributionBoard mode.** Its model maps outcomes to weighted values with exact probabilities; raw lists, a changing n, order statistics and off-chart values would bend both its model and its one-column-per-value axis.
+- **Observable Plot.** A new dependency, deferred to the sampling board, with no accessible equivalent of its own.
+- **Copying the guided pieces a third time.** Decision 0012 forbids it; 0013 supplied them.
+- **Validating a maximum stack height instead of a minimum spacing.** A slider can stack every child on one value, so any stack limit below n would refuse a reachable state; the spacing rule catches the real failure, values that can't be told apart.
