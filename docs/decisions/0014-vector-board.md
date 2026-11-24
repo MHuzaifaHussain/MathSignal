@@ -20,7 +20,7 @@ The vectors and dot product pages need one board for arrows on a plane: two trip
 
 ## Consequences
 - Later vector pages (span, linear independence, orthogonality, embeddings) add setups to this board rather than new boards.
-- The table makes the board taller than the earlier Mafs boards: plane, readouts, table and tray stack in one column, because the content column is never wide enough to put the table beside a 440px plane.
+- **The board breaks the "at most about 480px tall" limit in [foundations.md](../design-system/foundations.md).** Measured on the lab page, `trips-add` is about 865px tall before Check and 1130px after it at a 1280px viewport, and about 890px and 1320px at 375px; the other setups run from about 740px to 970px. The square plane alone is up to 440px, and the coordinate table under it is the dependable keyboard path, so the two can't share 480px, and the content column is never wide enough to put the table beside the plane. Plane, readouts, table and tray therefore stack in one column. Whether to accept this, or to trade the table for a collapsible "Show as table" fold, is the owner's call.
 - The "product" miss on `trips-add` (a guess of (3, 6)) can't be reached on the opening, because (3, 6) is off the board. Its sentence is kept and pinned in `check:boards` for a later setup that can reach it.
 - The manual pass the definition of done asks for (NVDA and VoiceOver on handles and steppers, Windows high contrast) is still to do; forced colors map the board's ink, muted ink and ochre to system colors, because SVG strokes aren't forced. The other Mafs boards share that gap.
 
