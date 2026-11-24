@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { Circle, Coordinates, Mafs, MovablePoint, Plot, Polyline, Text, Vector } from "mafs";
 import type { vec } from "mafs";
 import { plotColors } from "../plotColors";
-import { ARC_RADIUS, handlesFor, ochreElement, planeLabels, showsArc, showsRightAngle, type TableRow } from "./describe.ts";
+import { ARC_RADIUS, cartShadow, handlesFor, ochreElement, planeLabels, showsArc, showsRightAngle, type TableRow } from "./describe.ts";
 import { VIEW_LIMIT, VIEW_PADDING, add, cross, isZero, lengthSquared, numberText, scale, shadowTip, snapInto, subtract, type Vec2 } from "./model.ts";
 import { handleBox, handleIds, setupOf, type HandleId, type VectorState } from "./state.ts";
 
@@ -140,8 +140,8 @@ function ScaleScene({ state, ochre }: SceneProps) {
 
 function CartScene({ state, ochre }: SceneProps) {
   const goal = setupOf(state).goal;
-  const tip = shadowTip(state.b, state.a);
-  const shadowShown = state.checked && tip !== null && !isZero(state.a);
+  const shadow = cartShadow(state);
+  const railsShown = shadow !== null && shadow.onBoard && cross(state.b, state.a) !== 0;
   return (
     <>
       {goal && (
@@ -149,12 +149,12 @@ function CartScene({ state, ochre }: SceneProps) {
       )}
       <Arrow tip={state.b} dashed />
       <Arrow tip={state.a} />
-      {shadowShown && tip && (
+      {shadow && (
         <>
-          {!isZero(tip) && <Segment from={[0, 0]} to={tip} color={ochreOr(ochre === "shadow")} weight={OCHRE_WEIGHT} />}
-          {cross(state.b, state.a) !== 0 && <Segment from={tip} to={state.a} color={plotColors.inkMuted} weight={2} dotted />}
-          {cross(state.b, state.a) !== 0 && !isZero(tip) && (
-            <RightAngle corner={tip} first={unit(scale(-1, tip))} second={unit(subtract(state.a, tip))} />
+          {!isZero(shadow.tip) && <Segment from={[0, 0]} to={shadow.tip} color={ochreOr(ochre === "shadow")} weight={OCHRE_WEIGHT} />}
+          {railsShown && <Segment from={shadow.tip} to={state.a} color={plotColors.inkMuted} weight={2} dotted />}
+          {railsShown && !isZero(shadow.tip) && (
+            <RightAngle corner={shadow.tip} first={unit(scale(-1, shadow.tip))} second={unit(subtract(state.a, shadow.tip))} />
           )}
         </>
       )}

@@ -1800,8 +1800,20 @@ const announcerRun = () => {
 	assert.ok(labelAt(tiltedLabels, 'a')[1] < 0);
 	assert.ok(vm.cross([4, 3], labelAt(tiltedLabels, 'shadow')) < 0);
 	// On the tilted track a push near (5, 5) throws its shadow past the edge, and the readout says so.
-	const offBoard = vd.readoutLines(runVec('cart-push', moveTo('a', [3, 4]), { type: 'check' }, { type: 'preset', id: 'tilted-track' }, moveTo('a', [5, 5])))[0];
+	const offBoardState = runVec('cart-push', moveTo('a', [3, 4]), { type: 'check' }, { type: 'preset', id: 'tilted-track' }, moveTo('a', [5, 5]));
+	const offBoard = vd.readoutLines(offBoardState)[0];
 	assert.ok(offBoard.endsWith('The shadow runs past the edge of the board.'), offBoard);
+	// The drawing matches: the shadow stops at the edge, and the line into the rails (past the edge too) and its label
+	// are left out. The true tip is (5.6, 4.2).
+	const near = (v, expected) => v.every((value, index) => Math.abs(value - expected[index]) < 1e-9);
+	assert.ok(near(vm.clipToView([5.6, 4.2]), [5, 3.75]));
+	assert.deepEqual(vm.clipToView([3, -4]), [3, -4]);
+	const offBoardShadow = vd.cartShadow(offBoardState);
+	assert.ok(near(offBoardShadow.tip, [5, 3.75]) && offBoardShadow.onBoard === false);
+	assert.ok(!vd.planeLabels(offBoardState).some((label) => label.id === 'rails'));
+	assert.ok(vd.planeLabels(offBoardState).every((label) => vm.withinView(label.at)));
+	assert.deepEqual(vd.cartShadow(cartDone), { tip: [3, 0], onBoard: true });
+	assert.equal(vd.cartShadow(cartOpen), null);
 	assert.equal(vd.handleAnnouncement(cartDone, 'a'), 'Your push: (3, 4), length 5. The cart gets 3 of it.');
 	assert.equal(vd.handleAnnouncement(vst.reducer(cartDone, moveTo('a', [-3, 4])), 'a'), 'Your push: (−3, 4), length 5. Its part along the track is −3: the cart rolls backward.');
 

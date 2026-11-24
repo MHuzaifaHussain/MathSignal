@@ -10,6 +10,7 @@ import {
 	VIEW_LIMIT,
 	add,
 	angleOf,
+	clipToView,
 	cross,
 	decimalText,
 	dot,
@@ -516,6 +517,17 @@ export function showsRightAngle(state: VectorState): boolean {
 	return state.checked && setupOf(state).kind === 'align' && angle !== null && 'exact' in angle && angle.exact === 90;
 }
 
+/**
+ * The cart's shadow as drawn after Check, or null before Check or for a zero push. On the tilted track a push near
+ * (5, 5) throws the true tip past the edge: the drawing then stops at the edge, and the line into the rails, which
+ * lies past the edge too, is left out (`onBoard` false). The readout says the shadow runs past the edge.
+ */
+export function cartShadow(state: VectorState): { tip: Vec2; onBoard: boolean } | null {
+	const tip = shadowTip(state.b, state.a);
+	if (!state.checked || !tip || isZero(state.a)) return null;
+	return { tip: clipToView(tip), onBoard: withinView(tip) };
+}
+
 /** Every text label drawn on the plane, in board ink. Before Check none of them names the answer. */
 export function planeLabels(state: VectorState): readonly PlaneLabel[] {
 	const setup = setupOf(state);
@@ -552,10 +564,10 @@ export function planeLabels(state: VectorState): readonly PlaneLabel[] {
 				const radius = Math.sqrt(goal.targetLengthSquared);
 				labels.push({ id: 'circle', text: `length ${numberText(radius)}`, at: [-radius * 0.72, radius * 0.72 + 0.35] });
 			}
-			const tip = shadowTip(b, a);
-			if (state.checked && tip && !isZero(a)) {
-				if (!isZero(tip)) labels.push(arrowLabel('shadow', 'moves the cart', ORIGIN, tip, pushSide));
-				if (!equals(tip, a)) labels.push(arrowLabel('rails', 'into the rails', tip, a, cross(b, a) > 0 ? -1 : 1));
+			const shadow = cartShadow(state);
+			if (shadow) {
+				if (!isZero(shadow.tip)) labels.push(arrowLabel('shadow', 'moves the cart', ORIGIN, shadow.tip, pushSide));
+				if (shadow.onBoard && !equals(shadow.tip, a)) labels.push(arrowLabel('rails', 'into the rails', shadow.tip, a, cross(b, a) > 0 ? -1 : 1));
 			}
 			break;
 		}

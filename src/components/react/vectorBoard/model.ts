@@ -46,6 +46,12 @@ export const clampToBox = (v: Vec2, box: Box): Vec2 => [clamp(v[0], box.min[0], 
 export const snapInto = (v: Vec2, box: Box): Vec2 => clampToBox(snapToGrid(v), box);
 export const withinView = (v: Vec2): boolean => inBox(v, symmetricBox(VIEW_LIMIT));
 
+/** Where a segment from the center to v reaches the edge of the view: v itself when it is on the board. */
+export function clipToView(v: Vec2): Vec2 {
+	const reach = Math.max(Math.abs(v[0]), Math.abs(v[1]));
+	return reach <= VIEW_LIMIT ? v : scale(VIEW_LIMIT / reach, v);
+}
+
 export type Angle = { exact: 0 | 45 | 90 | 135 | 180 } | { approx: number };
 
 /**
