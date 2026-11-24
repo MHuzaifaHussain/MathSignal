@@ -1650,6 +1650,10 @@ const announcerRun = () => {
 	assert.equal(dst.reducer(neighbor, { type: 'set-value', value: 7 }).activePreset, null);
 	assert.equal(dst.reducer(dst.reducer(neighbor, { type: 'newcomer', on: false }), { type: 'set-value', value: 20 }).newcomer, null, 'the slider waits while nobody new is in');
 	assert.equal(dst.reducer(neighbor, { type: 'preset', id: 'nobody' }).newcomer, null);
+	// The switch is named for the millionaire, so it always brings 1,000, not the neighbor seen last.
+	const backIn = [{ type: 'preset', id: 'nobody' }, { type: 'newcomer', on: true }].reduce(dst.reducer, neighbor);
+	assert.equal(backIn.newcomer, 1000);
+	assert.equal(backIn.activePreset, 'millionaire');
 
 	// pumpkin-outliers: with two giants the slider moves both, and n stays 9.
 	const twoGiants = run('pumpkin-outliers', { type: 'preset', id: 'two-giants' }, { type: 'set-value', value: 45 });

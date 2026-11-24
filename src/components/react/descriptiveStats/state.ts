@@ -28,10 +28,8 @@ export interface DescriptiveState extends guided.CheckProgress {
 	sample: boolean;
 	/** The previous preset's σ, drawn dashed so the reader can compare. */
 	ghost: { sigma: Root; preset: string } | null;
-	/** Newcomer setups: the newcomer's savings while they are in the cafe, or null. */
+	/** Newcomer setups: the newcomer's savings while they are in the cafe, or null. The slider shows it while they are in. */
 	newcomer: number | null;
-	/** Newcomer setups: the slider's value, kept while the newcomer is away. */
-	newcomerValue: number;
 	scale: Scale;
 	giant: number;
 	giants: 1 | 2;
@@ -85,7 +83,6 @@ export function initialState(setupId: SetupId): DescriptiveState {
 		sample: false,
 		ghost: null,
 		newcomer: null,
-		newcomerValue: setup.newcomerOpening ?? 0,
 		scale: 'raw',
 		giant: setup.kind === 'outliers' ? setup.opening[setup.opening.length - 1] : 0,
 		giants: 1,
@@ -138,8 +135,7 @@ function check(setup: Setup, state: DescriptiveState): DescriptiveState {
 
 function applyPreset(setup: Setup, state: DescriptiveState, preset: Preset): DescriptiveState {
 	if (setup.kind === 'newcomer') {
-		const on = preset.newcomer ?? null;
-		return { ...withValues(state, state.values, preset.id), newcomer: on, newcomerValue: on ?? state.newcomerValue };
+		return { ...withValues(state, state.values, preset.id), newcomer: preset.newcomer ?? null };
 	}
 	if (setup.kind === 'outliers' && preset.giant !== undefined && preset.giants !== undefined) {
 		return { ...withValues(state, pumpkins(preset.giant, preset.giants), preset.id), giant: preset.giant, giants: preset.giants };
@@ -151,6 +147,12 @@ function applyPreset(setup: Setup, state: DescriptiveState, preset: Preset): Des
 		if (previous) return { ...next, ghost: { sigma: populationSD(state.values), preset: previous.label } };
 	}
 	return next;
+}
+
+/** The switch always brings the newcomer the setup names (the millionaire), whatever the slider showed last. */
+function newcomerOpening(setup: Setup): number {
+	if (setup.newcomerOpening === undefined) throw new Error(`DescriptiveStats: setup "${setup.id}" has no newcomer to bring in.`);
+	return setup.newcomerOpening;
 }
 
 function clampToSlider(setup: Setup, value: number): number {
@@ -165,8 +167,8 @@ function setValue(setup: Setup, state: DescriptiveState, raw: number): Descripti
 		return withValues(state, state.values.map((height, child) => (child === state.selected ? value : height)), null);
 	}
 	if (setup.kind === 'newcomer') {
-		const value = clampToSlider(setup, raw);
-		return { ...withValues(state, state.values, null), newcomerValue: value, newcomer: state.newcomer === null ? null : value };
+		if (state.newcomer === null) return state;
+		return { ...withValues(state, state.values, null), newcomer: clampToSlider(setup, raw) };
 	}
 	if (setup.kind === 'outliers') {
 		const value = clampToSlider(setup, raw);
@@ -225,7 +227,7 @@ function transition(setup: Setup, state: DescriptiveState, action: Action): Desc
 			return setup.kind === 'spread' ? { ...state, sample: action.on, refusal: null } : state;
 		case 'newcomer':
 			if (setup.kind !== 'newcomer') return state;
-			return { ...withValues(state, state.values, null), newcomer: action.on ? state.newcomerValue : null };
+			return { ...withValues(state, state.values, null), newcomer: action.on ? newcomerOpening(setup) : null };
 		case 'scale':
 			return setup.kind === 'scaling' && SCALES.includes(action.scale) ? { ...state, scale: action.scale, refusal: null } : state;
 		case 'cutoff':

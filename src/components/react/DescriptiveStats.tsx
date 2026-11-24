@@ -48,7 +48,7 @@ function sliderValue(state: DescriptiveState): number | null {
     case "spread":
       return state.values[state.selected];
     case "newcomer":
-      return state.newcomer === null ? null : state.newcomerValue;
+      return state.newcomer;
     case "outliers":
       return state.giant;
     default:
