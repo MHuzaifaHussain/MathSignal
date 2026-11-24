@@ -831,6 +831,33 @@ assert.equal(distSay.announcementFor(spreadFresh, { type: 'spread', on: false })
 const notEditable = dist.reducer(spreadOn, { type: 'step', id: '1', direction: 1 });
 assert.equal(distSay.announcementFor(notEditable, { type: 'step', id: '1', direction: 1 }), 'These values are fixed. Switch presets to compare.');
 
+// Chart and stepper labels: the words drawn on the (hidden) chart and above the steppers.
+assert.equal(distSetups.TILT_DEGREES, 6);
+assert.equal(distSetups.MAX_BAR_COLUMNS, 21);
+assert.deepEqual(distSay.stepperHeaders(candyBuild, 'numbers'), { outcome: 'Face', value: 'Candies', group: 'Candies for each face' });
+assert.deepEqual(distSay.stepperHeaders(candyBuild, 'symbols'), { outcome: 'ω', value: 'X(ω)', group: 'Candies for each face' });
+assert.deepEqual(distSay.stepperHeaders(distSetups.getSetup('coins-heads'), 'pictures'), { outcome: 'Outcome', value: 'X', group: 'X for each outcome' });
+assert.deepEqual(distSay.chartLabels(buildFresh), { axis: 'candies', shares: [], pencil: null, mu: null, sigma: null, ghost: null, arms: [] });
+assert.deepEqual(distSay.chartLabels(cardMatched), {
+	axis: 'candies',
+	shares: [{ value: 0, text: '3/6' }, { value: 1, text: '2/6' }, { value: 5, text: '1/6' }],
+	pencil: null, mu: null, sigma: null, ghost: null, arms: [],
+});
+assert.equal(distSay.chartLabels(balanceFresh).pencil, 'your pencil');
+assert.equal(distSay.chartLabels(balanceFresh).mu, null);
+assert.equal(distSay.chartLabels(balancedAt('One big prize', 9)).mu, 'μ = 1');
+assert.equal(distSay.chartLabels(balancedAt('Plain die', 21)).mu, 'μ = 3.5');
+assert.equal(distSay.chartLabels(distAt('candy-balance', [0, 0, 0, 1, 1, 5], { pencil: 7, revealed: true })).mu, 'μ = 7/6');
+assert.equal(distSay.chartLabels(spreadFresh).mu, 'μ = 2');
+assert.equal(distSay.chartLabels(spreadFresh).sigma, null);
+assert.deepEqual(distSay.chartLabels(spreadOn).arms, [{ value: 1, text: '1 away' }, { value: 3, text: '1 away' }]);
+assert.equal(distSay.chartLabels(spreadOn).sigma, 'σ ≈ 0.82');
+assert.equal(distSay.chartLabels(ghosted).sigma, 'σ = 2');
+assert.equal(distSay.chartLabels(ghosted).ghost, 'Before: σ ≈ 0.82');
+assert.deepEqual(distSay.chartLabels(ghosted).arms, [{ value: 0, text: '2 away' }, { value: 4, text: '2 away' }]);
+assert.equal(distSay.chartLabels(steadyOn).sigma, 'σ = 0');
+assert.deepEqual(distSay.chartLabels(steadyOn).arms, []);
+
 // Covered strings reveal nothing computed from the reader's values: no chance, fraction, bar or membership.
 const revealing = /P\(|\/| bar|holds/;
 for (const [setupId, steps] of [
@@ -852,6 +879,7 @@ for (const [setupId, steps] of [
 			assert.ok(!revealing.test(text), `${setupId} covered string reveals the grouping: ${text}`);
 		}
 		assert.deepEqual(distSay.tableRows(state), [], `${setupId}: no table while covered`);
+		assert.deepEqual(distSay.chartLabels(state).shares, [], `${setupId}: no bar shares while covered`);
 	}
 	assert.ok(coveredStates > trailing.length);
 }
@@ -867,6 +895,7 @@ const everyAction = (setup) => [
 	{ type: 'pencil', k: -3 }, { type: 'pencil', k: 6 }, { type: 'pencil', k: 18 }, { type: 'balance' },
 	{ type: 'spread', on: true }, { type: 'spread', on: false }, { type: 'reset' },
 ];
+const chartStrings = (labels) => [labels.axis, labels.pencil, labels.mu, labels.sigma, labels.ghost, ...labels.shares.map((share) => share.text), ...labels.arms.map((arm) => arm.text)];
 const everyString = (state) => {
 	const setup = dist.setupOf(state);
 	return [
@@ -878,6 +907,8 @@ const everyString = (state) => {
 		...outcomeIdsOf(setup).flatMap((id) => [distSay.rowText(state, id), distSay.stepperName(state, id, 1), distSay.stepperName(state, id, -1)]),
 		...['below-range', 'above-range', 'locked', 'parked', 'not-editable'].map((kind) => distSay.refusalText(setup, { kind })),
 		...Object.values(distSay.STAGE_LABELS),
+		...['pictures', 'numbers', 'symbols'].flatMap((stage) => Object.values(distSay.stepperHeaders(setup, stage))),
+		...chartStrings(distSay.chartLabels(state)),
 	].filter((text) => text !== null);
 };
 let sweptStrings = 0;
@@ -892,6 +923,10 @@ for (const setupId of ['candy-build', 'coins-heads', 'candy-balance', 'candy-spr
 		for (const action of everyAction(setup)) {
 			const next = dist.reducer(start, action);
 			for (const state of [next, dist.reducer(next, action)]) {
+				if (setup.kind === 'goal') {
+					const labels = distSay.chartLabels(state);
+					assert.ok(labels.mu === null && labels.sigma === null, `${setupId}: no μ or σ before they are taught`);
+				}
 				for (const text of [...everyString(state), distSay.announcementFor(state, action)]) {
 					assert.equal(typeof text, 'string');
 					assert.ok(!bannedWords.test(text), `${setupId} after ${action.type}: ${text}`);

@@ -40,6 +40,8 @@ interface SourceCopy {
 	unit: WordPair;
 	/** What X stands for in the status line. */
 	variable: string;
+	/** The steppers' value column, e.g. "Candies". */
+	valueHeader: string;
 	/** "wins / win" for faces, "has / have" for coin outcomes. */
 	verb: WordPair;
 	/** "face 6" and "faces 1, 2 and 3", or bare "HT and TH": die faces are numerals, so they need the word. */
@@ -65,6 +67,7 @@ const SOURCE_COPY: Readonly<Record<SourceId, SourceCopy>> = {
 	'one-die': {
 		unit: CANDIES,
 		variable: 'candies won',
+		valueHeader: 'Candies',
 		verb: WINS,
 		name: facesName,
 		assigned: (label, valueText) => `${capitalize(facesName([label]))} wins ${valueText}.`,
@@ -87,6 +90,7 @@ const SOURCE_COPY: Readonly<Record<SourceId, SourceCopy>> = {
 	'two-coins': {
 		unit: { one: 'head', many: 'heads' },
 		variable: 'number of heads',
+		valueHeader: 'X',
 		verb: { one: 'has', many: 'have' },
 		name: joinWords,
 		assigned: (label, valueText) => `${valueText} for ${label}.`,
@@ -502,6 +506,58 @@ export function ghostLine(state: DistributionState): string | null {
 	const now = standardDeviation(distributionNow(state));
 	const name = state.activePreset ? ` (${state.activePreset})` : '';
 	return `Before: σ ${sigmaValue(state.ghost.sigma)} (${state.ghost.preset}). Now: σ ${sigmaValue(now)}${name}.`;
+}
+
+// ---- Chart and stepper labels ----
+
+/** The steppers' column headers and group name; the Symbols view writes X as a function, ω ↦ X(ω). */
+export function stepperHeaders(setup: Setup, stage: Stage): { outcome: string; value: string; group: string } {
+	const { valueHeader } = copyOf(setup);
+	const group = `${valueHeader} for each ${setup.wording.outcomeWord}`;
+	if (stage === 'symbols') return { outcome: 'ω', value: 'X(ω)', group };
+	return { outcome: capitalize(setup.wording.outcomeWord), value: valueHeader, group };
+}
+
+export interface ChartLabels {
+	/** The axis unit, e.g. "candies". */
+	axis: string;
+	/** Each bar's count over the total, e.g. "3/6", under its column. Empty while covered. */
+	shares: { value: number; text: string }[];
+	/** The ochre wedge's label on balance setups. */
+	pencil: string | null;
+	/** "μ = 1" on the pink triangle, once μ is shown. */
+	mu: string | null;
+	/** "σ ≈ 0.82" on the blue span, while the spread is shown. */
+	sigma: string | null;
+	/** "Before: σ ≈ 0.82" on the dashed ghost span. */
+	ghost: string | null;
+	/** "1 away" on each dotted distance arm; bars at the mean get none. */
+	arms: { value: number; text: string }[];
+}
+
+/** Every word drawn on the chart. The chart is hidden from screen readers; the readouts say the same. */
+export function chartLabels(state: DistributionState): ChartLabels {
+	const setup = setupOf(state);
+	const axis = copyOf(setup).unit.many;
+	const empty: ChartLabels = { axis, shares: [], pencil: null, mu: null, sigma: null, ghost: null, arms: [] };
+	if (isCovered(state)) return empty;
+	const d = distributionNow(state);
+	const center = mean(d);
+	const spreadOn = setup.kind === 'spread' && state.spreadShown;
+	return {
+		...empty,
+		shares: d.bars.map((bar) => ({ value: bar.value, text: `${bar.weight}/${d.totalWeight}` })),
+		pencil: setup.kind === 'balance' ? 'your pencil' : null,
+		mu: setup.kind !== 'goal' && state.revealed ? `μ = ${shortAmount(center)}` : null,
+		sigma: spreadOn ? `σ ${sigmaValue(standardDeviation(d))}` : null,
+		ghost: spreadOn && state.ghost ? `Before: σ ${sigmaValue(state.ghost.sigma)}` : null,
+		arms: spreadOn
+			? d.bars
+					.map((bar) => ({ value: bar.value, distance: absolute(difference(fraction(bar.value, 1), center)) }))
+					.filter(({ distance }) => distance.numerator !== 0)
+					.map(({ value, distance }) => ({ value, text: `${shortAmount(distance)} away` }))
+			: [],
+	};
 }
 
 // ---- Steppers and refusals ----

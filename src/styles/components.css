@@ -78,6 +78,12 @@
 	.ms-chalk-note-short {
 		display: inline;
 	}
+
+	/* DistributionBoard stacks: steppers first, then the chart. Scoped under .ms-dist so it outranks the
+	   side-by-side rule declared later in this file. */
+	.ms-dist .ms-dist-body {
+		grid-template-columns: minmax(0, 1fr);
+	}
 }
 
 /* ── Tray slider ── */
@@ -359,7 +365,10 @@
 	.ms-runner-bar,
 	.ms-cup-buttons,
 	.ms-event-presets,
-	.ms-event-locked-note {
+	.ms-event-locked-note,
+	.ms-dist-step,
+	.ms-dist-presets,
+	.ms-dist-strip {
 		display: none;
 	}
 }
@@ -422,7 +431,8 @@
 }
 
 .ms-choice-option:has(input:checked),
-.ms-board-switch[aria-checked='true'] {
+.ms-board-switch[aria-checked='true'],
+.ms-dist-presets .ms-board-button[aria-pressed='true'] {
 	border-color: var(--ms-board-ink);
 	background-color: var(--ms-board);
 	font-weight: 600;
@@ -440,7 +450,8 @@
 }
 
 .ms-board-button[aria-disabled='true'],
-.ms-cup-button[aria-disabled='true'] {
+.ms-cup-button[aria-disabled='true'],
+.ms-dist-step[aria-disabled='true'] {
 	color: var(--ms-board-ink-muted);
 	border-style: dashed;
 	cursor: not-allowed;
@@ -588,19 +599,22 @@
 	pointer-events: none;
 }
 
-.ms-event-presets {
+.ms-event-presets,
+.ms-dist-presets {
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
 	gap: 0.25rem 0.5rem;
 }
 
-.ms-event-presets-label {
+.ms-event-presets-label,
+.ms-dist-presets-label {
 	font-size: 0.9375rem;
 	font-weight: 600;
 }
 
-.ms-event-note-line {
+.ms-event-note-line,
+.ms-dist-note {
 	flex-basis: 100%;
 	margin: 0;
 	font-size: 0.875rem;
@@ -747,6 +761,485 @@
 	cursor: pointer;
 }
 
+/* ── DistributionBoard: outcomes given values, stacked into bars (decision 0012) ──
+ * Bars, tiles, axis, plank and arms are ink. The pencil and the face-to-tile link are ochre; μ is pink, σ blue.
+ * Every mark also has a label or a shape, so nothing depends on color. */
+.ms-dist {
+	padding: 0.75rem 8px 1rem;
+}
+
+.ms-dist-status,
+.ms-dist-goal-line,
+.ms-dist-feedback {
+	margin: 0 0 0.75rem;
+	font-size: 0.9375rem;
+	line-height: 1.5;
+	color: var(--ms-board-ink);
+}
+
+.ms-dist-feedback {
+	margin: 0.75rem 0 0;
+	font-weight: 600;
+}
+
+.ms-dist-goal {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem 1rem;
+	margin: 0 0 0.75rem;
+}
+
+.ms-dist-goal-line {
+	flex: 1 1 16rem;
+	margin: 0;
+	font-weight: 600;
+}
+
+/* Steppers left, chart right; the 559px container rule stacks them. */
+.ms-dist-body {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: start;
+	gap: 1rem 1.5rem;
+}
+
+.ms-dist-steppers {
+	display: grid;
+	align-content: start;
+	gap: 4px;
+}
+
+.ms-dist-stepper-head,
+.ms-dist-row {
+	display: grid;
+	grid-template-columns: 2.5rem 44px 4rem 44px;
+	align-items: center;
+	gap: 4px;
+}
+
+.ms-dist-stepper-head {
+	padding-inline: 4px;
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: var(--ms-board-ink);
+}
+
+.ms-dist-stepper-head span:last-child {
+	grid-column: 2 / 5;
+	text-align: center;
+}
+
+.ms-dist-row {
+	padding-inline: 2px;
+	border: 2px solid transparent;
+	border-radius: 4px;
+}
+
+/* The face-to-tile link: highlighter fill and an ochre border, matched on the tile. */
+.ms-dist-row.is-linked {
+	border-color: var(--ms-attention);
+	background-color: var(--ms-highlight);
+}
+
+.ms-dist-row-face {
+	display: grid;
+	place-items: center;
+	font: 600 0.9375rem var(--ms-font-mono);
+	color: var(--ms-board-ink);
+}
+
+.ms-dist-step {
+	inline-size: 44px;
+	block-size: 44px;
+	padding: 0;
+	border: 1px solid var(--ms-board-edge);
+	border-radius: 4px;
+	background: transparent;
+	color: var(--ms-board-ink);
+	font: 600 1.125rem var(--ms-font-ui);
+	cursor: pointer;
+}
+
+.ms-dist-step:hover {
+	border-color: var(--ms-board-ink);
+}
+
+.ms-dist-row-value {
+	display: grid;
+	justify-items: center;
+	gap: 2px;
+	font: 600 1rem var(--ms-font-mono);
+	font-variant-numeric: tabular-nums;
+	color: var(--ms-board-ink);
+}
+
+.ms-dist-dots {
+	display: flex;
+	gap: 2px;
+}
+
+.ms-dist-dot {
+	inline-size: 5px;
+	block-size: 5px;
+	border-radius: 50%;
+	background-color: var(--ms-board-ink);
+	print-color-adjust: exact;
+}
+
+/* Pictures view: die pips and coin faces, CSS only. */
+.ms-dist-pips {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	grid-template-rows: repeat(3, 1fr);
+	gap: 1px;
+	inline-size: 80%;
+	block-size: 80%;
+}
+
+.ms-dist-row-face .ms-dist-pips {
+	box-sizing: border-box;
+	inline-size: 26px;
+	block-size: 26px;
+	padding: 2px;
+	border: 1.5px solid currentColor;
+	border-radius: 4px;
+}
+
+.ms-dist-pip {
+	border-radius: 50%;
+}
+
+.ms-dist-pip.is-on {
+	background-color: currentColor;
+	print-color-adjust: exact;
+}
+
+.ms-dist-coins {
+	display: flex;
+	gap: 1px;
+}
+
+.ms-dist-coin {
+	display: grid;
+	place-items: center;
+	inline-size: 12px;
+	block-size: 12px;
+	border: 1px solid currentColor;
+	border-radius: 50%;
+	font: 600 0.5625rem/1 var(--ms-font-ui);
+}
+
+.ms-dist-row-face .ms-dist-coin {
+	inline-size: 18px;
+	block-size: 18px;
+	font-size: 0.6875rem;
+}
+
+/* The chart's column is a container, so tiles size from the chart's own width. */
+.ms-dist-view {
+	min-inline-size: 0;
+	container-type: inline-size;
+}
+
+.ms-dist-covered {
+	display: grid;
+	place-items: center;
+	min-block-size: 12rem;
+	padding: 1rem;
+	border: 2px dashed var(--ms-board-axis);
+	border-radius: 4px;
+	text-align: center;
+}
+
+.ms-dist-covered p {
+	margin: 0;
+	font-size: 0.9375rem;
+	color: var(--ms-board-ink);
+}
+
+.ms-dist-chart {
+	--ms-dist-tile: min(28px, calc(100cqi / var(--ms-dist-cols) - 4px));
+	--ms-dist-pitch: calc(var(--ms-dist-tile) + 3px);
+	--ms-dist-plank: 4px;
+	position: relative;
+	color: var(--ms-board-ink);
+	font-family: var(--ms-font-ui);
+	print-color-adjust: exact;
+}
+
+.ms-dist-mark-row,
+.ms-dist-span-row {
+	position: relative;
+	block-size: 1.75rem;
+}
+
+.ms-dist-mark-label,
+.ms-dist-span-label,
+.ms-dist-arm-label,
+.ms-dist-pencil-label {
+	font: 600 0.8125rem/1.2 var(--ms-font-ui);
+	white-space: nowrap;
+}
+
+/* μ: a labeled pink triangle with a dashed pink guide down to the axis. */
+.ms-dist-mu {
+	position: absolute;
+	inset-block-end: 0;
+	left: var(--x);
+	display: grid;
+	justify-items: center;
+	transform: translateX(-50%);
+	color: var(--ms-mu);
+}
+
+.ms-dist-mu-triangle {
+	inline-size: 12px;
+	block-size: 10px;
+	fill: currentColor;
+}
+
+.ms-dist-mu-guide {
+	position: absolute;
+	inset-block: 0;
+	left: var(--x);
+	border-inline-start: 2px dashed var(--ms-mu);
+	transform: translateX(-1px);
+}
+
+/* σ: a capped span from μ − σ to μ + σ; at σ = 0 only one cap is left, a tick. The ghost is dashed ink. */
+.ms-dist-span {
+	position: absolute;
+	inset-block-end: 6px;
+	left: var(--from);
+	inline-size: calc(var(--to) - var(--from));
+	border-block-start: 2px solid currentColor;
+}
+
+.ms-dist-span::before,
+.ms-dist-span::after {
+	content: '';
+	position: absolute;
+	inset-block-start: -6px;
+	block-size: 10px;
+	border-inline-start: 2px solid currentColor;
+}
+
+.ms-dist-span::before {
+	left: -1px;
+}
+
+.ms-dist-span::after {
+	right: -1px;
+}
+
+.ms-dist-span.is-zero {
+	border-block-start-color: transparent;
+}
+
+.ms-dist-span.is-zero::after {
+	display: none;
+}
+
+.ms-dist-span-label {
+	position: absolute;
+	inset-block-end: 4px;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+.ms-dist-sigma {
+	color: var(--ms-sigma);
+}
+
+.ms-dist-ghost {
+	border-block-start-style: dashed;
+	color: var(--ms-board-ink);
+}
+
+.ms-dist-ghost::before,
+.ms-dist-ghost::after {
+	border-inline-start-style: dashed;
+}
+
+.ms-dist-stacks {
+	position: relative;
+	block-size: calc(var(--ms-dist-rows) * var(--ms-dist-pitch) + var(--ms-dist-plank) + 1.5rem);
+}
+
+/* The plank and its tiles tilt about the pencil, only after "Balance it". */
+.ms-dist-beam {
+	position: absolute;
+	inset: 0;
+	transform-origin: var(--pivot) 100%;
+	transform: rotate(var(--tilt));
+}
+
+.ms-dist-axis-line {
+	position: absolute;
+	inset-inline: 0;
+	bottom: 0;
+	block-size: 2px;
+	background-color: var(--ms-board-ink);
+	print-color-adjust: exact;
+}
+
+.ms-dist-beam.is-plank .ms-dist-axis-line {
+	block-size: var(--ms-dist-plank);
+	border-radius: 2px;
+}
+
+.ms-dist-tile {
+	position: absolute;
+	bottom: calc(var(--ms-dist-plank) + var(--row) * var(--ms-dist-pitch));
+	left: calc(var(--x) - var(--ms-dist-tile) / 2);
+	display: grid;
+	place-items: center;
+	box-sizing: border-box;
+	inline-size: var(--ms-dist-tile);
+	block-size: var(--ms-dist-tile);
+	border: 2px solid var(--ms-board-ink);
+	border-radius: 3px;
+	background-color: var(--ms-board-ink);
+	color: var(--ms-board);
+	font: 600 0.8125rem var(--ms-font-mono);
+	print-color-adjust: exact;
+}
+
+.ms-dist-tile.is-linked {
+	border-color: var(--ms-attention);
+	background-color: var(--ms-highlight);
+	color: var(--ms-board-ink);
+}
+
+/* Distance arms: dotted ink from μ to each bar, above its stack. */
+.ms-dist-arm {
+	position: absolute;
+	bottom: calc(var(--ms-dist-plank) + var(--row) * var(--ms-dist-pitch) + 6px);
+	left: var(--from);
+	inline-size: calc(var(--to) - var(--from));
+	border-block-start: 2px dotted var(--ms-board-ink);
+}
+
+.ms-dist-arm-label {
+	position: absolute;
+	bottom: 2px;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+.ms-dist-under {
+	position: relative;
+	padding-block-start: 14px;
+}
+
+/* On balance setups the pencil stands below the plank, tall enough that the tilted plank never reaches the axis
+ * numbers: at 6 degrees the far end drops at most sin 6° ≈ 0.105 of the chart's width. */
+.ms-dist-chart.is-balance .ms-dist-under {
+	padding-block-start: calc(11cqi + 14px);
+}
+
+/* The reader's pencil: a hollow ochre wedge, tip up under the plank, on an ochre post. */
+.ms-dist-pencil {
+	position: absolute;
+	inset-block-start: 1px;
+	left: var(--x);
+	display: grid;
+	justify-items: center;
+	line-height: 0;
+	transform: translateX(-50%);
+	color: var(--ms-attention);
+}
+
+.ms-dist-pencil::after {
+	content: '';
+	block-size: 11cqi;
+	border-inline-start: 2px solid currentColor;
+}
+
+.ms-dist-pencil-wedge {
+	inline-size: 14px;
+	block-size: 12px;
+	fill: none;
+	stroke: currentColor;
+	stroke-width: 2;
+}
+
+.ms-dist-ticks,
+.ms-dist-shares,
+.ms-dist-pencil-row {
+	position: relative;
+	block-size: 1.25rem;
+}
+
+.ms-dist-tick,
+.ms-dist-share {
+	position: absolute;
+	left: var(--x);
+	transform: translateX(-50%);
+	font: 500 0.8125rem var(--ms-font-mono);
+	font-variant-numeric: tabular-nums;
+}
+
+.ms-dist-pencil-label {
+	position: absolute;
+	left: clamp(2.5rem, var(--x), calc(100% - 2.5rem));
+	transform: translateX(-50%);
+}
+
+.ms-dist-unit {
+	margin: 0.25rem 0 0;
+	font-size: 0.8125rem;
+	text-align: end;
+	color: var(--ms-board-ink-muted);
+}
+
+/* Pointer drag for the pencil; the tray slider is its keyboard path. */
+.ms-dist-strip {
+	position: absolute;
+	inset: 0;
+	min-block-size: 44px;
+	cursor: ew-resize;
+	touch-action: none;
+}
+
+.ms-dist-symbols p {
+	margin: 0.5rem 0 0;
+	font: 500 0.9375rem var(--ms-font-mono);
+	color: var(--ms-board-ink);
+	overflow-wrap: anywhere;
+}
+
+.ms-dist-readouts {
+	margin-block-start: 0.75rem;
+}
+
+.ms-dist-readouts .ms-board-readout {
+	margin: 0.15rem 0;
+	overflow-wrap: anywhere;
+}
+
+.ms-dist-table {
+	margin: 0.75rem 0 0;
+	border-collapse: collapse;
+	font-size: 0.875rem;
+	font-variant-numeric: tabular-nums;
+	color: var(--ms-board-ink);
+}
+
+.ms-dist-table caption {
+	padding-block-end: 0.25rem;
+	font-weight: 600;
+	text-align: start;
+}
+
+.ms-dist-table th,
+.ms-dist-table td {
+	padding: 0.25rem 1rem 0.25rem 0;
+	border-block-end: 1px solid var(--ms-board-axis);
+	text-align: start;
+}
+
 @container (max-width: 399px) {
 	.ms-event-grid {
 		--ms-event-header: 24px;
@@ -755,18 +1248,38 @@
 	.ms-event-cell {
 		font-size: 0.8125rem;
 	}
+
+	/* Narrow boards: the steppers keep 44px height and give up width, never under 36px. */
+	.ms-dist-row,
+	.ms-dist-stepper-head {
+		grid-template-columns: 2rem 40px 3rem 40px;
+	}
+
+	.ms-dist-step {
+		inline-size: 40px;
+	}
 }
 
 @media (prefers-reduced-motion: no-preference) {
 	.ms-event-cell {
 		transition: background-color 120ms, border-color 120ms;
 	}
+
+	/* A tile slides to its new stack; the plank eases into its tilt. */
+	.ms-dist-tile {
+		transition: left 150ms ease, bottom 150ms ease;
+	}
+
+	.ms-dist-beam {
+		transition: transform 300ms ease;
+	}
 }
 
 @media (forced-colors: active) {
 	/* The selected option and an "on" switch keep a visible state when fills are dropped. */
 	.ms-choice-option:has(input:checked),
-	.ms-board-switch[aria-checked='true'] {
+	.ms-board-switch[aria-checked='true'],
+	.ms-dist-presets .ms-board-button[aria-pressed='true'] {
 		forced-color-adjust: none;
 		border-color: Highlight;
 		background-color: Highlight;
@@ -774,7 +1287,10 @@
 	}
 
 	.ms-event-cell:focus-visible,
-	.ms-choice-option:has(input:focus-visible) {
+	.ms-choice-option:has(input:focus-visible),
+	.ms-dist-step:focus-visible,
+	.ms-dist-goal-line:focus-visible,
+	.ms-dist-feedback:focus-visible {
 		outline-color: Highlight;
 	}
 
@@ -794,5 +1310,37 @@
 
 	.ms-cup-row td.is-a {
 		border-color: CanvasText;
+	}
+
+	/* DistributionBoard: fills vanish in forced colors, so tiles, dots, pips and the plank draw in CanvasText. */
+	.ms-dist-tile,
+	.ms-dist-dot,
+	.ms-dist-pip.is-on,
+	.ms-dist-axis-line {
+		forced-color-adjust: none;
+		background-color: CanvasText;
+	}
+
+	.ms-dist-tile {
+		border-color: CanvasText;
+		color: Canvas;
+	}
+
+	.ms-dist-tile .ms-dist-pip.is-on {
+		background-color: Canvas;
+	}
+
+	.ms-dist-tile.is-linked {
+		border-color: Highlight;
+		background-color: Canvas;
+		color: CanvasText;
+	}
+
+	.ms-dist-tile.is-linked .ms-dist-pip.is-on {
+		background-color: CanvasText;
+	}
+
+	.ms-dist-row.is-linked {
+		border-color: Highlight;
 	}
 }
