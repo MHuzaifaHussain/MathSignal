@@ -239,7 +239,7 @@ $$
 p(\mathbf{x} \mid y = c) = \prod_j \mathcal{N}\!\left(x_j;\ \mu_{jc},\ \sigma_{jc}^2\right)
 $$
 
-It predicts the class with the largest $P(y = c)\, p(\mathbf{x} \mid y = c)$, so it stores one mean and one variance per feature per class, plus the class priors. It suits continuous features such as flower measurements or sensor readings; for word counts in text, multinomial or Bernoulli naive Bayes fit better.
+It predicts the class with the largest $P(y = c)\, p(\mathbf{x} \mid y = c)$, which by [Bayes' theorem](/probability/bayes-theorem/) is the class with the largest posterior $P(y = c \mid \mathbf{x})$. So it stores one mean and one variance per feature per class, plus the class priors. It suits continuous features such as flower measurements or sensor readings; for word counts in text, multinomial or Bernoulli naive Bayes fit better.
 
 ### VAE latent spaces
 
