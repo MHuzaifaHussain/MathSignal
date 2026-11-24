@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, type KeyboardEvent, type ReactNode } from "react";
 
 const MOVE_KEYS = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
 
@@ -42,33 +42,42 @@ export default function Board({
   // Mafs renders each handle as a focusable <g> with no name or role; give them one or hide them.
   // Mafs mounts its handles only after measuring itself, so watch the canvas for them.
   const handleLabelsRef = useRef(handleLabels);
-  useEffect(() => {
+  // A layout effect, so the labels are current before the MutationObserver's microtask reads them when a
+  // change adds or removes a handle in the same commit.
+  useLayoutEffect(() => {
     handleLabelsRef.current = handleLabels;
   });
+  const describeHandles = useCallback(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.querySelectorAll<SVGGElement>(".mafs-movable-point").forEach((handle, index) => {
+      const handleLabel = handleLabelsRef.current?.[index];
+      if (handleLabel) {
+        handle.setAttribute("role", "button");
+        handle.setAttribute("aria-roledescription", "draggable point");
+        handle.setAttribute("aria-label", `${handleLabel}. Use the arrow keys to move it.`);
+        handle.removeAttribute("aria-hidden");
+        handle.setAttribute("tabindex", "0");
+      } else {
+        handle.setAttribute("tabindex", "-1");
+        handle.setAttribute("aria-hidden", "true");
+      }
+    });
+  }, []);
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const describeHandles = () => {
-      canvas.querySelectorAll<SVGGElement>(".mafs-movable-point").forEach((handle, index) => {
-        const handleLabel = handleLabelsRef.current?.[index];
-        if (handleLabel) {
-          handle.setAttribute("role", "button");
-          handle.setAttribute("aria-roledescription", "draggable point");
-          handle.setAttribute("aria-label", `${handleLabel}. Use the arrow keys to move it.`);
-          handle.removeAttribute("aria-hidden");
-          handle.setAttribute("tabindex", "0");
-        } else {
-          handle.setAttribute("tabindex", "-1");
-          handle.setAttribute("aria-hidden", "true");
-        }
-      });
-    };
     describeHandles();
     // childList only: the attribute changes above must not retrigger the observer.
     const observer = new MutationObserver(describeHandles);
     observer.observe(canvas, { childList: true, subtree: true });
     return () => observer.disconnect();
-  }, []);
+  }, [describeHandles]);
+  // New names for handles that stay mounted (no childList change, so the observer stays quiet).
+  const labelsKey = handleLabels?.join("\u0000");
+  useEffect(() => {
+    describeHandles();
+  }, [labelsKey, describeHandles]);
 
   // Mafs captures the pointer and stops pointerup and keyup from bubbling, so listen in the
   // capture phase. The callback is deferred one task so Mafs' own final onMove has rendered first.
