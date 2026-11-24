@@ -80,7 +80,7 @@ The frame every interactive board sits in. It sets Mafs' CSS variables from the 
 | `tray` | `ReactNode` | Optional. Sliders, readouts and buttons shown under the canvas |
 | `onReset` | `() => void` | Optional; adds a Reset button to the tray |
 | `announcement` | `string` | Text for the polite live region; update it only when an interaction ends |
-| `onInteractionEnd` | `() => void` | Optional. Called once when a drag or an arrow-key move on the canvas ends; set `announcement` here. Board listens in the capture phase because Mafs captures the pointer and stops `pointerup`/`keyup` from bubbling |
+| `onInteractionEnd` | `(source: "pointer" \| "keyboard") => void` | Optional. Called once when a drag or an arrow-key move on the canvas ends; set `announcement` here. `source` tells a plain click (nothing moved) from an arrow press at an edge (nothing moved either, but the reader asked to move). Board listens in the capture phase because Mafs captures the pointer and stops `pointerup`/`keyup` from bubbling |
 | `handleLabels` | `string[]` | Optional. Names for the canvas's draggable handles, in render order. Given: the handles stay keyboard-focusable and are announced as draggable points. Omitted: the tray sliders are the keyboard path, so the handles are removed from the tab order and the accessibility tree |
 
 ### `ChalkNote`

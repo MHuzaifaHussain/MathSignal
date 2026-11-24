@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useId, useReducer, useRef, useState } from "react";
-import Board from "./Board";
+import Board, { type InteractionSource } from "./Board";
 import ChalkNote from "./ChalkNote";
 import TrayChoice from "./TrayChoice";
 import TraySlider from "./TraySlider";
@@ -38,6 +38,13 @@ import { handleIds, initialState, reducer, stageAllowed, type Action, type Handl
 import useSquarePlane from "./vectorBoard/useSquarePlane.ts";
 
 const STAGE_OPTIONS: readonly { value: Stage; label: string }[] = (["trips", "arrows", "lists"] as const).map((value) => ({ value, label: STAGE_LABELS[value] }));
+
+/** The handle with keyboard focus, or null. Mafs renders the handles in the order of `ids`. */
+function focusedHandle(plane: HTMLElement | null, ids: readonly HandleId[]): HandleId | null {
+  const points = Array.from(plane?.querySelectorAll(".mafs-movable-point") ?? []);
+  const index = points.findIndex((point) => point === document.activeElement);
+  return index >= 0 ? (ids[index] ?? null) : null;
+}
 
 interface VectorBoard2DProps {
   /** Which configuration to show; see src/components/react/vectorBoard/setups.ts. */
@@ -95,16 +102,18 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
   );
 
   // A handle that sits at an edge doesn't move on an arrow press, so Mafs calls no onMove; the focused handle
-  // still gets its sentence ("a is at the right edge of the board.").
-  const handleInteractionEnd = useCallback(() => {
-    const current = stateRef.current;
-    const points = Array.from(planeRef.current?.querySelectorAll(".mafs-movable-point") ?? []);
-    const focusedIndex = points.findIndex((point) => point === document.activeElement);
-    const ids = handleIds(current);
-    const id = focusedIndex >= 0 ? ids[focusedIndex] : movedHandle.current;
-    movedHandle.current = null;
-    if (id && ids.includes(id)) announce(handleAnnouncement(current, id));
-  }, [announce]);
+  // still gets its sentence ("a is at the right edge of the board."). A pointer speaks only for the handle it
+  // moved, so a plain click on a handle stays quiet.
+  const handleInteractionEnd = useCallback(
+    (source: InteractionSource) => {
+      const current = stateRef.current;
+      const ids = handleIds(current);
+      const id = source === "keyboard" ? focusedHandle(planeRef.current, ids) : movedHandle.current;
+      movedHandle.current = null;
+      if (id && ids.includes(id)) announce(handleAnnouncement(current, id));
+    },
+    [announce],
+  );
 
   // Announce when a button or stepper interaction ends: at once for buttons, after a pause for a burst of presses.
   useEffect(() => {

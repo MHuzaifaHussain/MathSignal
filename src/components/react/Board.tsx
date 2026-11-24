@@ -2,6 +2,9 @@ import { useCallback, useEffect, useLayoutEffect, useRef, type KeyboardEvent, ty
 
 const MOVE_KEYS = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"]);
 
+/** How a canvas interaction ended: a drag (or a plain click) let go, or an arrow key released. */
+export type InteractionSource = "pointer" | "keyboard";
+
 interface BoardProps {
   /** Accessible name of the figure, e.g. "Normal distribution with draggable mean and spread". */
   label: string;
@@ -16,8 +19,11 @@ interface BoardProps {
   onReset?: () => void;
   /** Polite live-region text. Update it only when an interaction ends, never on every frame. */
   announcement?: string;
-  /** Called once when a drag or an arrow-key move on the canvas ends; use it to update `announcement`. */
-  onInteractionEnd?: () => void;
+  /**
+   * Called once when a drag or an arrow-key move on the canvas ends; use it to update `announcement`. The source
+   * lets a board tell a plain click, which moves nothing, from an arrow press at an edge, which also moves nothing.
+   */
+  onInteractionEnd?: (source: InteractionSource) => void;
   /**
    * Accessible names for the canvas's draggable handles, in render order. When given, the handles stay
    * keyboard-focusable (arrow keys move them). When omitted, the tray's sliders are the keyboard path,
@@ -95,16 +101,16 @@ export default function Board({
     [],
   );
 
-  const endInteraction = useCallback(() => {
+  const endInteraction = useCallback((source: InteractionSource) => {
     window.clearTimeout(pendingEndRef.current);
-    pendingEndRef.current = window.setTimeout(() => interactionEndRef.current?.(), 0);
+    pendingEndRef.current = window.setTimeout(() => interactionEndRef.current?.(source), 0);
   }, []);
 
   const handlePointerDown = useCallback(() => {
     removeListenersRef.current?.();
     const handleEnd = () => {
       removeListenersRef.current?.();
-      endInteraction();
+      endInteraction("pointer");
     };
     window.addEventListener("pointerup", handleEnd, { capture: true });
     window.addEventListener("pointercancel", handleEnd, { capture: true });
@@ -117,7 +123,7 @@ export default function Board({
 
   const handleKeyUp = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
-      if (MOVE_KEYS.has(event.key)) endInteraction();
+      if (MOVE_KEYS.has(event.key)) endInteraction("keyboard");
     },
     [endInteraction],
   );
