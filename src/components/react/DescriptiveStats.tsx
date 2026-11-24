@@ -38,7 +38,7 @@ import {
   symbolLines,
 } from "./descriptiveStats/describe.ts";
 import { SCALES, getSetup, type SetupId } from "./descriptiveStats/setups.ts";
-import { initialState, isCovered, reducer, stageAllowed, type Action, type DescriptiveState } from "./descriptiveStats/state.ts";
+import { clampToSlider, initialState, isCovered, reducer, stageAllowed, type Action, type DescriptiveState } from "./descriptiveStats/state.ts";
 
 const SCALE_OPTIONS = SCALES.map((value) => ({ value, label: SCALE_LABELS[value] }));
 
@@ -100,7 +100,7 @@ export default function DescriptiveStats({ setup: setupId }: DescriptiveStatsPro
   );
 
   const scrub = usePointerScrub({
-    valueAt: (fraction) => Math.round(setup.axis.min + fraction * (setup.axis.max - setup.axis.min)),
+    valueAt: (fraction) => clampToSlider(setup, Math.round(setup.axis.min + fraction * (setup.axis.max - setup.axis.min))),
     onMove: slide,
     onCommit: commitSlide,
   });

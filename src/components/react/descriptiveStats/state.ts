@@ -155,7 +155,8 @@ function newcomerOpening(setup: Setup): number {
 	return setup.newcomerOpening;
 }
 
-function clampToSlider(setup: Setup, value: number): number {
+/** A whole value held to the slider's range; the drag strip uses it too, so a drag commits the value it shows. */
+export function clampToSlider(setup: Setup, value: number): number {
 	if (!setup.slider) throw new Error(`DescriptiveStats: setup "${setup.id}" has no slider to set.`);
 	if (!Number.isInteger(value)) throw new Error(`DescriptiveStats: setup "${setup.id}" got a slider value of ${value}; it must be a whole number.`);
 	return Math.min(Math.max(value, setup.slider.min), setup.slider.max);

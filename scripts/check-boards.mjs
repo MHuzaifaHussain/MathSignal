@@ -1637,6 +1637,13 @@ const announcerRun = () => {
 	assert.equal(run('class-spread', { type: 'sample', on: true }).sample, true);
 	assert.equal(dst.reducer(spreadOpen, { type: 'check' }), spreadOpen, 'spread setups have no Check');
 
+	// The drag strip clamps the way the reducer does, so the value it commits is the value the board holds.
+	const spreadSetup = ds.getSetup('class-spread');
+	assert.equal(dst.clampToSlider(spreadSetup, spreadSetup.slider.max + 20), spreadSetup.slider.max);
+	assert.equal(dst.clampToSlider(spreadSetup, spreadSetup.slider.min - 20), spreadSetup.slider.min);
+	assert.equal(dst.reducer(dst.initialState('class-spread'), { type: 'set-value', value: spreadSetup.slider.max + 20 }).values[0], dst.clampToSlider(spreadSetup, spreadSetup.slider.max + 20));
+	assert.throws(() => dst.clampToSlider(ds.getSetup('class-lineup'), 130), /has no slider/);
+
 	// cafe-millionaire: the switch and the presets agree on who is in the cafe.
 	const cafeOpen = dst.initialState('cafe-millionaire');
 	assert.equal(cafeOpen.activePreset, 'nobody');
