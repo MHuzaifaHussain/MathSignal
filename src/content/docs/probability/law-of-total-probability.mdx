@@ -1,0 +1,457 @@
+---
+title: "The law of total probability, worked through"
+description: "The law of total probability finds an event's chance by splitting it into cases. Practice it on six graded examples, from two marble bags to a classifier."
+sidebar:
+  order: 5
+draft: true
+topic: probability/law-of-total-probability
+type: C
+objectives:
+  - Choose cases that split every outcome exactly once, and check that their probabilities add up to 1.
+  - Find P(B) for two, three or more cases by multiplying each case's weight by the chance of B within it and adding.
+  - Check an answer by confirming it lies between the smallest and largest within-case chance.
+  - Spot three slips in someone else's working, namely averaging without weights, pooling groups not picked in proportion to their size, and overlapping cases.
+  - Predict how a classifier's flag rate changes with the share of positive cases, and recognize the same sum in a mixture model's likelihood.
+takeaways:
+  - Split the world into cases that share no outcome and cover everything, then P(B) = Σ P(B | H_k) P(H_k). The case weights must add up to 1.
+  - P(B) is a weighted average of the within-case chances, so it always lies between the smallest and the largest of them. The late bus's 0.15 sits between 0.10 and 0.30.
+  - Averaging the case chances without weights is wrong unless the cases are equally likely. For the two bags it gives 1/2 instead of 5/12.
+  - Pooling the marbles gives 3/8, which is right only if you pick a marble from all 16 at once, so that each bag's weight is its share of the marbles.
+  - A classifier that catches 80% of fraud and flags 3% of honest cases flags 6.08% of all cases when 4% are fraud, and 10.7% when 10% are.
+references:
+  - grinstead2003
+  - deisenroth2020
+author: Muhammad Huzaifa Hussain
+reviewedAt: 2026-11-24
+aiAssisted: true
+primaryQuery: law of total probability
+searchIntent: solve
+depthStatus: complete
+---
+
+import Analogy from "../../../components/Analogy.astro";
+import CheckYourself from "../../../components/CheckYourself.astro";
+import Cite from "../../../components/Cite.astro";
+import CommonMistakes from "../../../components/CommonMistakes.astro";
+import ConceptHeader from "../../../components/ConceptHeader.astro";
+import ConceptMap from "../../../components/ConceptMap.astro";
+import FormalDefinition from "../../../components/FormalDefinition.astro";
+import GoDeeper from "../../../components/GoDeeper.astro";
+import Mistake from "../../../components/Mistake.astro";
+import NotationKey from "../../../components/NotationKey.astro";
+import PreciseStatement from "../../../components/PreciseStatement.astro";
+import PyRunner from "../../../components/PyRunner.astro";
+import References from "../../../components/References.astro";
+import Simpler from "../../../components/Simpler.astro";
+import StepThrough from "../../../components/StepThrough.astro";
+import Takeaways from "../../../components/Takeaways.astro";
+import WhyThisMatters from "../../../components/WhyThisMatters.astro";
+import WorkedExample from "../../../components/WorkedExample.astro";
+import BayesTheorem from "../../../components/react/BayesTheorem.tsx";
+
+<ConceptHeader
+  oneLiner="The law of total probability finds the chance of an event by splitting the world into separate cases and adding each case's chance of the event, weighted by how likely that case is: P(B) = P(B | H_1) P(H_1) + ... + P(B | H_m) P(H_m)."
+  difficulty="beginner"
+/>
+
+## In everyday terms
+
+<Analogy breaks="Twelve games split evenly only because 12 is a multiple of 3 and of 4; real counts wobble around 5 in 12. The picture also assumes the die decides the bag and nothing else, and that every game ends in exactly one bag, so the cases cannot overlap.">
+
+Roll a die. On a 1 or 2 you reach into the small bag, which holds 3 red marbles out of 4. On anything else you reach into the big bag, which holds 3 red out of 12. What is the chance of drawing red? Picture 12 games. The die sends about 4 of them to the small bag, giving 3 reds, and about 8 to the big bag, giving 2 reds. That makes 5 reds in 12 games, a chance of 5/12. Each bag adds its share of the games times its share of red.
+
+</Analogy>
+
+<WhyThisMatters>
+A fraud model's flag rate, the share of transactions a review team must check, is this sum over two cases: fraud and not fraud. So it moves when fraud gets more or less common, even though the model has not changed. Mixture models find how likely a data point is with the same sum.
+</WhyThisMatters>
+
+## Split the world, then add
+
+To find the chance of an event, split the world into cases, find the chance of the event inside each case, and add those chances weighted by how often each case happens:
+
+1. Pick cases that share no outcome and cover everything; their weights must add up to 1.
+2. Write each case's weight, P(case).
+3. Write the event's chance within each case, P(event | case).
+4. Multiply each pair and add. Check that the answer lies between the smallest and largest chance from step 3.
+
+It rains on 1 day in 4. On a rainy day the bus is late 30% of the time; on a dry day, 10%. Before you touch anything: is the chance of a late bus closer to 0.10, 0.15 or 0.20? Going further: which piece is bigger, the rainy-day one or the dry-day one?
+
+The board's unit square is every day: A is a rainy day, B a late bus. P(A) is the weight of rain; P(B | A) and P(B | not A) are the chances within each case. The block labeled "B and A" is the rainy-day piece, the strip labeled "B and not A" the dry-day piece, and P(B) their total area. Ignore the buttons after "Example:". Your task: set P(A) to 0.25 and P(B | A) to 0.30, leave P(B | not A) at 0.10, and read P(B). The arrow keys move a slider by 0.01, and Page Up and Page Down by 0.10.
+
+<div class="not-content">
+  <BayesTheorem client:visible />
+</div>
+
+Exactly 0.15: the readout says "P(A | B) = 0.500   P(B) = 0.150". The rainy-day piece is 0.30 × 0.25 = 0.075 and the dry-day piece is 0.10 × 0.75 = 0.075, so the pieces are equal. Rain triples the chance of a late bus, but dry days are three times as common. The readout's P(A | B) turns the question around, "given a late bus, how likely is rain?", and belongs to [Bayes' theorem](/probability/bayes-theorem/).
+
+Now press Page Up once on P(B | A) and three times on P(B | not A), so both read 0.40. The readout says "P(A | B) = 0.250   P(B) = 0.400", and P(B) stays at 0.400 wherever you drag P(A): with the same chance in every case, the weights stop mattering.
+
+## Four steps, one sum
+
+The law of total probability is four steps that end in one sum.
+
+### Cases that split everything once
+
+Good cases put every outcome in exactly one case, so their weights add up to 1. Each roll picks one bag, with weights 2/6 = 1/3 and 4/6 = 2/3. Overlapping cases count some outcomes twice and cases with gaps count some never, so the weights stop adding up to 1: that is the warning sign.
+
+### Weight, chance, multiply, add
+
+Each case contributes its weight times the event's chance inside it, and P(B) is the total. For the bags:
+
+P(red) = 3/4 × 1/3 + 1/4 × 2/3 = 1/4 + 1/6 = 5/12 ≈ 0.417.
+
+The Bayes' theorem page proves [why the two pieces add](/probability/bayes-theorem/#why-the-two-pieces-add) and extends the rule to [more than two cases](/probability/bayes-theorem/#more-than-two-ways).
+
+### The answer sits between the cases
+
+P(B) lies between the smallest and largest within-case chance, because it is a weighted average of them: 1/4 ≤ 5/12 ≤ 3/4 for the bags, 0.10 ≤ 0.15 ≤ 0.30 for the bus. It leans toward the heavier case, so 5/12 sits closer to the big bag's 1/4. An answer outside the range is wrong.
+
+### Going the other way: the complement
+
+Not B adds up the same way, which gives a check. The bus is on time on 70% of rainy days and 90% of dry ones, so P(not late) = 0.70 × 0.25 + 0.90 × 0.75 = 0.175 + 0.675 = 0.85, which is 1 − 0.15.
+
+<Simpler label="pooling the marbles: when it works" id="when-pooling-works">
+
+Pooling all 16 marbles gives 6 red of 16, or 3/8 = 0.375, not 5/12. It is the law with each bag weighted by its share of the marbles: 3/4 × 4/16 + 1/4 × 12/16 = 3/16 + 3/16 = 3/8. It answers a different experiment: picking one marble from all 16 at once. The unweighted average, (3/4 + 1/4)/2 = 1/2, answers a third: a fair coin picks the bag. The die fits neither.
+
+</Simpler>
+
+<GoDeeper label="the law inside a condition" id="conditional-form">
+
+Once you know that an event C with P(C) > 0 happened, the law holds with every part conditioned on C: P(B | C) is the sum of P(B | H_k and C) × P(H_k | C) over the cases with P(H_k and C) > 0. Say C is "a weekday". It rains on 20% of weekdays, and the bus is late on 35% of rainy weekdays and 15% of dry ones, so P(late | weekday) = 0.35 × 0.20 + 0.15 × 0.80 = 0.07 + 0.12 = 0.19. The rain weight is now P(rain | weekday) = 0.20, not P(rain) = 0.25.
+
+</GoDeeper>
+
+## Notation
+
+<NotationKey symbols={["sample-space", "event-collection", "event", "complement", "intersection", "union", "probability", "conditional", "partition", "sum", "density", "conditional-distribution"]} />
+
+<PreciseStatement>
+
+Let $(\Omega, \mathcal{F}, P)$ be a probability space, and let $H_1, \ldots, H_m \in \mathcal{F}$ be pairwise disjoint with $H_1 \cup \cdots \cup H_m = \Omega$. For every event $B \in \mathcal{F}$,
+
+$$
+P(B) = \sum_{k=1}^{m} P(B \cap H_k) = \sum_{k \,:\, P(H_k) > 0} P(B \mid H_k)\,P(H_k), \qquad \sum_{k=1}^{m} P(H_k) = 1.
+$$
+
+Terms with $P(H_k) = 0$ are 0 and are dropped. The same holds for countably many cases, by [countable additivity](/probability/probability-axioms/#countable-additivity). Boundary cases: overlapping cases count shared outcomes twice, cases with gaps miss outcomes, and with one case, $H_1 = \Omega$, the law says $P(B) = P(B)$.
+
+</PreciseStatement>
+
+<FormalDefinition>
+
+Grinstead and Snell take hypotheses $H_1, \ldots, H_m$ that are pairwise disjoint and cover $\Omega$ (§4.1, p. 145), and write this sum as their equation (4.3) on p. 146 <Cite id="grinstead2003" />.
+
+<StepThrough title="Why P(B) lies between the smallest and largest case chance" rigor="full">
+
+1. Keep the cases with $P(H_k) > 0$, so every $P(B \mid H_k)$ is defined, and let $a$ and $b$ be the smallest and largest of those chances.
+2. For each kept $k$, multiplying $a \le P(B \mid H_k) \le b$ by $P(H_k) > 0$ gives $a\,P(H_k) \le P(B \mid H_k)\,P(H_k) \le b\,P(H_k)$.
+3. Add over the kept cases. By the law, the middle sum is $P(B)$.
+4. The dropped cases have weight 0, so the kept weights add up to 1 and the outer sums are $a$ and $b$: $a \le P(B) \le b$.
+5. If every within-case chance equals $q$, then $a = b = q$ and $P(B) = q$ whatever the weights, as on the board with both likelihood sliders at 0.40.
+
+</StepThrough>
+
+<StepThrough title="The law inside a condition: P(B | C) = Σ P(B | H_k ∩ C) P(H_k | C)" rigor="full">
+
+1. Assume $P(C) > 0$.
+2. The sets $B \cap C \cap H_k$ are pairwise disjoint, and their union is $B \cap C$, because the $H_k$ split $\Omega$.
+3. Additivity gives $P(B \cap C) = \sum_k P(B \cap C \cap H_k)$. Terms with $P(H_k \cap C) = 0$ are 0, since $B \cap C \cap H_k \subseteq H_k \cap C$, and are dropped.
+4. For the rest, the multiplication rule twice gives $P(B \cap C \cap H_k) = P(B \mid H_k \cap C)\,P(H_k \cap C) = P(B \mid H_k \cap C)\,P(H_k \mid C)\,P(C)$.
+5. Divide both sides by $P(C)$. Since [a conditional probability is itself a probability](/probability/conditional-probability/#conditioning-is-a-probability), this is the ordinary law applied to $P(\,\cdot \mid C)$.
+
+</StepThrough>
+
+| Rule | Statement | Example |
+| --- | --- | --- |
+| Law of total probability | $P(B) = \sum_{k} P(B \mid H_k)\,P(H_k)$ | Two bags: $5/12$ |
+| Between the cases | $\min_k P(B \mid H_k) \le P(B) \le \max_k P(B \mid H_k)$ | $1/4 \le 5/12 \le 3/4$ |
+| Complement route | $P(B^\complement) = \sum_{k} P(B^\complement \mid H_k)\,P(H_k) = 1 - P(B)$ | Bus on time: $0.85$ |
+
+</FormalDefinition>
+
+## Worked examples
+
+<WorkedExample number={1} title="Two bags and a die">
+
+Step 1: the cases are the small bag (a roll of 1 or 2) and the big bag (3 to 6). Step 2: the weights are $1/3$ and $2/3$, which add up to 1. Step 3: the chances of red are $3/4$ and $3/12 = 1/4$. Step 4: $3/4 \times 1/3 + 1/4 \times 2/3 = 1/4 + 1/6 = 5/12$. Check: $1/4 \le 5/12 \le 3/4$.
+
+</WorkedExample>
+
+<WorkedExample number={2} title="The late bus on the board">
+
+Steps 1 to 3 are on the board: weights $1/4$ and $3/4$, late chances $0.30$ and $0.10$. Step 4 is the readout's P(B), 0.150. Check with the complement: $0.70 \times 0.25 + 0.90 \times 0.75 = 0.85 = 1 - 0.15$.
+
+</WorkedExample>
+
+<WorkedExample number={3} title="Three kinds of dice" faded>
+
+A bag holds 2 four-sided, 3 six-sided and 5 ten-sided dice. You pick one at random and roll it. What is the chance of a 1? Steps 1 and 2 are done: the cases are the three kinds of die, with weights $2/10$, $3/10$ and $5/10$. Your turn: write down the three chances, multiply, add and check.
+
+<div slot="solution">
+
+The chances are $1/4$, $1/6$ and $1/10$, and every product is $1/20$: $2/10 \times 1/4 = 3/10 \times 1/6 = 5/10 \times 1/10 = 1/20$. So $P(1) = 3/20 = 0.15$, and $1/10 \le 3/20 \le 1/4$. The more common dice have more faces.
+
+</div>
+
+</WorkedExample>
+
+<WorkedExample number={4} title="Find the slip" faded>
+
+(a) 40% of emails are for work and 60% are personal. 5% of work emails and 20% of personal ones are marked urgent. A student writes $P(\text{urgent}) = 0.05 + 0.20 = 0.25$.
+
+(b) A student uses "weekday" (weight $5/7$) and "rainy day" (weight $1/4$) as the cases, with late rates $1/5$ and $2/5$, and writes $5/7 \times 1/5 + 1/4 \times 2/5 = 1/7 + 1/10 = 17/70$.
+
+What went wrong in each?
+
+<div slot="solution">
+
+(a) No weights, and $0.25$ is above the largest chance, $0.20$, so it fails the check. Correct: $0.05 \times 0.4 + 0.20 \times 0.6 = 0.02 + 0.12 = 0.14$.
+
+(b) The cases overlap (a rainy weekday is in both), and the weights add up to $5/7 + 1/4 = 27/28$, not 1. A valid split needs four cases, rainy or dry on a weekday or weekend, with a late rate for each. The problem gives none, so the honest answer is "not enough information".
+
+</div>
+
+</WorkedExample>
+
+<WorkedExample number={5} title="A fraud model's flag rate" faded>
+
+4% of transactions are fraud. A model flags 80% of fraud cases and 3% of honest ones. What share of transactions does it flag, and how many of 10,000? What if fraud rises to 10% and the model stays the same?
+
+<div slot="solution">
+
+$P(\text{flag}) = 0.80 \times 0.04 + 0.03 \times 0.96 = 0.032 + 0.0288 = 0.0608$, so 608 of 10,000 are flagged. At 10% fraud: $0.80 \times 0.10 + 0.03 \times 0.90 = 0.08 + 0.027 = 0.107$, so 1,070. Both lie between $0.03$ and $0.80$.
+
+On the board, press Reset, then set P(A) to 0.04 and P(B | not A) to 0.03. The readout says "P(A | B) = 0.526   P(B) = 0.061". Its 0.526, the share of flags that are fraud, belongs to [Bayes' theorem](/probability/bayes-theorem/).
+
+</div>
+
+</WorkedExample>
+
+<WorkedExample number={6} title="Label noise in a mixed training set" faded>
+
+A training set takes 50% of its examples from web scrapes with 8% wrong labels, 30% from books with 2% wrong, and 20% checked by hand with none wrong. What share of all labels is wrong?
+
+<div slot="solution">
+
+$P(\text{wrong}) = 0.08 \times 0.5 + 0.02 \times 0.3 + 0 \times 0.2 = 0.04 + 0.006 + 0 = 0.046$, and $0 \le 0.046 \le 0.08$. The hand-checked source adds nothing, but it keeps its weight in the split: without it the weights add up to only $0.8$.
+
+</div>
+
+</WorkedExample>
+
+## Where the sum shows up in ML
+
+### Flag rates move with prevalence
+
+A classifier's flag rate is the law with two cases: $P(\text{flag}) = \text{recall} \times \text{prevalence} + \text{false-positive rate} \times (1 - \text{prevalence})$, where recall is $P(\text{flag} \mid \text{positive})$. Worked example 5's model, unchanged, sends 608 of every 10,000 transactions to review at 4% fraud and 1,070 at 10%. What a single flag means is covered in [the base rate section of the Bayes' theorem page](/probability/bayes-theorem/#the-base-rate-decides-a-lot).
+
+### Mixture models: a hidden case for every data point
+
+A Gaussian mixture says each data point $x$ comes from one of several groups, and a hidden variable $z$ names the group. The density of $x$ is the law of total probability over the groups:
+
+$$
+p(x) = \sum_{k=1}^{K} P(z = k)\, p(x \mid z = k),
+$$
+
+where each $p(x \mid z = k)$ is a normal density with its group's mean and standard deviation. Deisenroth and coauthors find the likelihood of a latent-variable model by summing out the hidden variable (§11.4.2, equations (11.63) to (11.66b)), which gives back the Gaussian mixture of their equation (11.3) <Cite id="deisenroth2020" />. With weights 0.3 and 0.7, means 0 and 4, and both standard deviations 1, the density at $x = 1$ is $0.3 \times 0.24197 + 0.7 \times 0.0044318 \approx 0.0757$, almost all from the first component.
+
+The same book's §6.3 notes that with many variables, or discrete variables with many states, this becomes a high-dimensional sum or integral, which in general has no known polynomial-time exact algorithm <Cite id="deisenroth2020" />. Large models approximate it, as the [research frontier on the Bayes' theorem page](/probability/bayes-theorem/#research-frontier) shows.
+
+## Check every answer in code
+
+This runs in your browser with exact fractions and stops with an error if any answer on this page is off. Its helper refuses cases whose weights don't add up to 1. At the end it plays the bag game 100,000 times; the share of reds must land within 0.01 of 5/12, and of 3/8 when one marble comes from all 16.
+
+<PyRunner
+  title="total_probability.py"
+  code={`
+import math
+import random
+from fractions import Fraction as F
+
+
+def terms_of(weights, chances):
+    """Each case's piece, weight times chance; refuses a split whose weights don't add up to 1."""
+    if len(weights) != len(chances):
+        raise ValueError("need one chance per case")
+    if any(not 0 <= value <= 1 for value in list(weights) + list(chances)):
+        raise ValueError("weights and chances must lie between 0 and 1")
+    if sum(weights) != 1:
+        raise ValueError(f"the case weights add up to {sum(weights)}, not 1")
+    return [weight * chance for weight, chance in zip(weights, chances)]
+
+
+def total_probability(weights, chances):
+    return sum(terms_of(weights, chances))
+
+
+def readout(value):
+    """The board shows three decimals."""
+    return f"{float(value):.3f}"
+
+
+# The hook: 12 games of die-then-bag.
+assert 12 * F(1, 3) == 4 and 4 * F(3, 4) == 3
+assert 12 * F(2, 3) == 8 and 8 * F(1, 4) == 2
+assert F(3 + 2, 12) == F(5, 12)
+
+# Two bags and a die.
+bags = ([F(1, 3), F(2, 3)], [F(3, 4), F(3, 12)])
+assert F(2, 6) == F(1, 3) and F(4, 6) == F(2, 3) and sum(bags[0]) == 1
+assert terms_of(*bags) == [F(1, 4), F(1, 6)]
+assert total_probability(*bags) == F(5, 12) and readout(F(5, 12)) == "0.417"
+assert F(1, 4) <= F(5, 12) <= F(3, 4)
+assert F(5, 12) - F(1, 4) < F(3, 4) - F(5, 12)
+
+# Pooling and the unweighted average answer other experiments.
+assert (F(3, 4) + F(1, 4)) / 2 == F(1, 2) != F(5, 12)
+assert 3 + 3 == 6 and F(6, 16) == F(3, 8) and float(F(3, 8)) == 0.375
+assert terms_of([F(4, 16), F(12, 16)], [F(3, 4), F(1, 4)]) == [F(3, 16), F(3, 16)]
+assert total_probability([F(4, 16), F(12, 16)], [F(3, 4), F(1, 4)]) == F(3, 8)
+assert total_probability([F(1, 2), F(1, 2)], [F(3, 4), F(1, 4)]) == F(1, 2)
+
+# The late bus.
+bus = ([F(1, 4), F(3, 4)], [F(30, 100), F(10, 100)])
+assert terms_of(*bus) == [F(75, 1000), F(75, 1000)]
+assert total_probability(*bus) == F(15, 100)
+assert F(10, 100) <= F(15, 100) <= F(30, 100)
+assert F(30, 100) / F(10, 100) == 3 and F(3, 4) / F(1, 4) == 3
+posterior = terms_of(*bus)[0] / total_probability(*bus)
+assert (readout(posterior), readout(total_probability(*bus))) == ("0.500", "0.150")
+on_time = ([F(1, 4), F(3, 4)], [F(70, 100), F(90, 100)])
+assert terms_of(*on_time) == [F(175, 1000), F(675, 1000)]
+assert total_probability(*on_time) == F(85, 100) == 1 - F(15, 100)
+
+# Same chance in both cases: the weights stop mattering.
+for p in (F(1, 100), F(1, 4), F(99, 100)):
+    assert total_probability([p, 1 - p], [F(40, 100), F(40, 100)]) == F(40, 100)
+    assert readout(total_probability([p, 1 - p], [F(40, 100), F(40, 100)])) == "0.400"
+assert readout(F(1, 4) * F(40, 100) / F(40, 100)) == "0.250"
+# Keyboard path: Page Up moves 0.10, so 0.30 to 0.40 is one press and 0.10 to 0.40 is three.
+assert F(30, 100) + F(10, 100) == F(40, 100) and F(10, 100) + 3 * F(10, 100) == F(40, 100)
+
+# The law inside a condition: weekdays.
+assert terms_of([F(20, 100), F(80, 100)], [F(35, 100), F(15, 100)]) == [F(7, 100), F(12, 100)]
+assert total_probability([F(20, 100), F(80, 100)], [F(35, 100), F(15, 100)]) == F(19, 100)
+
+# Worked example 3: three kinds of dice.
+dice = ([F(2, 10), F(3, 10), F(5, 10)], [F(1, 4), F(1, 6), F(1, 10)])
+assert sum(dice[0]) == 1 and terms_of(*dice) == [F(1, 20)] * 3
+assert total_probability(*dice) == F(3, 20) == F(15, 100)
+assert F(1, 10) <= F(3, 20) <= F(1, 4)
+
+# Worked example 4: the slips.
+assert F(5, 100) + F(20, 100) == F(1, 4) > F(1, 5)
+assert terms_of([F(4, 10), F(6, 10)], [F(5, 100), F(20, 100)]) == [F(2, 100), F(12, 100)]
+assert total_probability([F(4, 10), F(6, 10)], [F(5, 100), F(20, 100)]) == F(14, 100)
+assert F(5, 7) + F(1, 4) == F(27, 28)
+assert F(5, 7) * F(1, 5) == F(1, 7) and F(1, 4) * F(2, 5) == F(1, 10)
+assert F(1, 7) + F(1, 10) == F(17, 70)
+try:
+    total_probability([F(5, 7), F(1, 4)], [F(1, 5), F(2, 5)])
+    raise AssertionError("overlapping cases should be refused")
+except ValueError as error:
+    print("overlapping cases:", error)
+
+# Worked example 5: the fraud model.
+fraud = ([F(4, 100), F(96, 100)], [F(80, 100), F(3, 100)])
+assert terms_of(*fraud) == [F(32, 1000), F(288, 10000)]
+assert total_probability(*fraud) == F(608, 10000) and 10000 * total_probability(*fraud) == 608
+assert (readout(F(32, 1000) / total_probability(*fraud)), readout(total_probability(*fraud))) == ("0.526", "0.061")
+more_fraud = ([F(10, 100), F(90, 100)], [F(80, 100), F(3, 100)])
+assert terms_of(*more_fraud) == [F(8, 100), F(27, 1000)]
+assert total_probability(*more_fraud) == F(107, 1000) and 10000 * total_probability(*more_fraud) == 1070
+assert F(3, 100) <= F(608, 10000) <= F(80, 100) and F(3, 100) <= F(107, 1000) <= F(80, 100)
+assert 100 * F(608, 10000) == F(608, 100)
+
+# Worked example 6: label noise.
+noise = ([F(5, 10), F(3, 10), F(2, 10)], [F(8, 100), F(2, 100), F(0)])
+assert terms_of(*noise) == [F(4, 100), F(6, 1000), 0]
+assert total_probability(*noise) == F(46, 1000) and 0 <= F(46, 1000) <= F(8, 100)
+assert F(5, 10) + F(3, 10) == F(8, 10)
+
+# Check yourself.
+for p in (F(1, 10), F(1, 3), F(9, 10)):
+    assert total_probability([p, 1 - p], [F(1, 2), F(1, 2)]) == F(1, 2)
+rain = F(1, 2)
+assert F(30, 100) * rain + F(10, 100) * (1 - rain) == F(20, 100)
+assert terms_of([F(3, 10), F(7, 10)], [F(1, 10), F(2, 100)]) == [F(3, 100), F(14, 1000)]
+assert total_probability([F(3, 10), F(7, 10)], [F(1, 10), F(2, 100)]) == F(44, 1000)
+
+# Common mistake: weighting by P(rain | late) instead of P(rain).
+assert F(30, 100) * F(1, 2) + F(10, 100) * F(1, 2) == F(20, 100) != F(15, 100)
+
+
+# A Gaussian mixture at x = 1: weights 0.3 and 0.7, means 0 and 4, standard deviations 1.
+def normal_pdf(x, mean, sd):
+    return math.exp(-((x - mean) ** 2) / (2 * sd**2)) / (sd * math.sqrt(2 * math.pi))
+
+
+first, second = normal_pdf(1, 0, 1), normal_pdf(1, 4, 1)
+assert abs(first - 0.24197) < 1e-5 and abs(second - 0.0044318) < 1e-7
+mixture = 0.3 * first + 0.7 * second
+assert abs(mixture - 0.0757) < 1e-4 and 0.3 * first / mixture > 0.95
+print(f"mixture density at x = 1: {mixture:.5f}")
+
+# Simulation: the bag game, then one marble from all 16.
+rng = random.Random(0)
+games = 100_000
+red = 0
+for _ in range(games):
+    small_bag = rng.randint(1, 6) <= 2
+    red += rng.randrange(4) < 3 if small_bag else rng.randrange(12) < 3
+pooled_red = sum(rng.randrange(16) < 6 for _ in range(games))
+print(f"die then bag: {red / games:.4f} (5/12 = {float(F(5, 12)):.4f})")
+print(f"one marble from 16: {pooled_red / games:.4f} (3/8 = 0.3750)")
+assert abs(red / games - float(F(5, 12))) < 0.01
+assert abs(pooled_red / games - float(F(3, 8))) < 0.01
+`}
+/>
+
+## Check yourself
+
+<CheckYourself level="intuition" question="Two bags each hold half red marbles, and a lopsided die picks the bag. Does the die matter?">
+No. $P(\text{red}) = 1/2 \times w + 1/2 \times (1 - w) = 1/2$ for any weight $w$: the answer lies between the smallest and largest within-case chance, and both are $1/2$.
+</CheckYourself>
+
+<CheckYourself level="standard" question="With the same 0.30 and 0.10, on what share of days would it have to rain for P(late) to be 0.20?">
+Half: $0.30\,p + 0.10\,(1 - p) = 0.20$ gives $p = 1/2$. Since $0.20$ sits halfway between $0.10$ and $0.30$, the cases need equal weight.
+</CheckYourself>
+
+<CheckYourself level="standard" question="A spam filter sees 30% newsletters, which it flags 10% of the time, and 70% other mail, which it flags 2% of the time. What share of all mail is flagged?">
+$0.10 \times 0.3 + 0.02 \times 0.7 = 0.03 + 0.014 = 0.044$. It lies between $0.02$ and $0.10$, closer to $0.02$ because other mail carries most of the weight.
+</CheckYourself>
+
+<CheckYourself level="proof" question="Show that if every within-case chance P(B | H_k) is at most b, then P(B) ≤ b.">
+Over the cases with $P(H_k) > 0$, $P(B) = \sum_k P(B \mid H_k)\,P(H_k) \le \sum_k b\,P(H_k) = b \sum_k P(H_k) = b$. The inequality holds term by term because each $P(H_k) > 0$, and the last step uses that the weights add up to 1.
+</CheckYourself>
+
+## Common mistakes
+
+<CommonMistakes>
+  <Mistake wrong="Average the chances in each case: (3/4 + 1/4)/2 = 1/2 for the bags.">
+    That gives the cases equal weight, which is right only when they are equally likely. The die picks the small bag with probability $1/3$, so the answer is $5/12$.
+  </Mistake>
+  <Mistake wrong="Pool the marbles: 6 red of 16 is 3/8.">
+    Pooling weights each bag by its share of the marbles, which is right only if you pick from all 16 at once. When a die picks the bag first, the weights are $1/3$ and $2/3$, and the answer is $5/12$.
+  </Mistake>
+  <Mistake wrong="Any list of cases will do.">
+    The cases must share no outcome and cover everything. Weights that do not add up to 1, such as $5/7 + 1/4 = 27/28$, are the warning sign.
+  </Mistake>
+  <Mistake wrong="Weight each case by how often it shows up when B happens.">
+    The weights are $P(H_k)$, how common each case is before you look at B, not $P(H_k \mid B)$. Half of all late buses come on rainy days, but weighting rain by $1/2$ instead of $1/4$ gives $0.30 \times 0.5 + 0.10 \times 0.5 = 0.20$, not $0.15$.
+  </Mistake>
+</CommonMistakes>
+
+## Key takeaways
+
+<Takeaways />
+
+## How this connects
+
+<ConceptMap />
+
+## References
+
+<References />
