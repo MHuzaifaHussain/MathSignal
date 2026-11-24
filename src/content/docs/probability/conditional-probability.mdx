@@ -1,0 +1,446 @@
+---
+title: "Conditional probability"
+description: "What is the chance of A once you know B happened? Conditional probability answers by shrinking the sample space to B, shown with hats, scarves and two dice."
+draft: true
+sidebar:
+  order: 3
+topic: probability/conditional-probability
+type: B
+objectives:
+  - Compute P(A | B) by shrinking the sample space to B and dividing by B's probability, not by the whole space's.
+  - Use the multiplication rule P(A and B) = P(A | B) P(B) to find the chance that two events both happen.
+  - Tell P(A | B) apart from P(B | A) and show with counts that they usually differ.
+  - Explain why P(A | B) is undefined when P(B) = 0, and why a classifier's output is a conditional probability.
+takeaways:
+  - P(A | B) is the share of B's probability that also lies in A. With equally likely outcomes it is the number of outcomes in both divided by the number in B.
+  - In a class of 12 where 5 children wear hats and 2 of them also wear scarves, P(scarf | hat) = 2/5, while P(scarf) = 4/12 = 1/3.
+  - The multiplication rule P(A and B) = P(A | B) P(B) turns a conditional probability back into the probability that both events happen.
+  - P(A | B) and P(B | A) share a numerator but divide by different events. In the class, P(hat | scarf) = 2/4 = 1/2, not 2/5.
+  - Conditioning needs P(B) > 0. On two dice, P(sum is at least 10 | doubles) = 2/6 = 1/3, but given an event that can't happen there is no answer at all.
+references:
+  - kolmogorov1950
+  - grinstead2003
+  - goodfellow2016
+author: Muhammad Huzaifa Hussain
+reviewedAt: 2026-11-24
+aiAssisted: true
+primaryQuery: conditional probability
+searchIntent: learn
+depthStatus: complete
+---
+
+import Analogy from "../../../components/Analogy.astro";
+import CheckYourself from "../../../components/CheckYourself.astro";
+import Cite from "../../../components/Cite.astro";
+import CommonMistakes from "../../../components/CommonMistakes.astro";
+import ConceptHeader from "../../../components/ConceptHeader.astro";
+import ConceptMap from "../../../components/ConceptMap.astro";
+import FormalDefinition from "../../../components/FormalDefinition.astro";
+import GoDeeper from "../../../components/GoDeeper.astro";
+import Mistake from "../../../components/Mistake.astro";
+import NotationKey from "../../../components/NotationKey.astro";
+import PreciseStatement from "../../../components/PreciseStatement.astro";
+import PyRunner from "../../../components/PyRunner.astro";
+import References from "../../../components/References.astro";
+import ResearchFrontier from "../../../components/ResearchFrontier.astro";
+import SideNote from "../../../components/SideNote.astro";
+import Simpler from "../../../components/Simpler.astro";
+import StepThrough from "../../../components/StepThrough.astro";
+import Takeaways from "../../../components/Takeaways.astro";
+import WhyThisMatters from "../../../components/WhyThisMatters.astro";
+import WorkedExample from "../../../components/WorkedExample.astro";
+import EventSpace from "../../../components/react/EventSpace.tsx";
+
+<ConceptHeader
+  oneLiner="Conditional probability is the probability of an event once you know that another event has happened: you keep only the outcomes where the second event happened and ask what share of them also belong to the first."
+  difficulty="beginner"
+/>
+
+## In everyday terms
+
+<Analogy breaks="The room only works if being told about hats is all you learn, and you would have been told whatever the answer. If someone mentions hats only when the picked child also wears a scarf, the way you heard it carries extra information, and simply keeping the hat-wearers gives the wrong answer. And someone has to be left in the room: if nobody wears a hat, there is no one to count and no answer to give.">
+
+A teacher picks one child at random from the class to hand out the paper. You can't see who it is, but someone tells you one thing: the child wears a hat. Picture every child without a hat leaving the room. The picked child is still in there, because the picked child wears a hat. So your question, "does the picked child wear a scarf?", is now a question about the children who are left. Count the scarves among them and compare with the number of children still in the room. That share is the new chance.
+
+The room has a blind spot: it treats every child as equally likely to be picked. Suppose instead the teacher draws a raffle ticket, and some children hold more tickets than others. Then told "the winner wears a hat", you throw away the tickets of every child without a hat, and the chance of a scarf is the share of the remaining tickets that belong to children with scarves. Counting heads in the room is the special case where everyone holds one ticket. Either way the rule is the same: keep only what is still possible, and measure shares against what is left, not against what you started with.
+
+</Analogy>
+
+<WhyThisMatters>
+Almost every number a trained model reports is a conditional probability. A classifier does not say how common cats are in general; it says how likely "cat" is given this particular image. A language model gives the chance of each next token given the text so far. And a model's accuracy on one group of users is a conditional probability that can sit far from its overall accuracy. Reading these numbers correctly means knowing what they are conditioned on, and not swapping "A given B" for "B given A", a swap that leads to confident and wrong conclusions.
+</WhyThisMatters>
+
+## Shrink the class to the hat-wearers
+
+Before you touch anything: pick one child at random from a class of 12. Among the children who wear a hat, is a scarf more or less likely than in the whole class? And what fraction exactly? Make a guess for both, then test it.
+
+The board lists the 12 children, numbered 1 to 12 in rows of four. Event A is "wears a scarf" and event B is "wears a hat". A child in A has a solid border and an "A" tag, a child in B a dashed outline and a "B" tag. The class is fixed data, so tapping a child changes nothing. Under the list the board reads out each event, starting with "A = wears a scarf: 4 of 12 = 1/3 (≈ 0.33)", and which children are in both. As a goal, press Shrink the world to B and read the line that replaces them.
+
+<div class="not-content">
+  <EventSpace client:visible setup="kids-condition" />
+</div>
+
+More likely: 2/5 among the hat-wearers, against 1/3 in the whole class. Shrunk to B, every child without a hat is muted and struck out, and the board says "Inside B: 5 outcomes, 2 of them also in A, \{2, 7\}. P(A | B) = 2/5 = 0.40, while P(A) = 4/12 = 1/3 ≈ 0.33." Five children wear hats, numbers 1, 2, 6, 7 and 10, and two of them, 2 and 7, also wear scarves. Once you know the picked child wears a hat, those five are the only possible outcomes left, and 2 of the 5 wear scarves. Press the switch again to bring the whole class back.
+
+## Probability after you learn something
+
+The probability of A given B is the share of B's probability that also lies in A. It is written P(A | B), read "the probability of A given B", and the bar is the word "given".
+
+### Divide by B, not by everything
+
+To find P(A | B), keep only the outcomes in B and ask what share of them are also in A. When every outcome is equally likely, as when a child is picked at random, that share is a count: the number of outcomes in both A and B divided by the number in B. For the class, 2 of the 5 hat-wearers wear scarves, so P(scarf | hat) = 2/5.
+
+The same share can be written with probabilities instead of counts. Divide the top and the bottom by the 12 children in the class: (2/12) / (5/12) = 2/5. So
+
+P(A | B) = P(A and B) / P(B),
+
+and this form works whether or not the outcomes are equally likely. It is the definition in Kolmogorov's book, Chapter I, §4 <Cite id="kolmogorov1950" />, and in Grinstead and Snell, §4.1 <Cite id="grinstead2003" />. Both require P(B) to be greater than 0: you can't take a share of nothing.
+
+<Simpler label="the same class as a table of counts">
+
+Sort the 12 children into a table by hat and scarf:
+
+|  | Scarf | No scarf | Total |
+| --- | --- | --- | --- |
+| **Hat** | 2 | 3 | 5 |
+| **No hat** | 2 | 5 | 7 |
+| **Total** | 4 | 8 | 12 |
+
+"Given a hat" means: read only the Hat row. Its total is 5, and 2 of those have a scarf, so the answer is 2 out of 5. The plain chance of a scarf uses the bottom row instead: 4 out of 12. Conditioning picks a row, or a column, and divides by that row's or column's total instead of the corner's.
+
+</Simpler>
+
+### The multiplication rule
+
+The probability that A and B both happen is the probability of B times the probability of A given B: P(A and B) = P(A | B) P(B). This is the definition read backward, multiplied out by P(B) <Cite id="kolmogorov1950" />. It is how you find the chance of two things in a row: first B must happen, and then, in the world where B happened, A must happen too. For the class, P(hat and scarf) = 2/5 × 5/12 = 2/12, which matches the 2 of 12 children who wear both. For the dice below, 1/3 × 6/36 = 2/36.
+
+### Given a hat is not given a scarf
+
+Swapping the two events changes the answer. P(hat | scarf) keeps only the 4 children with scarves, and 2 of them wear hats, so P(hat | scarf) = 2/4 = 1/2. P(scarf | hat) = 2/5. Both have the same top, the 2 children with both, but they divide by different groups: the scarf-wearers in one, the hat-wearers in the other. In general P(A | B) and P(B | A) are different numbers, and treating them as equal is the classic mistake in reading test results and evidence. [Bayes' theorem](/probability/bayes-theorem/), the next page, is the rule that turns one into the other.
+
+### Not A, given B
+
+Once you condition on B, the complement rule still holds inside B: P(not A | B) = 1 − P(A | B). Every outcome in B is either in A or not in A, so the two shares of B add up to the whole of B. Of the 5 hat-wearers, 2 wear scarves and 3 don't, so P(no scarf | hat) = 3/5 = 1 − 2/5. The rules from [the probability axioms](/probability/probability-axioms/) all carry over to the shrunk world in the same way.
+
+## Shrink two dice to the doubles
+
+The same move works on two dice, where the outcomes are the 36 ordered pairs from [sample spaces and events](/probability/sample-spaces-and-events/). Before you look: event A is "the sum is at least 10" and event B is "doubles". Is a sum of at least 10 more or less likely once you know the roll is a double? By how much?
+
+The board shows the 36 outcomes with A and B already marked, in the same style as above. "Editing" chooses which event a tap changes, A or B. The presets set an event in one press: Sum is at least 10 or Clear for A, and Doubles or Clear for B. The arrow keys move between squares and Space toggles one. As a goal, press Shrink the world to B.
+
+<div class="not-content">
+  <EventSpace client:visible setup="dice-condition" />
+</div>
+
+Twice as likely. Shrunk to the doubles, the board says "Inside B: 6 outcomes, 2 of them also in A, \{(5,5), (6,6)\}. P(A | B) = 2/6 = 1/3 ≈ 0.33, while P(A) = 6/36 = 1/6 ≈ 0.17." A sum of at least 10 happens in 6 of the 36 rolls, (4,6), (5,5), (5,6), (6,4), (6,5) and (6,6), but 2 of those 6 are doubles, and there are only 6 doubles. Here P(B | A) is also 2/6, only because A and B happen to hold 6 outcomes each; the class above shows that the two directions differ in general.
+
+Now, while the world is shrunk, press Clear for B. B no longer holds any outcome, so the board turns the switch off and says "Undefined: B can't happen (probability 0)." Pressing the switch again is refused with the same words. The answer is undefined, not 0: there is no outcome left to take a share of, and P(B) = 0 would put 0 at the bottom of the fraction. The [Bayes' theorem](/probability/bayes-theorem/) page does the same shrinking with areas instead of squares.
+
+## Notation
+
+<NotationKey symbols={["sample-space", "event", "intersection", "complement", "probability", "conditional", "cardinality"]} />
+
+<PreciseStatement>
+
+Let $(\Omega, \mathcal{F}, P)$ be a probability space, as on the [probability axioms](/probability/probability-axioms/) page, and let $A, B \in \mathcal{F}$ be events with $P(B) > 0$. The conditional probability of $A$ given $B$ is
+
+$$
+P(A \mid B) = \frac{P(A \cap B)}{P(B)}.
+$$
+
+When $\Omega$ is finite and every outcome is equally likely, this is the count $P(A \mid B) = |A \cap B| / |B|$. Rearranged, the definition is the multiplication rule $P(A \cap B) = P(A \mid B)\,P(B)$, and the complement rule holds given $B$: $P(A^\complement \mid B) = 1 - P(A \mid B)$.
+
+Boundary cases. If $P(B) = 0$, then $P(A \mid B)$ is undefined; it is not 0. Conditioning on the whole space changes nothing: $P(A \mid \Omega) = P(A)$. Given $B$, $B$ itself is certain: $P(B \mid B) = 1$, and more generally $P(A \mid B) = 1$ whenever $B \subseteq A$. An event that shares no outcome with $B$ is ruled out: if $A \cap B = \emptyset$, then $P(A \mid B) = 0$. And $P(A \mid B)$ and $P(B \mid A)$ are in general different; they agree exactly when $P(A) = P(B)$, provided $P(A \cap B) > 0$.
+
+</PreciseStatement>
+
+<GoDeeper label="why P( · | B) is itself a probability" id="conditioning-is-a-probability">
+
+Fix an event $B$ with $P(B) > 0$ and define $Q(A) = P(A \mid B)$ for every $A \in \mathcal{F}$. Then $Q$ satisfies all three axioms, so it is a probability on the same events, one that puts all of its weight on $B$. Every rule derived from the axioms, such as the complement rule or inclusion–exclusion, therefore holds given $B$ as well.
+
+<StepThrough title="Conditioning on B gives a probability" rigor="full">
+
+1. $Q$ is defined on all of $\mathcal{F}$: for $A \in \mathcal{F}$, the set $A \cap B$ is an event, because $\mathcal{F}$ is closed under intersections, so $P(A \cap B)$ exists. Since $P(B) > 0$, the quotient $Q(A) = P(A \cap B)/P(B)$ is a real number.
+2. Axiom 1. $P(A \cap B) \ge 0$ by axiom 1 for $P$, and $P(B) > 0$, so $Q(A) \ge 0$.
+3. Axiom 2. $\Omega \cap B = B$, so $Q(\Omega) = P(B)/P(B) = 1$.
+4. Axiom 3. Let $A_1, A_2, \ldots \in \mathcal{F}$ be pairwise disjoint. Then the sets $A_i \cap B$ are pairwise disjoint too, since $(A_i \cap B) \cap (A_j \cap B) \subseteq A_i \cap A_j = \emptyset$ for $i \ne j$, and $\big(\bigcup_i A_i\big) \cap B = \bigcup_i (A_i \cap B)$.
+5. Countable additivity of $P$ gives $P\big(\big(\bigcup_i A_i\big) \cap B\big) = \sum_i P(A_i \cap B)$. Dividing both sides by $P(B)$ gives $Q\big(\bigcup_i A_i\big) = \sum_i Q(A_i)$.
+6. So $Q$ satisfies the three axioms. In particular $Q(A^\complement) = 1 - Q(A)$ by the complement rule for any probability, which is $P(A^\complement \mid B) = 1 - P(A \mid B)$.
+
+</StepThrough>
+
+Kolmogorov makes the same observation, with additivity for two events: for a fixed condition, the conditional probabilities are non-negative, give the whole space 1 and add over disjoint events, so all the general theorems about probabilities hold for them <Cite id="kolmogorov1950" />. His book writes the condition as a subscript, $P_B(A)$ for "$A$ given $B$" (Chapter I, §4). On the board, $Q$ is what you see after pressing the switch: the struck-out squares have $Q = 0$, and the squares left in B share all of the probability.
+
+</GoDeeper>
+
+<FormalDefinition>
+
+<StepThrough title="The multiplication rule: P(A ∩ B) = P(A | B) P(B)" rigor="full">
+
+1. Assume $P(B) > 0$, so that $P(A \mid B)$ is defined.
+2. Multiply both sides of $P(A \mid B) = P(A \cap B)/P(B)$ by $P(B)$: $P(A \cap B) = P(A \mid B)\,P(B)$.
+3. If also $P(A) > 0$, the same step with the roles swapped gives $P(A \cap B) = P(B \mid A)\,P(A)$. Setting the two equal gives $P(A \mid B)\,P(B) = P(B \mid A)\,P(A)$, the starting point of [Bayes' theorem](/probability/bayes-theorem/).
+
+</StepThrough>
+
+<StepThrough title="The chain rule for three events: P(A ∩ B ∩ C) = P(A) P(B | A) P(C | A ∩ B)" rigor="full">
+
+1. Assume $P(A \cap B) > 0$. Then $P(A) > 0$ as well, because $A \cap B \subseteq A$ and monotonicity gives $P(A) \ge P(A \cap B)$. So both conditional probabilities on the right are defined.
+2. Apply the multiplication rule to the events $C$ and $A \cap B$: $P\big((A \cap B) \cap C\big) = P(C \mid A \cap B)\,P(A \cap B)$.
+3. Apply it again to $B$ and $A$: $P(A \cap B) = P(B \mid A)\,P(A)$.
+4. Substitute step 3 into step 2 and use $(A \cap B) \cap C = A \cap B \cap C$: $P(A \cap B \cap C) = P(A)\,P(B \mid A)\,P(C \mid A \cap B)$.
+
+</StepThrough>
+
+The same argument, repeated, gives the rule for any number of events, which Kolmogorov calls the Multiplication Theorem (Chapter I, §4) <Cite id="kolmogorov1950" />. For example, pick three different children from the class one after another. The chance that all three wear hats is $5/12 \times 4/11 \times 3/10 = 1/22$: 5 of the 12 wear hats, then 4 of the 11 left, then 3 of the 10 left. Counting agrees: 10 of the 220 possible groups of three are all hat-wearers.
+
+| Rule | Statement | In the class of 12 |
+| --- | --- | --- |
+| Definition | $P(A \mid B) = P(A \cap B)/P(B)$, for $P(B) > 0$ | $P(\text{scarf} \mid \text{hat}) = (2/12)/(5/12) = 2/5$ |
+| Equally likely outcomes | $P(A \mid B) = \lvert A \cap B\rvert / \lvert B\rvert$ | 2 of the 5 hat-wearers |
+| Multiplication rule | $P(A \cap B) = P(A \mid B)\,P(B)$ | $2/5 \times 5/12 = 2/12$ |
+| Other direction | $P(B \mid A) = P(A \cap B)/P(A)$ | $P(\text{hat} \mid \text{scarf}) = 2/4 = 1/2$ |
+| Complement given $B$ | $P(A^\complement \mid B) = 1 - P(A \mid B)$ | $P(\text{no scarf} \mid \text{hat}) = 3/5$ |
+| Chain rule | $P(A \cap B \cap C) = P(A)\,P(B \mid A)\,P(C \mid A \cap B)$ | Three hat-wearers in a row: $1/22$ |
+| Undefined case | No value when $P(B) = 0$ | The dice board refuses an empty B |
+
+</FormalDefinition>
+
+## Worked examples
+
+<WorkedExample number={1} title="A six, given an even number">
+
+Roll one fair die and learn that it shows an even number. The outcomes left are $B = \{2, 4, 6\}$, and the six is one of them, so $P(\text{six} \mid \text{even}) = 1/3$. Without the information, $P(\text{six}) = 1/6$. Learning "even" removes three faces, and the six keeps its place among the three that are left.
+
+</WorkedExample>
+
+<WorkedExample number={2} title="A high sum, given a high first die, and the other way round">
+
+Roll two fair dice. Let $A$ be "the sum is at least 10" and $B$ be "the first die shows at least 4". $B$ holds 18 of the 36 outcomes. Every roll in $A$ has a first die of at least 4, because the second die can add at most 6, so $A \cap B = A$, with 6 outcomes. Then $P(A \mid B) = 6/18 = 1/3$, while $P(B \mid A) = 6/6 = 1$: knowing the sum is at least 10 makes a first die of at least 4 certain, but knowing the first die is at least 4 leaves a high sum at only 1 in 3.
+
+</WorkedExample>
+
+<WorkedExample number={3} title="Two aces in a row" faded>
+
+Draw two cards from a shuffled 52-card deck without putting the first back. What is the probability that both are aces? Use the multiplication rule, then check by counting pairs.
+
+<div slot="solution">
+
+Let $A_1$ be "the first card is an ace" and $A_2$ be "the second card is an ace". $P(A_1) = 4/52$. Given $A_1$, 51 cards are left and 3 of them are aces, so $P(A_2 \mid A_1) = 3/51$. The multiplication rule gives $P(A_1 \cap A_2) = 4/52 \times 3/51 = 12/2652 = 1/221$. Counting agrees: there are $\binom{52}{2} = 1326$ equally likely pairs of cards, and $\binom{4}{2} = 6$ of them are two aces, so the probability is $6/1326 = 1/221$.
+
+</div>
+
+</WorkedExample>
+
+## Conditional probability in machine learning
+
+### A classifier's output
+
+A classifier's output is a conditional probability: the probability of each class given the input. A softmax output layer is built to produce a vector $\hat{y}$ with
+
+$$
+\hat{y}_i = P(y = i \mid x),
+$$
+
+the probability that the label $y$ is class $i$ given the input $x$, and training by maximum likelihood fits this conditional distribution $p(y \mid x)$ <Cite id="goodfellow2016" />. So a "cat: 0.9" output means P(cat | this image) = 0.9. It says nothing directly about how common cats are, or about P(this image | cat), which is the other direction.
+
+### Accuracy within a group
+
+Accuracy on a subgroup of the data is a conditional probability, and it can sit far from the overall accuracy. Suppose a test set has 1,000 examples: 900 from group 1, of which the model gets 855 right, and 100 from group 2, of which it gets 60 right. Overall accuracy is $915/1000 = 0.915$. But P(correct | group 1) = 855/900 = 0.95 and P(correct | group 2) = 60/100 = 0.60. The overall number is a weighted average of the two, $0.95 \times 0.9 + 0.60 \times 0.1 = 0.915$, dominated by the larger group, which is why evaluations often report accuracy per group as well as overall. The next page turns this weighted average into a general rule.
+
+### The next token
+
+A language model gives the probability of each possible next token given the context, the text so far: P(next token | context). It writes a whole sequence one token at a time, so by the multiplication rule, applied once per token, the probability of a sequence is the product of these conditional probabilities, each one given everything before it. The top-$k$ sampling step on [sample spaces and events](/probability/sample-spaces-and-events/) is conditioning too: keeping only the $k$ most likely tokens $V_k$ and dividing by $P(V_k)$ gives each kept token $\omega$ the probability $P(\{\omega\} \mid V_k) = P(\{\omega\})/P(V_k)$.
+
+## Shrink the world in code
+
+This runs in your browser, uses exact fractions so every equality is exact, and stops with an error if a result is off. It rebuilds the class and the two dice from the boards, checks every number on this page, and then estimates P(A | B) on two dice by simulation: it rolls 100,000 times, keeps only the rolls where B happened, and checks that the share of those with a sum of at least 10 is within 0.02 of 1/3.
+
+<PyRunner
+  title="conditional.py"
+  code={`
+import math
+import random
+from fractions import Fraction
+from itertools import product
+
+
+def probability(event, space):
+    """P(A) = |A| / |Omega| for equally likely outcomes."""
+    return Fraction(len(event), len(space))
+
+
+def given(a, b, space):
+    """P(A | B) = P(A and B) / P(B); undefined (an error) when P(B) = 0."""
+    if probability(b, space) == 0:
+        raise ValueError("P(A | B) is undefined: B can't happen (probability 0)")
+    return probability(a & b, space) / probability(b, space)
+
+
+# The class of 12 children from the first board: (hat, scarf) for children 1 to 12.
+wear = [(True, False), (True, True), (False, False), (False, True),
+        (False, False), (True, False), (True, True), (False, False),
+        (False, False), (True, False), (False, True), (False, False)]
+children = set(range(1, 13))
+hat = {child for child in children if wear[child - 1][0]}
+scarf = {child for child in children if wear[child - 1][1]}
+assert hat == {1, 2, 6, 7, 10} and scarf == {2, 4, 7, 11} and hat & scarf == {2, 7}
+
+assert given(scarf, hat, children) == Fraction(2, 5)
+assert round(float(given(scarf, hat, children)), 2) == 0.40
+assert probability(scarf, children) == Fraction(4, 12) == Fraction(1, 3)
+assert probability(hat, children) == Fraction(5, 12)
+assert (Fraction(2, 12) / Fraction(5, 12)) == Fraction(2, 5)
+print("P(scarf | hat) =", given(scarf, hat, children), " P(scarf) =", probability(scarf, children))
+
+# The other direction, and the complement given B.
+assert given(hat, scarf, children) == Fraction(2, 4) == Fraction(1, 2)
+assert given(hat, scarf, children) != given(scarf, hat, children)
+no_scarf = children - scarf
+assert given(no_scarf, hat, children) == Fraction(3, 5) == 1 - given(scarf, hat, children)
+
+# The 2 x 2 table of counts.
+no_hat = children - hat
+assert [len(hat & scarf), len(hat & no_scarf), len(no_hat & scarf), len(no_hat & no_scarf)] == [2, 3, 2, 5]
+assert [len(hat), len(no_hat), len(scarf), len(no_scarf)] == [5, 7, 4, 8]
+
+# The multiplication rule, both ways round.
+both = probability(hat & scarf, children)
+assert both == Fraction(2, 12)
+assert given(scarf, hat, children) * probability(hat, children) == Fraction(2, 5) * Fraction(5, 12) == both
+assert given(hat, scarf, children) * probability(scarf, children) == Fraction(1, 2) * Fraction(4, 12) == both
+
+# The chain rule: three different children in a row, all with hats.
+chain = Fraction(5, 12) * Fraction(4, 11) * Fraction(3, 10)
+assert chain == Fraction(1, 22)
+assert math.comb(5, 3) == 10 and math.comb(12, 3) == 220
+assert Fraction(math.comb(5, 3), math.comb(12, 3)) == chain
+
+# Two dice from the second board: A = sum is at least 10, B = doubles.
+dice = set(product(range(1, 7), repeat=2))
+A = {roll for roll in dice if sum(roll) >= 10}
+B = {roll for roll in dice if roll[0] == roll[1]}
+assert A == {(4, 6), (5, 5), (5, 6), (6, 4), (6, 5), (6, 6)} and len(B) == 6
+assert A & B == {(5, 5), (6, 6)}
+assert given(A, B, dice) == Fraction(2, 6) == Fraction(1, 3)
+assert probability(A, dice) == Fraction(6, 36) == Fraction(1, 6)
+assert given(B, A, dice) == Fraction(2, 6)
+assert given(A, B, dice) * probability(B, dice) == Fraction(1, 3) * Fraction(6, 36) == Fraction(2, 36)
+print("P(sum >= 10 | doubles) =", given(A, B, dice), " P(sum >= 10) =", probability(A, dice))
+
+# Clearing B: conditioning on an event that can't happen has no answer.
+try:
+    given(A, set(), dice)
+    raise AssertionError("conditioning on an empty B should fail")
+except ValueError as error:
+    print("empty B:", error)
+
+# Worked example 1: a six, given an even number.
+die = set(range(1, 7))
+assert given({6}, {2, 4, 6}, die) == Fraction(1, 3) and probability({6}, die) == Fraction(1, 6)
+
+# Worked example 2: sum at least 10 and first die at least 4.
+first_high = {roll for roll in dice if roll[0] >= 4}
+assert len(first_high) == 18 and A & first_high == A
+assert given(A, first_high, dice) == Fraction(6, 18) == Fraction(1, 3)
+assert given(first_high, A, dice) == 1
+
+# Worked example 3: two aces in a row, without replacement.
+two_aces = Fraction(4, 52) * Fraction(3, 51)
+assert two_aces == Fraction(12, 2652) == Fraction(1, 221)
+assert math.comb(52, 2) == 1326 and math.comb(4, 2) == 6
+assert Fraction(math.comb(4, 2), math.comb(52, 2)) == two_aces
+
+# Conditioning need not change anything: first die 6, given second die 6.
+first_6 = {roll for roll in dice if roll[0] == 6}
+second_6 = {roll for roll in dice if roll[1] == 6}
+assert given(first_6, second_6, dice) == Fraction(1, 6) == probability(first_6, dice)
+
+# Accuracy within a group is a conditional probability.
+right_1, size_1, right_2, size_2 = 855, 900, 60, 100
+overall = Fraction(right_1 + right_2, size_1 + size_2)
+assert overall == Fraction(915, 1000)
+assert Fraction(right_1, size_1) == Fraction(95, 100) and Fraction(right_2, size_2) == Fraction(60, 100)
+assert Fraction(95, 100) * Fraction(9, 10) + Fraction(60, 100) * Fraction(1, 10) == overall
+
+# Check yourself.
+assert given(scarf, no_hat, children) == Fraction(2, 7) and Fraction(2, 7) < Fraction(1, 3)
+assert Fraction(1, 2) * Fraction(2, 5) == Fraction(1, 5)
+assert given(hat, no_scarf, children) == Fraction(3, 8)
+
+# Simulation: estimate P(A | B) by keeping only the rolls where B happened.
+rng = random.Random(0)
+rolls = 100_000
+kept = 0
+high = 0
+for _ in range(rolls):
+    first, second = rng.randint(1, 6), rng.randint(1, 6)
+    if first != second:
+        continue  # B didn't happen: this roll is ruled out
+    kept += 1
+    high += first + second >= 10
+estimate = high / kept
+print(f"kept {kept} of {rolls} rolls (doubles); P(sum >= 10 | doubles) is about {estimate:.3f}")
+assert abs(kept / rolls - 1 / 6) < 0.01
+assert abs(estimate - 1 / 3) < 0.02
+`}
+/>
+
+About one roll in six is a double, so the simulation keeps roughly 16,700 of the 100,000 rolls, and the share with a sum of at least 10 among them lands within 0.02 of 1/3. The rolls that are thrown away are the ruled-out squares on the board.
+
+## Research frontier
+
+<ResearchFrontier reviewed="2026-11-24">
+
+**Conditioning on an event of probability 0.** The definition divides by $P(B)$, so it says nothing when $P(B) = 0$. For a measurement such as a point on a sphere, every single point and every single circle has probability 0, yet "given that the point lies on this circle" sounds like a reasonable condition. Kolmogorov's Chapter V, §2, "Explanation of a Borel paradox", takes a point chosen uniformly on a sphere and asks for the distribution of its latitude given that it lies on a fixed meridian circle. By symmetry one expects the uniform distribution, but treating the circle as one of the meridians through the poles gives a density proportional to $|\cos \theta|$ in the latitude $\theta$, so latitudes near the equator are more likely than latitudes near the poles. His conclusion is that a conditional probability given an isolated hypothesis of probability 0 is inadmissible: the circle gets a conditional distribution only as one member of a whole family of sets that splits up the sphere, here all the meridians with the given poles <Cite id="kolmogorov1950" />. The same circle can belong to different families, so the answer depends on which family, or which limit of thin bands around the circle, you choose. This is now known as the Borel–Kolmogorov paradox.
+
+**Where it matters in ML.** A model's input is often a continuous measurement, where each exact value $x$ has probability 0, and yet $p(y \mid x)$ is the object a classifier or regressor learns. That works because measure theory defines conditional probability given a random variable, using the whole family of events $\{X = x\}$ at once, rather than given one zero-probability event on its own. This is settled mathematics, not an open question; it is here because the paradox is the reason the elementary definition on this page stops at $P(B) > 0$.
+
+</ResearchFrontier>
+
+## Check yourself
+
+<CheckYourself level="intuition" question="You learn that B happened. Can that make A less likely than before, as well as more likely?">
+Yes. In the class, a hat makes a scarf more likely, $2/5$ against $1/3$. But no hat makes it less likely: 7 children have no hat and 2 of them wear scarves, so $P(\text{scarf} \mid \text{no hat}) = 2/7$, which is less than $1/3$. Shrinking the world can raise A's share, lower it or leave it unchanged.
+</CheckYourself>
+
+<CheckYourself level="standard" question="P(B) = 0.4 and P(A | B) = 0.5. What is P(A and B)?">
+$0.2$. The multiplication rule gives $P(A \cap B) = P(A \mid B)\,P(B) = 0.5 \times 0.4 = 0.2$. Half of B's probability also lies in A, and B has 0.4 of the total.
+</CheckYourself>
+
+<CheckYourself level="standard" question="In the class of 12, what is P(hat | no scarf)?">
+$3/8$. Eight children have no scarf, and 3 of them wear hats (children 1, 6 and 10). Divide by the 8 without a scarf, not by the 12 in the class and not by the 5 with hats.
+</CheckYourself>
+
+<CheckYourself level="proof" question="Show that if B ⊆ A and P(B) > 0, then P(A | B) = 1.">
+If every outcome of $B$ is in $A$, then $A \cap B = B$. So $P(A \mid B) = P(A \cap B)/P(B) = P(B)/P(B) = 1$. Once you know $B$ happened, an event that contains $B$ is certain. In the class: given a hat, "wears a hat or a scarf" has probability 1.
+</CheckYourself>
+
+## Common mistakes
+
+<CommonMistakes>
+  <Mistake wrong="P(A | B) and P(B | A) are the same thing.">
+    They share the numerator $P(A \cap B)$ but divide by different events. In the class, $P(\text{scarf} \mid \text{hat}) = 2/5$ while $P(\text{hat} \mid \text{scarf}) = 2/4 = 1/2$. Mixing them up is how a rare disease and an accurate test get misread; [Bayes' theorem](/probability/bayes-theorem/) is the rule that connects the two directions.
+  </Mistake>
+  <Mistake wrong="To get P(scarf | hat), count the children with both and divide by the class: 2/12.">
+    That is $P(\text{scarf} \cap \text{hat})$, the chance that a random child wears both. Given a hat, the children without hats are ruled out, so divide by the 5 hat-wearers: $2/5$. Dividing by the whole sample space instead of $|B|$ forgets the information you were given.
+  </Mistake>
+  <Mistake wrong="Learning that B happened always changes the probability of A.">
+    Not always. On two dice, $P(\text{first die is 6} \mid \text{second die is 6}) = 1/6$, the same as $P(\text{first die is 6})$: one die tells you nothing about the other. When knowing B leaves the probability of A unchanged, A and B are called independent, a topic that gets its own page later in this subject.
+  </Mistake>
+  <Mistake wrong="If B can't happen, then P(A | B) = 0.">
+    It is undefined, not 0. The definition divides by $P(B)$, and with $P(B) = 0$ there is nothing to take a share of; the dice board refuses with "Undefined: B can't happen (probability 0)." For measurements, where single values have probability 0, the research frontier above explains what replaces the definition.
+  </Mistake>
+</CommonMistakes>
+
+## Key takeaways
+
+<Takeaways />
+
+## How this connects
+
+<ConceptMap />
+
+## References
+
+<References />
