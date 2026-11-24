@@ -1,0 +1,603 @@
+---
+title: "Independent events in probability"
+description: "Two events are independent when knowing one happened leaves the other's chance unchanged. Check it with P(A and B) = P(A) P(B) on a coin, a die and two dice."
+sidebar:
+  order: 4
+draft: true
+topic: probability/independence
+type: B
+objectives:
+  - Decide whether two events are independent by comparing P(A ∩ B) with P(A) P(B), or P(A | B) with P(A).
+  - Use the product rule P(A ∩ B) = P(A) P(B) for independent events, and refuse it when independence has not been shown.
+  - Explain why independence depends on the probabilities, not on the picture, so that a loaded die can break it and two events about one roll can have it.
+  - Tell pairwise independence apart from mutual independence for three or more events, and say what the i.i.d. assumption asks of a training set.
+takeaways:
+  - A and B are independent when P(A ∩ B) = P(A) P(B). When P(B) > 0 this is the same as P(A | B) = P(A), so knowing B leaves A's chance where it was.
+  - For a coin and a die, P(heads and six) = 1/2 × 1/6 = 1/12, which is 1 of the 12 equally likely outcomes.
+  - On two dice, "sum is 7" and "first die is 6" are independent (1/36 = 1/6 × 1/6), but "sum is 8" and "first die is 6" are not (1/36 against 5/216).
+  - Disjoint events with positive probabilities are never independent, because if one happens the other can't.
+  - Three events can be independent in every pair and still not independent together. On two coins, "first is heads", "second is heads" and "both the same" all happen together with probability 1/4, not 1/8.
+references:
+  - kolmogorov1950
+  - grinstead2003
+  - goodfellow2016ml
+  - srivastava2014
+  - recht2019
+  - koh2020
+  - liu2021
+author: Muhammad Huzaifa Hussain
+reviewedAt: 2026-11-25
+aiAssisted: true
+primaryQuery: independent events probability
+searchIntent: learn
+depthStatus: complete
+---
+
+import Analogy from "../../../components/Analogy.astro";
+import CheckYourself from "../../../components/CheckYourself.astro";
+import Cite from "../../../components/Cite.astro";
+import CommonMistakes from "../../../components/CommonMistakes.astro";
+import ConceptHeader from "../../../components/ConceptHeader.astro";
+import ConceptMap from "../../../components/ConceptMap.astro";
+import FormalDefinition from "../../../components/FormalDefinition.astro";
+import GoDeeper from "../../../components/GoDeeper.astro";
+import Mistake from "../../../components/Mistake.astro";
+import NotationKey from "../../../components/NotationKey.astro";
+import PreciseStatement from "../../../components/PreciseStatement.astro";
+import PyRunner from "../../../components/PyRunner.astro";
+import References from "../../../components/References.astro";
+import ResearchFrontier from "../../../components/ResearchFrontier.astro";
+import SideNote from "../../../components/SideNote.astro";
+import Simpler from "../../../components/Simpler.astro";
+import StepThrough from "../../../components/StepThrough.astro";
+import Takeaways from "../../../components/Takeaways.astro";
+import WhyThisMatters from "../../../components/WhyThisMatters.astro";
+import WorkedExample from "../../../components/WorkedExample.astro";
+import EventSpace from "../../../components/react/EventSpace.tsx";
+
+<ConceptHeader
+  oneLiner="Two events are independent when knowing that one of them happened does not change the probability of the other; in symbols, the probability that both happen is the product of their probabilities."
+  difficulty="beginner"
+/>
+
+## In everyday terms
+
+<Analogy breaks="Separate objects are a good reason to expect independence, not a proof of it, and one die can give two independent events. The picture also breaks once someone chooses what to tell you: if your friend mentions the coin only when the die shows a six, then hearing about the coin is itself a clue, and the share changes.">
+
+You hold a coin in one hand and a die in the other. A friend takes both behind a screen, flips the coin, rolls the die, and tells you only one thing: the coin landed heads. Is a six now more likely, less likely, or neither? The die never saw the coin, so a six is still one face in six. Picture all 12 coin-and-die results in a table with 2 rows and 6 columns. "Heads" keeps the top row, and the six is still 1 of the 6 squares left: the same share as in the whole table, where it is 2 of 12.
+
+That picture leans on two separate objects, which is its blind spot. Take one die and ask two questions about the same roll: is it even, and is it at most 2? Learning "at most 2" leaves only the faces 1 and 2, and one of those two is even. So the chance of even is still 1 in 2, exactly as before you learned anything. Independence is about shares, not about separate objects.
+
+</Analogy>
+
+<WhyThisMatters>
+Most training objectives multiply probabilities. They treat the training examples as independent draws, so the probability of the whole data set is a product, and its logarithm is a sum: the familiar average loss. Dropout switches units off independently of each other. When independence fails, as with copies of the same example, or with [two tests whose mistakes repeat](/probability/bayes-theorem/#updating-twice), multiplying counts the same evidence twice and makes a model more confident than the data allow.
+</WhyThisMatters>
+
+## Flip a coin, roll a die
+
+Before you touch anything: you learn that the coin landed heads. Is a six now more likely, less likely, or exactly as likely as before? Going further: write P(six | heads) as a share of the 6 heads squares and P(six) as a share of all 12 squares, and compare the two fractions.
+
+The board lists the 12 outcomes of flipping a coin and rolling a die, H1 to H6 in the top row and T1 to T6 in the bottom one. Event A starts as "die is 6" and event B as "coin is heads". A square in A has a solid border and an "A" tag, a square in B a dashed outline and a "B" tag. Under the grid the board reads "A = die is 6: 2 of 12 = 1/6 (≈ 0.17)" and "B = coin is heads: 6 of 12 = 1/2 (0.50)", and nothing else yet: how much of A lies inside B is for you to count.
+
+Your task: turn on Compare A and B, then press Shrink the world to B, and check whether P(A | B) and P(A) agree. Shrinking is refused until Compare is on, because it would answer the question for you.
+
+<div class="not-content">
+  <EventSpace client:visible setup="coin-die-independence" />
+</div>
+
+Exactly as likely. Compare A and B adds the line "A and B = \{H6\}: 1 of 12" and a verdict, "Independent: yes.", with "P(A and B) = 1/12, and P(A) × P(B) = 1/6 × 1/2 = 1/12: equal." It also says the two events are not mutually exclusive, because they share H6. Shrunk to B, the tails row is struck out and the board says "Inside B: 6 outcomes, 1 of them also in A, \{H6\}. P(A | B) = 1/6 ≈ 0.17, while P(A) = 2/12 = 1/6 ≈ 0.17." The six holds 1 of the 6 heads squares and 2 of all 12 squares, and both shares are 1/6.
+
+Now press Die is even in the row labeled "A:". Still shrunk, the board says "Inside B: 6 outcomes, 3 of them also in A, \{H2, H4, H6\}. P(A | B) = 3/6 = 1/2 = 0.50, while P(A) = 6/12 = 1/2 = 0.50." and the product line reads "P(A and B) = 1/4, and P(A) × P(B) = 1/2 × 1/2 = 1/4: equal." Any event about the die alone is independent of any event about the coin alone, because the die's share is the same in both rows.
+
+Last, press Heads and a six. That event is built from the coin as well as the die, and the verdict flips: "P(A and B) = 1/12 (≈ 0.08), but P(A) × P(B) = 1/12 × 1/2 = 1/24 (≈ 0.04): not equal." Learning heads doubles its chance, from 1/12 to 1/6. Press Reset to return to the opening events.
+
+## When knowing B tells you nothing about A
+
+Events A and B are independent when learning that B happened leaves the probability of A unchanged: P(A | B) = P(A).
+
+### Two ways to say it
+
+The conditional form and the product form say the same thing whenever P(B) > 0. By the definition on the [conditional probability](/probability/conditional-probability/) page, P(A | B) = P(A and B) / P(B). Set that equal to P(A) and multiply both sides by P(B):
+
+P(A and B) = P(A) P(B).
+
+For the coin and the die, P(heads and six) = 1/2 × 1/6 = 1/12, the single square H6 out of 12. Kolmogorov uses the product form as the definition, his equation (5) in Chapter I, §5 <Cite id="kolmogorov1950" />. Grinstead and Snell define independence through the conditional form, with a separate clause for an event of probability 0, and their Theorem 4.1 (§4.1, p. 140) proves that it holds exactly when the product form does <Cite id="grinstead2003" />. The product form is the one most books take as the definition, for two reasons: it treats A and B the same way, and it still makes sense when P(B) = 0, where P(A | B) has no value.
+
+<SideNote>
+Kolmogorov's definition uses no conditional probability at all. He notes this, and only afterward connects independence to conditional probabilities in his Theorem III (Chapter I, §5, pp. 11–12) <Cite id="kolmogorov1950" />.
+</SideNote>
+
+<Simpler label="the same idea as a table of counts">
+
+Sort the 12 coin-and-die outcomes by coin and by "six or not":
+
+|  | Six | Not six | Total |
+| --- | --- | --- | --- |
+| **Heads** | 1 | 5 | 6 |
+| **Tails** | 1 | 5 | 6 |
+| **Total** | 2 | 10 | 12 |
+
+"Given heads" means: read only the Heads row. It holds 1 six in 6 squares. The whole table holds 2 sixes in 12 squares. The two shares are the same, 1/6, and that is all independence says. If the rows held different shares of sixes, learning the coin would tell you something about the die.
+
+</Simpler>
+
+### It works in both directions
+
+If knowing B doesn't change the chance of A, then knowing A doesn't change the chance of B, as long as P(A) > 0. The product form is symmetric, so dividing it by P(A) instead of P(B) gives P(B | A) = P(B). For the coin and the die: there are 2 sixes, H6 and T6, and 1 of them is heads, so P(heads | six) = 1/2 = P(heads). Grinstead and Snell leave this as their Exercise 1 in §4.1 (p. 150) <Cite id="grinstead2003" />.
+
+### Multiplying is a rule you earn
+
+The product P(A) P(B) gives the chance of both only when A and B are independent. In general the chance of both is P(A | B) P(B), the multiplication rule from the [conditional probability](/probability/conditional-probability/#the-multiplication-rule) page. In the class of 12 on that page, 5 children wear hats, 4 wear scarves and 2 wear both. So P(hat and scarf) = 2/12 = 1/6 ≈ 0.167, while P(hat) P(scarf) = 5/12 × 4/12 = 20/144 = 5/36 ≈ 0.139. Multiplying would undercount the children who wear both, because hats and scarves tend to go together: cold weather brings out both. That kind of shared cause, and what happens once you hold it fixed, is the subject of a later page on conditional independence.
+
+## Test pairs of events on two dice
+
+Before you look: is "the sum is 7" independent of "the first die is 6"? Going further: work out P(sum is 7 | first die is 6) before you press anything. Many people expect the two to be dependent, because the first die is part of the sum.
+
+The board shows the 36 outcomes of rolling two dice, with A = sum is 7 and B = first die is 6 already marked in the same style as above. It opens with "A = sum is 7: 6 of 36 = 1/6 (≈ 0.17)" and "B = first die is 6: 6 of 36 = 1/6 (≈ 0.17)". The presets after "A:" are Sum is 7, Sum is 8, Doubles and Sum is at least 10; after "B:" they are First die is 6, Second die is 6, Doubles and Clear. "Editing" chooses which event a tap changes, the arrow keys move between squares, and Space toggles one. Your task: turn on Compare A and B and read the verdict.
+
+<div class="not-content">
+  <EventSpace client:visible setup="dice-independence" />
+</div>
+
+Independent. The board says "Independent: yes." and "P(A and B) = 1/36, and P(A) × P(B) = 1/6 × 1/6 = 1/36: equal." The only roll in both events is (6,1). Given that the first die is 6, only a 1 on the second die makes 7, so P(A | B) = 1/6, and P(A) = 6/36 = 1/6 as well; shrinking the world to B shows "Inside B: 6 outcomes, 1 of them also in A, \{(6,1)\}. P(A | B) = 1/6 ≈ 0.17, while P(A) = 6/36 = 1/6 ≈ 0.17." The reason is that 7 is special: whatever the first die shows, exactly one face of the second die makes 7. So the first die never changes the chance of a 7.
+
+Now try three more pairs with Compare still on.
+
+1. Press Sum is 8. The board says "Independent: no." and "P(A and B) = 1/36 (≈ 0.03), but P(A) × P(B) = 5/36 × 1/6 = 5/216 (≈ 0.02): not equal." Here P(sum is 8 | first die is 6) = 1/6, which is more than P(sum is 8) = 5/36. A first die of 6 leaves one way to make 8, a 2, while a first die of 1 leaves no way at all. The first die now matters.
+2. Press Doubles, keeping B = first die is 6. The verdict is "Independent: yes." again, with 1/36 on both sides: whatever the first die shows, one face of the second die matches it.
+3. Press Sum is 7 for A and Doubles for B. These two can't happen together, and the board says "Mutually exclusive: yes, A and B share no outcome." and "P(A and B) = 0, but P(A) × P(B) = 1/6 × 1/6 = 1/36 (≈ 0.03): not equal." Learning that the roll is a double rules out a 7 completely, a strong form of dependence. The [probability axioms](/probability/probability-axioms/) page lists this as a common mistake, and a later page compares the two ideas side by side.
+
+Last, press Clear for B. B now holds no outcome, and the board says "Independent: yes, but only because B can't happen.", "P(A and B) = 0, and P(A) × P(B) = 1/6 × 0 = 0: equal." and "P(A | B) is undefined, because B can't happen." Shrink the world to B is refused with "Undefined: B can't happen (probability 0)." This is where the two forms part ways. The product form calls an event that can't happen independent of everything, while the conditional form has no value to compare. That is why the product form is the definition.
+
+<CheckYourself level="intuition" question="Is the event 'doubles' independent of itself? Set both A and B to Doubles and predict the verdict before you look.">
+No. A double happens whenever a double happens, so P(doubles and doubles) = P(doubles) = 1/6, but P(doubles) × P(doubles) = 1/36. The board says "P(A and B) = 1/6 (≈ 0.17), but P(A) × P(B) = 1/6 × 1/6 = 1/36 (≈ 0.03): not equal." Learning that a double happened makes a double certain. An event is independent of itself only when its probability is 0 or 1.
+</CheckYourself>
+
+### The probabilities decide, not the picture
+
+Whether two events are independent depends on the probabilities, not on the sets alone. Take one die with A = even, \{2, 4, 6\}, and B = at most 2, \{1, 2\}. On a fair die, P(A) = 1/2, P(B) = 1/3 and P(A and B) = P(\{2\}) = 1/6 = 1/2 × 1/3, so they are independent, as in the everyday picture above.
+
+Now load the die toward six, with the same fill as the jug board on the [probability axioms](/probability/probability-axioms/) page: faces 1 to 5 carry 1 unit each and face 6 carries 7, out of 12.
+
+|  | P(A) | P(B) | P(A and B) | P(A) P(B) | P(A \| B) |
+| --- | --- | --- | --- | --- | --- |
+| **Fair die** | 1/2 | 1/3 | 1/6 | 1/6 | 1/2 |
+| **Loaded toward six** | 3/4 | 1/6 | 1/12 | 1/8 | 1/2 |
+
+On the loaded die, P(A and B) = 1/12 but P(A) P(B) = 3/4 × 1/6 = 1/8, so the events are dependent. P(A | B) is 1/2 on both dice, because faces 1 and 2 still carry equal weight. What moved is P(A), from 1/2 to 3/4, since the heavy six is even. Same sets, different probabilities, different answer.
+
+### Three or more events
+
+Three or more events are mutually independent when every group of two or more of them multiplies. For three events A, B and C that is four equations:
+
+P(A and B) = P(A) P(B), P(A and C) = P(A) P(C), P(B and C) = P(B) P(C), and P(A and B and C) = P(A) P(B) P(C).
+
+For n events it is 2ⁿ − n − 1 equations, one for every group of two or more: 1 for two events, 4 for three, 11 for four. Kolmogorov states this count with his Definition II, equation (4), in Chapter I, §5 <Cite id="kolmogorov1950" />. Checking only the pairs is not enough, and checking only the product of all of them is not enough either.
+
+<GoDeeper label="independent in pairs, not all together" id="pairwise-not-mutual">
+
+Toss two fair coins. Let A be "the first is heads", B be "the second is heads" and C be "both the same". Each has probability 1/2:
+
+| Outcome | A: first heads | B: second heads | C: both the same |
+| --- | --- | --- | --- |
+| HH | yes | yes | yes |
+| HT | yes | no | no |
+| TH | no | yes | no |
+| TT | no | no | yes |
+
+Every pair meets only in HH, so each pair has P = 1/4 = 1/2 × 1/2, and every pair is independent. All three also meet only in HH, so P(A and B and C) = 1/4, not 1/2 × 1/2 × 1/2 = 1/8. The three are not mutually independent: once you know A and B, C is certain, P(C | A and B) = 1. This is Grinstead and Snell's Exercise 7 in §4.1 (p. 151), which also asks you to show that C is independent of A and of B but not of A ∩ B <Cite id="grinstead2003" />. Kolmogorov gives the same kind of example, due to Bernstein, on four equally likely points (Chapter I, §5, footnote 12) <Cite id="kolmogorov1950" />.
+
+The failure runs the other way too. Grinstead and Snell's Exercise 8 (p. 151) takes Ω = \{a, b, c, d, e, f\} with weights 1/8 for a and b and 3/16 for each of c, d, e and f, and the events A = \{d, e, a\}, B = \{c, e, a\} and C = \{c, d, a\} <Cite id="grinstead2003" />. Each has probability 3/16 + 3/16 + 1/8 = 1/2, and all three meet only in a, so P(A and B and C) = 1/8 = (1/2)³. The triple product holds. But A and B share e and a, so P(A and B) = 3/16 + 1/8 = 5/16, not 1/4, and no pair is independent.
+
+</GoDeeper>
+
+## Notation
+
+<NotationKey symbols={["sample-space", "event-collection", "event", "intersection", "complement", "empty-set", "probability", "conditional", "independent", "product"]} />
+
+<PreciseStatement>
+
+Let $(\Omega, \mathcal{F}, P)$ be a probability space, as on the [probability axioms](/probability/probability-axioms/) page, and let $A, B \in \mathcal{F}$. The events $A$ and $B$ are independent, written $A \perp\!\!\!\perp B$, if
+
+$$
+P(A \cap B) = P(A)\,P(B).
+$$
+
+If $P(B) > 0$, this holds exactly when $P(A \mid B) = P(A)$; if $P(A) > 0$, exactly when $P(B \mid A) = P(B)$. Events $A_1, \ldots, A_n$ are mutually independent if $P(A_{i_1} \cap \cdots \cap A_{i_m}) = P(A_{i_1}) \cdots P(A_{i_m})$ for every $1 \le i_1 < \cdots < i_m \le n$ with $m \ge 2$, which is $2^n - n - 1$ conditions.
+
+Boundary cases. An event with probability 0 or 1 is independent of every event, so $\emptyset$ and $\Omega$ are. An event is independent of itself only when its probability is 0 or 1. Disjoint events $A$ and $B$ with $P(A) > 0$ and $P(B) > 0$ are dependent. Independence in every pair does not imply mutual independence. And independence is a property of $P$, not of the sets alone.
+
+</PreciseStatement>
+
+<FormalDefinition>
+
+<StepThrough title="Independence two ways: P(A ∩ B) = P(A) P(B) exactly when P(A | B) = P(A)" rigor="full">
+
+1. Assume $P(B) > 0$, so that $P(A \mid B) = P(A \cap B)/P(B)$ is defined.
+2. If $P(A \cap B) = P(A)\,P(B)$, divide both sides by $P(B)$: $P(A \mid B) = P(A)$.
+3. If $P(A \mid B) = P(A)$, multiply both sides of $P(A \cap B)/P(B) = P(A)$ by $P(B)$: $P(A \cap B) = P(A)\,P(B)$.
+4. If also $P(A) > 0$, the same two steps with $A$ and $B$ swapped give $P(B \mid A) = P(B)$, because $A \cap B = B \cap A$. This is Grinstead and Snell's Theorem 4.1 <Cite id="grinstead2003" />.
+
+</StepThrough>
+
+<StepThrough title="If A ⫫ B, then A is independent of not B" rigor="full">
+
+1. Assume $P(A \cap B) = P(A)\,P(B)$.
+2. $A$ splits into $A \cap B$ and $A \cap B^\complement$, which share no outcome, so additivity gives $P(A) = P(A \cap B) + P(A \cap B^\complement)$.
+3. Rearrange and use step 1: $P(A \cap B^\complement) = P(A) - P(A)\,P(B) = P(A)\,(1 - P(B))$.
+4. By the complement rule $1 - P(B) = P(B^\complement)$, so $P(A \cap B^\complement) = P(A)\,P(B^\complement)$.
+5. Applying the same steps with the roles of $A$ and $B^\complement$ swapped gives $A^\complement \perp\!\!\!\perp B^\complement$, and likewise $A^\complement \perp\!\!\!\perp B$. Kolmogorov's footnote 11 in Chapter I, §5 is this one-line argument <Cite id="kolmogorov1950" />.
+
+</StepThrough>
+
+On two dice, sum is 7 and "the first die is not 6" give $P = 5/36 = 1/6 \times 5/6$: five of the six rolls that make 7 have a first die below 6.
+
+<StepThrough title="An event with probability 0 or 1 is independent of every event" rigor="full">
+
+1. Let $P(B) = 0$. Since $A \cap B \subseteq B$, monotonicity gives $0 \le P(A \cap B) \le P(B) = 0$.
+2. So $P(A \cap B) = 0 = P(A) \times 0 = P(A)\,P(B)$, and $A \perp\!\!\!\perp B$ for every event $A$.
+3. Now let $P(B) = 1$. Then $P(B^\complement) = 0$, so by step 2, $A \perp\!\!\!\perp B^\complement$.
+4. By the complement result above, $A \perp\!\!\!\perp B$ as well.
+
+</StepThrough>
+
+| Rule | Statement | Example |
+| --- | --- | --- |
+| Definition | $P(A \cap B) = P(A)\,P(B)$ | Coin heads, die 6: $1/12 = 1/2 \times 1/6$ |
+| Conditional form | $P(A \mid B) = P(A)$, when $P(B) > 0$ | Sum 7 given first die 6: $1/6$ |
+| Symmetric | $A \perp\!\!\!\perp B$ exactly when $B \perp\!\!\!\perp A$ | $P(\text{heads} \mid \text{six}) = 1/2$ |
+| Complements | $A \perp\!\!\!\perp B$ gives $A \perp\!\!\!\perp B^\complement$ | Sum 7, first die not 6: $5/36$ |
+| Probability 0 or 1 | Independent of every event | Clear B: "Independent: yes, but only because B can't happen." |
+| Disjoint, both positive | Dependent | Sum 7 and doubles: $0$ against $1/36$ |
+| Itself | $A \perp\!\!\!\perp A$ only if $P(A) \in \{0, 1\}$ | Doubles with doubles: $1/6$ against $1/36$ |
+| Mutual independence | $2^n - n - 1$ equations | 4 for three events |
+| Pairs are not enough | Pairwise does not give mutual | Two coins: $1/4$ against $1/8$ |
+
+</FormalDefinition>
+
+## Worked examples
+
+<WorkedExample number={1} title="Heads and a six">
+
+Flip a fair coin and roll a fair die. The two events here are "heads" and "six"; the board's Heads and a six preset is their intersection. The coin and the die don't affect each other, so heads and six are independent and $P(\text{heads and six}) = 1/2 \times 1/6 = 1/12$. Counting agrees: 1 of the 12 equally likely outcomes, H6. The chance of heads or a six then follows from the union rule on the [probability axioms](/probability/probability-axioms/) page: $1/2 + 1/6 - 1/12 = 7/12$, which is 7 of the 12 squares (H1 to H6, and T6).
+
+</WorkedExample>
+
+<WorkedExample number={2} title="Sum 7 and sum 8, given the first die">
+
+Roll two fair dice and let $B$ be "the first die is 6". Given $B$, the second die decides everything. A 7 needs a 1, so $P(\text{sum 7} \mid B) = 1/6$, the same as $P(\text{sum 7}) = 6/36$: independent. An 8 needs a 2, so $P(\text{sum 8} \mid B) = 1/6 = 6/36$, which is more than $P(\text{sum 8}) = 5/36$: dependent. The difference is that every first face has exactly one partner that makes 7, while a first face of 1 has no partner that makes 8.
+
+</WorkedExample>
+
+<WorkedExample number={3} title="A rare class in a mini-batch" faded>
+
+A class makes up 1% of a large data set. A training batch of 64 examples is drawn independently, with replacement. What is the probability that the batch contains at least one example of the class? How many draws would it take for "at least one" to pass 1/2? Name the assumption you used.
+
+<div slot="solution">
+
+Each draw misses the class with probability $0.99$, and the draws are independent, so the product rule gives $P(\text{none in 64}) = 0.99^{64} \approx 0.5256$. The complement is $P(\text{at least one}) \approx 0.4744$, under half. "At least one" passes 1/2 once $0.99^n < 1/2$, that is $n > \ln 0.5 / \ln 0.99 \approx 68.97$, so it takes 69 draws. The assumption is that the draws are independent. Batches drawn by shuffling and taking examples without replacement are not exactly independent, but from a large data set they come close.
+
+</div>
+
+</WorkedExample>
+
+## Independence in machine learning
+
+### A likelihood becomes a product
+
+Independent training examples turn the probability of a whole data set into a product. Goodfellow and coauthors name the i.i.d. assumptions: the examples in each data set are independent of each other, and the training and test sets are identically distributed (§5.2) <Cite id="goodfellow2016ml" />. Under the first, the maximum likelihood estimate for $m$ examples $x^{(1)}, \ldots, x^{(m)}$ is
+
+$$
+\theta_{\text{ML}} = \arg\max_{\theta} \prod_{i=1}^{m} p_{\text{model}}(x^{(i)}; \theta),
+$$
+
+their equation (5.57). They point out that this product is prone to numerical underflow, and that taking the logarithm turns it into a sum with the same maximizer, equation (5.58) <Cite id="goodfellow2016ml" />. For three coin flips H, H, T and a coin with heads probability $\theta$, the likelihood is $\theta^2 (1 - \theta)$: $4/27 \approx 0.148$ at $\theta = 2/3$, against $1/8 = 0.125$ at $\theta = 1/2$, and $2/3$ is where it peaks. Underflow is easy to reach. A thousand examples that each get probability $0.01$ have likelihood $10^{-2000}$, which a 64-bit float stores as 0, while the log-likelihood $1000 \ln 0.01 \approx -4605.17$ is an ordinary number.
+
+### Dropout drops each unit on its own
+
+Dropout uses independence on purpose. Srivastava and coauthors keep each unit with a fixed probability $p$, independent of the other units, and note that a network with $n$ units can be seen as a collection of $2^n$ thinned networks that share weights (§1, pp. 1930–1931) <Cite id="srivastava2014" />. In their model each unit $j$ of layer $l$ gets its own mask $r^{(l)}_j \sim \text{Bernoulli}(p)$, a vector of independent Bernoulli variables (§4, pp. 1933–1934) <Cite id="srivastava2014" />. With $p = 0.5$, a given pair of units is kept together with probability $1/2 \times 1/2 = 1/4$, all 4 units of a 4-unit layer are dropped at once with probability $1/16$, and that layer has $2^4 = 16$ possible thinned versions.
+
+<SideNote>
+This page uses Srivastava's $p$, the probability of keeping a unit. PyTorch's [nn.Dropout](https://docs.pytorch.org/docs/stable/generated/torch.nn.Dropout.html) uses $p$ for the probability of zeroing an element, and scales the kept outputs by $1/(1 - p)$ during training.
+</SideNote>
+
+### When the examples share information
+
+The product counts each example as a separate piece of evidence, which is only right when the examples are independent. If a data set holds copies or near-copies of one example, the product counts that one example several times, and the model grows more certain than the data allow. The same happens with evidence: a second test whose mistakes repeat the first test's adds less than an independent one, as the [Bayes' theorem](/probability/bayes-theorem/#updating-twice) page shows with numbers. Naive Bayes classifiers multiply word probabilities on purpose, assuming the words are independent once the class is known; that assumption, conditional independence, gets its own page later in this subject.
+
+## Test the product rule in code
+
+This runs in your browser with exact fractions and stops with an error if any number on this page is off. Its helper decides independence the way the board does, by comparing P(A and B) with P(A) P(B) exactly. At the end it simulates the boards: 100,000 coin-and-die trials, where the share of heads with a six must land within 0.005 of 1/12, and 100,000 rolls of two dice, keeping only those with a first die of 6, where the share with a sum of 7 must land within 0.02 of 1/6.
+
+<PyRunner
+  title="independence.py"
+  code={`
+import math
+import random
+from fractions import Fraction
+from itertools import combinations, product
+
+
+def probability(event, weights):
+    """P(A): add the weights of the outcomes in A. Equally likely outcomes all get the same weight."""
+    return sum((weights[outcome] for outcome in event), Fraction(0))
+
+
+def given(a, b, weights):
+    """P(A | B) = P(A and B) / P(B); undefined (an error) when P(B) = 0."""
+    if probability(b, weights) == 0:
+        raise ValueError("P(A | B) is undefined: B can't happen (probability 0)")
+    return probability(a & b, weights) / probability(b, weights)
+
+
+def independent(a, b, weights):
+    """The product form, compared exactly: P(A and B) == P(A) P(B)."""
+    return probability(a & b, weights) == probability(a, weights) * probability(b, weights)
+
+
+def uniform(space):
+    return {outcome: Fraction(1, len(space)) for outcome in space}
+
+
+# The coin and the die from the first board: 12 equally likely outcomes.
+coin_die = set(product("HT", range(1, 7)))
+cd = uniform(coin_die)
+heads = {o for o in coin_die if o[0] == "H"}
+six = {o for o in coin_die if o[1] == 6}
+even = {o for o in coin_die if o[1] % 2 == 0}
+heads_and_six = heads & six
+assert len(coin_die) == 12
+assert probability(heads, cd) == Fraction(1, 2)
+assert probability(six, cd) == Fraction(2, 12) == Fraction(1, 6)
+assert probability(heads & six, cd) == Fraction(1, 12) == Fraction(1, 2) * Fraction(1, 6)
+assert independent(six, heads, cd)
+assert given(six, heads, cd) == Fraction(1, 6) == probability(six, cd)
+assert given(heads, six, cd) == Fraction(1, 2) == probability(heads, cd)
+assert probability(even & heads, cd) == Fraction(3, 12) == Fraction(1, 4) == Fraction(1, 2) * Fraction(1, 2)
+assert given(even, heads, cd) == Fraction(3, 6) == Fraction(1, 2)
+# Every event about the die alone is independent of every event about the coin alone.
+for faces in range(64):
+    die_event = {o for o in coin_die if faces >> (o[1] - 1) & 1}
+    for coin_event in (set(), heads, coin_die - heads, coin_die):
+        assert independent(die_event, coin_event, cd)
+# Heads and a six is built from the coin too, so it depends on the coin.
+assert probability(heads_and_six, cd) * probability(heads, cd) == Fraction(1, 24)
+assert not independent(heads_and_six, heads, cd)
+assert given(heads_and_six, heads, cd) == Fraction(1, 6) == 2 * probability(heads_and_six, cd)
+# Worked example 1: heads or a six.
+assert probability(heads | six, cd) == Fraction(1, 2) + Fraction(1, 6) - Fraction(1, 12) == Fraction(7, 12)
+assert len(heads | six) == 7
+print("coin and die: P(six | heads) =", given(six, heads, cd), " P(six) =", probability(six, cd))
+
+# Two dice from the second board.
+dice = set(product(range(1, 7), repeat=2))
+dd = uniform(dice)
+events = {
+    "sum 7": {r for r in dice if sum(r) == 7},
+    "sum 8": {r for r in dice if sum(r) == 8},
+    "doubles": {r for r in dice if r[0] == r[1]},
+    "sum at least 10": {r for r in dice if sum(r) >= 10},
+    "first 6": {r for r in dice if r[0] == 6},
+    "second 6": {r for r in dice if r[1] == 6},
+}
+sum7, sum8, doubles, first6 = events["sum 7"], events["sum 8"], events["doubles"], events["first 6"]
+assert probability(sum7 & first6, dd) == Fraction(1, 36) == Fraction(1, 6) * Fraction(1, 6)
+assert sum7 & first6 == {(6, 1)}
+assert independent(sum7, first6, dd) and independent(sum7, events["second 6"], dd)
+assert given(sum7, first6, dd) == Fraction(1, 6) == probability(sum7, dd) == Fraction(6, 36)
+assert independent(doubles, first6, dd) and probability(doubles & first6, dd) == Fraction(1, 36)
+# Sum 8 and first die 6: dependent.
+assert probability(sum8 & first6, dd) == Fraction(1, 36) == Fraction(6, 216)
+assert probability(sum8, dd) * probability(first6, dd) == Fraction(5, 36) * Fraction(1, 6) == Fraction(5, 216)
+assert not independent(sum8, first6, dd)
+assert given(sum8, first6, dd) == Fraction(1, 6) > probability(sum8, dd) == Fraction(5, 36)
+assert not any(sum(r) == 8 for r in dice if r[0] == 1)
+# Every first face has exactly one partner that makes 7.
+assert all(sum(1 for r in dice if r[0] == face and sum(r) == 7) == 1 for face in range(1, 7))
+# Sum 7 and doubles are disjoint, so dependent.
+assert sum7 & doubles == set() and probability(sum7, dd) * probability(doubles, dd) == Fraction(1, 36)
+assert not independent(sum7, doubles, dd)
+# Doubles with itself, and sum at least 10 with doubles.
+assert probability(doubles & doubles, dd) == Fraction(1, 6) and probability(doubles, dd) ** 2 == Fraction(1, 36)
+assert not independent(doubles, doubles, dd)
+assert probability(events["sum at least 10"] & doubles, dd) == Fraction(1, 18) and not independent(events["sum at least 10"], doubles, dd)
+# Complements: sum 7 and the first die not 6.
+assert probability(sum7 - first6, dd) == Fraction(5, 36) == Fraction(1, 6) * Fraction(5, 6)
+assert independent(sum7, dice - first6, dd) and independent(dice - sum7, dice - first6, dd)
+# The empty event and the whole space are independent of every event; P(A | empty B) has no value.
+for event in events.values():
+    assert independent(event, set(), dd) and independent(event, dice, dd)
+    assert probability(event & set(), dd) == 0 == probability(event, dd) * 0
+try:
+    given(sum7, set(), dd)
+    raise AssertionError("conditioning on an empty B should fail")
+except ValueError as error:
+    print("empty B:", error)
+# An event is independent of itself only when its probability is 0 or 1.
+for event in [set(), dice, doubles, *events.values()]:
+    p = probability(event, dd)
+    assert independent(event, event, dd) == (p in (0, 1))
+print("two dice: P(sum 8 and first 6) =", probability(sum8 & first6, dd), " P(sum 8) P(first 6) =", Fraction(5, 216))
+
+# The class of 12 from the conditional probability page.
+children = set(range(1, 13))
+kids = uniform(children)
+hat = {1, 2, 6, 7, 10}
+scarf = {2, 4, 7, 11}
+assert probability(hat & scarf, kids) == Fraction(2, 12) == Fraction(1, 6)
+assert probability(hat, kids) * probability(scarf, kids) == Fraction(5, 12) * Fraction(4, 12) == Fraction(20, 144) == Fraction(5, 36)
+assert not independent(hat, scarf, kids)
+assert round(Fraction(1, 6), 3) == Fraction(167, 1000) and round(Fraction(5, 36), 3) == Fraction(139, 1000)
+
+# One die, fair and loaded toward six: the same sets, a different verdict.
+die = set(range(1, 7))
+fair = {face: Fraction(2, 12) for face in die}
+loaded = {face: Fraction(units, 12) for face, units in zip(range(1, 7), (1, 1, 1, 1, 1, 7))}
+assert sum(fair.values()) == 1 and sum(loaded.values()) == 1
+die_even, at_most_2 = {2, 4, 6}, {1, 2}
+assert (probability(die_even, fair), probability(at_most_2, fair), probability(die_even & at_most_2, fair)) == (Fraction(1, 2), Fraction(1, 3), Fraction(1, 6))
+assert independent(die_even, at_most_2, fair)
+assert (probability(die_even, loaded), probability(at_most_2, loaded), probability(die_even & at_most_2, loaded)) == (Fraction(3, 4), Fraction(1, 6), Fraction(1, 12))
+assert probability(die_even, loaded) * probability(at_most_2, loaded) == Fraction(1, 8)
+assert not independent(die_even, at_most_2, loaded)
+assert given(die_even, at_most_2, fair) == given(die_even, at_most_2, loaded) == Fraction(1, 2)
+
+# Three or more events: 2^n - n - 1 equations, one for every group of two or more.
+for n, count in ((2, 1), (3, 4), (4, 11)):
+    groups = sum(1 for size in range(2, n + 1) for _ in combinations(range(n), size))
+    assert groups == 2**n - n - 1 == count
+
+
+def mutually_independent(family, weights):
+    return all(
+        probability(set.intersection(*group), weights) == math.prod(probability(e, weights) for e in group)
+        for size in range(2, len(family) + 1)
+        for group in combinations(family, size)
+    )
+
+
+# Pairwise, not mutually: two coins.
+coins = set(product("HT", repeat=2))
+cc = uniform(coins)
+A = {o for o in coins if o[0] == "H"}
+B = {o for o in coins if o[1] == "H"}
+C = {o for o in coins if o[0] == o[1]}
+assert all(probability(e, cc) == Fraction(1, 2) for e in (A, B, C))
+assert all(probability(x & y, cc) == Fraction(1, 4) == Fraction(1, 2) ** 2 for x, y in combinations((A, B, C), 2))
+assert probability(A & B & C, cc) == Fraction(1, 4) != Fraction(1, 8)
+assert given(C, A & B, cc) == 1
+assert independent(C, A, cc) and independent(C, B, cc) and not independent(C, A & B, cc)
+assert not mutually_independent([A, B, C], cc)
+
+# Grinstead and Snell, Exercise 8: the triple product holds, no pair is independent.
+m = {"a": Fraction(1, 8), "b": Fraction(1, 8), "c": Fraction(3, 16), "d": Fraction(3, 16), "e": Fraction(3, 16), "f": Fraction(3, 16)}
+assert sum(m.values()) == 1
+E1, E2, E3 = {"d", "e", "a"}, {"c", "e", "a"}, {"c", "d", "a"}
+assert all(probability(e, m) == Fraction(3, 16) + Fraction(3, 16) + Fraction(1, 8) == Fraction(1, 2) for e in (E1, E2, E3))
+assert probability(E1 & E2 & E3, m) == Fraction(1, 8) == Fraction(1, 2) ** 3
+assert probability(E1 & E2, m) == Fraction(3, 16) + Fraction(1, 8) == Fraction(5, 16) != Fraction(1, 4)
+assert not any(independent(x, y, m) for x, y in combinations((E1, E2, E3), 2))
+
+# Worked example 3: a rare class in a batch of 64 independent draws.
+none_in_64 = Fraction(99, 100) ** 64
+assert round(none_in_64, 4) == Fraction(5256, 10000) and round(1 - none_in_64, 4) == Fraction(4744, 10000)
+assert 1 - none_in_64 < Fraction(1, 2)
+assert abs(math.log(0.5) / math.log(0.99) - 68.97) < 0.005
+assert math.ceil(math.log(0.5) / math.log(0.99)) == 69
+assert Fraction(99, 100) ** 69 < Fraction(1, 2) < Fraction(99, 100) ** 68
+
+# A likelihood for H, H, T: theta^2 (1 - theta).
+assert Fraction(2, 3) ** 2 * Fraction(1, 3) == Fraction(4, 27) and Fraction(1, 2) ** 3 == Fraction(1, 8)
+assert Fraction(4, 27) > Fraction(1, 8)
+assert round(Fraction(4, 27), 3) == Fraction(148, 1000) and Fraction(1, 8) == Fraction(125, 1000)
+grid = [Fraction(k, 300) for k in range(301)]
+assert max(grid, key=lambda theta: theta**2 * (1 - theta)) == Fraction(2, 3)
+# Underflow: the product is 0.0 in a 64-bit float, the sum of logs is not.
+assert 0.01**1000 == 0.0
+assert Fraction(1, 100) ** 1000 == Fraction(1, 10**2000)
+assert abs(1000 * math.log(0.01) + 4605.17) < 0.005
+
+# Dropout with keep probability p = 1/2.
+keep = Fraction(1, 2)
+assert keep * keep == Fraction(1, 4) and (1 - keep) ** 4 == Fraction(1, 16) and 2**4 == 16
+assert len(list(product((0, 1), repeat=4))) == 16
+
+# Check yourself.
+pa, pb = Fraction(3, 10), Fraction(1, 2)
+assert pa * pb == Fraction(15, 100) and pa + pb - pa * pb == Fraction(65, 100)
+assert Fraction(1, 6) * Fraction(1, 6) == Fraction(1, 36) != 0
+
+# Simulations, seeded.
+rng = random.Random(0)
+trials = 100_000
+hits = 0
+for _ in range(trials):
+    coin_heads = rng.random() < 0.5
+    die_face = rng.randint(1, 6)
+    hits += coin_heads and die_face == 6
+print(f"coin and die: heads with a six in {hits / trials:.4f} of trials (1/12 = {1 / 12:.4f})")
+assert abs(hits / trials - 1 / 12) < 0.005
+
+masks = [[rng.random() < 0.5 for _ in range(4)] for _ in range(trials)]
+all_dropped = sum(not any(mask) for mask in masks)
+print(f"dropout: all four units dropped in {all_dropped / trials:.4f} of masks (1/16 = {1 / 16:.4f})")
+assert abs(all_dropped / trials - 1 / 16) < 0.005
+
+kept = 0
+sevens = 0
+for _ in range(trials):
+    first, second = rng.randint(1, 6), rng.randint(1, 6)
+    if first != 6:
+        continue  # B didn't happen: this roll is ruled out
+    kept += 1
+    sevens += first + second == 7
+print(f"kept {kept} of {trials} rolls (first die 6); P(sum 7 | first 6) is about {sevens / kept:.3f}")
+assert abs(kept / trials - 1 / 6) < 0.01
+assert abs(sevens / kept - 1 / 6) < 0.02
+`}
+/>
+
+Each simulated trial flips the coin and rolls the die separately, so independence is built in, and heads with a six lands near 1 in 12. The dropout masks draw each of the four units on its own, and all four are dropped in about 1 mask in 16. The two-dice run keeps about one roll in six, the ones with a first die of 6, and about 1 in 6 of those has a sum of 7, the same share as among all rolls. Shrinking the world on the board does the same thing exactly.
+
+## Research frontier
+
+<ResearchFrontier reviewed="2026-11-25">
+
+**Deciding that real events are independent.** Kolmogorov wrote that independence is the concept that gave probability theory its own character, and he called the question of which premises let us treat real events as independent one of the most important problems in the philosophy of the natural sciences, beyond the scope of his book (Chapter I, §5) <Cite id="kolmogorov1950" />. The math defines independence for a given $P$; no data set certifies it.
+
+**The i.i.d. assumption under distribution shift.** Machine learning assumes two things at once: examples are independent, and training and test data come from the same distribution (§5.2) <Cite id="goodfellow2016ml" />. Liu and coauthors write the second half as $P_{\text{tr}}(X, Y) = P_{\text{te}}(X, Y)$ and note that it often fails in deployment (§2.1) <Cite id="liu2021" />. Recht and coauthors rebuilt the CIFAR-10 and ImageNet test sets by closely following the original collection process and found accuracy drops of 3% to 15% on CIFAR-10 and 11% to 14% on ImageNet. Accuracy on the new sets followed a linear function of accuracy on the old ones with slope 1.7 and 1.1, so progress on the old test sets carried over, and their leading explanation is a gap between the distributions, not overfitting to the reused test sets (Figure 1, §5.1–5.2) <Cite id="recht2019" />. WILDS gathers 10 data sets with shifts that arise in practice, such as across hospitals, camera traps, and time and place in satellite images. On each, standard training gives substantially lower performance out of distribution than in distribution, and the gap remains with methods built for distribution shift <Cite id="koh2020" />. These results test the "identically distributed" half. The "independent" half is what turns a likelihood into a product, and this page does not claim that these papers show it failing. Recht and coauthors note that one remaining test would need a new test set that is "truly i.i.d." (§5.1) <Cite id="recht2019" />.
+
+**What is still open.** Liu and coauthors list the theoretical characterization of a learnable out-of-distribution problem as open: it "remains vague in recent literature", because no model can generalize to arbitrary unknown shifts, so deciding which shifts to allow comes first (§9) <Cite id="liu2021" />. Recht and coauthors call finding a test set that could detect a constant drop from test-set reuse a direction for future research (§5.1) <Cite id="recht2019" />.
+
+</ResearchFrontier>
+
+## Check yourself
+
+<CheckYourself level="intuition" question="One fair die: are 'even' and 'at most 2' independent? What if the die is loaded toward six, with faces 1 to 5 carrying 1 unit each and face 6 carrying 7, out of 12?">
+On the fair die, yes: $P(\text{even and at most 2}) = P(\{2\}) = 1/6 = 1/2 \times 1/3$. On the loaded die, no: $P(\{2\}) = 1/12$, while $P(\text{even})\,P(\text{at most 2}) = 3/4 \times 1/6 = 1/8$. The sets did not change; the probabilities did.
+</CheckYourself>
+
+<CheckYourself level="standard" question="A and B are independent, with P(A) = 0.3 and P(B) = 0.5. Find P(A and B) and P(A or B).">
+$P(A \cap B) = 0.3 \times 0.5 = 0.15$, by the product rule, which independence allows. Then the union rule gives $P(A \cup B) = 0.3 + 0.5 - 0.15 = 0.65$.
+</CheckYourself>
+
+<CheckYourself level="standard" question="A and B are disjoint, and P(A) = P(B) = 1/6. Are they independent?">
+No. Disjoint means $P(A \cap B) = 0$, but $P(A)\,P(B) = 1/36$. Knowing that A happened rules B out, which changes B's chance from $1/6$ to 0. Sum is 7 and doubles on two dice are such a pair.
+</CheckYourself>
+
+<CheckYourself level="proof" question="Show that an event A is independent of itself only if P(A) is 0 or 1.">
+$A \cap A = A$, so $A \perp\!\!\!\perp A$ means $P(A) = P(A)^2$, that is $P(A)\,(1 - P(A)) = 0$. A product is 0 only when a factor is 0, so $P(A) = 0$ or $P(A) = 1$. Both values work, since $0 = 0^2$ and $1 = 1^2$.
+</CheckYourself>
+
+## Common mistakes
+
+<CommonMistakes>
+  <Mistake wrong="Independent means the two events can't happen together.">
+    That is disjoint, or mutually exclusive, and disjoint events with positive probabilities are dependent: knowing one happened rules the other out. Sum is 7 and doubles share no roll, so $P(A \cap B) = 0$ against $P(A)\,P(B) = 1/36$.
+  </Mistake>
+  <Mistake wrong="You can always multiply probabilities to get the chance of both.">
+    Only for independent events. In the class of 12, $P(\text{hat and scarf}) = 1/6$, not $5/12 \times 4/12 = 5/36$. The general rule is $P(A \cap B) = P(A \mid B)\,P(B)$, the [multiplication rule](/probability/conditional-probability/#the-multiplication-rule).
+  </Mistake>
+  <Mistake wrong="Two events about the same roll can't be independent.">
+    They can. On two dice, sum is 7 and first die is 6 are independent, and so are doubles and first die is 6: both give $1/36 = 1/6 \times 1/6$.
+  </Mistake>
+  <Mistake wrong="If every pair is independent, the whole set is.">
+    Not for three or more events. On two coins, "first heads", "second heads" and "both the same" are independent in every pair, yet all three happen together with probability $1/4$, not $1/8$; see [independent in pairs, not all together](#pairwise-not-mutual).
+  </Mistake>
+  <Mistake wrong="Independence is a property of the events as sets.">
+    It depends on the probabilities. Even and at most 2 are independent on a fair die and dependent on a die loaded toward six, with exactly the same sets.
+  </Mistake>
+</CommonMistakes>
+
+## Key takeaways
+
+<Takeaways />
+
+## How this connects
+
+<ConceptMap />
+
+## References
+
+<References />

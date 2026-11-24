@@ -232,8 +232,8 @@ export const REFERENCES = [
 		title: 'Dropout: a simple way to prevent neural networks from overfitting',
 		venue: 'Journal of Machine Learning Research 15(56):1929–1958',
 		url: 'https://jmlr.org/papers/v15/srivastava14a.html',
-		note: 'Section 1, p. 1930: each unit is retained with a fixed probability p, independent of other units, and a network with n units is a collection of 2ⁿ thinned networks. Section 4, p. 1933: the retain masks are independent Bernoulli(p) variables.',
-		checked: '2026-11-24',
+		note: 'Section 1, p. 1930: each unit is retained with a fixed probability p, independent of other units; p. 1931: a network with n units is a collection of 2ⁿ thinned networks. Section 4, p. 1933: each mask r_j is Bernoulli(p); p. 1934: r is a vector of independent Bernoulli variables.',
+		checked: '2026-11-25',
 	},
 	{
 		id: 'recht2019',
