@@ -232,6 +232,13 @@ export const NOTATION = [
 		meaning: 'The angle between two vectors, from 0° to 180°',
 		note: 'Undefined when either vector is the zero vector.',
 	},
+	{
+		key: 'perpendicular',
+		tex: '\\mathbf{a} \\perp \\mathbf{b}',
+		say: '"a is perpendicular to b"',
+		meaning: 'Perpendicular (orthogonal): a · b = 0',
+		note: 'The zero vector counts as perpendicular to every vector. Independence of events uses a different symbol, ⫫.',
+	},
 ];
 
 const BY_KEY = new Map(NOTATION.map((entry) => [entry.key, entry]));
