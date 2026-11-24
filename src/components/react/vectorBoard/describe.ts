@@ -3,6 +3,7 @@
 // that nothing names an answer before Check. Plain Unicode only, never KaTeX (decision 0007). Notation follows
 // src/data/notation.mjs: ‖a‖ for a vector's length, |c| only for a number, · only for the dot product.
 // Design and reasoning: decision 0014.
+import { isPerfectSquare } from '../boardMath.ts';
 import { capitalize, plural } from '../boardText.ts';
 import { canShowAnswer } from '../guided/guided.ts';
 import { formatNumber } from '../plotColors.ts';
@@ -15,7 +16,6 @@ import {
 	decimalText,
 	dot,
 	equals,
-	isPerfectSquare,
 	isZero,
 	labelAnchor,
 	lengthSquared,

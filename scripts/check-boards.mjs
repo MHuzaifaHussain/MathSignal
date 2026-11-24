@@ -2,7 +2,7 @@
 // before every build. Node 24 runs the TypeScript modules directly, so no test framework is needed.
 // Each section names the behavior it pins; the exact values come from the board's design doc.
 import assert from 'node:assert/strict';
-import { fraction, formatFraction, addFractions, multiplyFractions, compareFractions, toNumber } from '../src/components/react/boardMath.ts';
+import { fraction, formatFraction, addFractions, multiplyFractions, compareFractions, toNumber, isPerfectSquare, squareRoot } from '../src/components/react/boardMath.ts';
 import { joinWords, plural, equalsDecimal } from '../src/components/react/boardText.ts';
 import { probability, checkGoal, pour, intersect, union, complement, WEIGHT_TOTAL } from '../src/components/react/eventSpace/model.ts';
 import { SCENARIOS } from '../src/components/react/eventSpace/scenarios.ts';
@@ -20,6 +20,19 @@ assert.throws(() => compareFractions(fraction(2 ** 30, 2 ** 30 - 1), fraction(2 
 assert.equal(toNumber(fraction(1, 4)), 0.25);
 assert.deepEqual(addFractions(fraction(0, 1), fraction(1, 3)), fraction(1, 3));
 assert.throws(() => addFractions(fraction(1, 2 ** 30), fraction(1, 2 ** 30 - 1)), /overflowed safe integers/);
+// A square root is exact only when the fraction is a square of a fraction; otherwise it is a float to round.
+assert.equal(isPerfectSquare(64), true);
+assert.equal(isPerfectSquare(0), true);
+assert.equal(isPerfectSquare(72), false);
+assert.equal(isPerfectSquare(2.25), false);
+assert.equal(isPerfectSquare(-4), false);
+assert.deepEqual(squareRoot(fraction(64, 1)), { exact: true, value: fraction(8, 1) });
+assert.deepEqual(squareRoot(fraction(9, 4)), { exact: true, value: fraction(3, 2) });
+assert.deepEqual(squareRoot(fraction(0, 1)), { exact: true, value: fraction(0, 1) });
+const rootOf72 = squareRoot(fraction(72, 1));
+assert.equal(rootOf72.exact, false);
+assert.equal(rootOf72.value.toFixed(4), '8.4853');
+assert.throws(() => squareRoot(fraction(-1, 4)), /negative/);
 assert.equal(joinWords(['1', '2', '3']), '1, 2 and 3');
 assert.equal(plural(1, 'candy', 'candies'), '1 candy');
 assert.equal(equalsDecimal(1, 6), '≈ 0.17');

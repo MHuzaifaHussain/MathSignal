@@ -9,7 +9,7 @@
 // - The pencil, and anything measured from it, shows two decimals, because it repeats the slider's readout:
 //   "your pencil at 3.50", "1 − 1.50 = −0.50".
 // "≈" appears only when the decimal is rounded.
-import { addFractions, compareFractions, formatFraction, fraction, toNumber, type Fraction } from '../boardMath.ts';
+import { addFractions, compareFractions, formatFraction, fraction, squareRoot, toNumber, type Fraction } from '../boardMath.ts';
 import { capitalize, equalsDecimal, joinWords, plural } from '../boardText.ts';
 import type { OutcomeId } from '../eventSpace/model.ts';
 import { CHECKS_BEFORE_ANSWER } from '../guided/guided.ts';
@@ -473,16 +473,12 @@ function distanceText(setup: Setup, d: Distribution, center: Fraction): string {
 		.join('; ');
 }
 
-const isPerfectSquare = (value: number) => Number.isInteger(Math.sqrt(value));
-
 /** "σ = √4 = 2 candies" or "σ = √(2/3) ≈ 0.82 candies": exact when the variance is a square of a fraction. */
 function sigmaText(setup: Setup, spread: Fraction): string {
 	const root = isWhole(spread) ? `√${spread.numerator}` : `√(${formatFraction(spread)})`;
-	if (isPerfectSquare(spread.numerator) && isPerfectSquare(spread.denominator)) {
-		const exact = fraction(Math.sqrt(spread.numerator), Math.sqrt(spread.denominator));
-		return `σ = ${root} = ${withUnit(setup, amountChain(exact), exact)}`;
-	}
-	return `σ = ${root} ≈ ${trimmedDecimal(Math.sqrt(toNumber(spread)))} ${copyOf(setup).unit.many}`;
+	const sigma = squareRoot(spread);
+	if (sigma.exact) return `σ = ${root} = ${withUnit(setup, amountChain(sigma.value), sigma.value)}`;
+	return `σ = ${root} ≈ ${trimmedDecimal(sigma.value)} ${copyOf(setup).unit.many}`;
 }
 
 /** Distances, variance and σ once "Show the spread" is on. A single bar gets one sentence: nothing spreads. */

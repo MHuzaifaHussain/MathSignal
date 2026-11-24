@@ -1,12 +1,12 @@
 // The board configurations pages pick with <VectorBoard2D setup="…" />. Each one fixes the opening vectors, how far
 // each vector may go, the presets and the stages. validateSetup runs at import, so a setup the board can't draw or
 // answer fails the build. Design and reasoning: decision 0014.
+import { isPerfectSquare } from '../boardMath.ts';
 import {
 	VIEW_LIMIT,
 	add,
 	classifyCartPush,
 	inBox,
-	isPerfectSquare,
 	isZero,
 	lengthSquared,
 	numberText,

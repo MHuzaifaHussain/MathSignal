@@ -55,3 +55,20 @@ export function compareFractions(a: Fraction, b: Fraction): -1 | 0 | 1 {
 export function toNumber(value: Fraction): number {
 	return value.numerator / value.denominator;
 }
+
+/** True for 0, 1, 4, 9, …: a whole number whose square root is whole. */
+export function isPerfectSquare(n: number): boolean {
+	return Number.isInteger(n) && n >= 0 && Number.isInteger(Math.sqrt(n));
+}
+
+/**
+ * The square root of a fraction: exact when both parts are perfect squares (√(9/4) = 3/2), so a readout can write
+ * "=", and otherwise a float the caller rounds and writes with "≈".
+ */
+export function squareRoot(value: Fraction): { exact: true; value: Fraction } | { exact: false; value: number } {
+	if (value.numerator < 0) throw new Error(`squareRoot: the fraction is negative (${formatFraction(value)})`);
+	if (isPerfectSquare(value.numerator) && isPerfectSquare(value.denominator)) {
+		return { exact: true, value: fraction(Math.sqrt(value.numerator), Math.sqrt(value.denominator)) };
+	}
+	return { exact: false, value: Math.sqrt(toNumber(value)) };
+}

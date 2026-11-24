@@ -5,6 +5,7 @@
 // Every constraint is "round to the grid, then clamp each component to an interval" (a box). Never write one that
 // rejects grid points inside the box, such as leaving out the zero vector: Mafs' keyboard loop tries larger and
 // larger steps until the constrained point moves, so a hole makes one arrow press jump several units.
+import { isPerfectSquare } from '../boardMath.ts';
 import { formatNumber } from '../plotColors.ts';
 
 export type Vec2 = readonly [number, number];
@@ -78,10 +79,6 @@ export function shadowLength(onto: Vec2, v: Vec2): number | null {
 /** Where v's shadow along `onto` ends: (v · onto ÷ ‖onto‖²) onto, or null when `onto` has no direction. */
 export function shadowTip(onto: Vec2, v: Vec2): Vec2 | null {
 	return isZero(onto) ? null : scale(dot(onto, v) / lengthSquared(onto), onto);
-}
-
-export function isPerfectSquare(n: number): boolean {
-	return Number.isInteger(n) && n >= 0 && Number.isInteger(Math.sqrt(n));
 }
 
 function requireWholeSquare(n: number): void {
