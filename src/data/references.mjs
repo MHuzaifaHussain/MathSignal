@@ -122,8 +122,8 @@ export const REFERENCES = [
 		title: 'Introduction to probability',
 		venue: 'American Mathematical Society, 2nd edition',
 		url: 'https://math.dartmouth.edu/~prob/prob/prob.pdf',
-		note: 'Section 1.2: sample spaces, outcomes, events, set operations and the basic rules of probability; Theorems 1.1–1.4 and Corollary 1.1, pp. 22–24: the basic rules, the sum over a partition and inclusion–exclusion, equation (1.1). Section 4.1, pp. 134–146: conditional probability, the reverse tree (p. 136) and Bayes\' formula with the total-probability sum over hypotheses H₁, …, Hₘ (p. 145, equation (4.3) on p. 146). Example 4.5, p. 135: two urns and a forward tree. Example 4.6, pp. 136–139: the Monty Hall problem, its history and assumptions (pp. 136–137), the tree with 2/3 against 1/3 (p. 138), and 4/7 when Monty opens the larger-numbered door with probability 3/4 (p. 139). Independent events, pp. 139–141: Definition 4.1, Theorem 4.1 (independent if and only if P(E ∩ F) = P(E)P(F)), Examples 4.7–4.9 and Definition 4.2 (mutual independence). Example 4.17, p. 147: a cancer test with 1 in 1,000 prevalence, 99% and 95% accuracy, and a posterior of .019. Historical remarks, p. 148: de Moivre on independent events. Exercises 7 and 8, p. 151: pairwise but not mutual independence, and a triple product that holds while no pair is independent; Exercise 11, p. 151: simulating Monty Hall; Exercise 17, p. 152: complements of independent events; Exercise 63, p. 161: Granberg\'s Monty Hall variants. Section 4.3, p. 175: the Monty Hall answer depends on the host\'s tie-break. Free version from the Dartmouth Chance Project.',
-		checked: '2026-11-24',
+		note: 'Section 1.2: sample spaces, outcomes, events, set operations and the basic rules of probability; Theorems 1.1–1.4 and Corollary 1.1, pp. 22–24: the basic rules, the sum over a partition and inclusion–exclusion, equation (1.1). Section 4.1, pp. 134–146: conditional probability, the reverse tree (p. 136) and Bayes\' formula with the total-probability sum over hypotheses H₁, …, Hₘ (p. 145, equation (4.3) on p. 146). Example 4.5, p. 135: two urns and a forward tree. Example 4.6, pp. 136–139: the Monty Hall problem, its history and assumptions (pp. 136–137), the tree with 2/3 against 1/3 (p. 138), and 4/7 when Monty opens the larger-numbered door with probability 3/4 (p. 139). Independent events, pp. 139–141: Definition 4.1 (p. 139; also independent when at least one event has probability 0), Theorem 4.1 (independent if and only if P(E ∩ F) = P(E)P(F)), Examples 4.7–4.9 and Definition 4.2 (mutual independence). Example 4.17, p. 147: a cancer test with 1 in 1,000 prevalence, 99% and 95% accuracy, and a posterior of .019. Historical remarks, p. 148: de Moivre on independent events. Exercise 1, p. 150: for events of positive probability, P(E | F) = P(E) implies P(F | E) = P(F). Exercises 7 and 8, p. 151: pairwise but not mutual independence, and a triple product that holds while no pair is independent; Exercise 11, p. 151: simulating Monty Hall; Exercise 17, p. 152: complements of independent events; Exercise 63, p. 161: Granberg\'s Monty Hall variants. Section 4.3, p. 175: the Monty Hall answer depends on the host\'s tie-break. Free version from the Dartmouth Chance Project.',
+		checked: '2026-11-25',
 	},
 	{
 		id: 'tao2011',
@@ -296,8 +296,8 @@ export const REFERENCES = [
 		title: 'Multiclass and multioutput algorithms',
 		venue: 'scikit-learn user guide, section 1.12 (version 1.9.1)',
 		url: 'https://scikit-learn.org/stable/modules/multiclass.html',
-		note: 'Section 1.12.1: in multiclass classification each sample has one and only one label. Section 1.12.2: multilabel classification predicts properties that are not mutually exclusive; separate binary classifiers treat each label independently, while multilabel classifiers may model correlated labels. Written by the scikit-learn developers.',
-		checked: '2026-11-24',
+		note: 'Section 1.12.1: in multiclass classification each sample has one and only one label. Section 1.12.2: multilabel classification predicts properties that are not mutually exclusive; separate binary classifiers treat each label independently, while multilabel classifiers may model correlated labels. Section 1.12.2.3: ClassifierChain combines binary classifiers into one multilabel model that can exploit correlations among targets. Written by the scikit-learn developers.',
+		checked: '2026-11-25',
 	},
 	{
 		id: 'pytorch-bcewithlogits',
@@ -466,8 +466,8 @@ export const REFERENCES = [
 		title: 'Fair is better than sensational: man is to doctor as woman is to doctor',
 		venue: 'Computational Linguistics 46(2), 2020',
 		url: 'https://aclanthology.org/2020.cl-2.7/',
-		note: 'Section 4.1: the usual analogy code never returns an input word; allowing them on the Mikolov et al. test set drops 3CosAdd accuracy from 0.71 to 0.21 and 3CosMul from 0.73 to 0.45. Year is arXiv v1 (1905.09866, May 2019).',
-		checked: '2026-11-24',
+		note: 'Section 4.1: the usual analogy code never returns an input word; allowing them drops macro-averaged 3CosAdd accuracy from 0.71 to 0.21 and 3CosMul from 0.73 to 0.45 (p. 491), with the GoogleNews embeddings. The test set is the Google analogy set released with word2vec, cited as Mikolov, Chen, Corrado and Dean (2013), "Efficient estimation of word representations in vector space"; not the NAACL 2013 syntactic set. Year is arXiv v1 (1905.09866, May 2019).',
+		checked: '2026-11-25',
 	},
 	{
 		id: 'park2023',
@@ -486,8 +486,8 @@ export const REFERENCES = [
 		title: 'Not all language model features are one-dimensionally linear',
 		venue: 'ICLR 2025',
 		url: 'https://arxiv.org/abs/2405.14860',
-		note: 'Abstract: irreducible multi-dimensional features found with sparse autoencoders in GPT-2 and Mistral 7B, including circles for the days of the week and the months, used for modular arithmetic; interventions on Mistral 7B and Llama 3 8B.',
-		checked: '2026-11-24',
+		note: 'Abstract: irreducible multi-dimensional features found with sparse autoencoders in GPT-2 and Mistral 7B, including circles for the days of the week and the months, used for modular arithmetic; interventions on Mistral 7B and Llama 3 8B. Title, authors and venue are from the current version (v3, February 2025); year is arXiv v1 (May 2024), which was titled "Not all language model features are linear" and listed Isaac Liao before Eric J. Michaud.',
+		checked: '2026-11-25',
 	},
 	{
 		id: 'sharkey2025',
@@ -556,7 +556,7 @@ export const REFERENCES = [
 		year: 2024,
 		title: 'Foundations of vector retrieval',
 		url: 'https://arxiv.org/abs/2401.09350',
-		note: 'A monograph on the data structures and algorithms of vector retrieval, written to lower the barrier of entry to the area.',
+		note: 'A monograph on the data structures and algorithms of vector retrieval, written to lower the barrier of entry to the area. Preface, p. vii: none of the existing methods proves easy to scale to billions of high-dimensional vectors, or to a database whose records change frequently.',
 		checked: '2026-11-25',
 	},
 ];
