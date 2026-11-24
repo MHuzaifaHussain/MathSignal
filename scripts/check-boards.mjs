@@ -2486,6 +2486,73 @@ const announcerRun = () => {
 	assert.deepEqual(vst.reducer(alignDone, moveTo('b', [5, 5])).b, [4, 4]);
 	assert.equal(vd.refusalText(alignDone, { kind: 'limit', id: 'b', axis: 'y', direction: 1 }), "b can't go further north: its entries stay between −4 and 4.");
 
+	// Plane labels stay inside the plane at every position the handles can reach, at the narrowest plane (a 320px
+	// phone) and the widest (440px). fitLabel moves a label that would cross the edge, never the arrow it names.
+	const PLANE_SIZES = [280, 440];
+	const labelFits = (label, size) => {
+		const fitted = vm.fitLabel(label.at, label.away, label.text, size);
+		const [left, right] = vm.fittedLabelSpan(fitted, label.text, size);
+		const [, halfHeight] = vm.labelHalfSize(label.text, size);
+		const reach = vm.labelReach(size) + 1e-9;
+		return left >= -reach && right <= reach && Math.abs(fitted.at[1]) + halfHeight <= reach;
+	};
+	const grid = (limit) => Array.from({ length: 2 * limit + 1 }, (_, index) => index - limit).flatMap((x) => Array.from({ length: 2 * limit + 1 }, (_, index) => [x, index - limit]));
+	/** Every a, b, guess and c the setup's boxes allow, before and after Check, on every stage it offers. */
+	function* reachableStates(id) {
+		const setup = vs.getSetup(id);
+		const open = vst.initialState(id);
+		const stages = setup.stages.length > 0 ? setup.stages : [setup.openingStage];
+		const tracks = setup.kind === 'cart' ? [...new Set([setup.opening.b, ...setup.presets.map((preset) => preset.b)].map(String))].map((text) => text.split(',').map(Number)) : null;
+		const scalars = setup.scaleRange ? Array.from({ length: Math.round((setup.scaleRange.max - setup.scaleRange.min) / setup.scaleRange.step) + 1 }, (_, index) => setup.scaleRange.min + index * setup.scaleRange.step) : [open.scalar];
+		for (const stage of stages) {
+			for (const checked of [false, true]) {
+				const base = { ...open, stage, checked, otherOrder: checked };
+				for (const a of grid(setup.limitA)) {
+					if (setup.kind === 'add' && !checked) {
+						if (a[0] !== open.a[0] || a[1] !== open.a[1]) continue;
+						for (const guess of grid(vm.VIEW_LIMIT)) yield { ...base, guess };
+						continue;
+					}
+					const bs = tracks ?? grid(setup.limitB);
+					for (const b of bs) {
+						if (setup.kind === 'add' && !vm.withinView(vm.add(a, b))) continue;
+						for (const scalar of scalars) yield { ...base, a, b, scalar };
+					}
+				}
+			}
+		}
+	}
+	for (const id of Object.keys(vs.SETUPS)) {
+		let count = 0;
+		for (const state of reachableStates(id)) {
+			for (const label of vd.planeLabels(state)) {
+				for (const size of PLANE_SIZES) assert.ok(labelFits(label, size), `${id}: "${label.text}" leaves a ${size}px plane at a = (${state.a}), b = (${state.b}), guess = (${state.guess}), c = ${state.scalar}`);
+			}
+			count++;
+		}
+		assert.ok(count > 0, `${id}: no states swept`);
+	}
+	// labelAnchor is the arrow's middle plus labelAway's unit step.
+	assert.deepEqual(vm.labelAway([0, 0], [4, 0], 1), [0, 1]);
+	assert.deepEqual(vm.labelAway([0, 0], [0, 5], -1), [1, 0]);
+	assert.deepEqual(vm.labelAway([2, 2], [2, 2], 1), [0, 1]);
+	// A label that already fits stays centered where planeLabels put it.
+	assert.deepEqual(vm.fitLabel([1, 1], [0, 1], 'a', 440), { at: [1, 1], attach: 'center' });
+	// cart-push with push (5, 5): "into the rails" named the line at x = 5 from outside it, past the edge. It moves to the
+	// inner side and ends before the line, so its text stays clear of it.
+	const railsState = runVec('cart-push', moveTo('a', [3, 4]), { type: 'check' }, moveTo('a', [5, 5]));
+	const rails = vd.planeLabels(railsState).find((label) => label.id === 'rails');
+	for (const size of PLANE_SIZES) {
+		const fitted = vm.fitLabel(rails.at, rails.away, rails.text, size);
+		assert.equal(fitted.attach, 'w');
+		assert.ok(vm.fittedLabelSpan(fitted, rails.text, size)[1] < 5, `rails label crosses its line at ${size}px`);
+	}
+	// trips-add after Check with a = (−5, −5), b = (1, 0): trip b's label sat below the bottom edge; it moves above b.
+	const lowTrip = vd.planeLabels({ ...vst.initialState('trips-add'), checked: true, a: [-5, -5], b: [1, 0] }).find((label) => label.id === 'b');
+	assert.ok(lowTrip.at[1] < -5);
+	assert.ok(vm.fitLabel(lowTrip.at, lowTrip.away, lowTrip.text, 440).at[1] > -5);
+	assert.throws(() => vm.fitLabel([0, 0], null, 'a', 0), /wider than 0px/);
+
 	// ---- Every setup ----
 	const bannedWord = new RegExp(['pro', 'mpt'].join(''), 'i');
 	for (const id of Object.keys(vs.SETUPS)) {

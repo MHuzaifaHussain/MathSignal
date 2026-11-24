@@ -3,14 +3,13 @@ import { Circle, Coordinates, Mafs, MovablePoint, Plot, Polyline, Text, Vector }
 import type { vec } from "mafs";
 import { plotColors } from "../plotColors";
 import { ARC_RADIUS, cartShadow, handlesFor, ochreElement, planeLabels, showsArc, showsRightAngle, type TableRow } from "./describe.ts";
-import { VIEW_LIMIT, VIEW_PADDING, add, cross, isZero, lengthSquared, numberText, scale, shadowTip, snapInto, subtract, type Vec2 } from "./model.ts";
+import { LABEL_SIZE, VIEW_LIMIT, VIEW_PADDING, add, cross, fitLabel, isZero, lengthSquared, numberText, scale, shadowTip, snapInto, subtract, type Vec2 } from "./model.ts";
 import { handleBox, handleIds, setupOf, type HandleId, type VectorState } from "./state.ts";
 
 const VIEW: vec.Vector2 = [-(VIEW_LIMIT + VIEW_PADDING), VIEW_LIMIT + VIEW_PADDING];
 const ARROW_WEIGHT = 2.5;
 /** The one ochre element is heavier, so it stands out by weight as well as hue. */
 const OCHRE_WEIGHT = 3;
-const LABEL_SIZE = 16;
 const ZERO_RING_RADIUS = 0.2;
 const GUESS_RING_RADIUS = 0.32;
 const RIGHT_ANGLE_SIZE = 0.3;
@@ -226,11 +225,15 @@ export default function VectorPlane({ state, linkedId, size, onMove }: VectorPla
       <Coordinates.Cartesian xAxis={axis} yAxis={axis} />
       {linked && !isZero(subtract(linked.tip, linked.tail)) && <ComponentLegs tail={linked.tail} tip={linked.tip} />}
       <Scene state={state} ochre={ochreElement(state)} />
-      {planeLabels(state).map((label) => (
-        <Text key={label.id} x={label.at[0]} y={label.at[1]} size={LABEL_SIZE} color={plotColors.ink}>
-          {label.text}
-        </Text>
-      ))}
+      {planeLabels(state).map((label) => {
+        // Kept inside the plane at this size, so a label near an edge isn't cut off (fitLabel in model.ts).
+        const fitted = fitLabel(label.at, label.away, label.text, size);
+        return (
+          <Text key={label.id} x={fitted.at[0]} y={fitted.at[1]} size={LABEL_SIZE} color={plotColors.ink} attach={fitted.attach === "center" ? undefined : fitted.attach}>
+            {label.text}
+          </Text>
+        );
+      })}
       {handles.map((handle) => {
         const handleMove = moveHandlers[handle.id];
         if (!handleMove) throw new Error(`VectorBoard2D: handle "${handle.id}" has no move handler.`);

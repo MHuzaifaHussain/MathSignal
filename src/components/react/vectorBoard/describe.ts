@@ -18,6 +18,7 @@ import {
 	equals,
 	isZero,
 	labelAnchor,
+	labelAway,
 	lengthSquared,
 	lengthText,
 	numberText,
@@ -25,6 +26,7 @@ import {
 	rootText,
 	scale,
 	shadowTip,
+	subtract,
 	withinView,
 	type Angle,
 	type Vec2,
@@ -482,13 +484,15 @@ export interface PlaneLabel {
 	id: string;
 	text: string;
 	at: Vec2;
+	/** The unit step from the arrow this label names to the label, or null when it names no arrow (fitLabel). */
+	away: Vec2 | null;
 }
 
 const ORIGIN: Vec2 = [0, 0];
-const zeroLabel = (id: string, at: Vec2): PlaneLabel => ({ id, text: 'zero vector', at: labelAnchor(at, at, 1) });
+const zeroLabel = (id: string, at: Vec2): PlaneLabel => ({ id, text: 'zero vector', at: labelAnchor(at, at, 1), away: labelAway(at, at, 1) });
 
 function arrowLabel(id: string, text: string, tail: Vec2, tip: Vec2, side: 1 | -1): PlaneLabel {
-	return equals(tail, tip) ? zeroLabel(id, tail) : { id, text, at: labelAnchor(tail, tip, side) };
+	return equals(tail, tip) ? zeroLabel(id, tail) : { id, text, at: labelAnchor(tail, tip, side), away: labelAway(tail, tip, side) };
 }
 
 /** A point on the angle's bisector, for the θ label. */
@@ -528,13 +532,16 @@ export function cartShadow(state: VectorState): { tip: Vec2; onBoard: boolean } 
 	return { tip: clipToView(tip), onBoard: withinView(tip) };
 }
 
+/** The rails label is placed on the first two thirds of its line, so it sits a third of the way up. */
+const RAILS_LABEL_SPAN = 2 / 3;
+
 /** Every text label drawn on the plane, in board ink. Before Check none of them names the answer. */
 export function planeLabels(state: VectorState): readonly PlaneLabel[] {
 	const setup = setupOf(state);
 	const { a, b } = state;
 	const trips = isTrips(state);
 	const labels: PlaneLabel[] = [];
-	if (trips) labels.push({ id: 'east', text: 'east', at: [VIEW_LIMIT - 0.2, -0.45] }, { id: 'north', text: 'north', at: [0.75, VIEW_LIMIT - 0.2] });
+	if (trips) labels.push({ id: 'east', text: 'east', at: [VIEW_LIMIT - 0.2, -0.45], away: null }, { id: 'north', text: 'north', at: [0.75, VIEW_LIMIT - 0.2], away: null });
 	switch (setup.kind) {
 		case 'add': {
 			const sum = add(a, b);
@@ -542,7 +549,7 @@ export function planeLabels(state: VectorState): readonly PlaneLabel[] {
 			// reversed, so the same physical side needs the other sign.
 			const bSide = cross(a, b) === 0 && dot(a, b) < 0 ? 1 : -1;
 			labels.push(arrowLabel('a', trips ? 'trip a' : 'a', ORIGIN, a, 1), arrowLabel('b', trips ? 'trip b' : 'b', a, sum, bSide));
-			if (!state.checked) labels.push({ id: 'guess', text: 'your guess', at: labelAnchor(state.guess, state.guess, 1) });
+			if (!state.checked) labels.push({ id: 'guess', text: 'your guess', at: labelAnchor(state.guess, state.guess, 1), away: labelAway(state.guess, state.guess, 1) });
 			else labels.push(arrowLabel('sum', trips ? 'both trips' : 'a + b', ORIGIN, sum, -1));
 			break;
 		}
@@ -562,12 +569,17 @@ export function planeLabels(state: VectorState): readonly PlaneLabel[] {
 			const goal = setup.goal;
 			if (goal) {
 				const radius = Math.sqrt(goal.targetLengthSquared);
-				labels.push({ id: 'circle', text: `length ${numberText(radius)}`, at: [-radius * 0.72, radius * 0.72 + 0.35] });
+				labels.push({ id: 'circle', text: `length ${numberText(radius)}`, at: [-radius * 0.72, radius * 0.72 + 0.35], away: null });
 			}
 			const shadow = cartShadow(state);
 			if (shadow) {
 				if (!isZero(shadow.tip)) labels.push(arrowLabel('shadow', 'moves the cart', ORIGIN, shadow.tip, pushSide));
-				if (shadow.onBoard && !equals(shadow.tip, a)) labels.push(arrowLabel('rails', 'into the rails', shadow.tip, a, cross(b, a) > 0 ? -1 : 1));
+				// The rails label sits a third of the way up the line from the track: the push arrow meets the line at its
+				// other end, so a label moved inside the triangle near an edge (fitLabel) stays clear of the push.
+				if (shadow.onBoard && !equals(shadow.tip, a)) {
+					const labelSpan = add(shadow.tip, scale(RAILS_LABEL_SPAN, subtract(a, shadow.tip)));
+					labels.push(arrowLabel('rails', 'into the rails', shadow.tip, labelSpan, cross(b, a) > 0 ? -1 : 1));
+				}
 			}
 			break;
 		}
@@ -576,7 +588,7 @@ export function planeLabels(state: VectorState): readonly PlaneLabel[] {
 			// A shadow shorter than one grid unit sits too close to the center for a label; the readout names it.
 			const tip = state.checked ? shadowTip(a, b) : null;
 			if (tip && lengthSquared(tip) >= 1) labels.push(arrowLabel('shadow', 'shadow of b', ORIGIN, tip, cross(a, b) > 0 ? -1 : 1));
-			if (showsArc(state)) labels.push({ id: 'theta', text: 'θ', at: bisectorPoint(a, b, THETA_RADIUS) });
+			if (showsArc(state)) labels.push({ id: 'theta', text: 'θ', at: bisectorPoint(a, b, THETA_RADIUS), away: null });
 			break;
 		}
 	}

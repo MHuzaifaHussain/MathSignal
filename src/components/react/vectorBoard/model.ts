@@ -170,8 +170,79 @@ export const LABEL_OFFSET = 0.45;
  */
 export function labelAnchor(tail: Vec2, tip: Vec2, side: 1 | -1): Vec2 {
 	const middle: Vec2 = [(tail[0] + tip[0]) / 2, (tail[1] + tip[1]) / 2];
+	return add(middle, scale(LABEL_OFFSET, labelAway(tail, tip, side)));
+}
+
+/** The unit step from an arrow's middle to its label (see labelAnchor): straight up for a zero arrow. */
+export function labelAway(tail: Vec2, tip: Vec2, side: 1 | -1): Vec2 {
 	const direction = subtract(tip, tail);
 	const length = Math.sqrt(lengthSquared(direction));
-	if (length === 0) return [middle[0], middle[1] + LABEL_OFFSET];
-	return [middle[0] - (side * LABEL_OFFSET * direction[1]) / length, middle[1] + (side * LABEL_OFFSET * direction[0]) / length];
+	if (length === 0) return [0, 1];
+	return [(-side * direction[1]) / length + 0, (side * direction[0]) / length + 0];
+}
+
+/** Font size of the plane's labels, in pixels. */
+export const LABEL_SIZE = 16;
+/**
+ * Estimated label width per character, in ems. The widest multi-letter label measured in Atkinson Hyperlegible Next
+ * is 0.48 em per character; a little more covers the fallback fonts.
+ */
+const LABEL_CHAR_WIDTH_EM = 0.5;
+/** A label's height, in ems (21px measured at 16px). */
+const LABEL_HEIGHT_EM = 1.35;
+/** Room kept between a label and the plane's edge, in pixels: Mafs' 3px text halo plus a little air. */
+const LABEL_EDGE_MARGIN_PX = 4;
+
+/** How a label is drawn: centered on `at`, or ending at `at` ('w') or starting at it ('e'), as in Mafs' Text. */
+export interface FittedLabel {
+	at: Vec2;
+	attach: 'center' | 'w' | 'e';
+}
+
+/** A label's half width and half height in grid units, on a square plane `planeSize` pixels wide. */
+export function labelHalfSize(text: string, planeSize: number): Vec2 {
+	if (!(planeSize > 0)) throw new Error(`VectorBoard2D: the plane must be wider than 0px to place labels, got ${planeSize}.`);
+	const unitsPerPixel = (2 * (VIEW_LIMIT + VIEW_PADDING)) / planeSize;
+	const width = Array.from(text).length * LABEL_CHAR_WIDTH_EM * LABEL_SIZE;
+	return [(width / 2) * unitsPerPixel, ((LABEL_HEIGHT_EM * LABEL_SIZE) / 2) * unitsPerPixel];
+}
+
+/** How far a label's box may reach from the center, in grid units: the plane's edge less the margin. */
+export function labelReach(planeSize: number): number {
+	return VIEW_LIMIT + VIEW_PADDING - (LABEL_EDGE_MARGIN_PX * 2 * (VIEW_LIMIT + VIEW_PADDING)) / planeSize;
+}
+
+/** True when `at` is past the edge on the side `away` mostly points to, so the label sits on the arrow's outer side. */
+function pointsOutward(at: Vec2, away: Vec2, axis: 0 | 1): boolean {
+	const other = axis === 0 ? 1 : 0;
+	return Math.abs(away[axis]) >= Math.abs(away[other]) && Math.sign(away[axis]) === Math.sign(at[axis]) && away[axis] !== 0;
+}
+
+/**
+ * Keeps a label inside the plane at every position the handles can reach. A label that would cross an edge on the
+ * outer side of its arrow moves to the inner side (mirrored across the arrow). It is then kept inside vertically, and
+ * if it still runs past the left or right edge it grows toward the center from its anchor instead of being centered,
+ * so its text stays clear of the arrow it names. `away` is the unit step from the arrow to the label (labelAway), or
+ * null for a label that names no arrow.
+ */
+export function fitLabel(at: Vec2, away: Vec2 | null, text: string, planeSize: number): FittedLabel {
+	const [halfWidth, halfHeight] = labelHalfSize(text, planeSize);
+	const reach = labelReach(planeSize);
+	const crossesX = Math.abs(at[0]) + halfWidth > reach;
+	const crossesY = Math.abs(at[1]) + halfHeight > reach;
+	const mirror = away !== null && ((crossesX && pointsOutward(at, away, 0)) || (crossesY && pointsOutward(at, away, 1)));
+	const anchor = mirror && away ? subtract(at, scale(2 * LABEL_OFFSET, away)) : at;
+	const y = clamp(anchor[1], -reach + halfHeight, reach - halfHeight);
+	if (Math.abs(anchor[0]) + halfWidth <= reach) return { at: [anchor[0], y], attach: 'center' };
+	// Grows toward the center: 'w' ends the text at x, 'e' starts it there. Clamped so both ends stay inside.
+	if (anchor[0] > 0) return { at: [clamp(anchor[0], -reach + 2 * halfWidth, reach), y], attach: 'w' };
+	return { at: [clamp(anchor[0], -reach, reach - 2 * halfWidth), y], attach: 'e' };
+}
+
+/** The x interval a fitted label covers, in grid units. */
+export function fittedLabelSpan(label: FittedLabel, text: string, planeSize: number): Vec2 {
+	const [halfWidth] = labelHalfSize(text, planeSize);
+	if (label.attach === 'w') return [label.at[0] - 2 * halfWidth, label.at[0]];
+	if (label.attach === 'e') return [label.at[0], label.at[0] + 2 * halfWidth];
+	return [label.at[0] - halfWidth, label.at[0] + halfWidth];
 }
