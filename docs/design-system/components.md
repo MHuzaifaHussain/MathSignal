@@ -149,6 +149,24 @@ The reader gives each outcome a number with a − / + pair. Outcomes that share 
 - **HTML board rules:** the board renders HTML inside the unchanged `Board`, never passes `onInteractionEnd` or `handleLabels`, and owns its live region through `useAnnouncer`. Check, stages, presets and refusals use the guided pieces above, as on EventSpace. Discrete pages never load Mafs. Island CSS lives under the `.ms-dist-*` section of `components.css`.
 - All math and copy live in pure modules (`model.ts`, `describe.ts`, `state.ts`) checked by `npm run check:boards`. Try every setup at `/lab/distribution-board/` in the dev server.
 
+### `VectorBoard2D`
+Vectors on a whole-number grid, as a Mafs board ([decision 0014](../decisions/0014-vector-board.md)). One prop: `setup`, the id of a configuration in `src/components/react/vectorBoard/setups.ts` (`trips-add`, `trips-scale`, `cart-push`, `align`); an unknown id, or a setup that would draw off the board or can't be answered, fails the build.
+
+```mdx
+<div class="not-content">
+  <VectorBoard2D client:visible setup="trips-add" />
+</div>
+```
+
+Every setup holds its answer until the reader commits with Check. Handles snap to the grid, and every handle also moves with the − / + buttons of the coordinate table under the plane.
+
+- **`trips-add`** (vectors): trip a = (3, 2), then trip b = (1, 3) drawn from a's tip. The only handle is an ochre "your guess" ring; a and b are locked and their steppers refused ("a and b are the question. Press Check first."). Check names the mistake (east and north swapped, stopped after trip a, and so on), and "Show the answer" appears after two misses. After Check the guess goes, a + b is drawn in ochre, the tips of a and of trip b become handles, a "Show b first too" switch draws the other route (the parallelogram), and four presets appear: Two trips, There and back, Same direction, Square corner. Stages: Trips (steps in words, no numbers on the axes), Arrows, and Lists (column vectors), which waits for Check.
+- **`trips-scale`** (vectors): a = (2, 1), entries within ±2, and a "Scale c" slider from −2 to 2 in steps of 0.5. Goal: the c that turns a around without changing its length. Before Check the readout gives only "c = …. c a = (…)."; after Check it says what c did ("−1 × a = (−2, −1): opposite direction, same length."), and the presets Double, Half, Turn around and Zero appear. Stages: Arrows and Lists.
+- **`cart-push`** (dot product): a push a = (5, 0) on a track û = (1, 0), with a dotted circle of length 5. Goal: keep the length at 5 and tilt the push until the cart gets exactly 3. After Check the ochre shadow ("moves the cart") and the dotted "into the rails" leg are drawn with a right-angle mark, and the presets Sideways, Backward, Longer track arrow (b = (2, 0): a · b is twice the part along the track) and Tilted track (b = (4, 3)) appear.
+- **`align`** (dot product): a = (4, 1) and b = (−1, 3), locked, with no handles until the reader picks Positive, Zero or Negative for a · b and presses Check (one shot: any answer reveals). Check is refused, with a visible reason, until a sign is picked. After Check the ochre shadow of b along a, the angle arc θ (or a right-angle mark at exactly 90°) and the presets Perpendicular, Opposite, Short b and Long b appear; Long b after Short b adds a "Before:" comparison. b's entries stay within ±4, so its shadow never leaves the board.
+- **Limits:** `validateSetup` allows at most 4 presets and refuses openings or presets outside their limits, an a + b or shadow off the board, a scale range that can carry c a off the board, a zero track or one whose length isn't a whole number, a cart goal with no whole-number answer, and an `align` opening with a zero vector.
+- Check, the stages, the presets, the refusal notes and the live region are the guided pieces above. All math and copy live in pure modules (`model.ts`, `setups.ts`, `state.ts`, `describe.ts`) checked by `npm run check:boards`; the Mafs code is `VectorPlane.tsx` and the table `CoordinateTable.tsx`. Island CSS lives under the `.ms-vec-*` section of `components.css`. Try every setup at `/lab/vector-board/` in the dev server.
+
 ## Code
 
 ### Fenced code blocks

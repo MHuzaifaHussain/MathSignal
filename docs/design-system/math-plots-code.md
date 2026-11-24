@@ -74,6 +74,22 @@ Mafs 0.21's `vec.lerp` (and `vec.midpoint`) return `[NaN, NaN]` when both points
 - A live region announces the new values when a drag, an arrow-key move or a slider change ends, never on every frame.
 - Handwritten notes (`ChalkNote`) sit at the board's top-left and switch to their `short` text when the board is under 560px wide.
 
+### Vectors (VectorBoard2D)
+
+Several vectors share one plane ([decision 0014](../decisions/0014-vector-board.md)). They are told apart by label and line style, never by hue:
+
+| Marking | Meaning |
+|---|---|
+| Ink solid 2.5px arrow, label "a" | Vector a, or the push |
+| Ink dashed 2.5px arrow, label "b" (or "û, length 1") | Vector b, or the track direction; on the add setup, b drawn from a's tip |
+| Muted ink dashed arrows | The other route, b then a ("Show b first too") |
+| Muted dotted lines | Component legs of the table row the reader points at, the length-5 circle, "into the rails" |
+| Muted arc labeled θ, or a muted square corner | The angle between a and b, or a right angle |
+| Ochre, 3px | The one element being taught: the guess ring, then a + b; c a; the shadow after Check |
+| Ink ring labeled "zero vector" | A zero vector, never an arrowhead |
+
+Pink and blue never appear on this board: a vector is not μ or σ. Ochre marks exactly one element at a time (`ochreElement` in `describe.ts`); the handles are ink dots, and Mafs' focus ring is the site's focus color beside it. Board strings follow the notation registry in plain Unicode: ‖a‖ for a vector's length, |c| only for a number, "a · b" for the dot product and "c a" or "2 × a" for a multiple, never "c·a". A negative factor gets parentheses ("4 × (−1)"), lengths are exact or "√13 ≈ 3.61", and angles are "exactly 45°" or "about 94.4°". The plane stays square at Mafs' default aspect ratio; don't copy `preserveAspectRatio={false}` from the Normal board to a vector board.
+
 ## Discrete boards (EventSpace)
 
 Discrete sample spaces are HTML tables, not Mafs plots (decision 0011). They follow the same color rules with these conventions:
