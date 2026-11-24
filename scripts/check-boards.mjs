@@ -16,6 +16,7 @@ assert.deepEqual(multiplyFractions(fraction(5, 6), fraction(6, 5)), fraction(1, 
 assert.equal(compareFractions(fraction(7, 6), fraction(1, 1)), 1);
 assert.equal(compareFractions(fraction(2, 4), fraction(1, 2)), 0);
 assert.throws(() => multiplyFractions(fraction(2 ** 30, 1), fraction(2 ** 30, 1)), /overflowed safe integers/);
+assert.throws(() => compareFractions(fraction(2 ** 30, 2 ** 30 - 1), fraction(2 ** 30 + 1, 2 ** 30)), /overflowed safe integers/);
 assert.equal(toNumber(fraction(1, 4)), 0.25);
 assert.deepEqual(addFractions(fraction(0, 1), fraction(1, 3)), fraction(1, 3));
 assert.throws(() => addFractions(fraction(1, 2 ** 30), fraction(1, 2 ** 30 - 1)), /overflowed safe integers/);
@@ -865,6 +866,14 @@ assert.deepEqual(distSay.chartLabels(steadyOn).arms, []);
 
 // Covered strings reveal nothing computed from the reader's values: no chance, fraction, bar or membership.
 const revealing = /P\(|\/| bar|holds/;
+for (const setupId of ['candy-build', 'coins-heads']) {
+	const opening = dist.initialState(setupId);
+	assert.ok(dist.isCovered(opening), `${setupId} opens covered`);
+	assert.deepEqual(distSay.readoutLines(opening), [], `${setupId}: no readouts at the opening`);
+	assert.deepEqual(distSay.symbolLines(opening), [], `${setupId}: no symbols at the opening`);
+	assert.deepEqual(distSay.tableRows(opening), [], `${setupId}: no table at the opening`);
+	assert.deepEqual(distSay.chartLabels(opening).shares, [], `${setupId}: no bar shares at the opening`);
+}
 for (const [setupId, steps] of [
 	['candy-build', stepsTo([0, 0, 0, 1, 1, 4])],
 	['candy-build', stepsTo([1, 2, 3, 4, 5, 6])],
