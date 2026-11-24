@@ -74,36 +74,36 @@ A second picture covers what the playground can't. A shopping list that says "2 
 </Analogy>
 
 <WhyThisMatters>
-Every input a model sees is a vector of numbers: the pixels of an image, the features of a house, or a word turned into an embedding with hundreds of entries. A training step adds a scaled gradient vector to the weight vector, and a layer adds one bias vector to every example in a batch. Getting these sums right is not automatic. When two arrays of mismatched shapes are added, NumPy and PyTorch can broadcast them into a matrix without any error, and a model then trains on the wrong sum.
+Every input a model sees is a vector of numbers: the pixels of an image, the features of a house, or a word turned into an embedding with hundreds of entries. A training step subtracts a scaled gradient vector from the weight vector, and a layer adds one bias vector to every example in a batch. Getting these sums right is not automatic. When two arrays of mismatched shapes are added, NumPy and PyTorch can broadcast them into a matrix without any error, and a model then trains on the wrong sum.
 </WhyThisMatters>
 
 ## Walk two trips on a grid
 
 Before you touch anything: you walk 3 steps east and 2 steps north, then 1 step east and 3 steps north. Where do you end up? Going further: is the straight-line distance from start to finish the two trips' lengths added together?
 
-The board shows trip **a** as a solid arrow from the start and trip **b** as a dashed arrow that begins where **a** ends. The two trips are the question, so they can't be moved yet; their − and + buttons are refused with the note "a and b are the question. Press Check first." The one thing you can move is the ochre ring labeled "your guess", which starts at the start. Drag it, or focus it and press the arrow keys to move it one square at a time, or use the − and + buttons in the table. Your task: put the ochre ring where the two trips end, then press Check.
+Your task: move the ochre ring labeled "your guess" to where the two trips end, then press Check. Drag the ring, focus it and use the arrow keys, or use its − and + buttons in the table. Trip **a** is the solid arrow and trip **b** the dashed one that begins where **a** ends. They stay fixed until you check; their buttons say "a and b are the question. Press Check first."
 
 <div class="not-content">
   <VectorBoard2D client:visible setup="trips-add" />
 </div>
 
-You end 4 steps east and 5 steps north. Check says "Yes. East: 3 + 1 = 4. North: 2 + 3 = 5. Both trips end where one trip of 4 east and 5 north would." After two misses, a Show the answer button appears. Once you have checked, the guess gives way to an ochre arrow from the start straight to the end, and the switch Show b first too draws the other route, **b** and then **a**, which ends on the same square. The two routes are the sides of a parallelogram.
+You end 4 steps east and 5 steps north. Check says "Yes. East: 3 + 1 = 4. North: 2 + 3 = 5. Both trips end where one trip of 4 east and 5 north would." After two misses, a Show the answer button appears. After Check, the switch Show b first too draws the other route, **b** and then **a**, which ends on the same square.
 
-The straight-line distance is not the two lengths added. Switch Show as to Arrows and the board reads "Length of a + b: √41 ≈ 6.40. The two trips' lengths add to √13 + √10 ≈ 6.77." The walk that turns a corner is longer than the straight path. The presets show the cases at the edges. Same direction makes the lengths add, because both trips point the same way. There and back ends at the start, drawn as a ring labeled "zero vector". Square corner gives "Length of a + b: 5. The two trips' lengths add to 3 + 4 = 7." Lists, the third view, writes each trip as a column of numbers and shows the sum as "a + b = (3 + 1, 2 + 3) = (4, 5)". After Check you can also drag the tip of **a** or the end of **b** and watch the sum follow.
+The straight-line distance is not the two lengths added. An arrow's length comes from Pythagoras: trip **a** = (3, 2) is √(3 × 3 + 2 × 2) = √13 long, trip **b** is √10 long, and the sum (4, 5) is √41 long. After Check, switch Show as to Arrows and the board reads "Length of a + b: √41 ≈ 6.40. The two trips' lengths add to √13 + √10 ≈ 6.77." The walk that turns a corner is longer. Four presets then load new trips. Same direction sets both trips to (2, 1), and here the lengths do add: √5 + √5 = √20. Square corner gives "Length of a + b: 5. The two trips' lengths add to 3 + 4 = 7." There and back ends at the start: the sum is (0, 0), the zero vector, the trip that goes nowhere, drawn as a ring labeled "zero vector".
 
 <SideNote>
-Adding arrows on paper is a real stumbling block. In a study published in 2003, of 2,031 introductory physics students, more than a quarter of those starting the second semester of calculus-based physics, and more than half in algebra-based physics, could not add two vectors in a plane <Cite id="nguyen2003" />.
+Adding arrows on paper is a real stumbling block. A 2003 study tested 2,031 introductory physics students. At the start of the second semester, more than a quarter of the calculus-based students and more than half of the algebra-based students could not add two vectors in a plane <Cite id="nguyen2003" />.
 </SideNote>
 
 ## What is a vector?
 
-A vector is an ordered list of numbers; with two numbers you can draw it as an arrow from the origin to the point with those coordinates. Grant Sanderson describes three ways of looking at it <Cite id="sanderson2016" />, and each one is useful in machine learning.
+A vector is an ordered list of numbers; with two numbers you can draw it as an arrow from the origin, the point (0, 0) where the axes cross (the start on the board), to the point with those coordinates. Grant Sanderson describes a vector as an arrow and as an ordered list of numbers <Cite id="sanderson2016" />. Machine learning adds a third view, a data point, and all three are useful.
 
 - **An arrow.** **a** = (3, 2) is the arrow from the origin to the point 3 to the right and 2 up. It has a length and a direction.
 - **A list.** **a** = (3, 2) is the list "first 3, then 2". Order matters: (3, 2) and (2, 3) are different vectors. A list can have any number of entries, and an entry can be any real number, including fractions and negatives.
 - **A data point.** A student who studied for 3 hours and solved 2 practice problems is the point (3, 2) on a chart of hours against problems. A data set is a cloud of such points.
 
-Goodfellow, Bengio and Courville define a vector the same way, as an array of numbers arranged in order, with a bold lower-case name, n real entries, and the entries written as a column; they add that a vector can be read as a point in space, each entry giving its coordinate along one axis (Section 2.1) <Cite id="goodfellow2016linalg" />. A vector with n real entries lives in a space called Rⁿ, read "R n". The board's vectors live in R², the house in the analogy lives in R³, and a word embedding with 768 entries lives in R⁷⁶⁸.
+Goodfellow, Bengio and Courville define a vector the same way: an ordered array of numbers, named with a bold lower-case letter. They also read it as a point in space, each entry giving its coordinate along one axis (Section 2.1) <Cite id="goodfellow2016linalg" />. A vector with n entries, each any real number (any number on the number line, fractions and negatives included), lives in a space called Rⁿ, read "R n". The board's vectors live in R², the house in the analogy lives in R³, and a word embedding with 768 entries lives in R⁷⁶⁸.
 
 <Simpler label="the same idea on a number line">
 
@@ -135,7 +135,7 @@ Now move the origin to the point (1, 0), so every coordinate drops by (1, 0). Th
 
 To add two vectors, add their matching entries; as arrows, put the tail of the second on the tip of the first. On the board, (3, 2) + (1, 3) = (3 + 1, 2 + 3) = (4, 5). The other order gives (1, 3) + (3, 2) = (4, 5) too, because adding numbers doesn't care about order. Drawn both ways, the two routes are the two sides of a parallelogram, and the sum is its diagonal.
 
-Subtraction undoes addition. **b** − **a** = (1, 3) − (3, 2) = (−2, 1) is the arrow from the tip of **a** to the tip of **b**: the trip that takes you from where **a** ends to where **b** ends. Every vector has an opposite that undoes it, −**a** = (−3, −2), and **a** + (−**a**) = (0, 0), the zero vector, the trip that goes nowhere.
+Subtraction undoes addition. Draw **a** = (3, 2) and **b** = (1, 3) both from the origin. Then **b** − **a** = (1, 3) − (3, 2) = (−2, 1) is the arrow from the tip of **a** to the tip of **b**: the trip that takes you from where **a** ends to where **b** ends. Every vector has an opposite that undoes it, −**a** = (−3, −2), and **a** + (−**a**) = (0, 0), the zero vector, the trip that goes nowhere.
 
 <Simpler label="shopping lists">
 
@@ -155,21 +155,23 @@ Multiplying a vector by a number c, called a scalar, multiplies every one of its
 
 Before you touch the second board: what does a negative c do to the arrow **a** = (2, 1)? And what does c = 0 do? Going further: is there a c that reverses **a** but keeps its length?
 
-The board shows **a** as a solid arrow and c **a** as an ochre arrow, with the slider Scale c running from −2 to 2 in steps of 0.5. It opens at c = 1 and reads "c = 1. c a = (2, 1)." Drag the slider, or focus it and use the arrow keys. You can also drag the tip of **a**, whose entries stay between −2 and 2. Your task: find the c that turns **a** around without changing its length, then press Check.
+Your task: find the c that turns **a** around without changing its length, then press Check. The solid arrow is **a** and the ochre arrow is c **a**. Set c with the slider Scale c, which runs from −2 to 2 in steps of 0.5: drag it, or focus it and use the arrow keys. It opens at "c = 1. c a = (2, 1)." You can also drag the tip of **a**.
 
 <div class="not-content">
   <VectorBoard2D client:visible setup="trips-scale" />
 </div>
 
-c = −1. Check says "Yes. −1 × a = (−2, −1): the same length as a, pointing the opposite way." A negative c always flips the direction, and the size of c sets the stretch, so −1.5 flips and stretches and −0.5 flips and shrinks. At c = 0 every entry becomes 0 and the arrow collapses to a point. After Check the presets show the landmarks: Double gives "2 × a = (4, 2): same direction as a, 2 times as long. Length 2 × √5 ≈ 4.47.", Half gives "0.5 × a = (1, 0.5): same direction as a, half as long.", and Zero gives "0 × a = (0, 0): the zero vector. It has no direction." The Lists view writes the scaling entry by entry, for example "c a = (2 × 2, 2 × 1) = (4, 2)".
+c = −1. Check says "Yes. −1 × a = (−2, −1): the same length as a, pointing the opposite way." A negative c always flips the direction, and the size of c sets the stretch, so −1.5 flips and stretches and −0.5 flips and shrinks. At c = 0 every entry becomes 0 and the arrow collapses to a point. After Check, the Double preset reads "2 × a = (4, 2): same direction as a, 2 times as long. Length 2 × √5 ≈ 4.47." (**a** = (2, 1) is √5 long.) Zero reads "0 × a = (0, 0): the zero vector. It has no direction."
 
-So scaling keeps an arrow on its line through the origin and only stretches, shrinks or flips it. Back on **a** = (3, 2), the multiple 2 × **a** = (6, 4) is twice as long in the same direction, 0.5 × **a** = (1.5, 1) is half as long, and −1.5 × **a** = (−4.5, −3) points the other way and is 1.5 times as long. Sanderson uses the same three kinds of factor, 2, 1/3 and −1.5 <Cite id="sanderson2016" />.
+So scaling keeps an arrow on its line through the origin and only stretches, shrinks or flips it. Back on the first board's trip, now with **a** = (3, 2) again, the multiple 2 × **a** = (6, 4) is twice as long in the same direction, 0.5 × **a** = (1.5, 1) is half as long, and −1.5 × **a** = (−4.5, −3) points the other way and is 1.5 times as long. Sanderson uses the same three kinds of factor, 2, 1/3 and −1.5 <Cite id="sanderson2016" />.
 
 However you set c, c **a** never leaves the line through the origin and **a**. Scaling can't turn an arrow sideways; reaching points off that line needs a second vector, which is the subject of linear combinations and span (coming soon).
 
 ### Only lists of the same length add
 
-**a** + **b** needs **a** and **b** to have the same number of entries; (1, 2) + (1, 2, 3) has no meaning, because the third entry has nothing to pair with. Padding the short one with a 0 doesn't rescue it: (1, 2, 0) is a different vector from (1, 2), in a different space, and whether a missing entry should count as 0 is a decision about the data, not a rule of arithmetic. The same goes for order. A house written as (bedrooms, area) and one written as (area, bedrooms) both have two entries, so the arithmetic goes through, but the sum adds bedrooms to square meters and means nothing. Scaling has no such limit: any vector can be multiplied by any number. Array libraries don't always refuse the mismatched sum. NumPy raises an error for arrays of 2 and 3 entries, but for a column of 3 plus a row of 3 it quietly builds a 3 × 3 table instead, a rule called broadcasting. The code section below shows both, and Common mistakes says how to catch it.
+**a** + **b** needs **a** and **b** to have the same number of entries; (1, 2) + (1, 2, 3) has no meaning, because the third entry has nothing to pair with. Padding the short one with a 0 doesn't rescue it: (1, 2, 0) is a different vector from (1, 2), in a different space, and whether a missing entry should count as 0 is a decision about the data, not a rule of arithmetic. The same goes for order. A house written as (bedrooms, area) and one written as (area, bedrooms) both have two entries, so the arithmetic goes through, but the sum adds bedrooms to square meters and means nothing. Scaling has no such limit: any vector can be multiplied by any number.
+
+Array libraries don't always refuse a mismatched sum. NumPy raises an error for arrays of 2 and 3 entries. But it treats a column of 3 and a row of 3 as a 3 × 3 table to be filled in, and quietly adds every row entry to every column entry, a rule called broadcasting. The code section below shows both, and Common mistakes says how to catch it.
 
 <GoDeeper label="anything you can add and scale" id="vector-spaces">
 
@@ -204,11 +206,11 @@ Addition and scaling in $\mathbb{R}^n$ obey eight laws, for all $\mathbf{u}, \ma
 | Law | Statement | With $\mathbf{a} = (3, 2)$, $\mathbf{b} = (1, 3)$ |
 | --- | --- | --- |
 | Order doesn't matter | $\mathbf{u} + \mathbf{v} = \mathbf{v} + \mathbf{u}$ | $(4, 5) = (4, 5)$ |
-| Grouping doesn't matter | $(\mathbf{u} + \mathbf{v}) + \mathbf{w} = \mathbf{u} + (\mathbf{v} + \mathbf{w})$ | three trips in a row end in one place |
+| Grouping doesn't matter | $(\mathbf{u} + \mathbf{v}) + \mathbf{w} = \mathbf{u} + (\mathbf{v} + \mathbf{w})$ | $((3, 2) + (1, 3)) + (0, 1) = (3, 2) + ((1, 3) + (0, 1)) = (4, 6)$ |
 | Zero changes nothing | $\mathbf{u} + \mathbf{0} = \mathbf{u}$ | $(3, 2) + (0, 0) = (3, 2)$ |
 | Every vector can be undone | $\mathbf{u} + (-\mathbf{u}) = \mathbf{0}$ | $(3, 2) + (-3, -2) = (0, 0)$ |
 | Scaling a sum | $c\,(\mathbf{u} + \mathbf{v}) = c\,\mathbf{u} + c\,\mathbf{v}$ | $2\,(4, 5) = (6, 4) + (2, 6) = (8, 10)$ |
-| Adding scales | $(c + d)\,\mathbf{u} = c\,\mathbf{u} + d\,\mathbf{u}$ | $3\,(3, 2) = (6, 4) + (3, 2) = (9, 6)$ |
+| Adding the scalars | $(c + d)\,\mathbf{u} = c\,\mathbf{u} + d\,\mathbf{u}$ | $3\,(3, 2) = (6, 4) + (3, 2) = (9, 6)$ |
 | Scaling twice | $c\,(d\,\mathbf{u}) = (cd)\,\mathbf{u}$ | $2\,(3\,(3, 2)) = 6\,(3, 2) = (18, 12)$ |
 | Scaling by 1 | $1\,\mathbf{u} = \mathbf{u}$ | $1\,(3, 2) = (3, 2)$ |
 
@@ -234,14 +236,14 @@ Each law holds because the same law holds for the numbers in every entry. The fi
 
 <StepThrough title="Scaling by zero gives the zero vector: 0 v = 0, from the laws alone" rigor="full">
 
-1. $0 = 0 + 0$ as numbers, so $0\,\mathbf{v} = (0 + 0)\,\mathbf{v} = 0\,\mathbf{v} + 0\,\mathbf{v}$, by the law "adding scales".
+1. $0 = 0 + 0$ as numbers, so $0\,\mathbf{v} = (0 + 0)\,\mathbf{v} = 0\,\mathbf{v} + 0\,\mathbf{v}$, by the law "adding the scalars".
 2. Add $-(0\,\mathbf{v})$ to both sides: $0\,\mathbf{v} + (-(0\,\mathbf{v})) = (0\,\mathbf{v} + 0\,\mathbf{v}) + (-(0\,\mathbf{v}))$.
 3. The left side is $\mathbf{0}$, because every vector can be undone. Regroup the right side: $0\,\mathbf{v} + (0\,\mathbf{v} + (-(0\,\mathbf{v})))$, by "grouping doesn't matter".
 4. The inner bracket is $\mathbf{0}$, and adding $\mathbf{0}$ changes nothing, so the right side is $0\,\mathbf{v}$. Hence $\mathbf{0} = 0\,\mathbf{v}$.
 
 </StepThrough>
 
-The third proof never looks inside $\mathbf{v}$, so it holds in every vector space, polynomials included.
+The third proof never looks inside $\mathbf{v}$, so it holds for anything that obeys the eight laws, not only lists of numbers (see the fold "anything you can add and scale" above).
 
 </FormalDefinition>
 
@@ -275,9 +277,11 @@ Scale first: $0.1\,\mathbf{g} = (0.2, -0.4, 0.1)$. Then subtract entry by entry:
 
 ## Where adding and scaling show up in machine learning
 
+Adding and scaling are the first operations a model runs: examples are feature vectors, a layer adds a bias vector, word embeddings relate by vector offsets, and a training step subtracts a scaled gradient.
+
 ### Every example is a list of features
 
-A model sees each example as a feature vector: one number per feature, in a fixed order. A house with 120 square meters, 3 bedrooms and an age of 15 years is $\mathbf{x} = (120, 3, 15)$ in $\mathbb{R}^3$, a single data point in the sense of Section 2.1 of Goodfellow et al. <Cite id="goodfellow2016linalg" />. Adding and scaling mean something here. The average of two houses $(120, 3, 15)$ and $(80, 2, 5)$ is $\tfrac{1}{2}\big((120, 3, 15) + (80, 2, 5)\big) = (100, 2.5, 10)$, the mean data point, and the half bedroom is fine for an average. The mixed units are a warning: the first entry is in the hundreds and the second is under 10, so a step of 1 means very different things in different entries. That is why features are often rescaled before training.
+A model sees each example as a feature vector: one number per feature, in a fixed order. A house with 120 square meters, 3 bedrooms and an age of 15 years is $\mathbf{x} = (120, 3, 15)$ in $\mathbb{R}^3$, one data point <Cite id="goodfellow2016linalg" />. Adding and scaling mean something here. The average of two houses $(120, 3, 15)$ and $(80, 2, 5)$ is $\tfrac{1}{2}\big((120, 3, 15) + (80, 2, 5)\big) = (100, 2.5, 10)$, the mean data point, and the half bedroom is fine for an average. The mixed units are a warning: the first entry is in the hundreds and the second is under 10, so a step of 1 means very different things in different entries. That is why features are often rescaled before training.
 
 ### A layer adds the same bias to every example
 
@@ -291,11 +295,11 @@ $$
 \mathbf{y} = \mathbf{x}_b - \mathbf{x}_a + \mathbf{x}_c ,
 $$
 
-where $\mathbf{x}_a$ is the vector of word $a$ (here the subscript names a word, not an entry), and returns the word whose vector is most similar to $\mathbf{y}$, measured with cosine similarity, which the [dot product](/linear-algebra/dot-product/) page builds. In their example, "King − Man + Woman" gives a vector very close to "Queen". On their syntactic test set of 8,000 questions (Section 4.1), such as "good is to better as rough is to ?", their 1,600-dimensional combined RNN vectors answered 39.6% correctly (Table 2) <Cite id="mikolov2013" />.
+where $\mathbf{x}_a$ is the vector of word $a$, scaled to length 1 first (here the subscript names a word, not an entry), and returns the word whose vector is most similar to $\mathbf{y}$, measured with cosine similarity, which the [dot product](/linear-algebra/dot-product/) page builds. In their example, "King − Man + Woman" gives a vector very close to "Queen". On their syntactic test set of 8,000 questions (Section 4.1), such as "good is to better as rough is to ?", their best word vectors, with 1,600 entries each, answered 39.6% correctly (Table 2) <Cite id="mikolov2013" />.
 
 <GoDeeper label="why king − man + woman is not exactly queen">
 
-The standard analogy code never returns one of the three words in the question. Nissim, van Noord and van der Goot changed the word2vec, gensim and Bolukbasi et al. code to allow them, and ran the Google Analogy test set with the GoogleNews embeddings. The macro-averaged accuracy of the offset method, which they call 3CosAdd, fell from 0.71 to 0.21, and that of 3CosMul from 0.73 to 0.45 (Section 4.1, Table 1) <Cite id="nissim2019" />. In most cases the word returned was the second word of the question itself, as in "man is to king as woman is to king". So the famous answer to king − man + woman depends on ruling king out. This test set is a different one from the 8,000 syntactic questions above.
+The standard analogy code never returns one of the three words in the question. Nissim, van Noord and van der Goot changed the word2vec, gensim and Bolukbasi et al. code to allow them, and ran the Google Analogy test set with the GoogleNews embeddings. The macro-averaged accuracy of the offset method, which they call 3CosAdd, fell from 0.71 to 0.21, and that of 3CosMul from 0.73 to 0.45 (Section 4.1, Table 1) <Cite id="nissim2019" />. Most of the new wrong answers were the second word of the question, as in "man is to king as woman is to king", and some were the third (Section 4.1). So the famous examples rely partly on ruling the question words out. This test set is a different one from the 8,000 syntactic questions above.
 
 </GoDeeper>
 
@@ -305,7 +309,7 @@ Training moves the weight vector a little at a time. One step of gradient descen
 
 ## Adding and scaling in code
 
-The first program uses plain Python with exact fractions, so 0.5, 2.5 and 0.1 are stored exactly and every equality is exact. It checks every number on this page and stops with an error if one is off.
+The first program uses plain Python with exact fractions, so 0.5, 2.5 and 0.1 are stored exactly and every equality is exact. It checks every number this page computes and stops with an error if one is off.
 
 <PyRunner
   title="vectors.py"
@@ -376,9 +380,7 @@ assert scale(0, a) == (0, 0)
 a2 = (2, 1)
 assert scale(-1, a2) == (-2, -1)
 assert scale(2, a2) == (4, 2) and 2 * 2 * 5 == 4 * 4 + 2 * 2  # length 2 sqrt 5
-assert scale(F(1, 2), a2) == (1, F(1, 2))
 assert scale(0, a2) == (0, 0)
-assert scale(2, a2) == (2 * 2, 2 * 1)
 
 # Polynomials (constant, x, x squared) add like vectors.
 assert add((1, 2, 0), (3, -1, 1)) == (4, 1, 1)
@@ -386,6 +388,7 @@ assert scale(2, (1, 2, 0)) == (2, 4, 0)
 
 # The properties table.
 assert scale(2, a) == (6, 4) and scale(2, b) == (2, 6)
+assert add(add(a, b), (0, 1)) == add(a, add(b, (0, 1))) == (4, 6)
 assert scale(2, add(a, b)) == add(scale(2, a), scale(2, b)) == (8, 10)
 assert scale(3, a) == add(scale(2, a), scale(1, a)) == (9, 6)
 assert scale(2, scale(3, a)) == scale(6, a) == (18, 12)
@@ -506,15 +509,15 @@ print((torch.zeros(3, 1) + torch.zeros(3)).shape)  # torch.Size([3, 3]): broadca
 
 **Are concepts directions?** If a language model stores a concept, such as "female rather than male", as a direction in its vector space, then adding vectors combines concepts and scaling sets how strongly a concept is present <Cite id="sharkey2025" />. This idea, the linear representation hypothesis, uses nothing but the two operations on this page.
 
-**The seminal result.** Mikolov, Yih and Zweig found that relations between words appear as roughly constant offsets between word vectors, so that "King − Man + Woman" lands close to "Queen", and their offset method answered 39.6% of 8,000 syntactic analogy questions (Table 2) <Cite id="mikolov2013" />.
+**The seminal result.** Mikolov, Yih and Zweig's offset method, described under word offsets above, found relations between words as roughly constant offsets between their vectors <Cite id="mikolov2013" />.
 
-**A caveat about the test.** The usual analogy code never returns a word from the question. Allowing those words drops the offset method's macro accuracy on the Google Analogy test set from 0.71 to 0.21, mostly because the answer is then the input word itself (Section 4.1) <Cite id="nissim2019" />. The offsets are real, but weaker than the famous example suggests.
+**A caveat about the test.** Its headline examples weaken once the question words are allowed as answers, so the offsets are real but weaker than the famous example suggests <Cite id="nissim2019" />.
 
-**A formal version.** Park, Choe and Veitch define "a concept is a direction" using counterfactual pairs: if changing only the concept changes a word from one to another, as king to queen, the difference of their vectors points along one common direction (Definition 2.1). They test 27 concepts, such as male to female, English to French and frequent to infrequent words, on LLaMA-2 with 7 billion parameters. Adding a multiple of the "male to female" vector to the model's representation of the text "Long live the" steers its output: at a scale of 0.2, "queen" overtakes "king" as the most likely next word (Section 4, Table 1). They also argue that the ordinary geometry of the embedding space is the wrong one for comparing concept directions, and build a different inner product from the inverse covariance of the model's unembedding vectors, the vectors that score each possible output word (Section 3.2, Equation 3.3) <Cite id="park2023" />. Inner products are the subject of the [dot product](/linear-algebra/dot-product/) page.
+**A formal version.** Park, Choe and Veitch define "a concept is a direction" using counterfactual pairs: if changing only the concept changes a word from one to another, as king to queen, the difference of their vectors points along one common direction (Definition 2.1). They test 27 concepts, such as male to female, English to French and frequent to infrequent words, on LLaMA-2 with 7 billion parameters. Adding a multiple of the "male to female" vector to the model's representation of the text "Long live the" steers its output: with no intervention "king" is the most likely next word, and by a scale of 0.2 "queen" is (Section 4, Table 1). They also argue that the ordinary geometry of the embedding space is the wrong one for comparing concept directions, and build a different inner product from the inverse covariance of the model's unembedding vectors, the vectors that score each possible output word (Section 3.2, Equation 3.3) <Cite id="park2023" />. Inner products are the subject of the [dot product](/linear-algebra/dot-product/) page.
 
 **A counter-result.** Not every feature is one direction. Engels and colleagues found features that can't be split into one-dimensional pieces: in GPT-2 and Mistral 7B, the days of the week and the months of the year sit on circles, which the models use for modular arithmetic with days and months. Interventions on Mistral 7B and Llama 3 8B suggest that the circle, not a single direction, is the unit the model computes with <Cite id="engels2024" />.
 
-**What is open.** A recent survey of open problems separates a weak form of the hypothesis, in which some concepts are directions, from a strong form, in which all of them are, and notes that the strong form is false for some models (Section 2.1.2). It calls the unclear nature of features "one of the most significant open questions" (Section 2.1.2) <Cite id="sharkey2025" />. Which concepts are directions, in which geometry, and how far addition and scaling explain what a model computes are all unsettled.
+**What is open.** A recent survey of open problems separates a weak form of the hypothesis, in which some concepts are directions, from a strong form, in which all of them are, and notes that the strong form is false for some models (Section 2.1.2c). It calls the unclear nature of features "one of the most significant open questions" (Section 2.1.2d) <Cite id="sharkey2025" />. Which concepts are directions, in which geometry, and how far addition and scaling explain what a model computes are all unsettled.
 
 </ResearchFrontier>
 
@@ -533,7 +536,7 @@ A 3 × 3 array of zeros, not an error and not a vector of 3. NumPy treats the fi
 </CheckYourself>
 
 <CheckYourself level="proof" question="Using only the eight laws, show that (−1) v = −v.">
-First, $\mathbf{v} + (-1)\,\mathbf{v} = 1\,\mathbf{v} + (-1)\,\mathbf{v} = (1 + (-1))\,\mathbf{v} = 0\,\mathbf{v} = \mathbf{0}$, using "scaling by 1", "adding scales" and the third proof above. So $(-1)\,\mathbf{v}$ undoes $\mathbf{v}$. Second, only one vector undoes $\mathbf{v}$: if $\mathbf{v} + \mathbf{w} = \mathbf{0}$, then $\mathbf{w} = \mathbf{w} + \mathbf{0} = \mathbf{w} + (\mathbf{v} + (-\mathbf{v})) = (\mathbf{w} + \mathbf{v}) + (-\mathbf{v}) = \mathbf{0} + (-\mathbf{v}) = -\mathbf{v}$, using order and grouping. With $\mathbf{w} = (-1)\,\mathbf{v}$, this gives $(-1)\,\mathbf{v} = -\mathbf{v}$.
+First, $\mathbf{v} + (-1)\,\mathbf{v} = 1\,\mathbf{v} + (-1)\,\mathbf{v} = (1 + (-1))\,\mathbf{v} = 0\,\mathbf{v} = \mathbf{0}$, using "scaling by 1", "adding the scalars" and the third proof above. So $(-1)\,\mathbf{v}$ undoes $\mathbf{v}$. Second, only one vector undoes $\mathbf{v}$: if $\mathbf{v} + \mathbf{w} = \mathbf{0}$, then $\mathbf{w} = \mathbf{w} + \mathbf{0} = \mathbf{w} + (\mathbf{v} + (-\mathbf{v})) = (\mathbf{w} + \mathbf{v}) + (-\mathbf{v}) = \mathbf{0} + (-\mathbf{v}) = -\mathbf{v}$, using order and grouping. With $\mathbf{w} = (-1)\,\mathbf{v}$, this gives $(-1)\,\mathbf{v} = -\mathbf{v}$.
 </CheckYourself>
 
 ## Common mistakes
@@ -552,7 +555,7 @@ First, $\mathbf{v} + (-1)\,\mathbf{v} = 1\,\mathbf{v} + (-1)\,\mathbf{v} = (1 + 
     A 1-D array has no orientation. Added to an array of shape (3, 1), it acts as a row and the result has shape (3, 3), with no error. Check `.shape` before adding, and reshape on purpose when you mean a column.
   </Mistake>
   <Mistake wrong="King − man + woman equals queen.">
-    It lands close to queen <Cite id="mikolov2013" />, and queen comes out on top only when the analogy code rules out the three words in the question. When they are allowed, the answer is often one of the input words, and accuracy on the Google Analogy test set falls from 0.71 to 0.21 <Cite id="nissim2019" />.
+    It lands close to queen <Cite id="mikolov2013" />, but the usual analogy code never lets the answer be one of the three question words. When they are allowed, the answer is often one of them <Cite id="nissim2019" />.
   </Mistake>
 </CommonMistakes>
 
