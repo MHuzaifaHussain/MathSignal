@@ -53,6 +53,7 @@ assert.equal(intersect(sum7, first6).size, 1);
 assert.equal(union(sum7, first6).size, 11);
 assert.equal(complement(sum7, dice.outcomes).size, 30);
 assert.deepEqual(probability(ids(die, 'even'), die.outcomes, { 1: 2, 2: 2, 3: 2, 4: 2, 5: 2, 6: 2 }), fraction(6, 12));
+assert.throws(() => probability(ids(die, 'even'), die.outcomes, { 1: 2, 2: 2, 3: 2, 4: 2, 5: 2 }), /outcome "6" has no weight/);
 
 // Check names the specific mistake.
 const goal = ids(coins, 'at-least-one-head');

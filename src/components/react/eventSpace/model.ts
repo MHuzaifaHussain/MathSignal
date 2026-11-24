@@ -33,7 +33,15 @@ export type Weights = Readonly<Record<OutcomeId, number>>;
 
 /** How much of the space an event holds: its outcomes counted, or its units when the outcomes are weighted. */
 export function eventSize(event: ReadonlySet<OutcomeId>, all: readonly Outcome[], weights?: Weights): number {
-	return all.reduce((total, outcome) => total + (event.has(outcome.id) ? (weights ? (weights[outcome.id] ?? 0) : 1) : 0), 0);
+	return all.reduce((total, outcome) => total + (event.has(outcome.id) ? unitsOf(outcome.id, weights) : 0), 0);
+}
+
+/** One outcome's units, or 1 when the outcomes are equally likely. A weighted outcome with no units given is a bug. */
+function unitsOf(id: OutcomeId, weights: Weights | undefined): number {
+	if (!weights) return 1;
+	const units = weights[id];
+	if (units === undefined) throw new Error(`EventSpace: outcome "${id}" has no weight; every weighted outcome needs one.`);
+	return units;
 }
 
 /** Count mode: |E| / |Ω|. Weights mode: the event's units out of the whole jug. */
