@@ -56,6 +56,21 @@ header.header {
 	border-bottom: 1px solid var(--ms-ledge-rule);
 }
 
+/* ── Mobile menu toggle: a plain icon on the ledge, like Search beside it. Starlight draws a filled disc
+ * in inverted colors, which in dark mode is a bright ivory circle (decision 0006: no fills or pills).
+ * Open, it shows the close icon; the icon change carries the state, so no fill is needed. ── */
+.sl-menu-button,
+.sl-menu-button:has(~ :popover-open),
+:root[data-theme='light'] .sl-menu-button,
+:root[data-theme='light'] .sl-menu-button:has(~ :popover-open) {
+	background-color: transparent;
+	color: var(--ms-ledge-ink);
+}
+
+.sl-menu-button:hover {
+	color: var(--ms-ink);
+}
+
 /* ── Columns are separated by whitespace, never by full-height vertical rules (decision 0006) ── */
 @media (min-width: 50rem) {
 	.sidebar-pane {
