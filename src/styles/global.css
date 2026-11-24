@@ -71,6 +71,19 @@ header.header {
 	color: var(--ms-ink);
 }
 
+/* Starlight sized this button at 32px with a 16px icon in its padding; at our 44px tap target the icon
+ * sat in the top-left corner. Center it and match the search icon's 20px so the two read as a pair. */
+.sl-menu-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+}
+
+.sl-menu-button svg {
+	font-size: 1.25rem;
+}
+
 /* ── Columns are separated by whitespace, never by full-height vertical rules (decision 0006) ── */
 @media (min-width: 50rem) {
 	.sidebar-pane {
