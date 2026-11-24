@@ -14,7 +14,7 @@ objectives:
 takeaways:
   - A and B are independent given C when P(A ∩ B | C) = P(A | C) P(B | C). When P(B ∩ C) > 0 that is the same as P(A | B ∩ C) = P(A | C).
   - Ice cream and sunburn are independent on hot days and on cool days, yet still dependent over the summer, where P(I ∩ S) = 0.17 but P(I) P(S) = 0.13.
-  - With two groups, P(A ∩ B) − P(A) P(B) = P(C) P(not C) (P(A | C) − P(A | not C)) (P(B | C) − P(B | not C)), so a common cause that moves both events links them.
+  - A common cause that moves both events links them overall. With two groups, the gap P(A ∩ B) − P(A) P(B) is P(C) P(not C) times how much C changes the rate of each.
   - Conditioning can also create a link. Two fair coins are independent, but once you know at least one landed heads, learning the second is tails makes the first certain to be heads.
   - Naive Bayes and the two-test update assume conditional independence. When it fails, the same evidence is counted twice and the answer is too confident.
 references:
@@ -55,11 +55,11 @@ import WorkedExample from "../../../components/WorkedExample.astro";
 
 ## In everyday terms
 
-<Analogy breaks="Knowing the weather removes the link only if the weather is the whole story. If beach days sell ice cream and also burn people, the link comes back even on hot days. And 'given the weather' means checking hot days and cool days separately, not only one of them.">
+<Analogy breaks="Knowing the weather removes the link only if the weather is the whole story. If some hot days are also beach holidays, and holidays both sell more ice cream and burn more people, the two stay linked even among hot days. And 'given the weather' means checking hot days and cool days separately, not only one of them.">
 
 Over a summer, the days with high ice-cream sales are also the days with more sunburn. Ice cream burns nobody; both follow the weather. Look only at hot days, and knowing about ice cream tells you nothing extra about sunburn. Do the same on cool days. That is conditional independence.
 
-Learning something can also create a link. Two coin tosses have nothing to do with each other, until a light that turns on when [either lands heads](#learning-about-a-common-effect-can-create-a-link) is on.
+Learning something can also create a link. Two coin tosses have nothing to do with each other. Now wire a light that turns on when [either lands heads](#learning-about-a-common-effect-can-create-a-link), and suppose you see it lit: the coins become linked.
 
 </Analogy>
 
@@ -69,7 +69,7 @@ Naive Bayes, Bayesian networks and repeated diagnostic tests all multiply probab
 
 ## A summer of 100 days
 
-Before you read the tables, guess. On days with high ice-cream sales, is sunburn more likely, less likely or the same as on an average day? And if you already know the answer to that: if ice cream and sunburn are independent on hot days and also on cool days, are they independent over the whole summer?
+Before you read the tables, guess. On days with high ice-cream sales, is sunburn more likely, less likely or the same as on an average day? A second guess: if ice cream and sunburn are independent on hot days and also on cool days, are they independent over the whole summer?
 
 Here is the summer: 100 days, 40 hot and 60 cool. On each day we note whether ice-cream sales were high (call it I) and whether the local clinic saw sunburn (call it S). A hot day is H, so a cool day is "not H". The counts are made up for teaching.
 
@@ -99,7 +99,7 @@ Here is the summer: 100 days, 40 hot and 60 cool. On each day we note whether ic
 
 More likely. Over the summer, sunburn happens on 26 of 100 days, 0.26. On high-ice-cream days it happens on 17 of 50, 0.34, and on the other days on 9 of 50, 0.18. So ice cream and sunburn are not independent overall.
 
-Inside each kind of day the link is gone. On hot days sunburn happens on 20 of 40 days and on 15 of the 30 high-ice-cream days: 1/2 both ways. On cool days it is 6 of 60 and 2 of 20: 1/10 both ways. So the answer to the second question is no: independent within every group, dependent overall.
+Inside each kind of day the link is gone. On hot days sunburn happens on 20 of 40 days and on 15 of the 30 high-ice-cream days: 1/2 both ways. The cool days pass too, as you will check below, so the answer to the second question is no: independent within every group, dependent overall.
 
 ## Notation
 
@@ -113,9 +113,9 @@ $$
 P(A \cap B \mid C) = P(A \mid C)\,P(B \mid C).
 $$
 
-If also $P(B \cap C) > 0$, this is equivalent to $P(A \mid B \cap C) = P(A \mid C)$. For discrete random variables $X, Y, Z$, the variables $X$ and $Y$ are conditionally independent given $Z$ if $p(x, y \mid z) = p(x \mid z)\,p(y \mid z)$ for all $x, y$ and every $z$ with $P(Z = z) > 0$; this is the form in Zhang et al., §2.6.4 <Cite id="zhang2023" />.
+If also $P(B \cap C) > 0$, this is equivalent to $P(A \mid B \cap C) = P(A \mid C)$. For discrete random variables $X, Y, Z$, the variables $X$ and $Y$ are conditionally independent given $Z$ if $p(x, y \mid z) = p(x \mid z)\,p(y \mid z)$ for all $x, y$ and every $z$ with $P(Z = z) > 0$. Zhang et al., §2.6.4, give this product rule for random variables <Cite id="zhang2023" />. The clause about every value of $z$ with positive probability spells out what "given $Z$" means.
 
-Boundary cases. If $P(C) = 0$ the definition doesn't apply. "Given a variable" means given every value of it, so for the weather it means given $C$ and given $C^\complement$. Neither independence nor conditional independence implies the other (see the coins below and worked example 5).
+Boundary cases. If $P(C) = 0$ the definition doesn't apply. "Given a variable" means given every value of it, so for the weather it means given $H$ and given $H^\complement$. Neither independence nor conditional independence implies the other: the summer tables show conditional independence without independence, and the coins in [learning about a common effect](#learning-about-a-common-effect-can-create-a-link) show independence without conditional independence.
 
 </PreciseStatement>
 
@@ -151,22 +151,24 @@ $P(I \mid H^\complement) = 20/60 = 1/3$, $P(S \mid H^\complement) = 6/60 = 1/10$
 
 A common cause links two events overall because pooling mixes groups where both rates are high with groups where both are low, so the pooled numbers move together. A high-ice-cream day is more likely to be a hot day, which makes sunburn more likely.
 
-With two groups, the gap between the joint and the product is the share of hot days times the share of cool days, times how much the weather moves each event (derived in [the formal definition](#formal-definition)):
+Over the summer, $P(I \cap S) = 17/100 = 0.17$, while $P(I) = 50/100 = 0.5$ and $P(S) = 0.26$, so $P(I)\,P(S) = 0.13$. On cool days, $P(I \mid H^\complement) = 20/60 = 1/3$ and $P(S \mid H^\complement) = 6/60 = 1/10$. The weather moves ice cream from $1/3$ to $3/4$ and sunburn from $1/10$ to $1/2$.
+
+With two groups, the gap between the joint and the product is the share of hot days times the share of cool days, times those two moves (derived in [the formal definition](#formal-definition)):
 
 $$
 P(I \cap S) - P(I)\,P(S) = 0.17 - 0.13 = 0.04 = 0.4 \times 0.6 \times \left(\tfrac{3}{4} - \tfrac{1}{3}\right)\left(\tfrac{1}{2} - \tfrac{1}{10}\right) = 0.24 \times \tfrac{5}{12} \times \tfrac{2}{5}.
 $$
 <Simpler label="the same 100 days as a strip" id="same-days-two-ways">
 
-Line up the 100 days as a strip and sort them by weather: 40 hot days on the left, 60 cool on the right. Mark ice-cream days and sunburn days. Both kinds of mark bunch in the hot block. Now ask what each mark tells you about the weather. Of the 50 ice-cream days, 30 are hot, so $P(H \mid I) = 3/5$, up from $0.4$. Of the 26 sunburn days, 20 are hot, so $P(H \mid S) = 10/13$. Of the 17 days with both, 15 are hot, so $P(H \mid I \cap S) = 15/17$. Each clue raises the chance that it was hot, and that shared rise is what links the two.
+Line up the 100 days as a strip and sort them by weather: 40 hot days on the left, 60 cool on the right. Mark the high-ice-cream days and the sunburn days. Both kinds of mark bunch in the hot block. Now ask what each mark tells you about the weather. Of the 50 high-ice-cream days, 30 are hot, so $P(H \mid I) = 3/5$, up from $0.4$. Of the 26 sunburn days, 20 are hot, so $P(H \mid S) = 10/13$. Of the 17 days with both, 15 are hot, so $P(H \mid I \cap S) = 15/17$. Each clue raises the chance that it was hot, and that shared rise is what links the two.
 
 </Simpler>
 
 ## Learning about a common effect can create a link
 
-Learning about a common effect can make two independent events dependent. Toss two fair coins, and wire a light that turns on when at least one lands heads. Without the light, the coins are [independent](/probability/independence/): $P(\text{first H} \mid \text{second T}) = P(\text{first H}) = 1/2$.
+Learning about a common effect can make two independent events dependent. Toss two fair coins, and wire a light that turns on when at least one lands heads. Without the light, the coins are [independent](/probability/independence/): $P(\text{first heads} \mid \text{second tails}) = P(\text{first heads}) = 1/2$.
 
-Now you see the light is on. Three of the four outcomes, HH, HT and TH, turn it on, so $P(\text{first H} \mid \text{light}) = 2/3$. If you then learn the second coin is heads, the light is already explained, and $P(\text{first H} \mid \text{light}, \text{second H}) = 1/2$. If you learn the second is tails, only HT is left, and the first is certainly heads: probability 1. Given the light, the second coin tells you about the first. This is called explaining away. Kuleshov and Ermon use rain, a sprinkler and a wet lawn: given a wet lawn, learning the sprinkler was off makes rain the explanation <Cite id="kuleshov-ermon-cs228" />.
+Now you see the light is on. Three of the four outcomes, HH, HT and TH, turn it on, so $P(\text{first heads} \mid \text{light}) = 2/3$. If you then learn the second coin is heads, the light is already explained, and $P(\text{first heads} \mid \text{light}, \text{second heads}) = 1/2$. If you learn the second is tails, only HT is left, and the first is certainly heads: probability 1. Given the light, the second coin tells you about the first. This is called explaining away. Kuleshov and Ermon use rain, a sprinkler and a wet lawn: given a wet lawn, learning the sprinkler was off makes rain the explanation <Cite id="kuleshov-ermon-cs228" />.
 
 <GoDeeper label="forks, chains and colliders in a graph" id="forks-chains-colliders">
 
@@ -176,7 +178,7 @@ A Bayesian network draws each variable as a node and arrows from causes to effec
 - **Cascade** $X \rightarrow Z \rightarrow Y$: the same pattern, because $Z$ carries everything $X$ passes to $Y$.
 - **V-structure** $X \rightarrow Z \leftarrow Y$ (the coins and the light): $X$ and $Y$ are independent, and can become dependent given $Z$, or given any descendant of $Z$.
 
-A path between two nodes is active given the observed nodes when every three-node stretch along it passes: the middle node of a common parent or cascade must be unobserved, and the middle of a v-structure must be observed or have an observed descendant. Two sets of nodes are d-separated given the observed ones when no path between them is active. Kuleshov and Ermon also show that graphs with the same skeleton (the same links, ignoring direction) and the same v-structures encode the same independencies <Cite id="kuleshov-ermon-cs228" />. So a chain and a fork over the same three nodes can't be told apart from conditional independencies alone, while a collider can be.
+A path is active when every three-node stretch along it passes: the middle of a common parent or cascade is unobserved, and the middle of a v-structure is observed or has an observed descendant. Two sets of nodes are d-separated when no path between them is active. Graphs with the same skeleton (links, ignoring direction) and the same v-structures encode the same independencies <Cite id="kuleshov-ermon-cs228" />. So conditional independencies alone can't tell a chain from a fork over the same three nodes, but can pick out a collider.
 
 </GoDeeper>
 
@@ -194,7 +196,7 @@ A path between two nodes is active given the observed nodes when every three-nod
 <StepThrough title="The two-group identity" rigor="full">
 
 1. Write $p = P(C)$ with $0 < p < 1$, $a_1 = P(A \mid C)$, $a_0 = P(A \mid C^\complement)$, $b_1 = P(B \mid C)$ and $b_0 = P(B \mid C^\complement)$. Assume $A$ and $B$ are independent given $C$ and given $C^\complement$.
-2. By [total probability](/probability/bayes-theorem/#add-up-every-way-the-evidence-can-happen) and the assumption, $P(A \cap B) = p\,a_1 b_1 + (1 - p)\,a_0 b_0$.
+2. By the [law of total probability](/probability/law-of-total-probability/) and the assumption, $P(A \cap B) = p\,a_1 b_1 + (1 - p)\,a_0 b_0$.
 3. By total probability again, $P(A) = p\,a_1 + (1 - p)\,a_0$ and $P(B) = p\,b_1 + (1 - p)\,b_0$.
 4. Expand $P(A)\,P(B)$ and subtract. The terms collect into $P(A \cap B) - P(A)\,P(B) = p(1 - p)(a_1 - a_0)(b_1 - b_0)$, because $p - p^2 = p(1-p)$ and $(1-p) - (1-p)^2 = p(1-p)$.
 5. Consequence: since $p(1 - p) > 0$, $A$ and $B$ are independent overall exactly when $a_1 = a_0$ or $b_1 = b_0$, that is, when $C$ doesn't change the rate of one of them. If $C$ moves both in the same direction, the difference is positive and they happen together more often than independence predicts.
@@ -229,23 +231,23 @@ First, the claim is about the weather, a variable, and only one of its values wa
 
 <WorkedExample number={3} title="Two HIV tests, independent given the condition">
 
-Zhang et al. (§2.6.5) take a condition $H$ with prevalence $P(H) = 0.0015$. Test 1 has $P(D_1 \mid H) = 1$ and $P(D_1 \mid H^\complement) = 0.01$; test 2 has $P(D_2 \mid H) = 0.98$ and $P(D_2 \mid H^\complement) = 0.03$. Assume the tests are independent given $H$ and given $H^\complement$ <Cite id="zhang2023" />.
+Here $M$ means a person has the condition (Zhang et al. call it $H$), $D_1$ means test 1 is positive and $D_2$ means test 2 is positive. Zhang et al. (§2.6.5) take prevalence $P(M) = 0.0015$. Test 1 has $P(D_1 \mid M) = 1$ and $P(D_1 \mid M^\complement) = 0.01$; test 2 has $P(D_2 \mid M) = 0.98$ and $P(D_2 \mid M^\complement) = 0.03$. Assume the tests are independent given $M$ and given $M^\complement$ <Cite id="zhang2023" />.
 
-Both positive: $P(D_1 \cap D_2 \mid H) = 1 \times 0.98 = 0.98$ and $P(D_1 \cap D_2 \mid H^\complement) = 0.01 \times 0.03 = 0.0003$. Total probability gives $P(D_1 \cap D_2) = 0.98 \times 0.0015 + 0.0003 \times 0.9985 = 0.00176955$, so
+Both positive: $P(D_1 \cap D_2 \mid M) = 1 \times 0.98 = 0.98$ and $P(D_1 \cap D_2 \mid M^\complement) = 0.01 \times 0.03 = 0.0003$. Total probability gives $P(D_1 \cap D_2) = 0.98 \times 0.0015 + 0.0003 \times 0.9985 = 0.00176955$, so
 
 $$
-P(H \mid D_1 \cap D_2) = \frac{0.00147}{0.00176955} \approx 0.8307,
+P(M \mid D_1 \cap D_2) = \frac{0.00147}{0.00176955} \approx 0.8307.
 $$
 
-against $P(H \mid D_1) = 0.0015 / 0.011485 \approx 0.1306$ after the first test alone. The book calls the assumption crucial to this answer <Cite id="zhang2023" />.
+After the first test alone, $P(D_1) = 1 \times 0.0015 + 0.01 \times 0.9985 = 0.011485$, so $P(M \mid D_1) = 0.0015 / 0.011485 \approx 0.1306$. The book calls the assumption crucial to this answer <Cite id="zhang2023" />.
 
-The tests are not independent overall. $P(D_2) = 0.031425$, but $P(D_2 \mid D_1) = 0.00176955 / 0.011485 \approx 0.1541$: a first positive makes a second about five times as likely, because it raises the chance of $H$. The product $P(D_1)\,P(D_2) \approx 0.000361$ is about 4.9 times smaller than the joint, and the gap matches the identity: $0.0015 \times 0.9985 \times 0.99 \times 0.95 \approx 0.0014086$. The Bayes page does the same update with simpler numbers in [updating twice](/probability/bayes-theorem/#updating-twice).
+The tests are not independent overall. $P(D_2) = 0.031425$, but $P(D_2 \mid D_1) = 0.00176955 / 0.011485 \approx 0.1541$: a first positive makes a second about 4.9 times as likely, because it raises the chance of $M$. Equivalently, the joint is about 4.9 times the product $P(D_1)\,P(D_2) \approx 0.000361$, and the gap matches the identity: $0.0015 \times 0.9985 \times (1 - 0.01) \times (0.98 - 0.03) \approx 0.0014086$. The Bayes page does the same update with simpler numbers in [updating twice](/probability/bayes-theorem/#updating-twice).
 
 </WorkedExample>
 
 <WorkedExample number={4} title="The coins and the light">
 
-The four outcomes HH, HT, TH and TT each have probability $1/4$. The light is on for HH, HT and TH, so $P(\text{light}) = 3/4$ and $P(\text{first H} \mid \text{light}) = (2/4)/(3/4) = 2/3$. Add "the second is tails": only HT is left, so $P(\text{first H} \mid \text{light}, \text{second T}) = 1$. Without the light, "the second is tails" leaves the first at $1/2$.
+The four outcomes HH, HT, TH and TT each have probability $1/4$. The light is on for HH, HT and TH, so $P(\text{light}) = 3/4$ and $P(\text{first heads} \mid \text{light}) = (2/4)/(3/4) = 2/3$. Add "the second is tails": only HT is left, so $P(\text{first heads} \mid \text{light}, \text{second tails}) = 1$. Without the light, "the second is tails" leaves the first at $1/2$.
 
 </WorkedExample>
 
@@ -253,7 +255,7 @@ The four outcomes HH, HT, TH and TT each have probability $1/4$. The light is on
 
 "Two fair coins are independent, so they stay independent given anything." Which step fails?
 
-Independence is a statement about the whole sample space. Given the light, the sample space shrinks to HH, HT and TH, and inside it $P(\text{first H} \cap \text{second H} \mid \text{light}) = 1/3$, while $P(\text{first H} \mid \text{light})\,P(\text{second H} \mid \text{light}) = 2/3 \times 2/3 = 4/9$. The product rule fails, so the coins are dependent given the light.
+Independence is a statement about the whole sample space. Given the light, the sample space shrinks to HH, HT and TH, and inside it $P(\text{first heads} \cap \text{second heads} \mid \text{light}) = 1/3$, while $P(\text{first heads} \mid \text{light})\,P(\text{second heads} \mid \text{light}) = 2/3 \times 2/3 = 4/9$. The product rule fails, so the coins are dependent given the light.
 
 </WorkedExample>
 
@@ -265,7 +267,7 @@ Made-up counts for 300 emails: 100 spam and 200 not. In spam, "free" appears in 
 
 Spam: $24/100 = 0.24 = 0.6 \times 0.4$, so the words are independent given spam. Not spam: $2/200 = 0.01$, but $0.05 \times 0.02 = 0.001$, so they are not independent given not spam; the pair shows up ten times as often as the product says.
 
-From the counts, 24 spam and 2 other emails have both words, so $P(\text{spam} \mid \text{both}) = 24/26 = 12/13 \approx 0.923$. The naive product gives $\tfrac{1}{3} \times 0.6 \times 0.4 = 0.08$ for spam and $\tfrac{2}{3} \times 0.05 \times 0.02 = 1/1500$ for the rest, so $0.08 / (0.08 + 1/1500) = 120/121 \approx 0.992$. The naive answer is too confident: it treats the newsletter's two words as two separate clues against it, when they are one. The [naive Bayes](/probability/bayes-theorem/#naive-bayes) classifier makes this assumption on purpose.
+From the counts, 24 spam and 2 other emails have both words, so $P(\text{spam} \mid \text{both}) = 24/26 = 12/13 \approx 0.923$. The naive product gives $\tfrac{1}{3} \times 0.6 \times 0.4 = 0.08$ for spam and $\tfrac{2}{3} \times 0.05 \times 0.02 = 1/1500$ for the rest, so $0.08 / (0.08 + 1/1500) = 120/121 \approx 0.992$. The naive answer is too confident: it treats the newsletter's two words as two separate clues that the email is spam, when for the newsletter they are one clue. A [naive Bayes classifier](/probability/naive-bayes-classifier/) makes this assumption on purpose.
 
 </div>
 
@@ -273,11 +275,9 @@ From the counts, 24 spam and 2 other emails have both words, so $P(\text{spam} \
 
 ## Where conditional independence shows up in ML
 
-A naive Bayes classifier assumes the features are independent given the class, so that $P(x_1, \ldots, x_n \mid y) = \prod_k P(x_k \mid y)$. Each factor is a count, which makes it cheap to train; the [naive Bayes section of the Bayes page](/probability/bayes-theorem/#naive-bayes) sets out the rule. Worked example 6 shows the price: correlated features are counted twice, and the probabilities drift toward 0 and 1.
+A naive Bayes classifier assumes the features are independent given the class, so that $P(x_1, \ldots, x_n \mid y) = \prod_k P(x_k \mid y)$. Each factor is a count, which makes it cheap to train; the [naive Bayes section of the Bayes page](/probability/bayes-theorem/#naive-bayes) sets out the rule, and the [naive Bayes classifier](/probability/naive-bayes-classifier/) page builds one from counts. Worked example 6 shows the price: correlated features are counted twice, and the probabilities drift toward 0 and 1.
 
-A Bayesian network writes a joint distribution as a product of each variable given its parents. The missing arrows are conditional independencies, and d-separation reads them off the graph: if the distribution factorizes over the graph, every independence the graph shows holds in the distribution <Cite id="kuleshov-ermon-cs228" />. That is what lets a model with many variables store only small local tables.
-
-A feature can also predict a label only because both follow a common cause, such as the season or the hospital a sample came from. The two-group identity sizes that link, $p(1-p)(a_1 - a_0)(b_1 - b_0)$, and it lasts only while the cause and its rates stay as they were in training.
+A Bayesian network writes a joint distribution as a product of each variable given its parents. The missing arrows are conditional independencies, and a graph rule called d-separation (see [forks, chains and colliders](#forks-chains-colliders)) reads them off the graph: if the distribution factorizes over the graph, every independence the graph shows holds in the distribution <Cite id="kuleshov-ermon-cs228" />. That is what lets a model with many variables store only small local tables.
 
 ## Check every count in code
 
@@ -313,11 +313,17 @@ assert summer == (17, 33, 9, 41)
 ice, sun, both = rates(summer)
 assert (ice, sun, both) == (F(1, 2), F(13, 50), F(17, 100))
 assert ice * sun == F(13, 100) and both - ice * sun == F(1, 25)
-assert F(17, 50) == F(34, 100) and F(9, 50) == F(18, 100)
-p = F(2, 5)
+both_s, ice_only, sun_only, neither = summer
+assert F(both_s, both_s + ice_only) == F(17, 50) == F(34, 100)
+assert F(sun_only, sun_only + neither) == F(9, 50) == F(18, 100)
+p = F(sum(hot), sum(summer))
+assert p == F(2, 5)
 assert p * (1 - p) * (ice_h - ice_c) * (sun_h - sun_c) == F(1, 25)
 assert p * (1 - p) == F(24, 100) and ice_h - ice_c == F(5, 12) and sun_h - sun_c == F(2, 5)
-assert F(30, 50) == F(3, 5) and F(15, 17) > F(3, 5) and F(20, 26) == F(10, 13)
+# What each clue says about the weather: P(H | I), P(H | S) and P(H | I and S).
+assert F(hot[0] + hot[1], both_s + ice_only) == F(3, 5)
+assert F(hot[0] + hot[2], both_s + sun_only) == F(10, 13)
+assert F(hot[0], both_s) == F(15, 17)
 print("summer: P(I and S) =", both, " P(I) P(S) =", ice * sun)
 
 # The two-group identity, on a grid of exact values.
@@ -358,7 +364,7 @@ both_dice = F(sum(1 for d in dice if d == (1, 6)), 6)
 assert (one_first, six_second, both_dice) == (F(1, 6), F(1, 6), F(1, 6))
 assert one_first * six_second == F(1, 36) != both_dice
 
-# Two HIV tests (Zhang et al., section 2.6.5), independent given H.
+# Two HIV tests (Zhang et al., section 2.6.5), independent given M (their H).
 prior = F("0.0015")
 d1_h, d1_not = F(1), F("0.01")
 d2_h, d2_not = F("0.98"), F("0.03")
@@ -371,14 +377,15 @@ d1 = d1_h * prior + d1_not * (1 - prior)
 d2 = d2_h * prior + d2_not * (1 - prior)
 assert d1 == F("0.011485") and round(float(prior / d1), 4) == 0.1306
 assert d2 == F("0.031425") and round(float(both_tests / d1), 4) == 0.1541
-assert round(float(both_tests / d1 / d2)) == 5 and F(2, 200) / F(1, 1000) == 10
+assert round(float(both_tests / d1 / d2), 1) == 4.9 and F(2, 200) / F(1, 1000) == 10
+assert 1 - d1_not == F("0.99") and d2_h - d2_not == F("0.95")
 assert d1 * d2 == F("0.000360916125") and round(float(d1 * d2), 6) == 0.000361
 gap = both_tests - d1 * d2
 assert gap == F("0.001408633875")
 assert gap == prior * (1 - prior) * (d1_h - d1_not) * (d2_h - d2_not)
 assert round(float(gap), 7) == 0.0014086
 assert round(float(both_tests / (d1 * d2)), 1) == 4.9
-print("two tests: P(H | both) =", round(float(both_h_t * prior / both_tests), 4))
+print("two tests: P(M | both) =", round(float(both_h_t * prior / both_tests), 4))
 
 # Spam words: made-up counts for 300 emails.
 assert F(24, 100) == F(6, 10) * F(4, 10)
@@ -391,8 +398,6 @@ naive_posterior = spam_term / (spam_term + other_term)
 assert (true_posterior, naive_posterior) == (F(12, 13), F(120, 121))
 assert (round(float(true_posterior), 3), round(float(naive_posterior), 3)) == (0.923, 0.992)
 print("spam: counted", true_posterior, " naive", naive_posterior)
-
-# Check yourself: the proof item, a1 == a0 removes the link (checked on the grid above).
 
 # Simulate 100,000 summer days with the same rates.
 rng = random.Random(0)
@@ -417,8 +422,8 @@ print(f"simulated summer: P(I and S) is about {pooled_both:.3f}")
 />
 ## Check yourself
 
-<CheckYourself level="intuition" question="Two thermometers in the same room read high together. Are their errors independent given the true temperature?">
-Usually yes. Each thermometer's error comes from its own parts, so once you know the true temperature, one reading tells you nothing about the other's error. The readings themselves are dependent, because both follow the temperature: a common cause, as with the weather in the summer.
+<CheckYourself level="intuition" question="Two thermometers in the same room rise and fall together. Are their errors independent given the true temperature?">
+Usually yes. Each thermometer's error comes from its own parts, so once you know the true temperature, one reading tells you nothing about the other's error. The readings themselves are dependent, because both follow the temperature: a common cause, as with the weather in the summer. The errors stop being independent if something besides the temperature affects both, such as a shared sunbeam: like the beach holidays in [the analogy](#in-everyday-terms), a second common cause brings the link back.
 </CheckYourself>
 
 <CheckYourself level="standard" question="From the summer tables, what is P(S | I, cool), and does it equal P(S | cool)?">
@@ -429,8 +434,8 @@ $2/20 = 1/10$, and $P(S \mid H^\complement) = 6/60 = 1/10$, so yes. On cool days
 No. Given C, the six outcomes are (1,6), (2,5), (3,4), (4,3), (5,2) and (6,1). $P(\text{first is 1} \mid C) = 1/6$ and $P(\text{second is 6} \mid C) = 1/6$, so the product is $1/36$, but both happen only in (1,6), so the joint is $1/6$. Given the sum, the first die fixes the second.
 </CheckYourself>
 
-<CheckYourself level="proof" question="Use the two-group identity to show that if P(A | C) = P(A | not C), then P(A ∩ B) = P(A) P(B).">
-If $a_1 = a_0$, then $a_1 - a_0 = 0$, so $P(A \cap B) - P(A)\,P(B) = p(1 - p) \times 0 \times (b_1 - b_0) = 0$. A cause that doesn't move one of the events can't link them, whatever it does to the other. The identity assumes conditional independence given both values of $C$.
+<CheckYourself level="proof" question="Suppose A and B are independent given C and given not C, with 0 < P(C) < 1. Use the two-group identity to show that if P(A | C) = P(A | not C), then P(A ∩ B) = P(A) P(B).">
+In the identity, $a_1 = P(A \mid C)$, $a_0 = P(A \mid C^\complement)$, $b_1 = P(B \mid C)$, $b_0 = P(B \mid C^\complement)$ and $p = P(C)$ (see [the formal definition](#formal-definition)). If $a_1 = a_0$, then $a_1 - a_0 = 0$, so $P(A \cap B) - P(A)\,P(B) = p(1 - p) \times 0 \times (b_1 - b_0) = 0$. A cause that doesn't move one of the events can't link them, whatever it does to the other.
 </CheckYourself>
 
 ## Common mistakes
