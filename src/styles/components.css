@@ -2021,6 +2021,15 @@
 		outline-color: Highlight;
 	}
 
+	/* The flag rings sit under forced-color-adjust: none too, so they need system colors of their own. */
+	.ms-desc-dot.is-iqr {
+		outline-color: CanvasText;
+	}
+
+	.ms-desc-dot.is-z::after {
+		border-color: CanvasText;
+	}
+
 	.ms-desc-feedback:focus-visible {
 		outline-color: Highlight;
 	}
