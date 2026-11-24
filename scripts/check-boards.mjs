@@ -767,6 +767,19 @@ assert.equal(
 	'The plank tips down on the right, so the balance point is further right. The mean is μ = 1 candy; your pencil was at 0.50.',
 );
 
+// Changing the values after the reveal drops the verdict: the old guess was about a different problem.
+const editedAfterGuess = [1, 2, 3, 4, 5, 6].map(() => ({ type: 'step', id: '6', direction: -1 })).reduce(dist.reducer, guessedAtZero);
+assert.equal(editedAfterGuess.guess, null);
+assert.equal(editedAfterGuess.revealed, true);
+assert.equal(distSay.balanceLine(editedAfterGuess), null);
+assert.deepEqual(distSay.meanLines(editedAfterGuess), [
+	'Average over the faces: (0 + 0 + 0 + 0 + 0 + 0) / 6 = 0 candies.',
+	'The same from the bars: 0 × 1 = 0.',
+]);
+assert.equal(distSay.announcementFor(dist.reducer(editedAfterGuess, { type: 'balance' }), { type: 'balance' }), '');
+// A second Balance it after the reveal changes nothing, so it can't replace the guess.
+assert.equal(dist.reducer(guessedAtZero, { type: 'balance' }), guessedAtZero);
+
 // The mean, two ways, once revealed.
 assert.deepEqual(distSay.meanLines(balancedAt('One big prize', 0)), [
 	'Average over the faces: (0 + 0 + 0 + 0 + 0 + 6) / 6 = 1 candy.',

@@ -360,13 +360,13 @@ const tipSide = (sign: -1 | 0 | 1) => (sign > 0 ? 'right' : 'left');
 
 /**
  * The verdict after "Balance it", from classifyGuess. Null until the reveal, so the pencil move stays a guess. It
- * judges the stored guess, not the live pencil, so exploring afterward never rewrites the verdict.
+ * judges the stored guess, not the live pencil, so exploring afterward never rewrites the verdict. A value change
+ * after the reveal drops the guess (the problem changed), and with it the verdict.
  */
 export function balanceLine(state: DistributionState): string | null {
 	const setup = setupOf(state);
-	if (setup.kind !== 'balance' || !state.revealed) return null;
 	const guess = state.guess;
-	if (guess === null) throw new Error(`DistributionBoard: setup "${setup.id}" is revealed with no guess; "Balance it" always stores one.`);
+	if (setup.kind !== 'balance' || !state.revealed || guess === null) return null;
 	const d = distributionNow(state);
 	const center = mean(d);
 	const pencil = formatPencil(setup, guess);

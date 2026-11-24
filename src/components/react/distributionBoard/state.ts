@@ -143,11 +143,12 @@ function openedGoal(setup: Setup): DistributionState['goal'] {
 
 /**
  * Every value change goes through here. Stale feedback misleads, so it is cleared; a checked follow-up goal
- * goes back to open because the values it judged are gone.
+ * goes back to open because the values it judged are gone. The balance guess goes for the same reason: it was a
+ * guess about the old bars, so the verdict on it would be about a problem the reader never saw.
  */
 function withValues(state: DistributionState, values: Readonly<Record<OutcomeId, number>>, activePreset: string | null): DistributionState {
 	const goal = state.goal === null ? null : 'open';
-	return { ...state, values, feedback: null, refusal: null, activePreset, goal };
+	return { ...state, values, feedback: null, refusal: null, activePreset, goal, guess: null };
 }
 
 function checkCard(setup: Setup, state: DistributionState, card: readonly number[]): DistributionState {
@@ -208,7 +209,8 @@ export function reducer(state: DistributionState, action: Action): DistributionS
 		case 'pencil':
 			return movePencil(setup, state, action.k);
 		case 'balance': {
-			if (setup.kind !== 'balance') return state;
+			// Once revealed, the guess is in; pressing again must not swap it for the explored pencil.
+			if (setup.kind !== 'balance' || state.revealed) return state;
 			if (state.pencil === parkedPencil(setup)) return { ...state, refusal: { kind: 'parked' } };
 			return { ...state, revealed: true, guess: state.pencil, refusal: null };
 		}
