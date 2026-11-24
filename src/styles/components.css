@@ -780,6 +780,101 @@
 	cursor: pointer;
 }
 
+/* ── Chart marks: μ and σ on HTML charts (src/components/react/chartMarks.tsx) ──
+ * Shared so a meaning color looks the same on every board. Each mark sits in a row of the board's chart and is
+ * placed by --x (or --from and --to) in percent. Every mark has a label, so nothing depends on color. */
+.ms-mark-row {
+	position: relative;
+	block-size: 1.75rem;
+}
+
+.ms-mark-label,
+.ms-span-label {
+	font: 600 0.8125rem/1.2 var(--ms-font-ui);
+	white-space: nowrap;
+}
+
+/* μ: a labeled pink triangle, with an optional dashed pink guide down to the axis. */
+.ms-mark-mean {
+	position: absolute;
+	inset-block-end: 0;
+	left: var(--x);
+	display: grid;
+	justify-items: center;
+	transform: translateX(-50%);
+	color: var(--ms-mu);
+}
+
+.ms-mark-mean-triangle {
+	inline-size: 12px;
+	block-size: 10px;
+	fill: currentColor;
+}
+
+.ms-mark-mean-guide {
+	position: absolute;
+	inset-block: 0;
+	left: var(--x);
+	border-inline-start: 2px dashed var(--ms-mu);
+	transform: translateX(-1px);
+}
+
+/* σ: a capped span from μ − σ to μ + σ; at σ = 0 only one cap is left, a tick. s is a blue double line; the ghost
+ * of an earlier σ is dashed ink. */
+.ms-span {
+	position: absolute;
+	inset-block-end: 6px;
+	left: var(--from);
+	inline-size: calc(var(--to) - var(--from));
+	border-block-start: 2px solid currentColor;
+}
+
+.ms-span::before,
+.ms-span::after {
+	content: '';
+	position: absolute;
+	inset-block-start: -6px;
+	block-size: 10px;
+	border-inline-start: 2px solid currentColor;
+}
+
+.ms-span::before {
+	left: -1px;
+}
+
+.ms-span::after {
+	right: -1px;
+}
+
+.ms-span.is-zero {
+	border-block-start-color: transparent;
+}
+
+.ms-span.is-zero::after {
+	display: none;
+}
+
+.ms-span-label {
+	position: absolute;
+	inset-block-end: 4px;
+	left: 50%;
+	transform: translateX(-50%);
+}
+
+.ms-span-sigma {
+	color: var(--ms-sigma);
+}
+
+.ms-span-ghost {
+	border-block-start-style: dashed;
+	color: var(--ms-board-ink);
+}
+
+.ms-span-ghost::before,
+.ms-span-ghost::after {
+	border-inline-start-style: dashed;
+}
+
 /* ── DistributionBoard: outcomes given values, stacked into bars (decision 0012) ──
  * Bars, tiles, axis, plank and arms are ink. The pencil and the face-to-tile link are ochre; μ is pink, σ blue.
  * Every mark also has a label or a shape, so nothing depends on color. */
@@ -987,98 +1082,10 @@
 	print-color-adjust: exact;
 }
 
-.ms-dist-mark-row,
-.ms-dist-span-row {
-	position: relative;
-	block-size: 1.75rem;
-}
-
-.ms-dist-mark-label,
-.ms-dist-span-label,
 .ms-dist-arm-label,
 .ms-dist-pencil-label {
 	font: 600 0.8125rem/1.2 var(--ms-font-ui);
 	white-space: nowrap;
-}
-
-/* μ: a labeled pink triangle with a dashed pink guide down to the axis. */
-.ms-dist-mu {
-	position: absolute;
-	inset-block-end: 0;
-	left: var(--x);
-	display: grid;
-	justify-items: center;
-	transform: translateX(-50%);
-	color: var(--ms-mu);
-}
-
-.ms-dist-mu-triangle {
-	inline-size: 12px;
-	block-size: 10px;
-	fill: currentColor;
-}
-
-.ms-dist-mu-guide {
-	position: absolute;
-	inset-block: 0;
-	left: var(--x);
-	border-inline-start: 2px dashed var(--ms-mu);
-	transform: translateX(-1px);
-}
-
-/* σ: a capped span from μ − σ to μ + σ; at σ = 0 only one cap is left, a tick. The ghost is dashed ink. */
-.ms-dist-span {
-	position: absolute;
-	inset-block-end: 6px;
-	left: var(--from);
-	inline-size: calc(var(--to) - var(--from));
-	border-block-start: 2px solid currentColor;
-}
-
-.ms-dist-span::before,
-.ms-dist-span::after {
-	content: '';
-	position: absolute;
-	inset-block-start: -6px;
-	block-size: 10px;
-	border-inline-start: 2px solid currentColor;
-}
-
-.ms-dist-span::before {
-	left: -1px;
-}
-
-.ms-dist-span::after {
-	right: -1px;
-}
-
-.ms-dist-span.is-zero {
-	border-block-start-color: transparent;
-}
-
-.ms-dist-span.is-zero::after {
-	display: none;
-}
-
-.ms-dist-span-label {
-	position: absolute;
-	inset-block-end: 4px;
-	left: 50%;
-	transform: translateX(-50%);
-}
-
-.ms-dist-sigma {
-	color: var(--ms-sigma);
-}
-
-.ms-dist-ghost {
-	border-block-start-style: dashed;
-	color: var(--ms-board-ink);
-}
-
-.ms-dist-ghost::before,
-.ms-dist-ghost::after {
-	border-inline-start-style: dashed;
 }
 
 .ms-dist-stacks {

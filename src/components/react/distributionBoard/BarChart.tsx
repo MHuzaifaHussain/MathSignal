@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { toNumber } from "../boardMath.ts";
+import { MeanGuide, MeanMark, SigmaSpan } from "../chartMarks.tsx";
 import { chartLabels } from "./describe.ts";
 import { mean, standardDeviation, torqueSign, type Bar } from "./model.ts";
 import { TILT_DEGREES, type Setup } from "./setups.ts";
@@ -110,37 +111,22 @@ export default function BarChart({ setup, state, linkedId, onPencilMove, onPenci
   return (
     <div className={isBalance ? "ms-dist-chart is-balance" : "ms-dist-chart"} aria-hidden="true" style={{ "--ms-dist-cols": columns, "--ms-dist-rows": outcomes.length } as Position}>
       {labels.mu && (
-        <div className="ms-dist-mark-row">
-          <span className="ms-dist-mu" style={at(center)}>
-            <span className="ms-dist-mark-label">{labels.mu}</span>
-            <svg className="ms-dist-mu-triangle" viewBox="0 0 12 10" focusable="false">
-              <polygon points="0,0 12,0 6,10" />
-            </svg>
-          </span>
+        <div className="ms-mark-row">
+          <MeanMark x={across(center)} label={labels.mu} />
         </div>
       )}
       {labels.sigma && (
-        <div className="ms-dist-span-row">
-          <span
-            className={sigma === 0 ? "ms-dist-span ms-dist-sigma is-zero" : "ms-dist-span ms-dist-sigma"}
-            style={{ "--from": `${across(center - sigma)}%`, "--to": `${across(center + sigma)}%` } as Position}
-          >
-            <span className="ms-dist-span-label">{labels.sigma}</span>
-          </span>
+        <div className="ms-mark-row">
+          <SigmaSpan kind="sigma" from={across(center - sigma)} to={across(center + sigma)} label={labels.sigma} />
         </div>
       )}
       {labels.ghost && state.ghost && (
-        <div className="ms-dist-span-row">
-          <span
-            className={state.ghost.sigma === 0 ? "ms-dist-span ms-dist-ghost is-zero" : "ms-dist-span ms-dist-ghost"}
-            style={{ "--from": `${across(center - state.ghost.sigma)}%`, "--to": `${across(center + state.ghost.sigma)}%` } as Position}
-          >
-            <span className="ms-dist-span-label">{labels.ghost}</span>
-          </span>
+        <div className="ms-mark-row">
+          <SigmaSpan kind="ghost" from={across(center - state.ghost.sigma)} to={across(center + state.ghost.sigma)} label={labels.ghost} />
         </div>
       )}
       <div className="ms-dist-stacks">
-        {labels.mu && <span className="ms-dist-mu-guide" style={at(center)} />}
+        {labels.mu && <MeanGuide x={across(center)} />}
         <div
           className={isBalance ? "ms-dist-beam is-plank" : "ms-dist-beam"}
           style={{ "--pivot": `${across(pencilValue)}%`, "--tilt": `${tilt}deg` } as Position}
