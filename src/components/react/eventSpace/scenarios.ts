@@ -10,7 +10,7 @@ export interface EventDefinition {
 	outsideReason?: string;
 }
 
-export type ScenarioId = 'two-coins' | 'one-die' | 'two-dice' | 'kids';
+export type ScenarioId = 'two-coins' | 'one-die' | 'two-dice' | 'coin-die' | 'kids' | 'weather-days';
 
 export interface Scenario {
 	id: ScenarioId;
@@ -65,6 +65,8 @@ function twoCoins(): Scenario {
 			'at-least-one-head': { label: 'at least one head', members: (outcome) => heads(outcome) >= 1, outsideReason: 'has no head' },
 			'exactly-one-head': { label: 'exactly one head', members: (outcome) => heads(outcome) === 1 },
 			'both-same': { label: 'both the same', members: (outcome) => outcome.id[0] === outcome.id[1] },
+			'first-head': { label: 'first coin is heads', members: (outcome) => outcome.id[0] === 'H' },
+			'two-heads': { label: 'two heads', members: (outcome) => heads(outcome) === 2 },
 		},
 		mirrorOf: (id) => (id[0] === id[1] ? undefined : `${id[1]}${id[0]}`),
 		pictureFaces: (outcome) => [...outcome.id],
@@ -81,19 +83,23 @@ function twoCoins(): Scenario {
 }
 
 function oneDie(): Scenario {
-	const outcomes = DIE_FACES.map((face, col) => ({ id: face, row: 0, col, label: face, spoken: `${face}` }));
+	// "Face 3", so a cell reads "3. Face 3." rather than "3. 3.".
+	const outcomes = DIE_FACES.map((face, col) => ({ id: face, row: 0, col, label: face, spoken: `face ${face}` }));
 	return {
 		id: 'one-die',
 		describeSpace: 'one roll of a die',
-		rowLabel: 'Die',
+		layout: 'list',
+		rowLabel: 'Row',
 		colLabel: 'Face',
-		rowValues: [''],
+		rowValues: ['1'],
 		colValues: DIE_FACES,
 		outcomes,
 		events: {
 			even: { label: 'even', members: (outcome) => Number(outcome.id) % 2 === 0 },
 			'at-most-2': { label: 'at most 2', members: (outcome) => Number(outcome.id) <= 2 },
 			six: { label: 'six', members: (outcome) => outcome.id === '6' },
+			'at-least-4': { label: 'at least 4', members: (outcome) => Number(outcome.id) >= 4 },
+			'five-or-six': { label: '5 or 6', members: (outcome) => Number(outcome.id) >= 5 },
 		},
 		mirrorOf: () => undefined,
 	};
@@ -121,6 +127,7 @@ function twoDice(): Scenario {
 		outcomes,
 		events: {
 			'sum-7': { label: 'sum is 7', members: (outcome) => sum(outcome) === 7 },
+			'sum-8': { label: 'sum is 8', members: (outcome) => sum(outcome) === 8 },
 			'sum-2': { label: 'sum is 2', members: (outcome) => sum(outcome) === 2 },
 			'sum-at-least-10': { label: 'sum is at least 10', members: (outcome) => sum(outcome) >= 10 },
 			double: { label: 'doubles', members: (outcome) => faces(outcome)[0] === faces(outcome)[1] },
@@ -131,6 +138,38 @@ function twoDice(): Scenario {
 			const [first, second] = id.split('-');
 			return first === second ? undefined : `${second}-${first}`;
 		},
+	};
+}
+
+/** A coin flipped beside a die: 12 outcomes, H1 to T6, where neither part can affect the other. */
+function coinDie(): Scenario {
+	const outcomes = COIN_FACES.flatMap((coin, row) =>
+		DIE_FACES.map((face, col) => ({
+			id: `${coin.value}${face}`,
+			row,
+			col,
+			label: `${coin.value}${face}`,
+			spoken: `coin ${coin.word}, die ${face}`,
+		})),
+	);
+	const coinOf = (outcome: Outcome) => outcome.id[0];
+	const faceOf = (outcome: Outcome) => Number(outcome.id.slice(1));
+	return {
+		id: 'coin-die',
+		describeSpace: 'a coin flip and a die roll',
+		rowLabel: 'Coin',
+		colLabel: 'Die',
+		rowValues: COIN_FACES.map((coin) => coin.value),
+		colValues: DIE_FACES,
+		outcomes,
+		events: {
+			heads: { label: 'coin is heads', members: (outcome) => coinOf(outcome) === 'H' },
+			tails: { label: 'coin is tails', members: (outcome) => coinOf(outcome) === 'T' },
+			'die-6': { label: 'die is 6', members: (outcome) => faceOf(outcome) === 6 },
+			'die-even': { label: 'die is even', members: (outcome) => faceOf(outcome) % 2 === 0 },
+			'heads-and-six': { label: 'heads and a six', members: (outcome) => coinOf(outcome) === 'H' && faceOf(outcome) === 6 },
+		},
+		mirrorOf: () => undefined,
 	};
 }
 
@@ -228,6 +267,32 @@ function kids(): Scenario {
 	});
 }
 
+/**
+ * The weather on 12 days of one spring. Each day has exactly one kind, so "rain all day" and "sun all day" can't
+ * both happen: the pair is mutually exclusive by construction.
+ */
+type DayWeather = 'rain' | 'sun' | 'mixed';
+const SPRING_DAYS: readonly DayWeather[] = ['mixed', 'rain', 'sun', 'mixed', 'sun', 'rain', 'mixed', 'sun', 'mixed', 'rain', 'sun', 'mixed'];
+const DAYS_PER_ROW = 4;
+const WEATHER_WORDS: Readonly<Record<DayWeather, string>> = { rain: 'rain all day', sun: 'sun all day', mixed: 'sun and showers' };
+
+function weatherDays(): Scenario {
+	return fixedList({
+		id: 'weather-days',
+		describeSpace: `${SPRING_DAYS.length} days from one spring, one day picked at random`,
+		idPrefix: 'day',
+		items: SPRING_DAYS,
+		perRow: DAYS_PER_ROW,
+		spokenOf: (day) => WEATHER_WORDS[day],
+		events: {
+			'rain-all-day': { label: 'rain all day', has: (day) => day === 'rain' },
+			'sun-all-day': { label: 'sun all day', has: (day) => day === 'sun' },
+			'some-rain': { label: 'some rain', has: (day) => day !== 'sun' },
+			'some-sun': { label: 'some sun', has: (day) => day !== 'rain' },
+		},
+	});
+}
+
 function checked(scenario: Scenario): Scenario {
 	if (scenario.outcomes.length > MAX_OUTCOMES) {
 		throw new Error(`EventSpace: scenario "${scenario.id}" has ${scenario.outcomes.length} outcomes; the most a board can show is ${MAX_OUTCOMES}.`);
@@ -239,7 +304,9 @@ export const SCENARIOS: Record<ScenarioId, Scenario> = {
 	'two-coins': checked(twoCoins()),
 	'one-die': checked(oneDie()),
 	'two-dice': checked(twoDice()),
+	'coin-die': checked(coinDie()),
 	kids: checked(kids()),
+	'weather-days': checked(weatherDays()),
 };
 
 /** The ids of a scenario's named event, in outcome order. */

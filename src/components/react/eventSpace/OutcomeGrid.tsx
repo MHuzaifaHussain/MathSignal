@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { cellName, focusSet, missedOutcome } from "./describe.ts";
+import { cellName, focusSet, missedOutcome, unitsNote } from "./describe.ts";
 import type { Scenario } from "./scenarios.ts";
 import { SMALL_GRID_MAX_CELLS, type EventSpaceState } from "./state.ts";
 import { useRovingGrid } from "./useRovingGrid.ts";
@@ -71,12 +71,14 @@ export default function OutcomeGrid({ state, scenario, describedBy, editable, on
               .map((outcome) => {
                 const inA = state.events.A.has(outcome.id);
                 const inB = state.events.B.has(outcome.id);
+                const units = unitsNote(state, outcome);
                 const classes = [
                   "ms-event-cell",
                   inA && "is-a",
                   inB && "is-b",
                   missed === outcome.id && "is-missed",
                   focus && !focus.has(outcome.id) && "is-outside",
+                  units && "is-weighted",
                 ].filter(Boolean).join(" ");
                 return (
                   <td key={outcome.id}>
@@ -104,6 +106,7 @@ export default function OutcomeGrid({ state, scenario, describedBy, editable, on
                       {inB && <span className="ms-event-tag ms-event-tag-b" aria-hidden="true">B</span>}
                       {missed === outcome.id && <span className="ms-event-note" aria-hidden="true">missed</span>}
                       {showTallies && <span className="ms-event-note" aria-hidden="true">{state.tallies[outcome.id] ?? 0}</span>}
+                      {units && <span className="ms-event-units" aria-hidden="true">{units}</span>}
                     </button>
                   </td>
                 );

@@ -2,14 +2,16 @@
 // (what is locked before Check, what Reset restores, which pours are refused) are all here, so they are
 // checked by scripts/check-boards.mjs.
 import * as guided from '../guided/guided.ts';
-import { checkGoal, pour, type GoalResult, type OutcomeId } from './model.ts';
+import { checkGoal, pour, type GoalResult, type OutcomeId, type Weights } from './model.ts';
 import { SCENARIOS, eventMembers, type Scenario } from './scenarios.ts';
-import { CLEAR_PRESET, getSetup, type Setup, type SetupId } from './setups.ts';
+import { CLEAR_PRESET, canShrink, canToggle, getSetup, type Setup, type SetupId } from './setups.ts';
 
 export type EventKey = 'A' | 'B';
 export type LookAt = 'everything' | 'A and B' | 'A or B' | 'not A';
 export type Stage = 'picture' | 'letters' | 'sets';
 export type Refusal = { id: OutcomeId; reason: 'cup-empty' | 'jug-empty' };
+/** Why shrinking to B is refused: B can't happen, or (on a compare setup) the reader hasn't turned on Compare yet. */
+export type ShrinkRefusal = 'b-empty' | 'compare-off';
 /** Check's verdict, or `shown` when the reader gave up and pressed "Show the answer" (no "Yes" for that). */
 export type Feedback = GoalResult | { kind: 'shown' };
 
@@ -30,8 +32,10 @@ export interface EventSpaceState {
 	stage: Stage;
 	/** Condition mode: the world is shrunk to B, so only B's outcomes count. */
 	shrink: boolean;
-	/** Condition mode: the last request to shrink was refused because B is empty. */
-	shrinkRefused: boolean;
+	/** Why the last request to shrink was refused, or null when it wasn't. */
+	shrinkRefusal: ShrinkRefusal | null;
+	/** Compare mode: the reader has turned on "Compare A and B", so the verdict and the A ∩ B line show. */
+	compare: boolean;
 }
 
 export type Action =
@@ -48,7 +52,8 @@ export type Action =
 	| { type: 'toss'; results: Readonly<Record<OutcomeId, number>> }
 	| { type: 'wrong-model'; on: boolean }
 	| { type: 'stage'; stage: Stage }
-	| { type: 'shrink'; on: boolean };
+	| { type: 'shrink'; on: boolean }
+	| { type: 'compare'; on: boolean };
 
 /** Grids up to this size are small enough to draw as pictures (coin faces) and to show toss counts in the cells. */
 export const SMALL_GRID_MAX_CELLS = 12;
@@ -94,13 +99,33 @@ export function initialState(setupId: SetupId): EventSpaceState {
 		wrongModel: false,
 		stage: 'letters',
 		shrink: false,
-		shrinkRefused: false,
+		shrinkRefusal: null,
+		compare: false,
 	};
 }
 
-/** Shrinking to B is refused while B is empty: P(A | B) is undefined when B can't happen. */
-export function shrinkBlocked(state: EventSpaceState): boolean {
-	return state.events.B.size === 0;
+/**
+ * Why shrinking to B would be refused now, or null. On a compare setup it waits for Compare, because P(A | B) beside
+ * P(A) would give the verdict away. It is always refused while B is empty: P(A | B) is undefined when B can't happen.
+ */
+export function shrinkBlocked(state: EventSpaceState): ShrinkRefusal | null {
+	if (setupOf(state).mode === 'compare' && !state.compare) return 'compare-off';
+	return state.events.B.size === 0 ? 'b-empty' : null;
+}
+
+/** The weights a compare setup's readouts use, or undefined when every outcome counts the same. */
+export function weightsOf(state: EventSpaceState): Weights | undefined {
+	const setup = setupOf(state);
+	return setup.mode === 'compare' && setup.weightPresets ? state.weights : undefined;
+}
+
+/** The weight preset the die shows now. Weights only change by preset in compare mode, so a miss is a bug. */
+export function activeWeightPreset(state: EventSpaceState): string {
+	const presets = setupOf(state).weightPresets ?? {};
+	const scenario = scenarioOf(state);
+	const match = Object.entries(presets).find(([, fills]) => scenario.outcomes.every((outcome, index) => state.weights[outcome.id] === fills[index]));
+	if (!match) throw new Error(`EventSpace: setup "${state.setupId}" shows weights that match none of its weight presets.`);
+	return match[0];
 }
 
 /** On a goal setup, presets, readouts and tosses stay locked until the reader passes Check. */
@@ -124,9 +149,10 @@ export function pourBlocked(state: EventSpaceState, id: OutcomeId, direction: 1 
 
 function withEvent(state: EventSpaceState, key: EventKey, members: ReadonlySet<OutcomeId>): EventSpaceState {
 	// Any change to an event clears Check's feedback: a stale "Not yet" misleads, and a stale "Yes" would approve a wrong event.
-	const next = { ...state, events: { ...state.events, [key]: members }, feedback: null, refusal: null, shrinkRefused: false };
+	const next = { ...state, events: { ...state.events, [key]: members }, feedback: null, refusal: null, shrinkRefusal: null };
 	// Emptying B while the world is shrunk to it leaves nothing to condition on, so the shrink is undone and says why.
-	return next.shrink && shrinkBlocked(next) ? { ...next, shrink: false, shrinkRefused: true } : next;
+	const refusal = next.shrink ? shrinkBlocked(next) : null;
+	return refusal ? { ...next, shrink: false, shrinkRefusal: refusal } : next;
 }
 
 function toggled(members: ReadonlySet<OutcomeId>, id: OutcomeId): ReadonlySet<OutcomeId> {
@@ -142,7 +168,7 @@ export function reducer(state: EventSpaceState, action: Action): EventSpaceState
 	switch (action.type) {
 		case 'toggle': {
 			const event = setup.events[state.editing];
-			if (!(setup.mode === 'count' || setup.mode === 'condition') || !event?.editable || !hasOutcome(scenario, action.id)) return state;
+			if (!canToggle(setup) || !event?.editable || !hasOutcome(scenario, action.id)) return state;
 			return withEvent(state, state.editing, toggled(state.events[state.editing], action.id));
 		}
 		case 'preset': {
@@ -185,10 +211,15 @@ export function reducer(state: EventSpaceState, action: Action): EventSpaceState
 		case 'stage':
 			return stageAllowed(state, action.stage) ? { ...state, stage: action.stage } : state;
 		case 'shrink': {
-			if (setup.mode !== 'condition') return state;
-			if (action.on && shrinkBlocked(state)) return { ...state, shrink: false, shrinkRefused: true };
-			return { ...state, shrink: action.on, shrinkRefused: false };
+			if (!canShrink(setup)) return state;
+			const refusal = action.on ? shrinkBlocked(state) : null;
+			if (refusal) return { ...state, shrink: false, shrinkRefusal: refusal };
+			return { ...state, shrink: action.on, shrinkRefusal: null };
 		}
+		case 'compare':
+			if (setup.mode !== 'compare') return state;
+			// Shrinking waits for Compare, so turning Compare off also leaves the shrunk view: the held lines stay held.
+			return action.on ? { ...state, compare: true, shrinkRefusal: null } : { ...state, compare: false, shrink: false, shrinkRefusal: null };
 		case 'weight-preset': {
 			const fills = setup.weightPresets?.[action.name];
 			return fills ? { ...state, weights: weightsFor(scenario, fills), refusal: null } : state;

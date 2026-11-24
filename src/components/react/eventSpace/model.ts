@@ -1,6 +1,6 @@
 // The math behind EventSpace: outcomes, events as sets, goal checking and pouring. Pure TypeScript that imports
 // only the shared fraction helpers, so scripts/check-boards.mjs can run it directly under Node.
-import { fraction, type Fraction } from '../boardMath.ts';
+import { compareFractions, fraction, multiplyFractions, type Fraction } from '../boardMath.ts';
 
 export type OutcomeId = string;
 
@@ -29,20 +29,66 @@ export function complement(a: ReadonlySet<OutcomeId>, all: readonly Outcome[]): 
 	return new Set(all.filter((outcome) => !a.has(outcome.id)).map((outcome) => outcome.id));
 }
 
+export type Weights = Readonly<Record<OutcomeId, number>>;
+
+/** How much of the space an event holds: its outcomes counted, or its units when the outcomes are weighted. */
+export function eventSize(event: ReadonlySet<OutcomeId>, all: readonly Outcome[], weights?: Weights): number {
+	return all.reduce((total, outcome) => total + (event.has(outcome.id) ? (weights ? (weights[outcome.id] ?? 0) : 1) : 0), 0);
+}
+
 /** Count mode: |E| / |Ω|. Weights mode: the event's units out of the whole jug. */
-export function probability(event: ReadonlySet<OutcomeId>, all: readonly Outcome[], weights?: Readonly<Record<OutcomeId, number>>): Fraction {
-	if (!weights) return fraction(all.filter((outcome) => event.has(outcome.id)).length, all.length);
-	const units = all.reduce((total, outcome) => total + (event.has(outcome.id) ? (weights[outcome.id] ?? 0) : 0), 0);
-	return fraction(units, WEIGHT_TOTAL);
+export function probability(event: ReadonlySet<OutcomeId>, all: readonly Outcome[], weights?: Weights): Fraction {
+	return fraction(eventSize(event, all, weights), weights ? WEIGHT_TOTAL : all.length);
 }
 
 /**
- * P(A | B) in count mode: the share of B's outcomes that are also in A. Null when B is empty, because
- * conditioning on an event that can't happen is undefined, not zero.
+ * P(A | B): the share of B's outcomes (or of B's units, when weighted) that also lie in A. Null when B can't
+ * happen, because conditioning on an impossible event is undefined, not zero.
  */
+export function weightedConditional(a: ReadonlySet<OutcomeId>, b: ReadonlySet<OutcomeId>, all: readonly Outcome[], weights?: Weights): Fraction | null {
+	const sizeOfB = eventSize(b, all, weights);
+	if (sizeOfB === 0) return null;
+	return fraction(eventSize(intersect(a, b), all, weights), sizeOfB);
+}
+
+/** P(A | B) on equally likely outcomes; see weightedConditional. */
 export function conditionalProbability(a: ReadonlySet<OutcomeId>, b: ReadonlySet<OutcomeId>): Fraction | null {
 	if (b.size === 0) return null;
 	return fraction(intersect(a, b).size, b.size);
+}
+
+export interface EventComparison {
+	pA: Fraction;
+	pB: Fraction;
+	pBoth: Fraction;
+	product: Fraction;
+	/** P(A | B), or null when B can't happen. */
+	given: Fraction | null;
+	/** P(A ∩ B) = P(A) P(B), compared exactly, so an event of probability 0 is independent of every event. */
+	independent: boolean;
+	/** A and B share no outcome: a fact about the sets, whatever the probabilities. */
+	exclusive: boolean;
+}
+
+/**
+ * Independence and mutual exclusivity of two events. Independence uses only the product form (Grinstead and
+ * Snell, Theorem 4.1), in exact integer arithmetic that throws rather than overflow, so no rounding decides it.
+ */
+export function compareEvents(a: ReadonlySet<OutcomeId>, b: ReadonlySet<OutcomeId>, all: readonly Outcome[], weights?: Weights): EventComparison {
+	const pA = probability(a, all, weights);
+	const pB = probability(b, all, weights);
+	const both = intersect(a, b);
+	const pBoth = probability(both, all, weights);
+	const product = multiplyFractions(pA, pB);
+	return {
+		pA,
+		pB,
+		pBoth,
+		product,
+		given: weightedConditional(a, b, all, weights),
+		independent: compareFractions(pBoth, product) === 0,
+		exclusive: both.size === 0,
+	};
 }
 
 export type GoalResult =

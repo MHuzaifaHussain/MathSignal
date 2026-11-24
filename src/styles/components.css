@@ -578,6 +578,17 @@
 	color: var(--ms-board-ink);
 }
 
+/* A weighted face: its units sit under the label, inside B's dashed frame rather than on it. */
+.ms-event-cell.is-weighted {
+	align-content: center;
+	gap: 2px;
+}
+
+.ms-event-units {
+	font: 500 11px/1 var(--ms-font-ui);
+	white-space: nowrap;
+}
+
 /* Missed after Check: dotted, so it can't be mistaken for B's dashes. */
 .ms-event-cell.is-missed::before {
 	border-style: dotted;
@@ -627,6 +638,11 @@
 
 .ms-event-readouts .ms-board-readout {
 	margin: 0.15rem 0;
+}
+
+/* Compare mode: the verdict block under the readouts, set apart by space alone (decision 0006). */
+.ms-event-compare {
+	margin-block-start: 0.5rem;
 }
 
 /* Pictures view: each coin drawn as an ink circle with its face, CSS only. */

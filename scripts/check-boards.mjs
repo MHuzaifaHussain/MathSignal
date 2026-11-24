@@ -276,7 +276,7 @@ assert.equal(refusedShrink.shrink, false);
 assert.equal(describe.announcementFor(refusedShrink, { type: 'shrink', on: true }), "Undefined: B can't happen (probability 0).");
 const emptiedWhileShrunk = reducer(shrunk, { type: 'preset', event: 'B', preset: 'clear' });
 assert.equal(emptiedWhileShrunk.shrink, false);
-assert.equal(emptiedWhileShrunk.shrinkRefused, true);
+assert.equal(emptiedWhileShrunk.shrinkRefusal, 'b-empty');
 assert.equal(describe.announcementFor(emptiedWhileShrunk, { type: 'preset', event: 'B', preset: 'clear' }), "Undefined: B can't happen (probability 0).");
 // Shrinking only exists in condition mode, and Reset un-shrinks.
 assert.equal(reducer(operations, { type: 'shrink', on: true }), operations);
@@ -290,6 +290,313 @@ assert.deepEqual(describe.readoutLines(reducer(kidsFresh, { type: 'shrink', on: 
 	'Inside B: 5 outcomes, 2 of them also in A, {2, 7}. P(A | B) = 2/5 = 0.40, while P(A) = 4/12 = 1/3 ≈ 0.33.',
 ]);
 assert.equal(describe.cellName(kidsFresh, kids.outcomes[1]), '2. Hat and scarf. In A and B.');
+
+// ---- Compare mode: independence and mutual exclusivity (v1.3) ----
+const setupsModule = await import('../src/components/react/eventSpace/setups.ts');
+const stateModule = await import('../src/components/react/eventSpace/state.ts');
+const coinDie = SCENARIOS['coin-die'];
+const weather = SCENARIOS['weather-days'];
+const loadedFill = { 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 7 };
+
+// The new spaces: a coin beside a die, 12 fixed days of weather, and one die drawn as a list.
+assert.deepEqual(coinDie.outcomes.map((outcome) => outcome.label), ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'T1', 'T2', 'T3', 'T4', 'T5', 'T6']);
+assert.equal(coinDie.outcomes[3].spoken, 'coin heads, die 4');
+assert.equal(coinDie.mirrorOf('H4'), undefined);
+assert.equal(die.layout, 'list');
+assert.equal(die.outcomes[2].spoken, 'face 3');
+assert.deepEqual([...ids(weather, 'rain-all-day')], ['day-2', 'day-6', 'day-10']);
+assert.deepEqual([...ids(weather, 'sun-all-day')], ['day-3', 'day-5', 'day-8', 'day-11']);
+assert.equal(ids(weather, 'some-rain').size, 8);
+assert.equal(ids(weather, 'some-sun').size, 9);
+assert.equal(weather.outcomes[0].spoken, 'sun and showers');
+assert.equal(weather.outcomes[1].spoken, 'rain all day');
+
+// P(A | B) with weights: the share of B's units that also lie in A; undefined when B can't happen.
+assert.deepEqual(model.weightedConditional(ids(die, 'even'), ids(die, 'at-most-2'), die.outcomes, loadedFill), fraction(1, 2));
+assert.equal(model.weightedConditional(ids(die, 'even'), new Set(), die.outcomes, loadedFill), null);
+assert.deepEqual(model.weightedConditional(ids(dice, 'sum-at-least-10'), ids(dice, 'double'), dice.outcomes), fraction(1, 3));
+
+// Independence is the product form, compared exactly. Grinstead & Snell Example 4.8: first coin heads and
+// both the same are independent, 1/4 = 1/2 × 1/2. Example 4.9: first coin heads and two heads are not, 1/4 against 1/8.
+const compareCoins = (a, b) => model.compareEvents(ids(coins, a), ids(coins, b), coins.outcomes);
+assert.deepEqual(compareCoins('first-head', 'both-same'), {
+	pA: fraction(1, 2),
+	pB: fraction(1, 2),
+	pBoth: fraction(1, 4),
+	product: fraction(1, 4),
+	given: fraction(1, 2),
+	independent: true,
+	exclusive: false,
+});
+const example49 = compareCoins('first-head', 'two-heads');
+assert.deepEqual([example49.pBoth, example49.product, example49.independent], [fraction(1, 4), fraction(1, 8), false]);
+// An event that can't happen is independent of everything, while P(A | B) is undefined; exclusivity comes from the sets.
+const againstEmpty = model.compareEvents(ids(dice, 'sum-7'), new Set(), dice.outcomes);
+assert.deepEqual([againstEmpty.independent, againstEmpty.exclusive, againstEmpty.given], [true, true, null]);
+// Complements of independent events are independent: sum 7 and "first die not 6" give 5/36 = 1/6 × 5/6.
+const withComplement = model.compareEvents(ids(dice, 'sum-7'), complement(ids(dice, 'first-6'), dice.outcomes), dice.outcomes);
+assert.deepEqual([withComplement.pBoth, withComplement.independent], [fraction(5, 36), true]);
+// The same sets, different probabilities: even and at most 2 are independent on a fair die, not on a loaded one.
+assert.equal(model.compareEvents(ids(die, 'even'), ids(die, 'at-most-2'), die.outcomes, fairDie).independent, true);
+const loadedPair = model.compareEvents(ids(die, 'even'), ids(die, 'at-most-2'), die.outcomes, loadedFill);
+assert.deepEqual([loadedPair.pA, loadedPair.pB, loadedPair.pBoth, loadedPair.product, loadedPair.independent, loadedPair.exclusive], [fraction(3, 4), fraction(1, 6), fraction(1, 12), fraction(1, 8), false, false]);
+
+// The setups, and one source for the die fills so the axioms page and the comparison page agree on "loaded".
+for (const id of ['coin-die-independence', 'dice-independence', 'weather-exclusive', 'die-compare']) assert.equal(getSetup(id).mode, 'compare');
+assert.deepEqual(setupsModule.DIE_WEIGHT_PRESETS, { 'Fair die': [2, 2, 2, 2, 2, 2], 'Loaded toward six': [1, 1, 1, 1, 1, 7] });
+assert.deepEqual(getSetup('die-pour').weightPresets['Loaded toward six'], getSetup('die-compare').weightPresets['Loaded toward six']);
+assert.equal(setupsModule.canShrink(getSetup('coin-die-independence')), true);
+assert.equal(setupsModule.canShrink(getSetup('dice-condition')), true);
+assert.equal(setupsModule.canShrink(getSetup('die-compare')), false);
+assert.equal(setupsModule.canShrink(getSetup('dice-operations')), false);
+
+// Compare setups refuse what they can't support, naming the setup.
+const diceCompareSetup = getSetup('dice-independence');
+const dieCompareSetup = getSetup('die-compare');
+assert.throws(() => validateSetup({ ...diceCompareSetup, events: { A: diceCompareSetup.events.A } }), /compare setup "dice-independence" needs an event B/);
+assert.throws(() => validateSetup({ ...diceCompareSetup, toss: true }), /compare setup "dice-independence" can't toss yet/);
+assert.throws(() => validateSetup({ ...diceCompareSetup, lookAt: true }), /compare setup "dice-independence" can't use "Look at"/);
+assert.throws(() => validateSetup({ ...diceCompareSetup, goal: 'double' }), /goal setup "dice-independence" can't use "Look at" or conditioning/);
+assert.throws(() => validateSetup({ ...diceCompareSetup, wrongModel: true }), /compare setup "dice-independence" can't show a wrong model/);
+assert.throws(() => validateSetup({ ...diceCompareSetup, stages: true }), /compare setup "dice-independence" can't offer stages/);
+assert.throws(() => validateSetup({ ...diceCompareSetup, shrinkSwitch: false, weightPresets: { Even: Array(36).fill(1) }, initialWeights: 'Even' }), /compare setup "dice-independence" can weigh only the one-die space/);
+assert.throws(() => validateSetup({ ...dieCompareSetup, weightPresets: { Short: [2, 2, 2, 2, 2, 1] }, initialWeights: 'Short' }), /"Short" pours 11 units; a compare setup needs exactly 12/);
+assert.throws(() => validateSetup({ ...dieCompareSetup, weightPresets: { Gap: [0, 2, 2, 2, 2, 4] }, initialWeights: 'Gap' }), /"Gap" leaves a face with no units/);
+assert.throws(() => validateSetup({ ...dieCompareSetup, initialWeights: undefined }), /compare setup "die-compare" has weight presets but no initialWeights/);
+assert.throws(() => validateSetup({ ...dieCompareSetup, shrinkSwitch: true }), /setup "die-compare" can't combine weights with shrinking/);
+assert.throws(() => validateSetup({ ...getSetup('dice-operations'), shrinkSwitch: true }), /count setup "dice-operations" can't shrink/);
+assert.throws(() => validateSetup({ ...conditionSetup, shrinkSwitch: false }), /condition setup "dice-condition" needs the shrink switch/);
+
+// Compare exists only in compare mode.
+assert.equal(reducer(conditionFresh, { type: 'compare', on: true }), conditionFresh);
+assert.equal(reducer(operations, { type: 'compare', on: true }), operations);
+
+// coin-die-independence before Compare: P(A) and P(B) only. The A ∩ B line and Shrink are held, so nothing answers
+// the page's prediction before the reader acts.
+const coinDieFresh = initialState('coin-die-independence');
+assert.equal(describe.statusLine(coinDieFresh), '12 equally likely outcomes. Editing A.');
+assert.deepEqual(describe.readoutLines(coinDieFresh), ['A = die is 6: 2 of 12 = 1/6 (≈ 0.17)', 'B = coin is heads: 6 of 12 = 1/2 (0.50)']);
+assert.equal(describe.compareLines(coinDieFresh), null);
+assert.equal(describe.COMPARE_LABEL, 'Compare A and B');
+assert.equal(describe.COMPARE_COVERED_NOTE, 'Turn on Compare A and B to see whether A and B are independent and whether they are mutually exclusive.');
+assert.equal(stateModule.shrinkBlocked(coinDieFresh), 'compare-off');
+const earlyShrink = reducer(coinDieFresh, { type: 'shrink', on: true });
+assert.equal(earlyShrink.shrink, false);
+assert.equal(describe.announcementFor(earlyShrink, { type: 'shrink', on: true }), 'Turn on Compare A and B first: shrinking to B would answer the question for you.');
+assert.equal(describe.shrinkRefusalText('compare-off'), 'Turn on Compare A and B first: shrinking to B would answer the question for you.');
+assert.equal(describe.shrinkRefusalText('b-empty'), "Undefined: B can't happen (probability 0).");
+
+// Compare on: the A ∩ B line, then the verdict, exclusivity, the product and the conditional, in that order.
+const coinDieCompared = reducer(coinDieFresh, { type: 'compare', on: true });
+assert.deepEqual(describe.readoutLines(coinDieCompared), ['A = die is 6: 2 of 12 = 1/6 (≈ 0.17)', 'B = coin is heads: 6 of 12 = 1/2 (0.50)', 'A and B = {H6}: 1 of 12']);
+const coinDieVerdict = [
+	'Independent: yes.',
+	'Mutually exclusive: no, A and B share 1 outcome, {H6}.',
+	'P(A and B) = 1/12, and P(A) × P(B) = 1/6 × 1/2 = 1/12: equal.',
+];
+assert.deepEqual(describe.compareLines(coinDieCompared), [...coinDieVerdict, 'P(A | B) = 1/6 and P(A) = 1/6: learning that B happened leaves the chance of A unchanged.']);
+assert.equal(describe.announcementFor(coinDieCompared, { type: 'compare', on: true }), coinDieVerdict.join(' '));
+
+// Shrink, once Compare is on: "Inside B" replaces the readouts, and the conditional line is left out as repeated.
+const coinDieShrunk = reducer(coinDieCompared, { type: 'shrink', on: true });
+assert.equal(coinDieShrunk.shrink, true);
+assert.deepEqual(describe.readoutLines(coinDieShrunk), ['Inside B: 6 outcomes, 1 of them also in A, {H6}. P(A | B) = 1/6 ≈ 0.17, while P(A) = 2/12 = 1/6 ≈ 0.17.']);
+assert.deepEqual(describe.compareLines(coinDieShrunk), coinDieVerdict);
+assert.equal(describe.announcementFor(coinDieShrunk, { type: 'shrink', on: true }), 'Inside B: 6 outcomes, 1 of them also in A, {H6}. P(A | B) = 1/6 ≈ 0.17, while P(A) = 2/12 = 1/6 ≈ 0.17.');
+
+// Precedence with Compare and Shrink both on: the new P(A | B), then the verdict in short.
+const evenShrunk = reducer(coinDieShrunk, { type: 'preset', event: 'A', preset: 'die-even' });
+assert.equal(
+	describe.announcementFor(evenShrunk, { type: 'preset', event: 'A', preset: 'die-even' }),
+	'Inside B: 6 outcomes, 3 of them also in A, {H2, H4, H6}. P(A | B) = 3/6 = 1/2 = 0.50, while P(A) = 6/12 = 1/2 = 0.50. Independent: yes. Mutually exclusive: no.',
+);
+const toggledShrunk = reducer(coinDieShrunk, { type: 'toggle', id: 'H1' });
+assert.equal(
+	describe.announcementFor(toggledShrunk, { type: 'toggle', id: 'H1' }),
+	'Inside B: 6 outcomes, 2 of them also in A, {H1, H6}. P(A | B) = 2/6 = 1/3 ≈ 0.33, while P(A) = 3/12 = 1/4 = 0.25. Independent: no. Mutually exclusive: no.',
+);
+// Emptying B while shrunk un-shrinks, says why, and still gives the verdict.
+const emptiedB = reducer(coinDieShrunk, { type: 'preset', event: 'B', preset: 'clear' });
+assert.deepEqual([emptiedB.shrink, emptiedB.shrinkRefusal], [false, 'b-empty']);
+assert.equal(
+	describe.announcementFor(emptiedB, { type: 'preset', event: 'B', preset: 'clear' }),
+	"Undefined: B can't happen (probability 0). Independent: yes, but only because B can't happen. Mutually exclusive: yes.",
+);
+// Compare on, not shrunk: the count, then the verdict in short.
+const toggledCompared = reducer(coinDieCompared, { type: 'toggle', id: 'H1' });
+assert.equal(describe.announcementFor(toggledCompared, { type: 'toggle', id: 'H1' }), 'A: 3 of 12 outcomes, P of A = 1/4. Independent: no. Mutually exclusive: no.');
+// Turning Compare off hides the verdict and the A ∩ B line again, and un-shrinks, so the held lines stay held.
+const comparedOff = reducer(coinDieShrunk, { type: 'compare', on: false });
+assert.deepEqual([comparedOff.compare, comparedOff.shrink], [false, false]);
+assert.equal(describe.announcementFor(comparedOff, { type: 'compare', on: false }), 'Comparison hidden.');
+assert.deepEqual(describe.readoutLines(comparedOff), ['A = die is 6: 2 of 12 = 1/6 (≈ 0.17)', 'B = coin is heads: 6 of 12 = 1/2 (0.50)']);
+// Reset clears both.
+const coinDieReset = reducer(coinDieShrunk, { type: 'reset' });
+assert.deepEqual([coinDieReset.compare, coinDieReset.shrink], [false, false]);
+
+// The other coin-die presets: an event built from the coin depends on the coin.
+const coinDieWith = (...actions) => describe.compareLines(run('coin-die-independence', { type: 'compare', on: true }, ...actions));
+assert.deepEqual(coinDieWith({ type: 'preset', event: 'A', preset: 'heads-and-six' }), [
+	'Independent: no.',
+	'Mutually exclusive: no, A and B share 1 outcome, {H6}.',
+	'P(A and B) = 1/12 (≈ 0.08), but P(A) × P(B) = 1/12 × 1/2 = 1/24 (≈ 0.04): not equal.',
+	'P(A | B) = 1/6 (≈ 0.17), while P(A) = 1/12 (≈ 0.08): learning that B happened changes the chance of A.',
+]);
+assert.deepEqual(coinDieWith({ type: 'preset', event: 'A', preset: 'die-even' }, { type: 'preset', event: 'B', preset: 'tails' }).slice(1, 3), [
+	'Mutually exclusive: no, A and B share 3 outcomes, {T2, T4, T6}.',
+	'P(A and B) = 1/4, and P(A) × P(B) = 1/2 × 1/2 = 1/4: equal.',
+]);
+assert.equal(
+	describe.announcementFor(run('coin-die-independence', { type: 'compare', on: true }, { type: 'preset', event: 'A', preset: 'heads-and-six' }), { type: 'preset', event: 'A', preset: 'heads-and-six' }),
+	'A set to heads and a six: 1 of 12 outcomes. Independent: no. Mutually exclusive: no.',
+);
+
+// dice-independence: every pair the two pages quote, reached with presets alone.
+const diceFreshCompare = initialState('dice-independence');
+assert.deepEqual(describe.readoutLines(diceFreshCompare), ['A = sum is 7: 6 of 36 = 1/6 (≈ 0.17)', 'B = first die is 6: 6 of 36 = 1/6 (≈ 0.17)']);
+const diceWith = (...actions) => describe.compareLines(run('dice-independence', { type: 'compare', on: true }, ...actions));
+const presetA = (preset) => ({ type: 'preset', event: 'A', preset });
+const presetB = (preset) => ({ type: 'preset', event: 'B', preset });
+assert.deepEqual(diceWith(), [
+	'Independent: yes.',
+	'Mutually exclusive: no, A and B share 1 outcome, {(6,1)}.',
+	'P(A and B) = 1/36, and P(A) × P(B) = 1/6 × 1/6 = 1/36: equal.',
+	'P(A | B) = 1/6 and P(A) = 1/6: learning that B happened leaves the chance of A unchanged.',
+]);
+assert.deepEqual(diceWith(presetA('sum-8')), [
+	'Independent: no.',
+	'Mutually exclusive: no, A and B share 1 outcome, {(6,2)}.',
+	'P(A and B) = 1/36 (≈ 0.03), but P(A) × P(B) = 5/36 × 1/6 = 5/216 (≈ 0.02): not equal.',
+	'P(A | B) = 1/6 (≈ 0.17), while P(A) = 5/36 (≈ 0.14): learning that B happened changes the chance of A.',
+]);
+assert.equal(diceWith(presetA('double'))[2], 'P(A and B) = 1/36, and P(A) × P(B) = 1/6 × 1/6 = 1/36: equal.');
+assert.equal(diceWith(presetB('second-6'))[0], 'Independent: yes.');
+assert.deepEqual(diceWith(presetB('double')).slice(0, 3), [
+	'Independent: no.',
+	'Mutually exclusive: yes, A and B share no outcome.',
+	'P(A and B) = 0, but P(A) × P(B) = 1/6 × 1/6 = 1/36 (≈ 0.03): not equal.',
+]);
+assert.equal(diceWith(presetA('double'), presetB('double'))[2], 'P(A and B) = 1/6 (≈ 0.17), but P(A) × P(B) = 1/6 × 1/6 = 1/36 (≈ 0.03): not equal.');
+assert.deepEqual(diceWith(presetA('sum-at-least-10'), presetB('double')).slice(2), [
+	'P(A and B) = 1/18 (≈ 0.06), but P(A) × P(B) = 1/6 × 1/6 = 1/36 (≈ 0.03): not equal.',
+	'P(A | B) = 1/3 (≈ 0.33), while P(A) = 1/6 (≈ 0.17): learning that B happened changes the chance of A.',
+]);
+assert.deepEqual(diceWith(presetA('sum-at-least-10')).slice(1, 3), [
+	'Mutually exclusive: no, A and B share 3 outcomes, {(6,4), (6,5), (6,6)}.',
+	'P(A and B) = 1/12 (≈ 0.08), but P(A) × P(B) = 1/6 × 1/6 = 1/36 (≈ 0.03): not equal.',
+]);
+assert.deepEqual(diceWith(presetB('clear')), [
+	"Independent: yes, but only because B can't happen.",
+	'Mutually exclusive: yes, A and B share no outcome.',
+	'P(A and B) = 0, and P(A) × P(B) = 1/6 × 0 = 0: equal.',
+	"P(A | B) is undefined, because B can't happen.",
+]);
+assert.equal(
+	describe.announcementFor(run('dice-independence', { type: 'compare', on: true }, presetB('clear')), presetB('clear')),
+	"B cleared. Independent: yes, but only because B can't happen. Mutually exclusive: yes.",
+);
+const noBCompared = run('dice-independence', { type: 'compare', on: true }, presetB('clear'));
+assert.equal(stateModule.shrinkBlocked(noBCompared), 'b-empty');
+assert.equal(describe.announcementFor(reducer(noBCompared, { type: 'shrink', on: true }), { type: 'shrink', on: true }), "Undefined: B can't happen (probability 0).");
+// A burst of toggles while Compare is on ends in one announcement with the verdict.
+const sum8Toggled = run('dice-independence', { type: 'compare', on: true }, presetA('sum-8'), ...toggles('1-1', '1-1'));
+assert.equal(describe.announcementFor(sum8Toggled, { type: 'toggle', id: '1-1' }), 'A: 5 of 36 outcomes, P of A = 5/36. Independent: no. Mutually exclusive: no.');
+// The comparison page quotes its pairs the other way round (A = first die 6, B = sum 7, and so on). Both events in
+// each pair hold 6 of 36 outcomes, so swapping A and B changes no number and no verdict the board shows.
+for (const [a, b] of [['sum-7', 'first-6'], ['sum-7', 'double'], ['sum-at-least-10', 'first-6']]) {
+	assert.deepEqual(model.compareEvents(ids(dice, a), ids(dice, b), dice.outcomes), model.compareEvents(ids(dice, b), ids(dice, a), dice.outcomes));
+}
+
+// weather-exclusive: fixed days, with presets that show exclusivity is not the only way to be dependent.
+const weatherFresh = initialState('weather-exclusive');
+assert.equal(describe.statusLine(weatherFresh), '12 equally likely outcomes. A: rain all day. B: sun all day.');
+assert.deepEqual(describe.readoutLines(weatherFresh), ['A = rain all day: 3 of 12 = 1/4 (0.25)', 'B = sun all day: 4 of 12 = 1/3 (≈ 0.33)']);
+assert.equal(reducer(weatherFresh, { type: 'toggle', id: 'day-1' }), weatherFresh);
+assert.equal(describe.cellName(weatherFresh, weather.outcomes[1]), '2. Rain all day. In A.');
+const weatherCompared = reducer(weatherFresh, { type: 'compare', on: true });
+assert.equal(describe.readoutLines(weatherCompared)[2], 'A and B: no shared outcome, 0 of 12');
+assert.deepEqual(describe.compareLines(weatherCompared), [
+	'Independent: no.',
+	'Mutually exclusive: yes, A and B share no outcome.',
+	'P(A and B) = 0, but P(A) × P(B) = 1/4 × 1/3 = 1/12 (≈ 0.08): not equal.',
+	'P(A | B) = 0, while P(A) = 1/4 (0.25): learning that B happened changes the chance of A.',
+]);
+assert.deepEqual(describe.readoutLines(reducer(weatherCompared, { type: 'shrink', on: true })), ['Inside B: 4 outcomes, none of them also in A. P(A | B) = 0/4 = 0, while P(A) = 3/12 = 1/4 = 0.25.']);
+const someOfEach = run('weather-exclusive', { type: 'compare', on: true }, presetA('some-rain'), presetB('some-sun'));
+assert.equal(describe.statusLine(someOfEach), '12 equally likely outcomes. A: some rain. B: some sun.');
+assert.deepEqual(describe.compareLines(someOfEach).slice(0, 3), [
+	'Independent: no.',
+	'Mutually exclusive: no, A and B share 5 outcomes, {1, 4, 7, 9, 12}.',
+	'P(A and B) = 5/12 (≈ 0.42), but P(A) × P(B) = 2/3 × 3/4 = 1/2 (0.50): not equal.',
+]);
+assert.equal(describe.compareLines(run('weather-exclusive', { type: 'compare', on: true }, presetB('some-sun')))[2], 'P(A and B) = 0, but P(A) × P(B) = 1/4 × 3/4 = 3/16 (≈ 0.19): not equal.');
+
+// die-compare: fixed sets chosen with presets, and two fixed fills of 12 units. Exclusivity is about the sets,
+// independence about the probabilities.
+const dieFresh = initialState('die-compare');
+assert.equal(describe.statusLine(dieFresh), '6 outcomes, one for each face. Fair die: every face carries 2 of 12 units, so the outcomes are equally likely. A: at most 2. B: 5 or 6.');
+assert.deepEqual(describe.readoutLines(dieFresh), ['A = at most 2: 4 of 12 units = 1/3 (≈ 0.33)', 'B = 5 or 6: 4 of 12 units = 1/3 (≈ 0.33)']);
+assert.equal(stateModule.activeWeightPreset(dieFresh), 'Fair die');
+assert.deepEqual(stateModule.weightsOf(dieFresh), fairDie);
+assert.equal(stateModule.weightsOf(coinDieFresh), undefined);
+assert.equal(reducer(dieFresh, { type: 'toggle', id: '1' }), dieFresh);
+assert.equal(reducer(dieFresh, { type: 'shrink', on: true }), dieFresh);
+assert.equal(describe.cellName(dieFresh, die.outcomes[1]), '2. Face 2. In A. 2 of 12 units.');
+assert.equal(describe.unitsNote(dieFresh, die.outcomes[1]), '2/12');
+const dieCompared = reducer(dieFresh, { type: 'compare', on: true });
+assert.equal(describe.readoutLines(dieCompared)[2], 'A and B: no shared outcome, 0 of 12 units');
+assert.deepEqual(describe.compareLines(dieCompared), [
+	'Independent: no.',
+	'Mutually exclusive: yes, A and B share no outcome.',
+	'P(A and B) = 0, but P(A) × P(B) = 1/3 × 1/3 = 1/9 (≈ 0.11): not equal.',
+	'P(A | B) = 0, while P(A) = 1/3 (≈ 0.33): learning that B happened changes the chance of A.',
+]);
+assert.equal(
+	describe.announcementFor(dieCompared, { type: 'compare', on: true }),
+	'Independent: no. Mutually exclusive: yes, A and B share no outcome. P(A and B) = 0, but P(A) × P(B) = 1/3 × 1/3 = 1/9 (≈ 0.11): not equal.',
+);
+const dieWith = (...actions) => describe.compareLines(run('die-compare', { type: 'compare', on: true }, ...actions));
+const loaded = { type: 'weight-preset', name: 'Loaded toward six' };
+assert.deepEqual(dieWith(presetB('even')).slice(0, 3), [
+	'Independent: yes.',
+	'Mutually exclusive: no, A and B share 1 outcome, {2}.',
+	'P(A and B) = 1/6, and P(A) × P(B) = 1/3 × 1/2 = 1/6: equal.',
+]);
+assert.equal(describe.readoutLines(run('die-compare', { type: 'compare', on: true }, presetB('even')))[2], 'A and B = {2}: 2 of 12 units');
+assert.deepEqual(dieWith(presetA('even'), presetB('at-least-4')).slice(2), [
+	'P(A and B) = 1/3 (≈ 0.33), but P(A) × P(B) = 1/2 × 1/2 = 1/4 (0.25): not equal.',
+	'P(A | B) = 2/3 (≈ 0.67), while P(A) = 1/2 (0.50): learning that B happened changes the chance of A.',
+]);
+assert.deepEqual(dieWith(presetA('clear')), [
+	"Independent: yes, but only because A can't happen.",
+	'Mutually exclusive: yes, A and B share no outcome.',
+	'P(A and B) = 0, and P(A) × P(B) = 0 × 1/3 = 0: equal.',
+	'P(A | B) = 0 and P(A) = 0: learning that B happened leaves the chance of A unchanged.',
+]);
+assert.equal(dieWith(presetA('clear'), presetB('at-most-2'))[0], "Independent: yes, but only because A can't happen.");
+// Loaded toward six: the same sets, a different verdict.
+const loadedEven = run('die-compare', presetB('even'), loaded);
+assert.equal(stateModule.activeWeightPreset(loadedEven), 'Loaded toward six');
+assert.equal(describe.statusLine(loadedEven), '6 outcomes, one for each face. Loaded toward six: the faces carry 1, 1, 1, 1, 1 and 7 of 12 units. A: at most 2. B: even.');
+assert.equal(describe.announcementFor(loadedEven, loaded), 'Loaded toward six: the faces carry 1, 1, 1, 1, 1 and 7 of 12 units.');
+assert.equal(describe.announcementFor(run('die-compare', loaded, { type: 'weight-preset', name: 'Fair die' }), { type: 'weight-preset', name: 'Fair die' }), 'Fair die: every face carries 2 of 12 units, so the outcomes are equally likely.');
+assert.equal(describe.cellName(loadedEven, die.outcomes[5]), '6. Face 6. In B. 7 of 12 units.');
+assert.equal(describe.unitsNote(loadedEven, die.outcomes[5]), '7/12');
+assert.deepEqual(dieWith(presetB('even'), loaded), [
+	'Independent: no.',
+	'Mutually exclusive: no, A and B share 1 outcome, {2}.',
+	'P(A and B) = 1/12 (≈ 0.08), but P(A) × P(B) = 1/6 × 3/4 = 1/8 (≈ 0.13): not equal.',
+	'P(A | B) = 1/9 (≈ 0.11), while P(A) = 1/6 (≈ 0.17): learning that B happened changes the chance of A.',
+]);
+assert.equal(describe.announcementFor(run('die-compare', { type: 'compare', on: true }, presetB('even'), loaded), loaded), 'Loaded toward six. Independent: no. Mutually exclusive: no.');
+assert.equal(dieWith(loaded)[2], 'P(A and B) = 0, but P(A) × P(B) = 1/6 × 2/3 = 1/9 (≈ 0.11): not equal.');
+// The comparison page's own pair: P(even | at most 2) stays 1/2 while P(even) moves from 1/2 to 3/4.
+assert.equal(dieWith(presetA('even'), presetB('at-most-2'))[3], 'P(A | B) = 1/2 and P(A) = 1/2: learning that B happened leaves the chance of A unchanged.');
+assert.equal(dieWith(presetA('even'), presetB('at-most-2'), loaded)[3], 'P(A | B) = 1/2 (0.50), while P(A) = 3/4 (0.75): learning that B happened changes the chance of A.');
+assert.equal(describe.announcementFor(run('die-compare', presetB('even')), presetB('even')), 'B set to even: 6 of 12 units.');
+// Reset brings back the fair die with Compare off.
+const dieReset = reducer(run('die-compare', { type: 'compare', on: true }, loaded), { type: 'reset' });
+assert.deepEqual([stateModule.activeWeightPreset(dieReset), dieReset.compare], ['Fair die', false]);
 
 // ---- BayesTheorem scenarios (week 2 presets) ----
 const bayes = await import('../src/components/react/bayesTheorem/scenarios.ts');

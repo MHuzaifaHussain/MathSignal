@@ -11,10 +11,10 @@ import CupRow from "./eventSpace/CupRow.tsx";
 import OutcomeGrid from "./eventSpace/OutcomeGrid.tsx";
 import WrongModelTiles from "./eventSpace/WrongModelTiles.tsx";
 import { simulate } from "./eventSpace/model.ts";
-import { SHRINK_REFUSAL, STAGE_LABELS, additivityLine, announcementFor, feedbackLine, jugLine, markedLine, presetLabel, readoutLines, setsLine, statusLine, tossLine, totalLine } from "./eventSpace/describe.ts";
+import { COMPARE_COVERED_NOTE, COMPARE_LABEL, STAGE_LABELS, additivityLine, announcementFor, compareLines, feedbackLine, jugLine, markedLine, presetLabel, readoutLines, setsLine, shrinkRefusalText, statusLine, tossLine, totalLine } from "./eventSpace/describe.ts";
 import { SCENARIOS } from "./eventSpace/scenarios.ts";
-import { getSetup, type SetupId } from "./eventSpace/setups.ts";
-import { initialState, isLocked, reducer, shrinkBlocked, stageAllowed, type Action, type EventKey, type LookAt, type Stage } from "./eventSpace/state.ts";
+import { canShrink, getSetup, type SetupId } from "./eventSpace/setups.ts";
+import { activeWeightPreset, initialState, isLocked, reducer, shrinkBlocked, stageAllowed, type Action, type EventKey, type LookAt, type Stage } from "./eventSpace/state.ts";
 
 const LOCKED_REASON = "Check your answer first";
 /** Tosses per press of "Toss 100". */
@@ -46,6 +46,7 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
   const statusId = useId();
   const lockedReasonId = useId();
   const shrinkReasonId = useId();
+  const compareNoteId = useId();
   const lastAction = useRef<Action | null>(null);
   const feedbackRef = useRef<HTMLParagraphElement>(null);
 
@@ -71,7 +72,9 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
   const eventKeys = (Object.keys(setup.events) as EventKey[]).filter((key) => setup.events[key]);
   const editableKeys = eventKeys.filter((key) => setup.events[key]?.editable);
   const presetKeys = eventKeys.filter((key) => (setup.events[key]?.presets.length ?? 0) > 0);
-  const cannotShrink = setup.mode === "condition" && shrinkBlocked(state);
+  const shrinkRefusal = canShrink(setup) ? shrinkBlocked(state) : null;
+  const comparison = compareLines(state);
+  const weighsInCompare = setup.mode === "compare" && Boolean(setup.weightPresets);
   const tosses = tossLine(state);
   const sets = setsLine(state);
   const showWrongModel = state.wrongModel && Boolean(scenario.wrongModel);
@@ -117,19 +120,46 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
           />
         </div>
       ))}
-      {setup.mode === "condition" && (
+      {weighsInCompare && (
+        <TrayChoice
+          legend="Die"
+          options={Object.keys(setup.weightPresets ?? {}).map((name) => ({ value: name, label: name }))}
+          value={activeWeightPreset(state)}
+          onChange={(name) => send({ type: "weight-preset", name })}
+        />
+      )}
+      {setup.mode === "compare" && (
+        <>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={state.compare}
+            aria-describedby={state.compare ? undefined : compareNoteId}
+            className="ms-board-button ms-board-switch"
+            onClick={() => send({ type: "compare", on: !state.compare })}
+          >
+            {COMPARE_LABEL}
+          </button>
+          {!state.compare && (
+            <p id={compareNoteId} className="ms-event-note-line">
+              {COMPARE_COVERED_NOTE}
+            </p>
+          )}
+        </>
+      )}
+      {canShrink(setup) && (
         <>
           <button
             type="button"
             role="switch"
             aria-checked={state.shrink}
-            {...refusedBy(cannotShrink ? shrinkReasonId : null)}
+            {...refusedBy(shrinkRefusal ? shrinkReasonId : null)}
             className="ms-board-button ms-board-switch"
             onClick={() => send({ type: "shrink", on: !state.shrink })}
           >
             Shrink the world to B
           </button>
-          {cannotShrink && <RefusalNote id={shrinkReasonId}>{SHRINK_REFUSAL}</RefusalNote>}
+          {shrinkRefusal && <RefusalNote id={shrinkReasonId}>{shrinkRefusalText(shrinkRefusal)}</RefusalNote>}
         </>
       )}
       {setup.toss && (
@@ -178,6 +208,15 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
               {line}
             </p>
           ))}
+          {comparison && (
+            <div className="ms-event-compare">
+              {comparison.map((line) => (
+                <p key={line} className="ms-board-readout">
+                  {line}
+                </p>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </>

@@ -1,12 +1,12 @@
 // Every sentence EventSpace shows or speaks, built from state. The visible text and the live-region text come
 // from the same functions, so what a screen reader hears always matches the screen.
-import { formatFraction, fraction, type Fraction } from '../boardMath.ts';
+import { compareFractions, formatFraction, fraction, type Fraction } from '../boardMath.ts';
 import { approx, capitalize, equalsDecimal, joinWords, plural } from '../boardText.ts';
 import { CHECKS_BEFORE_ANSWER } from '../guided/guided.ts';
-import { complement, conditionalProbability, intersect, probability, union, WEIGHT_TOTAL, type Outcome, type OutcomeId } from './model.ts';
+import { compareEvents, complement, conditionalProbability, eventSize, intersect, probability, union, WEIGHT_TOTAL, type EventComparison, type Outcome, type OutcomeId } from './model.ts';
 import { eventMembers, type Scenario } from './scenarios.ts';
 import { CLEAR_PRESET } from './setups.ts';
-import { isLocked, scenarioOf, setupOf, type Action, type EventKey, type EventSpaceState, type Refusal, type Stage } from './state.ts';
+import { activeWeightPreset, isLocked, scenarioOf, setupOf, weightsOf, type Action, type EventKey, type EventSpaceState, type Refusal, type ShrinkRefusal, type Stage } from './state.ts';
 
 /** The "Show as" options' names, shown on the buttons and spoken when the view changes. */
 export const STAGE_LABELS: Readonly<Record<Stage, string>> = { picture: 'Pictures', letters: 'Letters', sets: 'Sets' };
@@ -44,7 +44,9 @@ function baseStatusLine(state: EventSpaceState): string {
 	const setup = setupOf(state);
 	const scenario = scenarioOf(state);
 	if (setup.mode === 'weights') return `${scenario.outcomes.length} cups, one for each face, filled from a jug of ${WEIGHT_TOTAL} units.`;
-	const space = `${scenario.outcomes.length} equally likely outcomes.`;
+	const space = weightsOf(state)
+		? `${scenario.outcomes.length} outcomes, one for each face. ${weightsSentence(state)}`
+		: `${scenario.outcomes.length} equally likely outcomes.`;
 	if (setup.goal) {
 		const event = `Event A: ${scenario.events[setup.goal].label}.`;
 		return isLocked(state) ? `${space} ${event} Tap the squares that belong to A.` : `${space} ${event}`;
@@ -103,27 +105,50 @@ export function missedOutcome(state: EventSpaceState): OutcomeId | null {
 	return state.feedback?.kind === 'missed-mirror' ? state.feedback.missing : null;
 }
 
-/** "A = sum is 7: 6 of 36 = 1/6 (≈ 0.17)", shared by every two-event readout. */
-function eventLine(scenario: Scenario, key: EventKey, members: ReadonlySet<OutcomeId>): string {
-	const total = scenario.outcomes.length;
-	return `${key} = ${eventText(scenario, members)}: ${members.size} of ${total} = ${formatFraction(fraction(members.size, total))} (${approx(members.size, total)})`;
+/** An event's size and the whole it is out of: outcomes, or units on a weighted die. */
+function sizeOf(state: EventSpaceState, members: ReadonlySet<OutcomeId>): { size: number; total: number } {
+	const scenario = scenarioOf(state);
+	const weights = weightsOf(state);
+	return { size: eventSize(members, scenario.outcomes, weights), total: weights ? WEIGHT_TOTAL : scenario.outcomes.length };
 }
 
-function bothLine(scenario: Scenario, a: ReadonlySet<OutcomeId>, b: ReadonlySet<OutcomeId>): string {
-	const both = intersect(a, b);
-	const total = scenario.outcomes.length;
-	if (both.size === 0) return `A and B: no shared outcome, 0 of ${total}`;
-	return `A and B = ${setText(scenario, both)}: ${both.size} of ${total}`;
+/** "6 of 36" in a readout, or "4 of 12 units" on a weighted die. */
+function countText(state: EventSpaceState, members: ReadonlySet<OutcomeId>): string {
+	const { size, total } = sizeOf(state, members);
+	return weightsOf(state) ? `${size} of ${total} units` : `${size} of ${total}`;
+}
+
+/** "6 of 36 outcomes" in a sentence, or "4 of 12 units" on a weighted die. */
+function countWords(state: EventSpaceState, members: ReadonlySet<OutcomeId>): string {
+	return weightsOf(state) ? countText(state, members) : `${countText(state, members)} outcomes`;
+}
+
+/** "A = sum is 7: 6 of 36 = 1/6 (≈ 0.17)", shared by every two-event readout. */
+function eventLine(state: EventSpaceState, key: EventKey): string {
+	const members = state.events[key];
+	const { size, total } = sizeOf(state, members);
+	return `${key} = ${eventText(scenarioOf(state), members)}: ${countText(state, members)} = ${formatFraction(fraction(size, total))} (${approx(size, total)})`;
+}
+
+function bothLine(state: EventSpaceState): string {
+	const both = intersect(state.events.A, state.events.B);
+	if (both.size === 0) return `A and B: no shared outcome, ${countText(state, both)}`;
+	return `A and B = ${setText(scenarioOf(state), both)}: ${countText(state, both)}`;
 }
 
 /** Readouts for the counting modes; empty while a goal setup is locked, so nothing gives the answer away. */
 export function readoutLines(state: EventSpaceState): string[] {
 	const setup = setupOf(state);
 	const scenario = scenarioOf(state);
-	if (!(setup.mode === 'count' || setup.mode === 'condition') || isLocked(state)) return [];
+	if (setup.mode === 'weights' || isLocked(state)) return [];
 	const total = scenario.outcomes.length;
 	const { A, B } = state.events;
-	if (setup.mode === 'condition') return state.shrink ? [conditionalLine(state)] : [eventLine(scenario, 'A', A), eventLine(scenario, 'B', B), bothLine(scenario, A, B)];
+	if (setup.mode === 'condition' || setup.mode === 'compare') {
+		if (state.shrink) return [conditionalLine(state)];
+		const lines = [eventLine(state, 'A'), eventLine(state, 'B')];
+		// A compare setup holds the A ∩ B line until Compare is on, so it can't answer the page's question first.
+		return setup.mode === 'compare' && !state.compare ? lines : [...lines, bothLine(state)];
+	}
 	if (!setup.events.B) {
 		const share = probability(A, scenario.outcomes);
 		const members = A.size === 0 ? 'A is empty.' : `A = ${setText(scenario, A)}.`;
@@ -132,17 +157,25 @@ export function readoutLines(state: EventSpaceState): string[] {
 	const both = intersect(A, B);
 	const either = union(A, B);
 	return [
-		eventLine(scenario, 'A', A),
-		eventLine(scenario, 'B', B),
+		eventLine(state, 'A'),
+		eventLine(state, 'B'),
 		`not A: ${complement(A, scenario.outcomes).size} of ${total}`,
-		bothLine(scenario, A, B),
+		bothLine(state),
 		`A or B: ${A.size} + ${B.size} − ${both.size} = ${either.size} of ${total} ${equalsDecimal(either.size, total)}`,
 	];
 }
 
 // ---- Condition mode ----
 
-export const SHRINK_REFUSAL = "Undefined: B can't happen (probability 0).";
+const SHRINK_REFUSALS: Readonly<Record<ShrinkRefusal, string>> = {
+	'b-empty': "Undefined: B can't happen (probability 0).",
+	'compare-off': 'Turn on Compare A and B first: shrinking to B would answer the question for you.',
+};
+
+/** The visible reason "Shrink the world to B" is refused, also spoken when a refused press ends. */
+export function shrinkRefusalText(reason: ShrinkRefusal): string {
+	return SHRINK_REFUSALS[reason];
+}
 
 /**
  * "2/6 = 1/3 ≈ 0.33": the count first, then the reduced fraction when it differs, then two decimals, which
@@ -194,7 +227,18 @@ export function cellName(state: EventSpaceState, outcome: Outcome): string {
 	const outside = focus && !focus.has(outcome.id) ? (state.shrink ? ' Ruled out.' : ' Outside.') : '';
 	const missed = missedOutcome(state) === outcome.id ? ' Missed.' : '';
 	const tossed = state.tossCount > 0 ? ` Tossed ${plural(state.tallies[outcome.id] ?? 0, 'time', 'times')}.` : '';
-	return `${outcome.label}. ${capitalize(outcome.spoken)}.${membership}${missed}${outside}${tossed}`;
+	const weights = weightsOf(state);
+	const units = weights ? ` ${weights[outcome.id]} of ${WEIGHT_TOTAL} units.` : '';
+	return `${outcome.label}. ${capitalize(outcome.spoken)}.${membership}${missed}${outside}${tossed}${units}`;
+}
+
+/**
+ * The visible note in a weighted cell, "2/12": units out of the jug, written as the die-pour board writes them,
+ * because "2 units" doesn't fit a 36px cell. Null when every outcome counts the same.
+ */
+export function unitsNote(state: EventSpaceState, outcome: Outcome): string | null {
+	const weights = weightsOf(state);
+	return weights ? `${weights[outcome.id]}/${WEIGHT_TOTAL}` : null;
 }
 
 /** The text on a preset button, e.g. "At least one head" or "Clear". */
@@ -209,6 +253,80 @@ export function setsLine(state: EventSpaceState): string | null {
 	const all = new Set(scenario.outcomes.map((outcome) => outcome.id));
 	const share = probability(state.events.A, scenario.outcomes);
 	return `Ω = ${setText(scenario, all)}. A = ${setText(scenario, state.events.A)}. P(A) = |A| / |Ω| = ${formatFraction(share)}`;
+}
+
+// ---- Compare mode ----
+
+export const COMPARE_LABEL = 'Compare A and B';
+export const COMPARE_COVERED_NOTE = `Turn on ${COMPARE_LABEL} to see whether A and B are independent and whether they are mutually exclusive.`;
+
+/** "Fair die: every face carries 2 of 12 units, …" or "Loaded toward six: the faces carry 1, 1, … and 7 of 12 units." */
+function weightsSentence(state: EventSpaceState): string {
+	const units = scenarioOf(state).outcomes.map((outcome) => state.weights[outcome.id]);
+	const name = activeWeightPreset(state);
+	if (units.every((value) => value === units[0])) {
+		return `${name}: every face carries ${units[0]} of ${WEIGHT_TOTAL} units, so the outcomes are equally likely.`;
+	}
+	return `${name}: the faces carry ${joinWords(units.map(String))} of ${WEIGHT_TOTAL} units.`;
+}
+
+function comparisonOf(state: EventSpaceState): EventComparison {
+	return compareEvents(state.events.A, state.events.B, scenarioOf(state).outcomes, weightsOf(state));
+}
+
+/** A fraction with its two decimals, "1/12 (≈ 0.08)", or alone when it is a whole number. */
+function withDecimal(value: Fraction): string {
+	const text = formatFraction(value);
+	return value.denominator === 1 ? text : `${text} (${approx(value.numerator, value.denominator)})`;
+}
+
+function independenceLine({ independent, pA, pB }: EventComparison): string {
+	if (!independent) return 'Independent: no.';
+	const aImpossible = pA.numerator === 0;
+	const bImpossible = pB.numerator === 0;
+	if (aImpossible && bImpossible) return 'Independent: yes, but only because neither A nor B can happen.';
+	if (bImpossible) return "Independent: yes, but only because B can't happen.";
+	if (aImpossible) return "Independent: yes, but only because A can't happen.";
+	return 'Independent: yes.';
+}
+
+function exclusivityLine(state: EventSpaceState, { exclusive }: EventComparison): string {
+	if (exclusive) return 'Mutually exclusive: yes, A and B share no outcome.';
+	const both = intersect(state.events.A, state.events.B);
+	return `Mutually exclusive: no, A and B share ${plural(both.size, 'outcome', 'outcomes')}, ${setText(scenarioOf(state), both)}.`;
+}
+
+/** Decimals only when the two sides differ, so the reader sees by how much; an equal line needs none. */
+function productLine({ independent, pA, pB, pBoth, product }: EventComparison): string {
+	const factors = `${formatFraction(pA)} × ${formatFraction(pB)}`;
+	if (independent) return `P(A and B) = ${formatFraction(pBoth)}, and P(A) × P(B) = ${factors} = ${formatFraction(product)}: equal.`;
+	return `P(A and B) = ${withDecimal(pBoth)}, but P(A) × P(B) = ${factors} = ${withDecimal(product)}: not equal.`;
+}
+
+function givenLine({ given, pA }: EventComparison): string {
+	if (!given) return "P(A | B) is undefined, because B can't happen.";
+	if (compareFractions(given, pA) === 0) {
+		return `P(A | B) = ${formatFraction(given)} and P(A) = ${formatFraction(pA)}: learning that B happened leaves the chance of A unchanged.`;
+	}
+	return `P(A | B) = ${withDecimal(given)}, while P(A) = ${withDecimal(pA)}: learning that B happened changes the chance of A.`;
+}
+
+/**
+ * With Compare on: the verdict, exclusivity, the product and the conditional, in that order. Null while Compare is
+ * off. While shrunk the conditional is left out, because "Inside B" already gives P(A | B) beside P(A).
+ */
+export function compareLines(state: EventSpaceState): string[] | null {
+	if (!state.compare) return null;
+	const comparison = comparisonOf(state);
+	const lines = [independenceLine(comparison), exclusivityLine(state, comparison), productLine(comparison)];
+	return state.shrink ? lines : [...lines, givenLine(comparison)];
+}
+
+/** The verdict in short, added to what a change announces while Compare is on. */
+function withVerdict(state: EventSpaceState, line: string): string {
+	if (!state.compare) return line;
+	const comparison = comparisonOf(state);
+	return `${line} ${independenceLine(comparison)} Mutually exclusive: ${comparison.exclusive ? 'yes' : 'no'}.`;
 }
 
 // ---- Tosses ----
@@ -263,18 +381,19 @@ export function refusalText(reason: Refusal['reason']): string {
 
 // ---- Announcements ----
 
+/** Turning Compare on speaks the verdict, exclusivity and the product; the conditional line stays on screen only. */
+const VERDICT_LINES_SPOKEN = 3;
+
 /** What the live region says after an action ends (toggles are debounced by the component). */
 export function announcementFor(state: EventSpaceState, action: Action): string {
 	const scenario = scenarioOf(state);
-	const total = scenario.outcomes.length;
 	switch (action.type) {
 		case 'toggle': {
 			if (isLocked(state)) return markedLine(state) ?? '';
-			if (state.shrinkRefused) return SHRINK_REFUSAL;
-			// While shrunk, the screen shows P(A | B), so that is what is spoken.
-			if (state.shrink) return conditionalLine(state);
 			const members = state.events[state.editing];
-			return `${state.editing}: ${members.size} of ${total} outcomes, P of ${state.editing} = ${formatFraction(fraction(members.size, total))}.`;
+			const { size, total } = sizeOf(state, members);
+			const count = `${state.editing}: ${countWords(state, members)}, P of ${state.editing} = ${formatFraction(fraction(size, total))}.`;
+			return withVerdict(state, eventChange(state, count));
 		}
 		case 'check': {
 			const line = feedbackLine(state) ?? '';
@@ -285,10 +404,9 @@ export function announcementFor(state: EventSpaceState, action: Action): string 
 			return feedbackLine(state) ?? '';
 		case 'preset': {
 			if (isLocked(state)) return 'Check your answer first.';
-			if (state.shrinkRefused) return SHRINK_REFUSAL;
-			if (state.shrink) return conditionalLine(state);
 			const members = state.events[action.event];
-			return members.size === 0 ? `${action.event} cleared.` : `${action.event} set to ${eventText(scenario, members)}: ${members.size} of ${total} outcomes.`;
+			const count = members.size === 0 ? `${action.event} cleared.` : `${action.event} set to ${eventText(scenario, members)}: ${countWords(state, members)}.`;
+			return withVerdict(state, eventChange(state, count));
 		}
 		case 'edit':
 			return `Editing ${state.editing}.`;
@@ -302,7 +420,8 @@ export function announcementFor(state: EventSpaceState, action: Action): string 
 			return `${outcome ? cupName(state, outcome) : ''} ${plural(WEIGHT_TOTAL - unitsPoured(state), 'unit', 'units')} left in the jug.`.trim();
 		}
 		case 'weight-preset':
-			return `${action.name}. ${totalLine(state)}`;
+			if (setupOf(state).mode !== 'compare') return `${action.name}. ${totalLine(state)}`;
+			return state.compare ? withVerdict(state, `${action.name}.`) : weightsSentence(state);
 		case 'toss': {
 			const { name, hits, share } = tossShare(state);
 			return `Tossed ${state.tossCount} times in all. ${capitalize(name)} ${plural(hits, 'time', 'times')}, ${share}.`;
@@ -312,7 +431,18 @@ export function announcementFor(state: EventSpaceState, action: Action): string 
 		case 'stage':
 			return setsLine(state) ?? `Showing ${STAGE_LABELS[state.stage].toLowerCase()}.`;
 		case 'shrink':
-			if (state.shrinkRefused) return SHRINK_REFUSAL;
+			if (state.shrinkRefusal) return shrinkRefusalText(state.shrinkRefusal);
 			return state.shrink ? conditionalLine(state) : 'Back to all outcomes.';
+		case 'compare':
+			return state.compare ? (compareLines(state) ?? []).slice(0, VERDICT_LINES_SPOKEN).join(' ') : 'Comparison hidden.';
 	}
+}
+
+/**
+ * What a change to A or B says before any verdict: why shrinking was undone, the new P(A | B) while shrunk (the
+ * screen shows it), or else `count`.
+ */
+function eventChange(state: EventSpaceState, count: string): string {
+	if (state.shrinkRefusal) return shrinkRefusalText(state.shrinkRefusal);
+	return state.shrink ? conditionalLine(state) : count;
 }
