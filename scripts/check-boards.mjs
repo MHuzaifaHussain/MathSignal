@@ -278,7 +278,7 @@ const emptiedWhileShrunk = reducer(shrunk, { type: 'preset', event: 'B', preset:
 assert.equal(emptiedWhileShrunk.shrink, false);
 assert.equal(emptiedWhileShrunk.shrinkRefusal, 'b-empty');
 assert.equal(describe.announcementFor(emptiedWhileShrunk, { type: 'preset', event: 'B', preset: 'clear' }), "Undefined: B can't happen (probability 0).");
-// Shrinking only exists in condition mode, and Reset un-shrinks.
+// Shrinking only exists where a setup offers the switch, and Reset un-shrinks.
 assert.equal(reducer(operations, { type: 'shrink', on: true }), operations);
 assert.equal(reducer(shrunk, { type: 'reset' }).shrink, false);
 
@@ -597,6 +597,37 @@ assert.equal(describe.announcementFor(run('die-compare', presetB('even')), prese
 // Reset brings back the fair die with Compare off.
 const dieReset = reducer(run('die-compare', { type: 'compare', on: true }, loaded), { type: 'reset' });
 assert.deepEqual([stateModule.activeWeightPreset(dieReset), dieReset.compare], ['Fair die', false]);
+
+// Neither event can happen: still independent by the product form, and P(A | B) has no value.
+const bothCleared = run('coin-die-independence', { type: 'compare', on: true }, presetA('clear'), presetB('clear'));
+assert.deepEqual(describe.compareLines(bothCleared), [
+	'Independent: yes, but only because neither A nor B can happen.',
+	'Mutually exclusive: yes, A and B share no outcome.',
+	'P(A and B) = 0, and P(A) × P(B) = 0 × 0 = 0: equal.',
+	"P(A | B) is undefined, because B can't happen.",
+]);
+assert.equal(describe.announcementFor(bothCleared, presetB('clear')), 'B cleared. Independent: yes, but only because neither A nor B can happen. Mutually exclusive: yes.');
+
+// The boards' accessible names, the grids' names and every new preset button, word for word.
+assert.deepEqual(
+	['coin-die-independence', 'dice-independence', 'weather-exclusive', 'die-compare'].map((id) => getSetup(id).label),
+	[
+		'The 12 outcomes of flipping a coin and rolling a die, with events A and B to compare.',
+		'The 36 outcomes of rolling two dice, with events A and B to compare.',
+		'12 days from one spring, one picked at random, with events A and B to compare.',
+		'One roll of a die, fair or loaded, with events A and B to compare.',
+	],
+);
+assert.equal(coinDie.describeSpace, 'a coin flip and a die roll');
+assert.equal(weather.describeSpace, '12 days from one spring, one day picked at random');
+const presetLabelsOf = (id) => {
+	const setup = getSetup(id);
+	return ['A', 'B'].map((key) => setup.events[key].presets.map((preset) => describe.presetLabel(SCENARIOS[setup.scenario], preset)));
+};
+assert.deepEqual(presetLabelsOf('coin-die-independence'), [['Die is 6', 'Die is even', 'Heads and a six', 'Clear'], ['Coin is heads', 'Coin is tails', 'Clear']]);
+assert.deepEqual(presetLabelsOf('dice-independence'), [['Sum is 7', 'Sum is 8', 'Doubles', 'Sum is at least 10'], ['First die is 6', 'Second die is 6', 'Doubles', 'Clear']]);
+assert.deepEqual(presetLabelsOf('weather-exclusive'), [['Rain all day', 'Some rain'], ['Sun all day', 'Some sun']]);
+assert.deepEqual(presetLabelsOf('die-compare'), [['At most 2', 'Even', 'Clear'], ['5 or 6', 'Even', 'At least 4', 'At most 2']]);
 
 // ---- BayesTheorem scenarios (week 2 presets) ----
 const bayes = await import('../src/components/react/bayesTheorem/scenarios.ts');

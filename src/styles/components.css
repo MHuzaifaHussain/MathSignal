@@ -367,6 +367,7 @@
 	.ms-event-presets,
 	.ms-board-presets,
 	.ms-board-refusal,
+	.ms-event-compare-note,
 	.ms-dist-step,
 	.ms-dist-strip {
 		display: none;
@@ -625,6 +626,7 @@
 }
 
 .ms-event-note-line,
+.ms-event-compare-note,
 .ms-board-refusal {
 	flex-basis: 100%;
 	margin: 0;

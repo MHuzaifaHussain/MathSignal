@@ -34,8 +34,9 @@ interface EventSpaceProps {
 }
 
 /**
- * A sample space as a table of equally likely outcomes. Readers build events by tapping outcomes, and the
- * board reads them back as exact counts and fractions. On goal setups nothing is revealed until Check passes.
+ * A sample space as a table of outcomes, equally likely or (on a weighted die) carrying units of 12. Readers build
+ * events by tapping outcomes, and the board reads them back as exact counts and fractions. On goal setups nothing
+ * is revealed until Check passes; on compare setups the verdict waits for the Compare switch.
  * Design and reasoning: decision 0011.
  */
 export default function EventSpace({ setup: setupId }: EventSpaceProps) {
@@ -141,7 +142,7 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
             {COMPARE_LABEL}
           </button>
           {!state.compare && (
-            <p id={compareNoteId} className="ms-event-note-line">
+            <p id={compareNoteId} className="ms-event-compare-note">
               {COMPARE_COVERED_NOTE}
             </p>
           )}
