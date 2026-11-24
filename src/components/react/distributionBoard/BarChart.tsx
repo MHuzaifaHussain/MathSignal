@@ -5,7 +5,7 @@ import { mean, standardDeviation, torqueSign, type Bar } from "./model.ts";
 import { TILT_DEGREES, type Setup } from "./setups.ts";
 import { outcomesOf, type SourceId } from "./sources.ts";
 import { distributionNow, parkedPencil, type DistributionState, type Stage } from "./state.ts";
-import { usePencilDrag } from "./usePencilDrag.ts";
+import { usePointerScrub } from "../usePointerScrub.ts";
 
 /** The 3 × 3 cells (0 top-left to 8 bottom-right) that carry a pip on each die face. */
 const PIP_CELLS: Readonly<Record<string, readonly number[]>> = {
@@ -80,8 +80,8 @@ export default function BarChart({ setup, state, linkedId, onPencilMove, onPenci
   // Level and still until "Balance it"; afterward it follows the live pencil.
   const tilt = isBalance && state.revealed ? torqueSign(distribution, state.pencil, W) * TILT_DEGREES : 0;
   const pencilValue = state.pencil / W;
-  const drag = usePencilDrag({
-    positionAt: (fraction) => {
+  const drag = usePointerScrub({
+    valueAt: (fraction) => {
       const k = Math.round((lowest - 0.5 + fraction * columns) * W);
       return Math.min(Math.max(k, parkedPencil(setup)), highest * W);
     },
