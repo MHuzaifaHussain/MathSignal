@@ -90,7 +90,7 @@ A short handwritten note on a board, in Kalam at 20px or larger. Qualitative onl
 A labeled slider for the tray, built on Base UI's Slider. Props: `label`, `value`, `min`, `max`, `step`, `largeStep` (optional; PageUp/PageDown and Shift+Arrow, defaults to about a tenth of the range), `onValueChange`, `onValueCommitted` (called once per drag, and once after a short pause for keyboard changes, so the board announces once), `format` (readout text, and `aria-valuetext` unless `describe` is given), `describe` (optional spoken value, e.g. "mean 1.50"), `meaning` (`'mu' | 'sigma' | undefined`, which colors the thumb and label).
 
 ### `TrayChoice`
-A segmented choice for the tray: a fieldset of native radios styled as buttons, so arrow keys and screen readers work natively. Props: `legend`, `options` (`{ value, label }[]`), `value`, `onChange`. The selected option is shown by fill and weight, never by color alone.
+A segmented choice for the tray: a fieldset of native radios styled as buttons, so arrow keys and screen readers work natively. Props: `legend`, `options` (`{ value, label }[]`), `value` (`null` while nothing is picked yet, for a guess the reader must make first), `onChange`. The selected option is shown by fill and weight, never by color alone.
 
 ### Guided pieces (`src/components/react/guided/`)
 Small modules every guided board composes in its tray ([decision 0013](../decisions/0013-shared-board-modules.md)), so Check, stages, presets, refusals and announcements behave the same on every board. `Board` itself knows nothing about them. None of them holds wording: labels, legends and reasons come from each board's own copy.

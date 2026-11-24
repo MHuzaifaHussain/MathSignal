@@ -9,7 +9,8 @@ interface TrayChoiceProps<T extends string> {
   /** Visible name of the group, e.g. "Editing". */
   legend: string;
   options: readonly TrayChoiceOption<T>[];
-  value: T;
+  /** The selected option, or null while the reader hasn't picked one yet (a guess that must be made first). */
+  value: T | null;
   onChange: (value: T) => void;
 }
 
