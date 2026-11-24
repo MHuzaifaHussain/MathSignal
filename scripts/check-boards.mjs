@@ -2,11 +2,12 @@
 // before every build. Node 24 runs the TypeScript modules directly, so no test framework is needed.
 // Each section names the behavior it pins; the exact values come from the board's design doc.
 import assert from 'node:assert/strict';
-import { fraction, formatFraction, addFractions, multiplyFractions, compareFractions } from '../src/components/react/boardMath.ts';
+import { fraction, formatFraction, addFractions, multiplyFractions, compareFractions, toNumber } from '../src/components/react/boardMath.ts';
 import { joinWords, plural, equalsDecimal } from '../src/components/react/boardText.ts';
 import { probability, checkGoal, pour, intersect, union, complement, WEIGHT_TOTAL } from '../src/components/react/eventSpace/model.ts';
 import { SCENARIOS } from '../src/components/react/eventSpace/scenarios.ts';
 import { getSetup } from '../src/components/react/eventSpace/setups.ts';
+import { distributionOf, distributionFromPmf, mean, variance, standardDeviation, torqueSign, classifyGuess } from '../src/components/react/distributionBoard/model.ts';
 
 // ---- Shared board helpers ----
 
@@ -15,6 +16,9 @@ assert.deepEqual(multiplyFractions(fraction(5, 6), fraction(6, 5)), fraction(1, 
 assert.equal(compareFractions(fraction(7, 6), fraction(1, 1)), 1);
 assert.equal(compareFractions(fraction(2, 4), fraction(1, 2)), 0);
 assert.throws(() => multiplyFractions(fraction(2 ** 30, 1), fraction(2 ** 30, 1)), /overflowed safe integers/);
+assert.equal(toNumber(fraction(1, 4)), 0.25);
+assert.deepEqual(addFractions(fraction(0, 1), fraction(1, 3)), fraction(1, 3));
+assert.throws(() => addFractions(fraction(1, 2 ** 30), fraction(1, 2 ** 30 - 1)), /overflowed safe integers/);
 assert.equal(joinWords(['1', '2', '3']), '1, 2 and 3');
 assert.equal(plural(1, 'candy', 'candies'), '1 candy');
 assert.equal(equalsDecimal(1, 6), '≈ 0.17');
@@ -304,5 +308,86 @@ for (const scenario of Object.values(bayes.BAYES_SCENARIOS)) {
 // P(B) = 0 has no posterior, and impossible inputs fail loudly.
 assert.equal(bayes.computePosterior({ prior: 0.5, likelihood: 0, falsePositive: 0 }).posterior, null);
 assert.throws(() => bayes.computePosterior({ prior: 1.2, likelihood: 0.5, falsePositive: 0.5 }), /prior must be a probability/);
+
+// ---- DistributionBoard model ----
+
+const weighted = (outcomes) => outcomes.map(({ id, label, spoken }) => ({ id, label, spoken, weight: 1 }));
+const oneDie = weighted(SCENARIOS['one-die'].outcomes);
+const twoCoins = weighted(SCENARIOS['two-coins'].outcomes);
+const dieDistribution = (values) => distributionOf(oneDie, Object.fromEntries(values.map((value, index) => [String(index + 1), value])));
+const coinDistribution = (values) => distributionOf(twoCoins, Object.fromEntries(values.map((value, index) => [twoCoins[index].id, value])));
+
+// Every preset's mean and variance, exact (the table in the design).
+const presets = [
+	['Game card', dieDistribution([0, 0, 0, 1, 1, 5]), fraction(7, 6), fraction(113, 36)],
+	['Plain die', dieDistribution([1, 2, 3, 4, 5, 6]), fraction(7, 2), fraction(35, 12)],
+	['One big prize', dieDistribution([0, 0, 0, 0, 0, 6]), fraction(1, 1), fraction(5, 1)],
+	['Lopsided', dieDistribution([0, 0, 0, 1, 1, 4]), fraction(1, 1), fraction(2, 1)],
+	['All win 1', dieDistribution([1, 1, 1, 1, 1, 1]), fraction(1, 1), fraction(0, 1)],
+	['Steady', dieDistribution([2, 2, 2, 2, 2, 2]), fraction(2, 1), fraction(0, 1)],
+	['Many amounts', dieDistribution([1, 1, 2, 2, 3, 3]), fraction(2, 1), fraction(2, 3)],
+	['All or nothing', dieDistribution([0, 0, 0, 4, 4, 4]), fraction(2, 1), fraction(4, 1)],
+	['Number of heads', coinDistribution([2, 1, 1, 0]), fraction(1, 1), fraction(1, 2)],
+	['Coins match', coinDistribution([1, 0, 0, 1]), fraction(1, 2), fraction(1, 4)],
+];
+for (const [name, distribution, expectedMean, expectedVariance] of presets) {
+	assert.deepEqual(mean(distribution), expectedMean, `${name}: mean`);
+	assert.deepEqual(variance(distribution), expectedVariance, `${name}: variance`);
+}
+assert.equal(standardDeviation(dieDistribution([0, 0, 0, 0, 0, 6])), Math.sqrt(5));
+assert.equal(standardDeviation(dieDistribution([2, 2, 2, 2, 2, 2])), 0);
+
+// The merge: faces that share a value become one bar, bars sorted by value, members in outcome order.
+const gameCard = dieDistribution([0, 0, 0, 1, 1, 5]);
+assert.deepEqual(gameCard.bars.map((bar) => bar.value), [0, 1, 5]);
+assert.deepEqual(gameCard.bars.map((bar) => bar.members), [['1', '2', '3'], ['4', '5'], ['6']]);
+assert.deepEqual(gameCard.bars.map((bar) => bar.probability), [fraction(1, 2), fraction(1, 3), fraction(1, 6)]);
+assert.equal(gameCard.totalWeight, 6);
+assert.deepEqual(dieDistribution([5, 0, 5, 0, 1, 0]).bars.map((bar) => bar.value), [0, 1, 5]);
+assert.throws(() => distributionOf(oneDie, { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }), /no value for outcome "6"/);
+
+// Weights: a loaded die moves the mean and the variance.
+const weightedDie = oneDie.map((outcome) => ({ ...outcome, weight: outcome.id === '6' ? 7 : 1 }));
+const loadedDie = distributionOf(weightedDie, { 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6 });
+assert.deepEqual(mean(loadedDie), fraction(19, 4));
+assert.deepEqual(variance(loadedDie), fraction(145, 48));
+
+// A distribution entered directly (week 5), with no outcomes behind it.
+const entered = distributionFromPmf([{ value: 0, weight: 1 }, { value: 1, weight: 2 }, { value: 2, weight: 1 }]);
+assert.deepEqual(mean(entered), fraction(1, 1));
+assert.deepEqual(variance(entered), fraction(1, 2));
+assert.deepEqual(entered.bars.map((bar) => bar.members), [[], [], []]);
+assert.throws(() => distributionFromPmf([]), /no weight/);
+
+// Torque: positive when the balance point is right of the pencil, so the plank tips down on the right.
+const oneBigPrize = dieDistribution([0, 0, 0, 0, 0, 6]);
+assert.equal(torqueSign(oneBigPrize, 0, 6), 1);
+assert.equal(torqueSign(oneBigPrize, 18, 6), -1);
+assert.equal(torqueSign(oneBigPrize, 6, 6), 0);
+assert.equal(torqueSign(oneBigPrize, -3, 6), 1);
+
+// Guess classification on One big prize (mean 1, midpoint 3, tallest bar at 0).
+assert.equal(classifyGuess(oneBigPrize, 0, 6), 'tallest-bar');
+assert.equal(classifyGuess(oneBigPrize, 18, 6), 'midrange');
+assert.equal(classifyGuess(oneBigPrize, 6, 6), 'balanced');
+assert.equal(classifyGuess(oneBigPrize, 3, 6), 'other');
+assert.equal(classifyGuess(oneBigPrize, -3, 6), 'other');
+assert.equal(torqueSign(oneBigPrize, -3, 6), 1);
+assert.equal(classifyGuess(oneBigPrize, 36, 6), 'other');
+assert.equal(torqueSign(oneBigPrize, 36, 6), -1);
+
+// Plain die is symmetric: the midpoint is the mean, so the midrange note never applies.
+const plainDie = dieDistribution([1, 2, 3, 4, 5, 6]);
+assert.equal(classifyGuess(plainDie, 21, 6), 'balanced');
+for (let k = -3; k <= 36; k += 1) assert.notEqual(classifyGuess(plainDie, k, 6), 'midrange', `plain die k=${k}`);
+
+// A tie for the tallest bar means no tallest-bar note.
+const tiedBars = dieDistribution([0, 0, 6, 6, 1, 1]);
+for (let k = -3; k <= 36; k += 1) assert.notEqual(classifyGuess(tiedBars, k, 6), 'tallest-bar', `tied bars k=${k}`);
+
+// The tallest bar at the mean is just balance, and a bad pencil fails loudly.
+assert.equal(classifyGuess(dieDistribution([2, 2, 2, 2, 0, 4]), 12, 6), 'balanced');
+assert.throws(() => torqueSign(plainDie, 1.5, 6), /integer/);
+assert.throws(() => torqueSign(plainDie, 1, 0), /positive/);
 
 console.log('Board check passed.');
