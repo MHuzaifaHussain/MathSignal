@@ -372,6 +372,7 @@
 	.ms-event-compare-note,
 	.ms-dist-step,
 	.ms-dist-strip,
+	.ms-desc-strip,
 	.ms-vec-step {
 		display: none;
 	}
@@ -867,6 +868,11 @@
 	color: var(--ms-sigma);
 }
 
+.ms-span-sample {
+	border-block-start: 6px double currentColor;
+	color: var(--ms-sigma);
+}
+
 .ms-span-ghost {
 	border-block-start-style: dashed;
 	color: var(--ms-board-ink);
@@ -1268,6 +1274,418 @@
 	text-align: start;
 }
 
+/* ── DescriptiveStats: a short list of numbers as dot plots, a box plot and tables (decision 0015) ──
+ * Dots, axes, the median diamond, quartiles, box, whiskers, fences and distance arms are ink. Ochre marks one
+ * "look here" dot (the pick, the child being moved, Ana's marks) and is never text. Pink is only the mean and the
+ * z row's 0; blue is only σ, s and the z row's ±1. Every mark has a label or a line style, so nothing depends on color. */
+.ms-desc {
+	--ms-desc-dot: 12px;
+	--ms-desc-pitch: 14px;
+	padding: 0.75rem 8px 1rem;
+}
+
+.ms-desc-status,
+.ms-desc-goal-line,
+.ms-desc-feedback {
+	margin: 0 0 0.75rem;
+	font-size: 0.9375rem;
+	line-height: 1.5;
+	color: var(--ms-board-ink);
+}
+
+.ms-desc-goal {
+	margin: 0 0 0.75rem;
+}
+
+.ms-desc-goal-line {
+	margin: 0;
+	font-weight: 600;
+}
+
+.ms-desc-goal .ms-board-readout {
+	margin: 0.25rem 0 0;
+}
+
+.ms-desc-feedback {
+	margin: 0.75rem 0 0;
+	font-weight: 600;
+}
+
+/* Pictures: one ink bar per child, drawn to height from the floor; bars slide when the class lines up. */
+.ms-desc-lineup {
+	--ms-desc-slot: min(calc(100% / var(--count)), 48px);
+	position: relative;
+	block-size: 13rem;
+	print-color-adjust: exact;
+}
+
+.ms-desc-bar {
+	position: absolute;
+	inset-block: 0;
+	left: calc(var(--slot) * var(--ms-desc-slot));
+	inline-size: var(--ms-desc-slot);
+	color: var(--ms-board-ink);
+	font: 500 0.8125rem var(--ms-font-mono);
+	text-align: center;
+}
+
+.ms-desc-bar-body {
+	position: absolute;
+	inset-block-end: 2.6rem;
+	left: 50%;
+	inline-size: min(28px, calc(100% - 6px));
+	block-size: calc((13rem - 2.6rem) * var(--h));
+	border: 2px solid var(--ms-board-ink);
+	border-radius: 3px 3px 0 0;
+	background-color: var(--ms-board-ink);
+	transform: translateX(-50%);
+	box-sizing: border-box;
+}
+
+.ms-desc-bar.is-look .ms-desc-bar-body {
+	border-color: var(--ms-attention);
+	background-color: var(--ms-highlight);
+}
+
+.ms-desc-bar-value,
+.ms-desc-bar-child {
+	position: absolute;
+	inset-inline: 0;
+}
+
+.ms-desc-bar-value {
+	inset-block-end: 1.3rem;
+}
+
+.ms-desc-bar-child {
+	inset-block-end: 0;
+	font-family: var(--ms-font-ui);
+	font-weight: 600;
+}
+
+/* Dot plots. Each row's track is inset by half a dot, so dots at either end stay inside the board. */
+.ms-desc-chart {
+	color: var(--ms-board-ink);
+	font-family: var(--ms-font-ui);
+	print-color-adjust: exact;
+}
+
+.ms-desc-row + .ms-desc-row {
+	margin-block-start: 1rem;
+}
+
+.ms-desc-row.has-lane {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: end;
+	gap: 0 0.5rem;
+}
+
+.ms-desc-row-title {
+	grid-column: 1 / -1;
+	margin: 0 0 0.25rem;
+	font-size: 0.875rem;
+	font-weight: 600;
+}
+
+.ms-desc-track {
+	min-inline-size: 0;
+	padding-inline: calc(var(--ms-desc-dot) / 2 + 2px);
+}
+
+.ms-desc-plot {
+	position: relative;
+	block-size: calc(var(--reserve) * var(--ms-desc-pitch) + 1.5rem);
+}
+
+.ms-desc-dot {
+	position: absolute;
+	bottom: calc(var(--row) * var(--ms-desc-pitch) + 2px);
+	left: calc(var(--x) - var(--ms-desc-dot) / 2);
+	box-sizing: border-box;
+	inline-size: var(--ms-desc-dot);
+	block-size: var(--ms-desc-dot);
+	border: 2px solid var(--ms-board-ink);
+	border-radius: 50%;
+	background-color: var(--ms-board-ink);
+}
+
+/* Look here: a highlighter dot in an ochre ring. */
+.ms-desc-dot.is-look {
+	border-color: var(--ms-attention);
+	background-color: var(--ms-highlight);
+	outline: 2px solid var(--ms-attention);
+	outline-offset: 1px;
+}
+
+/* The IQR rule's flag is a solid ring; the z rule's is a dashed ring further out. */
+.ms-desc-dot.is-iqr {
+	outline: 2px solid var(--ms-board-ink);
+	outline-offset: 2px;
+}
+
+.ms-desc-dot.is-z::after {
+	content: '';
+	position: absolute;
+	inset: -9px;
+	border: 2px dashed var(--ms-board-ink);
+	border-radius: 50%;
+}
+
+.ms-desc-dot-text {
+	position: absolute;
+	bottom: calc(100% + 2px);
+	left: 50%;
+	font: 600 0.75rem var(--ms-font-mono);
+	transform: translateX(-50%);
+}
+
+.ms-desc-flag-tag {
+	position: absolute;
+	bottom: calc(100% + 11px);
+	left: 50%;
+	font: 600 0.75rem/1 var(--ms-font-ui);
+	white-space: nowrap;
+	transform: translateX(-50%);
+}
+
+/* Both tags on one dot stack: "z" above "IQR". */
+.ms-desc-dot .ms-desc-flag-tag.is-iqr + .ms-desc-flag-tag.is-z {
+	bottom: calc(100% + 25px);
+}
+
+.ms-desc-arm {
+	position: absolute;
+	bottom: calc(var(--row) * var(--ms-desc-pitch) + 7px);
+	left: var(--from);
+	inline-size: calc(var(--to) - var(--from));
+	border-block-start: 1px dotted var(--ms-board-ink-muted);
+}
+
+.ms-desc-mode-tag {
+	position: absolute;
+	bottom: calc(var(--row) * var(--ms-desc-pitch) + 4px);
+	left: var(--x);
+	font: 600 0.75rem var(--ms-font-ui);
+	transform: translateX(-50%);
+}
+
+/* The box plot: a 2px ink box, the median line, 1px muted whiskers and dashed fences. */
+.ms-desc-box-row {
+	position: relative;
+	block-size: 28px;
+	margin-block: 4px;
+}
+
+.ms-desc-box,
+.ms-desc-whisker,
+.ms-desc-fence,
+.ms-desc-box-median {
+	position: absolute;
+}
+
+.ms-desc-box {
+	inset-block: 2px;
+	left: var(--from);
+	inline-size: calc(var(--to) - var(--from));
+	box-sizing: border-box;
+	border: 2px solid var(--ms-board-ink);
+}
+
+.ms-desc-whisker {
+	inset-block-start: 50%;
+	left: var(--from);
+	inline-size: calc(var(--to) - var(--from));
+	border-block-start: 1px solid var(--ms-board-ink-muted);
+}
+
+.ms-desc-fence {
+	inset-block: 0;
+	left: var(--x);
+	border-inline-start: 1px dashed var(--ms-board-ink);
+}
+
+.ms-desc-box-median {
+	inset-block: 2px;
+	left: var(--x);
+	border-inline-start: 2px solid var(--ms-board-ink);
+	transform: translateX(-1px);
+}
+
+.ms-desc-tag-row {
+	position: relative;
+	block-size: 1.4rem;
+}
+
+.ms-desc-median,
+.ms-desc-quartile {
+	position: absolute;
+	left: clamp(2.5rem, var(--x), calc(100% - 2.5rem));
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	font: 600 0.8125rem/1.2 var(--ms-font-ui);
+	white-space: nowrap;
+	transform: translateX(-50%);
+}
+
+/* The median is a diamond and a word, the mean a pink triangle: told apart without color. */
+.ms-desc-diamond {
+	inline-size: 8px;
+	block-size: 8px;
+	background-color: var(--ms-board-ink);
+	transform: rotate(45deg);
+}
+
+.ms-desc-axis {
+	position: relative;
+	block-size: 1.5rem;
+	border-block-start: 2px solid var(--ms-board-ink);
+}
+
+.ms-desc-tick {
+	position: absolute;
+	inset-block-start: 4px;
+	left: var(--x);
+	font: 500 0.8125rem var(--ms-font-mono);
+	font-variant-numeric: tabular-nums;
+	transform: translateX(-50%);
+}
+
+/* The z row's marks, under the tick numbers: pink "mean" at 0, blue "σ" at ±1, each on a short colored stub. */
+.ms-desc-ztick {
+	position: absolute;
+	inset-block-start: 0;
+	left: var(--x);
+	padding-block-start: 2px;
+	border-block-start: 3px solid currentColor;
+	font: 600 0.75rem/1.2 var(--ms-font-ui);
+	white-space: nowrap;
+	transform: translateX(-50%);
+}
+
+.ms-desc-ztick.is-mean {
+	color: var(--ms-mu);
+}
+
+.ms-desc-ztick.is-sigma {
+	color: var(--ms-sigma);
+}
+
+.ms-desc-unit {
+	margin: 0.25rem 0 0;
+	font-size: 0.8125rem;
+	text-align: end;
+	color: var(--ms-board-ink-muted);
+}
+
+/* Pointer drag under the axis; the tray's Height slider is its keyboard path. At least 24px tall (WCAG 2.5.8). */
+.ms-desc-strip {
+	position: absolute;
+	inset-inline: 0;
+	inset-block-start: -2rem;
+	block-size: calc(100% + 2rem);
+	min-block-size: 44px;
+	cursor: ew-resize;
+	touch-action: none;
+}
+
+/* Values past the axis: edge arrows that carry their number, in a lane at the right. */
+.ms-desc-lane {
+	display: grid;
+	justify-items: end;
+	gap: 0.25rem;
+	padding-block-end: 2.75rem;
+	font: 600 0.8125rem var(--ms-font-mono);
+	white-space: nowrap;
+}
+
+.ms-desc-lane-mean {
+	color: var(--ms-mu);
+}
+
+.ms-desc-lane-value {
+	position: relative;
+	padding-inline: 2px;
+}
+
+.ms-desc-lane-value.is-iqr {
+	outline: 2px solid var(--ms-board-ink);
+	outline-offset: 2px;
+}
+
+.ms-desc-lane-value.is-z {
+	border: 2px dashed var(--ms-board-ink);
+}
+
+.ms-desc-lane-value .ms-desc-flag-tag {
+	position: static;
+	margin-inline-start: 0.35rem;
+	font-size: 0.6875rem;
+}
+
+.ms-desc-symbols p {
+	margin: 0.5rem 0 0;
+	font: 500 0.9375rem var(--ms-font-mono);
+	color: var(--ms-board-ink);
+	overflow-wrap: anywhere;
+}
+
+.ms-desc-readouts {
+	margin-block-start: 0.75rem;
+}
+
+.ms-desc-readouts .ms-board-readout {
+	margin: 0.15rem 0;
+	overflow-wrap: anywhere;
+}
+
+.ms-desc-tables {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: start;
+	gap: 0.75rem 1.5rem;
+	margin-block-start: 0.75rem;
+}
+
+.ms-desc-table {
+	border-collapse: collapse;
+	font-size: 0.875rem;
+	font-variant-numeric: tabular-nums;
+	color: var(--ms-board-ink);
+}
+
+.ms-desc-table caption {
+	padding-block-end: 0.25rem;
+	font-weight: 600;
+	text-align: start;
+}
+
+.ms-desc-table th,
+.ms-desc-table td {
+	padding: 0.25rem 1rem 0.25rem 0;
+	border-block-end: 1px solid var(--ms-board-axis);
+	text-align: start;
+	vertical-align: top;
+}
+
+.ms-desc-covered {
+	display: grid;
+	place-items: center;
+	flex: 1 1 14rem;
+	min-block-size: 6rem;
+	padding: 1rem;
+	border: 2px dashed var(--ms-board-axis);
+	border-radius: 4px;
+	text-align: center;
+}
+
+.ms-desc-covered p {
+	margin: 0;
+	font-size: 0.9375rem;
+	color: var(--ms-board-ink);
+}
+
 /* ── VectorBoard2D: vectors on a whole-number grid (decision 0014) ──
  * Arrows are ink, told apart by label and line style (a solid, b dashed). Exactly one element is ochre at a time,
  * drawn in Mafs code; pink and blue never appear. The plane stays square so a right angle looks like one. */
@@ -1471,6 +1889,11 @@
 	.ms-vec-length-lines {
 		display: block;
 	}
+
+	/* DescriptiveStats: only the ticks at the narrow step keep their numbers. */
+	.ms-desc-tick.is-minor {
+		visibility: hidden;
+	}
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -1485,6 +1908,15 @@
 
 	.ms-dist-beam {
 		transition: transform 300ms ease;
+	}
+
+	/* DescriptiveStats: bars slide into line; dots slide when a value changes. */
+	.ms-desc-bar {
+		transition: left 300ms ease;
+	}
+
+	.ms-desc-dot {
+		transition: left 150ms ease, bottom 150ms ease;
 	}
 }
 
@@ -1571,5 +2003,25 @@
 
 	.ms-dist-row.is-linked {
 		border-color: Highlight;
+	}
+
+	/* DescriptiveStats: filled marks draw in CanvasText; the "look here" dot and bar keep a Highlight ring. */
+	.ms-desc-dot,
+	.ms-desc-bar-body,
+	.ms-desc-diamond {
+		forced-color-adjust: none;
+		border-color: CanvasText;
+		background-color: CanvasText;
+	}
+
+	.ms-desc-dot.is-look,
+	.ms-desc-bar.is-look .ms-desc-bar-body {
+		border-color: Highlight;
+		background-color: Canvas;
+		outline-color: Highlight;
+	}
+
+	.ms-desc-feedback:focus-visible {
+		outline-color: Highlight;
 	}
 }

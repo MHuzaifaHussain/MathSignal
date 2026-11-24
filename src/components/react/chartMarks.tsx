@@ -33,8 +33,11 @@ export function MeanGuide({ x }: { x: number }) {
   return <span className="ms-mark-mean-guide" style={{ "--x": percent(x) } as Position} />;
 }
 
-/** `sigma`: the standard deviation, solid blue. `ghost`: an earlier σ kept for comparison, dashed ink. */
-export type SpanKind = "sigma" | "ghost";
+/**
+ * `sigma`: the standard deviation, solid blue. `sample`: the sample standard deviation s, a blue double line, so it
+ * never relies on color to differ from σ. `ghost`: an earlier σ kept for comparison, dashed ink.
+ */
+export type SpanKind = "sigma" | "sample" | "ghost";
 
 interface SigmaSpanProps {
   kind: SpanKind;

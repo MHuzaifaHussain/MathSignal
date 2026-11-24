@@ -1899,6 +1899,56 @@ const announcerRun = () => {
 	assert.ok(swept > 2000, `swept ${swept} strings`);
 }
 
+// ---- DescriptiveStats chart (chart.ts) ----
+// What the drawing shows: no mean or median before the middle child is found, no blue on the line-up page, values
+// past the axis in the lane, and the box plot's whisker stopping at the last child inside the fences.
+{
+	const dc = await import('../src/components/react/descriptiveStats/chart.ts');
+	const dst = await import('../src/components/react/descriptiveStats/state.ts');
+	const { readFileSync, readdirSync } = await import('node:fs');
+	const run = (setupId, ...actions) => actions.reduce(dst.reducer, dst.initialState(setupId));
+	const numbersStage = { type: 'stage', stage: 'numbers' };
+
+	const covered = dc.chartRows(run('class-lineup', numbersStage, { type: 'pick', child: 6 }))[0];
+	assert.equal(covered.mean, null);
+	assert.equal(covered.median, null);
+	assert.deepEqual(covered.spans, []);
+	assert.deepEqual(covered.dots.map((dot) => dot.look), [false, false, false, false, false, false, true, false, false], 'the pick is the one ochre dot');
+	assert.ok(covered.dots.every((dot) => dot.text === null), 'no place numbers before Check');
+	const found = dc.chartRows(run('class-lineup', numbersStage, { type: 'pick', child: 0 }, { type: 'check' }))[0];
+	assert.equal(found.mean.label, 'mean 134');
+	assert.equal(found.median.label, 'median 133');
+	assert.deepEqual(found.spans, [], 'no blue on the line-up page');
+	assert.equal(found.reserve, 1);
+	assert.deepEqual(dc.lineUpBars(run('class-lineup', { type: 'line-up', on: true })).map((bar) => bar.slot), [4, 0, 6, 2, 8, 1, 5, 3, 7]);
+
+	const rich = dc.chartRows(run('cafe-millionaire', { type: 'preset', id: 'millionaire' }))[0];
+	assert.equal(rich.mean.lane, true);
+	assert.equal(rich.mean.label, 'mean 103.6 →');
+	assert.deepEqual(rich.dots.filter((dot) => dot.lane).map((dot) => dot.text), ['1,000 →']);
+	assert.deepEqual(rich.modeTags, [{ x: 50, row: 3 }]);
+
+	const sample = dc.chartRows(run('class-spread', { type: 'sample', on: true }, { type: 'preset', id: 'tight-class' }))[0];
+	assert.deepEqual(sample.spans.map((span) => [span.kind, span.label]), [['sigma', 'σ = 4'], ['sample', 's ≈ 4.24'], ['ghost', 'Before: σ = 8']]);
+	assert.equal(sample.mean.label, 'μ = x̄ = 134');
+
+	const tall = dc.chartRows(run('class-box', { type: 'stage', stage: 'box' }, { type: 'preset', id: 'one-very-tall' }))[0];
+	assert.equal(tall.box.high, ((142 - 110) / 60) * 100, 'the whisker stops at 142 cm');
+	assert.deepEqual(tall.box.fences, [0, 80]);
+	assert.equal(tall.dots[4].iqrFlag, true);
+	assert.deepEqual(dc.chartRows(dst.initialState('class-box'))[0].dots.map((dot) => dot.text), ['5', '1', '7', '3', '9', '2', '6', '4', '8']);
+
+	const giants = dc.chartRows(run('pumpkin-outliers', { type: 'preset', id: 'two-giants' }, { type: 'set-value', value: 45 }))[0];
+	assert.deepEqual(giants.dots.filter((dot) => dot.lane).map((dot) => [dot.text, dot.iqrFlag, dot.zFlag]), [['45 kg →', true, false], ['45 kg →', true, false]]);
+	const zRows = dc.chartRows(run('marks-scaling', { type: 'scale', scale: 'z' }));
+	assert.deepEqual(zRows.map((row) => row.zTicks.map((tick) => tick.kind)), [['mean', 'sigma', 'sigma'], ['mean', 'sigma', 'sigma']]);
+	assert.deepEqual(dc.chartRows(dst.initialState('marks-scaling')).map((row) => row.zTicks.length), [0, 0], 'pink and blue only on the z scale');
+
+	// The board's files never render KaTeX (decision 0007).
+	const files = ['src/components/react/DescriptiveStats.tsx', ...readdirSync('src/components/react/descriptiveStats').map((name) => `src/components/react/descriptiveStats/${name}`)];
+	for (const file of files) assert.ok(!readFileSync(file, 'utf8').includes('<LaTeX'), `${file} renders KaTeX`);
+}
+
 // ---- VectorBoard2D (decision 0014) ----
 // Whole-number vectors make every sum, scaling, dot product and exact angle an integer fact. These asserts pin the
 // copy word for word and the rule that nothing gives an answer away before the reader commits.
