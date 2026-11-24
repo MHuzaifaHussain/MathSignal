@@ -22,6 +22,8 @@
 }
 
 .ms-board-tray {
+	/* A container, so a tray slider can stack its label on narrow boards (the 399px rule). */
+	container-type: inline-size;
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
@@ -1415,6 +1417,16 @@
 }
 
 @container (max-width: 399px) {
+	/* Tray sliders: the label takes its own line, so the track and readout fit at 320px. */
+	.ms-slider {
+		grid-template-columns: minmax(0, 1fr) auto;
+		gap: 0 0.75rem;
+	}
+
+	.ms-slider-label {
+		grid-column: 1 / -1;
+	}
+
 	.ms-event-grid {
 		--ms-event-header: 24px;
 	}
