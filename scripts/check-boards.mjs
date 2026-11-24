@@ -1411,6 +1411,142 @@ const announcerRun = () => {
 	assert.deepEqual(shown, []);
 }
 
+// ---- DescriptiveStats model and datasets (decision 0015) ----
+// Exact statistics on short whole-number lists. Quantiles are NumPy's default "linear" method, variance divides by n
+// (σ) or by n − 1 (s), Tukey fences sit 1.5 × IQR past the quartiles with a strict test.
+{
+	const dm = await import('../src/components/react/descriptiveStats/model.ts');
+	const dd = await import('../src/components/react/descriptiveStats/datasets.ts');
+	const f = fraction;
+	const rootText = (root) => (root.exact ? formatFraction(root.value) : `≈ ${root.value.toFixed(2)}`);
+	const zText = (root) => (root.exact ? formatFraction(root.value) : root.value.toFixed(2));
+	const klass = dd.CLASS_HEIGHTS;
+
+	// Our class: 9 children, numbered in the order they arrived.
+	assert.deepEqual(klass, [133, 122, 140, 128, 148, 125, 137, 131, 142]);
+	assert.deepEqual(dm.sortedValues(klass), [122, 125, 128, 131, 133, 137, 140, 142, 148]);
+	assert.deepEqual(klass, [133, 122, 140, 128, 148, 125, 137, 131, 142], 'sortedValues leaves its input alone');
+	assert.equal(dm.sum(klass), 1206);
+	assert.deepEqual(dm.mean(klass), f(134, 1));
+	assert.deepEqual(dm.median(klass), f(133, 1));
+	assert.deepEqual(dm.modes(klass), []);
+	assert.equal(dm.range(klass), 26);
+	assert.deepEqual(dm.midrange(klass), f(135, 1));
+	assert.deepEqual(dm.quartiles(klass), { q1: f(128, 1), median: f(133, 1), q3: f(140, 1) });
+	assert.deepEqual(dm.iqr(klass), f(12, 1));
+	assert.deepEqual(dm.fences(klass), { lower: f(110, 1), upper: f(158, 1) });
+	assert.deepEqual(dm.populationVariance(klass), f(64, 1));
+	assert.deepEqual(dm.sampleVariance(klass), f(72, 1));
+	assert.deepEqual(dm.populationSD(klass), { exact: true, value: f(8, 1) });
+	assert.equal(rootText(dm.sampleSD(klass)), '≈ 8.49');
+	assert.deepEqual(dm.rankOf(klass, 4), { shorter: 8, taller: 0, same: 0 });
+	assert.deepEqual(dm.rankOf(klass, 6), { shorter: 5, taller: 3, same: 0 });
+	assert.deepEqual(dm.rankOf(klass, 0), { shorter: 4, taller: 4, same: 0 });
+	assert.deepEqual(dm.iqrFlags(klass), klass.map(() => false));
+
+	// The tight class has the same mean and median, two modes and a quarter of the variance.
+	const tight = dd.TIGHT_CLASS;
+	assert.deepEqual(dm.mean(tight), f(134, 1));
+	assert.deepEqual(dm.median(tight), f(134, 1));
+	assert.deepEqual(dm.modes(tight), [130, 138]);
+	assert.deepEqual(dm.populationVariance(tight), f(16, 1));
+	assert.deepEqual(dm.populationSD(tight), { exact: true, value: f(4, 1) });
+	assert.deepEqual(dm.sampleVariance(tight), f(18, 1));
+	assert.equal(rootText(dm.sampleSD(tight)), '≈ 4.24');
+	assert.deepEqual(dm.populationSD(dd.EVERYONE_134), { exact: true, value: f(0, 1) });
+	assert.deepEqual(dm.modes(dd.EVERYONE_134), [], 'every value appears equally often, so there is no mode');
+
+	// One very tall child: 148 becomes 162, and the quartiles and fences stay put.
+	assert.deepEqual(dd.CLASS_TALL, [133, 122, 140, 128, 162, 125, 137, 131, 142]);
+	assert.deepEqual(dm.quartiles(dd.CLASS_TALL), { q1: f(128, 1), median: f(133, 1), q3: f(140, 1) });
+	assert.deepEqual(dm.fences(dd.CLASS_TALL), { lower: f(110, 1), upper: f(158, 1) });
+	assert.deepEqual(dm.iqrFlags(dd.CLASS_TALL), [false, false, false, false, true, false, false, false, false]);
+
+	// The cafe: a millionaire moves the mean far more than the median, and the mode not at all.
+	const cafe = dd.CAFE_SAVINGS;
+	assert.deepEqual(cafe, [1, 2, 3, 4, 4, 5, 5, 5, 7]);
+	assert.deepEqual(dm.mean(cafe), f(4, 1));
+	assert.deepEqual(dm.median(cafe), f(4, 1));
+	assert.deepEqual(dm.modes(cafe), [5]);
+	assert.equal(dm.topCount(cafe), 3);
+	const millionaire = [...cafe, 1000];
+	assert.deepEqual(dm.mean(millionaire), f(518, 5));
+	assert.deepEqual(dm.median(millionaire), f(9, 2));
+	assert.deepEqual(dm.quartiles(millionaire).q1, f(13, 4));
+	assert.deepEqual(dm.modes(millionaire), [5]);
+	assert.deepEqual(dm.mean([...cafe, 6]), f(21, 5));
+	assert.deepEqual(dm.median([...cafe, 6]), f(9, 2));
+	assert.deepEqual(dm.modes([...cafe, 4]), [4, 5]);
+
+	// Quantiles: NumPy's linear method, h = (n − 1) p, exact.
+	assert.deepEqual(dm.quantile([1, 2, 3, 4], f(1, 4)), f(7, 4));
+	assert.deepEqual(dm.quantile([1, 2, 3, 4], f(1, 2)), f(5, 2));
+	assert.deepEqual(dm.quantile([5], f(3, 4)), f(5, 1));
+	assert.deepEqual(dm.quantile(klass, f(0, 1)), f(122, 1));
+	assert.deepEqual(dm.quantile(klass, f(1, 1)), f(148, 1));
+	assert.throws(() => dm.quantile(klass, f(5, 4)), /quantile.*5\/4/);
+	assert.throws(() => dm.mean([]), /empty/);
+	assert.throws(() => dm.mean([1, 2.5]), /whole numbers.*2\.5/);
+	assert.throws(() => dm.sampleVariance([5]), /two values/);
+	assert.throws(() => dm.sum([2 ** 52, 2 ** 52]), /safe integers/);
+
+	// Scaling two tests: min–max and z disagree about where Ana did better.
+	const testA = dd.TEST_A.values;
+	const testB = dd.TEST_B.values;
+	assert.equal(testA[dd.TEST_A.ana], 36);
+	assert.equal(testB[dd.TEST_B.ana], 58);
+	assert.deepEqual(dm.mean(testA), f(30, 1));
+	assert.deepEqual(dm.populationSD(testA), { exact: true, value: f(6, 1) });
+	assert.deepEqual(dm.mean(testB), f(50, 1));
+	assert.deepEqual(dm.populationSD(testB), { exact: true, value: f(8, 1) });
+	assert.deepEqual(dm.minMax(36, testA), f(15, 18));
+	assert.deepEqual(dm.minMax(58, testB), f(20, 26));
+	assert.deepEqual(dm.zScore(36, testA), { exact: true, value: f(1, 1) });
+	assert.deepEqual(dm.zScore(58, testB), { exact: true, value: f(1, 1) });
+	const lowB = dd.TEST_B_LOW;
+	assert.deepEqual(lowB, [10, 41, 44, 47, 49, 53, 56, 58, 64]);
+	assert.deepEqual(dm.minMax(58, lowB), f(8, 9));
+	assert.equal(zText(dm.zScore(58, lowB)), '0.76');
+	assert.throws(() => dm.minMax(3, [3, 3, 3]), /every value is the same/);
+
+	// The pumpkins: the second giant replaces a 7 kg pumpkin, so there are always 9.
+	assert.deepEqual(dd.pumpkins(8, 1), [4, 5, 5, 6, 6, 6, 7, 7, 8]);
+	assert.deepEqual(dd.pumpkins(30, 2), [4, 5, 5, 6, 6, 6, 7, 30, 30]);
+	assert.throws(() => dd.pumpkins(30, 3), /1 or 2 giants/);
+	const oneGiant = dd.pumpkins(30, 1);
+	assert.deepEqual(dm.quartiles(oneGiant), { q1: f(5, 1), median: f(6, 1), q3: f(7, 1) });
+	assert.deepEqual(dm.fences(oneGiant), { lower: f(2, 1), upper: f(10, 1) });
+	assert.equal(rootText(dm.populationSD(oneGiant)), '≈ 7.68');
+	assert.equal(toNumber(dm.mean(oneGiant)).toFixed(2), '8.44');
+	assert.equal(zText(dm.zScore(30, oneGiant)), '2.81');
+	assert.deepEqual(dm.zFlags(oneGiant, 2), [false, false, false, false, false, false, false, false, true]);
+	assert.deepEqual(dm.zFlags(oneGiant, 3), oneGiant.map(() => false));
+	// On the fence is not past it: at 10 kg the IQR rule stays quiet while |z| > 2 flags; at 11 kg both flag.
+	assert.equal(dm.iqrFlags(dd.pumpkins(10, 1))[8], false);
+	assert.equal(zText(dm.zScore(10, dd.pumpkins(10, 1))), '2.34');
+	assert.equal(dm.zFlags(dd.pumpkins(10, 1), 2)[8], true);
+	assert.equal(dm.iqrFlags(dd.pumpkins(11, 1))[8], true);
+	// Masking: with σ dividing by n, no |z| among n values can reach √(n − 1) = √8 ≈ 2.83, so |z| > 3 never flags.
+	for (let giant = 8; giant <= 60; giant += 1) {
+		const z = dm.zScore(giant, dd.pumpkins(giant, 1));
+		const value = z.exact ? toNumber(z.value) : z.value;
+		assert.ok(value < Math.sqrt(8) && value <= 3, `giant ${giant} kg: z = ${value}`);
+	}
+	assert.equal(dm.zScore(15, dd.pumpkins(15, 1)).value.toFixed(2), '2.70', 'above 8/3, the bound for the sample s, not σ');
+	// Two giants hide each other: mean 11, σ ≈ 10.19, each z ≈ 1.87, yet both are past the IQR fence.
+	const twoGiants = dd.pumpkins(30, 2);
+	assert.deepEqual(dm.mean(twoGiants), f(11, 1));
+	assert.equal(rootText(dm.populationSD(twoGiants)), '≈ 10.19');
+	assert.equal(zText(dm.zScore(30, twoGiants)), '1.87');
+	assert.deepEqual(dm.zFlags(twoGiants, 2), twoGiants.map(() => false));
+	assert.deepEqual(dm.iqrFlags(twoGiants), [false, false, false, false, false, false, false, true, true]);
+	// No giant: nothing is flagged, and the largest |z| is ≈ 1.73.
+	const noGiant = dd.pumpkins(8, 1);
+	assert.deepEqual(dm.iqrFlags(noGiant), noGiant.map(() => false));
+	assert.equal(Math.max(...noGiant.map((value) => Math.abs(dm.zScore(value, noGiant).value))).toFixed(2), '1.73');
+	assert.throws(() => dm.zScore(134, dd.EVERYONE_134), /σ is 0/);
+}
+
 // ---- VectorBoard2D (decision 0014) ----
 // Whole-number vectors make every sum, scaling, dot product and exact angle an integer fact. These asserts pin the
 // copy word for word and the rule that nothing gives an answer away before the reader commits.
