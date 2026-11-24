@@ -1668,6 +1668,237 @@ const announcerRun = () => {
 	assert.deepEqual(run('class-box', { type: 'stage', stage: 'box' }, { type: 'reset' }), dst.initialState('class-box'));
 }
 
+// ---- DescriptiveStats copy (describe.ts) ----
+// Every readout pinned word for word, the line-up cover, and the banned words on every reachable state.
+{
+	const dsay = await import('../src/components/react/descriptiveStats/describe.ts');
+	const ds = await import('../src/components/react/descriptiveStats/setups.ts');
+	const dst = await import('../src/components/react/descriptiveStats/state.ts');
+	const run = (setupId, ...actions) => actions.reduce(dst.reducer, dst.initialState(setupId));
+	const lines = (state) => dsay.readoutLines(state).join(' ');
+
+	// Number format.
+	assert.equal(dsay.groupThousands(1206), '1,206');
+	assert.equal(dsay.groupThousands(-1000), '−1,000');
+	assert.equal(dsay.groupThousands(48), '48');
+	assert.equal(dsay.amount(fraction(518, 5)), '103.6');
+	assert.equal(dsay.amount(fraction(76, 9)), '≈ 8.44');
+	assert.equal(dsay.equalsAmount(fraction(134, 1)), '= 134');
+	assert.equal(dsay.ordinal(1), '1st');
+	assert.equal(dsay.ordinal(3), '3rd');
+	assert.equal(dsay.ordinal(12), '12th');
+	assert.equal(dsay.ordinal(22), '22nd');
+
+	// class-lineup: the hunt for the middle child.
+	const open = dst.initialState('class-lineup');
+	assert.equal(dsay.statusLine(open), '9 children, in the order they arrived. Heights from 122 cm to 148 cm.');
+	assert.equal(dsay.statusLine(run('class-lineup', { type: 'line-up', on: true })), '9 children, lined up from shortest to tallest. Heights from 122 cm to 148 cm.');
+	assert.equal(dsay.coveredText(), 'The summary appears when you find the middle child.');
+	assert.equal(dsay.checkRefusal(open), 'Pick a child under Your middle child first.');
+	assert.equal(
+		dsay.feedbackLine(run('class-lineup', { type: 'pick', child: 4 }, { type: 'check' })),
+		'Child 5 stands in the middle of the arrival line, but 8 children are shorter and none is taller. Line them up first.',
+	);
+	assert.equal(
+		dsay.feedbackLine(run('class-lineup', { type: 'line-up', on: true }, { type: 'pick', child: 4 }, { type: 'check' })),
+		'Child 5 stands in the middle of the arrival line, but 8 children are shorter and none is taller. Try a shorter child.',
+	);
+	assert.equal(dsay.feedbackLine(run('class-lineup', { type: 'pick', child: 6 }, { type: 'check' })), 'Child 7 (137 cm) has 5 children shorter and 3 taller. Try a shorter child.');
+	assert.equal(dsay.feedbackLine(run('class-lineup', { type: 'pick', child: 1 }, { type: 'check' })), 'Child 2 (122 cm) has 0 children shorter and 8 taller. Try a taller child.');
+	const found = run('class-lineup', { type: 'pick', child: 0 }, { type: 'check' });
+	assert.equal(dsay.feedbackLine(found), 'Yes. Child 1 (133 cm) has 4 children shorter and 4 taller, so the median height is 133 cm.');
+	assert.deepEqual(dsay.readoutLines(found), [
+		'Mean: (122 + 125 + 128 + 131 + 133 + 137 + 140 + 142 + 148) / 9 = 1,206 / 9 = 134 cm. The tallest children stand further above the median than the shortest stand below it, so the mean sits 1 cm higher.',
+		'No height repeats, so this class has no mode.',
+		'Range: 148 − 122 = 26 cm.',
+	]);
+	const given = run('class-lineup', { type: 'pick', child: 4 }, { type: 'check' }, { type: 'check' }, { type: 'show-answer' });
+	assert.equal(dsay.feedbackLine(given), 'The middle child is child 1 (133 cm): 4 children are shorter and 4 taller, so the median height is 133 cm.');
+	const symbols = dst.reducer(found, { type: 'stage', stage: 'symbols' });
+	assert.deepEqual(dsay.symbolLines(symbols).map((line) => line.text), ['x₍₁₎ ≤ x₍₂₎ ≤ … ≤ x₍₉₎', 'median = x₍₅₎ = 133 cm', 'μ = (1/n) Σ xᵢ = 1,206 / 9 = 134 cm']);
+	for (const line of dsay.symbolLines(symbols)) assert.ok(!/[₍₎ᵢΣ≤]/.test(line.spoken), `spoken form has symbols: ${line.spoken}`);
+	assert.deepEqual(dsay.dataTable(open).headers, ['Child', 'Height (cm)'], 'no Place in line before Check');
+	assert.deepEqual(dsay.dataTable(found).headers, ['Child', 'Height (cm)', 'Place in line']);
+	assert.deepEqual(dsay.dataTable(found).rows[0], { header: 'Child 1', cells: ['133', '5th'] });
+	assert.deepEqual(dsay.summaryTable(open).rows, []);
+
+	// The cover: before Check, nothing states the median, the mean, the mode, a place or a summary row ("133" may
+	// appear, because it is child 1's height in the data table).
+	const summaryWords = /median|mean|mode|134|place|5th|summary row|range/i;
+	const coveredStates = [
+		open,
+		run('class-lineup', { type: 'line-up', on: true }),
+		...Array.from({ length: 9 }, (_, child) => run('class-lineup', { type: 'pick', child })),
+		...Array.from({ length: 9 }, (_, child) => run('class-lineup', { type: 'line-up', on: true }, { type: 'pick', child }, { type: 'check' })),
+		run('class-lineup', { type: 'stage', stage: 'numbers' }),
+		run('class-lineup', { type: 'check' }),
+	].filter((state) => dst.isCovered(state));
+	assert.ok(coveredStates.length >= 18);
+	for (const state of coveredStates) {
+		const texts = [
+			dsay.statusLine(state),
+			...dsay.readoutLines(state),
+			...dsay.symbolLines(state).flatMap((line) => [line.text, line.spoken]),
+			dsay.dataTable(state).caption,
+			...dsay.dataTable(state).headers,
+			...dsay.dataTable(state).rows.flatMap((entry) => [entry.header, ...entry.cells]),
+			...dsay.summaryTable(state).rows.flatMap((entry) => [entry.header, ...entry.cells]),
+			dsay.checkRefusal(state) ?? '',
+			dsay.announcementFor(state, { type: 'line-up', on: state.linedUp }),
+			dsay.announcementFor(state, { type: 'reset' }),
+			dsay.announcementFor(state, { type: 'stage', stage: state.stage }),
+		];
+		for (const text of texts) assert.ok(!summaryWords.test(text), `covered line-up says: ${text}`);
+		// A wrong verdict is allowed "middle" (of the arrival line) but never the median.
+		assert.ok(!/median|mean/.test(dsay.feedbackLine(state) ?? ''), dsay.feedbackLine(state));
+	}
+
+	// cafe-millionaire.
+	const cafe = dst.initialState('cafe-millionaire');
+	assert.equal(lines(cafe), '9 customers. Mean: 36 / 9 = 4. Median: 4, the 5th of 9. Mode: 5, held by 3 customers.');
+	const rich = run('cafe-millionaire', { type: 'preset', id: 'millionaire' });
+	assert.equal(lines(rich), '10 customers. Mean: 1,036 / 10 = 103.6. Median: (4 + 5) / 2 = 4.5, the average of the 5th and 6th. Mode: still 5.');
+	assert.equal(dsay.newcomerChange(rich), 'The mean jumped from 4 to 103.6 thousand dollars; the median moved from 4 to 4.5; the mode stayed at 5.');
+	assert.equal(dsay.announcementFor(rich, { type: 'newcomer', on: true }), 'The mean jumped from 4 to 103.6 thousand dollars; the median moved from 4 to 4.5; the mode stayed at 5.');
+	const neighbor = run('cafe-millionaire', { type: 'preset', id: 'neighbor' });
+	assert.equal(lines(neighbor), '10 customers. Mean: 42 / 10 = 4.2. Median: (4 + 5) / 2 = 4.5, the average of the 5th and 6th. Mode: still 5.');
+	assert.equal(dsay.newcomerChange(neighbor), 'The mean moved from 4 to 4.2 thousand dollars; the median moved from 4 to 4.5; the mode stayed at 5.');
+	assert.equal(dsay.describeSavings(1000), 'newcomer has 1,000 thousand dollars, a million');
+	assert.equal(dsay.describeSavings(6), 'newcomer has 6 thousand dollars');
+	assert.equal(dsay.formatSavings(1000), '1,000');
+	assert.equal(dsay.laneLabel(1000, ds.getSetup('cafe-millionaire')), '1,000 →');
+
+	// class-spread.
+	const spread = run('class-spread', { type: 'distances', on: true });
+	assert.deepEqual(dsay.readoutLines(spread), [
+		'Mean: 1,206 / 9 = 134 cm.',
+		'Distances from the mean, 134 cm: −12, −9, −6, −3, −1, +3, +6, +8 and +14 cm. They add up to 0, so their plain average is always 0.',
+		'Squared: 144 + 81 + 36 + 9 + 1 + 9 + 36 + 64 + 196 = 576 cm².',
+		'Variance: 576 / 9 = 64 cm². Standard deviation: √64 = 8 cm.',
+	]);
+	const tight = dst.reducer(spread, { type: 'preset', id: 'tight-class' });
+	assert.equal(
+		dsay.readoutLines(tight).slice(2).join(' '),
+		'Squared: 36 + 16 + 16 + 4 + 0 + 4 + 16 + 16 + 36 = 144 cm². Variance: 144 / 9 = 16 cm². Standard deviation: √16 = 4 cm. Dashed: σ for Our class was 8 cm; now it is 4 cm.',
+	);
+	assert.deepEqual(dsay.readoutLines(run('class-spread', { type: 'preset', id: 'everyone-134' })), [
+		'Every child is 134 cm: every distance is 0, so the variance is 0 and σ = 0 cm.',
+		'Dashed: σ for Our class was 8 cm; now it is 0 cm.',
+	]);
+	// Owner decision 6: the sample versions sit beside σ, never instead of it.
+	const sample = run('class-spread', { type: 'sample', on: true });
+	assert.deepEqual(dsay.readoutLines(sample).slice(-3), [
+		'Variance: 576 / 9 = 64 cm². Standard deviation: √64 = 8 cm.',
+		'As a sample of a bigger group, the same mean is written x̄ = 134 cm.',
+		'Sample variance: 576 / 8 = 72 cm². s = √72 ≈ 8.49 cm.',
+	]);
+	assert.equal(dsay.readoutLines(run('class-spread', { type: 'sample', on: true }, { type: 'preset', id: 'tight-class' }))[3], 'Sample variance: 144 / 8 = 18 cm². s = √18 ≈ 4.24 cm.');
+	assert.equal(
+		dsay.symbolLines(run('class-spread', { type: 'stage', stage: 'symbols' })).at(-1).text,
+		"÷ 9 counts every child once, as NumPy's np.std does by default. pandas' .std() divides by 8 and gives ≈ 8.49 cm.",
+	);
+	assert.equal(dsay.meanLabel(sample), 'μ = x̄ = 134');
+	assert.equal(dsay.spreadLabel('s', { exact: false, value: Math.sqrt(72) }), 's ≈ 8.49');
+	// The goal: the mean back at exactly 134 and σ under 8, met only after at least two moves.
+	assert.equal(dsay.goalLine(spread), 'Goal: without changing the mean, make σ smaller than 8 cm.');
+	assert.equal(dsay.goalStatus(spread), 'The mean is 134 cm, but σ = 8 cm is not smaller than 8 cm yet.');
+	const oneMove = run('class-spread', { type: 'select', child: 4 }, { type: 'set-value', value: 145 });
+	assert.equal(dsay.goalStatus(oneMove), 'The mean is now ≈ 133.67 cm. Move another child to bring it back to 134 cm.');
+	const twoMoves = dst.reducer(dst.reducer(oneMove, { type: 'select', child: 1 }), { type: 'set-value', value: 125 });
+	assert.equal(dsay.goalMet(twoMoves), true);
+	assert.equal(dsay.goalStatus(twoMoves), 'Done: the mean is still 134 cm and σ ≈ 6.98 cm is smaller than 8 cm.');
+	assert.equal(dsay.describeHeight(run('class-spread', { type: 'select', child: 3 }), 131), 'child 4, 131 cm');
+	assert.equal(
+		dsay.announcementFor(oneMove, { type: 'set-value', value: 145 }),
+		'Child 5 is now 145 cm. Mean ≈ 133.67 cm, σ ≈ 7.45 cm. The mean is now ≈ 133.67 cm. Move another child to bring it back to 134 cm.',
+	);
+
+	// class-box: the three steps.
+	assert.equal(lines(dst.initialState('class-box')), '9 children make 8 steps from shortest to tallest.');
+	assert.equal(lines(run('class-box', { type: 'stage', stage: 'quartiles' })), 'Each quarter is 2 steps: Q1 is the 3rd in line (128 cm), the median the 5th (133 cm), Q3 the 7th (140 cm).');
+	assert.equal(
+		lines(run('class-box', { type: 'stage', stage: 'box' })),
+		'IQR = 140 − 128 = 12 cm. The fences sit 1.5 × 12 = 18 cm beyond the box, at 110 cm and 158 cm. Every child is inside them, so the whiskers reach the shortest (122 cm) and the tallest (148 cm).',
+	);
+	assert.equal(
+		dsay.readoutLines(run('class-box', { type: 'stage', stage: 'box' }, { type: 'preset', id: 'one-very-tall' }))[1],
+		'162 cm is above the upper fence (158 cm), so it is drawn as its own dot and the whisker stops at 142 cm.',
+	);
+
+	// marks-scaling.
+	assert.equal(lines(dst.initialState('marks-scaling')), 'Ana scored 36 out of 50 on test A (72%) and 58 out of 80 on test B (72.5%).');
+	assert.equal(
+		lines(run('marks-scaling', { type: 'scale', scale: 'minmax' })),
+		'Test A: (36 − 21) / (39 − 21) = 15/18 = 5/6 ≈ 0.83. Test B: (58 − 38) / (64 − 38) = 20/26 = 10/13 ≈ 0.77. Min–max says test A.',
+	);
+	assert.equal(lines(run('marks-scaling', { type: 'scale', scale: 'z' })), 'Test A: (36 − 30) / 6 = 1. Test B: (58 − 50) / 8 = 1. Ana is exactly one standard deviation above the mean on both.');
+	const low = run('marks-scaling', { type: 'preset', id: 'low-mark' });
+	assert.equal(
+		dsay.announcementFor(low, { type: 'preset', id: 'low-mark' }),
+		"One mark of 10 moved both scores for test B: min–max rose from ≈ 0.77 to 48/54 = 8/9 ≈ 0.89, the z-score fell from 1 to ≈ 0.76. Ana's 58 did not change.",
+	);
+	assert.equal(lines(dst.reducer(low, { type: 'scale', scale: 'z' })), 'Test A: (36 − 30) / 6 = 1. Test B: mean ≈ 46.89, σ ≈ 14.70, so z = (58 − 46.89) / 14.70 ≈ 0.76. z says test A.');
+
+	// pumpkin-outliers.
+	assert.equal(
+		lines(run('pumpkin-outliers', { type: 'preset', id: 'one-giant' })),
+		'Q1 = 5 kg, Q3 = 7 kg, IQR = 2 kg, so the upper fence is 7 + 3 = 10 kg. The 30 kg pumpkin is past it: the IQR rule flags it. Mean ≈ 8.44 kg, σ ≈ 7.68 kg, so its z-score is ≈ 2.81: flagged at |z| > 2, not at |z| > 3.',
+	);
+	assert.equal(
+		dsay.readoutLines(run('pumpkin-outliers', { type: 'preset', id: 'one-giant' }, { type: 'cutoff', cutoff: 3 })).at(-1),
+		'With 9 pumpkins no z-score can reach √8 ≈ 2.83, however heavy the giant, so |z| > 3 can never flag anything here.',
+	);
+	assert.equal(
+		dsay.readoutLines(run('pumpkin-outliers', { type: 'preset', id: 'two-giants' }))[1],
+		'Mean 11 kg, σ ≈ 10.19 kg, each z ≈ 1.87. Neither passes |z| > 2: the two giants hide each other. The IQR rule still flags both.',
+	);
+	assert.equal(dsay.readoutLines(dst.initialState('pumpkin-outliers'))[1], 'Every pumpkin is inside the fences (2 kg to 10 kg) and every |z| is at most ≈ 1.73: nothing is flagged.');
+	assert.equal(dsay.readoutLines(run('pumpkin-outliers', { type: 'set-value', value: 10 }))[1], "On the fence is not past it: the IQR rule doesn't flag 10 kg, but z ≈ 2.34 passes |z| > 2.");
+	assert.equal(dsay.describeGiant(run('pumpkin-outliers', { type: 'preset', id: 'two-giants' }), 30), 'both giant pumpkins, 30 kg');
+	assert.equal(dsay.describeGiant(dst.initialState('pumpkin-outliers'), 30), 'giant pumpkin, 30 kg');
+	assert.equal(dsay.laneLabel(45, ds.getSetup('pumpkin-outliers')), '45 kg →');
+
+	// Board labels match the notation registry's symbols for μ, σ and z (decision 0009).
+	const { NOTATION } = await import('../src/data/notation.mjs');
+	const notationSay = Object.fromEntries(NOTATION.map((entry) => [entry.key, entry.say]));
+	assert.equal(notationSay.mu, '"mu"');
+	assert.equal(notationSay.sigma, '"sigma"');
+	assert.ok(dsay.symbolLines(run('class-spread', { type: 'stage', stage: 'symbols' }))[0].spoken.startsWith('mu,'));
+	assert.ok(dsay.symbolLines(run('class-spread', { type: 'stage', stage: 'symbols' }))[2].spoken.startsWith('sigma,'));
+
+	// Every reachable sentence: American spelling, no em dash, and never the banned word.
+	const banned = new RegExp(['pro', 'mpt'].join(''), 'i');
+	const british = /standardis|normalis|summaris|colour|centre|grey|metre\b/i;
+	let swept = 0;
+	for (const id of ds.SETUP_IDS) {
+		const setup = ds.getSetup(id);
+		const actions = [
+			{ type: 'line-up', on: true }, { type: 'pick', child: 0 }, { type: 'pick', child: 4 }, { type: 'check' }, { type: 'show-answer' },
+			{ type: 'select', child: 2 }, { type: 'distances', on: true }, { type: 'sample', on: true }, { type: 'newcomer', on: true }, { type: 'newcomer', on: false },
+			...['raw', 'minmax', 'z'].map((scale) => ({ type: 'scale', scale })), { type: 'cutoff', cutoff: 3 }, { type: 'cutoff', cutoff: 2 },
+			...setup.stages.map((stage) => ({ type: 'stage', stage })), ...setup.presets.map((preset) => ({ type: 'preset', id: preset.id })), { type: 'reset' },
+			...(setup.slider ? [setup.slider.min, setup.slider.max].map((value) => ({ type: 'set-value', value })) : []),
+		];
+		let state = dst.initialState(id);
+		for (const action of [...actions, ...actions]) {
+			state = dst.reducer(state, action);
+			const texts = [
+				dsay.statusLine(state), dsay.feedbackLine(state) ?? '', dsay.goalLine(state) ?? '', dsay.goalStatus(state) ?? '', ...dsay.readoutLines(state),
+				...dsay.symbolLines(state).flatMap((line) => [line.text, line.spoken]), dsay.announcementFor(state, action), dsay.boardLabel(setup),
+				...[dsay.dataTable(state), dsay.summaryTable(state)].flatMap((table) => [table.caption, ...table.headers, ...table.rows.flatMap((entry) => [entry.header, ...entry.cells])]),
+				...Object.values(dsay.CONTROL_LABELS), ...Object.values(dsay.STAGE_LABELS), ...Object.values(dsay.SCALE_LABELS), dsay.axisUnit(state),
+			];
+			for (const text of texts) {
+				assert.equal(typeof text, 'string');
+				assert.ok(!banned.test(text) && !british.test(text) && !text.includes('—'), `${id} after ${action.type}: ${text}`);
+				assert.ok(!/undefined|NaN|null/.test(text), `${id} after ${action.type}: ${text}`);
+				swept += 1;
+			}
+		}
+	}
+	assert.ok(swept > 2000, `swept ${swept} strings`);
+}
+
 // ---- VectorBoard2D (decision 0014) ----
 // Whole-number vectors make every sum, scaling, dot product and exact angle an integer fact. These asserts pin the
 // copy word for word and the rule that nothing gives an answer away before the reader commits.
