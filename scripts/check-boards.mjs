@@ -1547,6 +1547,127 @@ const announcerRun = () => {
 	assert.throws(() => dm.zScore(134, dd.EVERYONE_134), /σ is 0/);
 }
 
+// ---- DescriptiveStats setups, layout and state ----
+{
+	const dl = await import('../src/components/react/descriptiveStats/layout.ts');
+	const ds = await import('../src/components/react/descriptiveStats/setups.ts');
+	const dst = await import('../src/components/react/descriptiveStats/state.ts');
+	const dd = await import('../src/components/react/descriptiveStats/datasets.ts');
+	const guidedModule = await import('../src/components/react/guided/guided.ts');
+	const run = (setupId, ...actions) => actions.reduce(dst.reducer, dst.initialState(setupId));
+
+	// Layout: ties stack, near neighbors at 320px step up, and the layout never depends on the screen.
+	const cafeAxis = ds.getSetup('cafe-millionaire').axis;
+	assert.deepEqual(dl.stackRows([5, 4, 5, 5, 7], cafeAxis), [0, 0, 1, 2, 0]);
+	assert.equal(dl.stackHeight(dd.CAFE_SAVINGS, cafeAxis), 3, 'the mode is the tallest stack');
+	assert.equal(dl.stackHeight(dd.CLASS_HEIGHTS, ds.getSetup('class-lineup').axis), 1, 'no class heights touch');
+	assert.equal(dl.stackHeight(dd.pumpkins(8, 1), ds.getSetup('pumpkin-outliers').axis), 5, '1 kg apart is under a dot width at 320px');
+	assert.equal(dl.across({ min: 110, max: 160, tickStep: 5, narrowTickStep: 10 }, 135), 50);
+	assert.deepEqual(dl.ticks({ min: 110, max: 130, tickStep: 5, narrowTickStep: 10 }).map((tick) => `${tick.value}${tick.narrow ? '*' : ''}`), ['110*', '115', '120*', '125', '130*']);
+
+	// Setup validation names the setup and the cause.
+	assert.throws(() => ds.getSetup('class-line-up'), /unknown setup "class-line-up"/);
+	assert.throws(() => ds.getSetup('toString'), /unknown setup "toString"/);
+	for (const id of ds.SETUP_IDS) assert.equal(ds.getSetup(id).id, id);
+	assert.deepEqual(ds.SETUP_IDS, ['class-lineup', 'cafe-millionaire', 'class-spread', 'class-box', 'marks-scaling', 'pumpkin-outliers']);
+	const box = ds.getSetup('class-box');
+	assert.throws(() => ds.validateSetup({ ...box, presets: [{ id: 'ten', label: 'Ten children', values: [...dd.CLASS_HEIGHTS, 130] }] }), /"class-box".*"Ten children".*4k \+ 1.*10/);
+	const spread = ds.getSetup('class-spread');
+	// The slider must stay on the chart unless the setup declares an off-chart lane.
+	assert.throws(() => ds.validateSetup({ ...spread, slider: { ...spread.slider, max: 170 } }), /"class-spread".*170 is past the axis.*no off-chart lane/);
+	assert.throws(() => ds.validateSetup({ ...spread, slider: { ...spread.slider, min: 100 } }), /"class-spread".*100 is below the axis/);
+	assert.throws(() => ds.validateSetup({ ...spread, presets: [{ id: 'x', label: 'Too tall', values: dd.CLASS_TALL }] }), /"class-spread".*"Too tall".*162 is past the axis/);
+	assert.throws(() => ds.validateSetup({ ...spread, slider: { ...spread.slider, max: 145 } }), /"class-spread" preset "Our class": 148 is outside the slider's 110 to 145/);
+	assert.throws(() => ds.validateSetup({ ...spread, opening: dd.TIGHT_CLASS.map((h) => h + 1) }), /"class-spread".*mean 135.*134/);
+	const pumpkinSetup = ds.getSetup('pumpkin-outliers');
+	assert.ok(pumpkinSetup.lane && pumpkinSetup.slider.max > pumpkinSetup.axis.max, 'the giant can pass 30 kg only because the setup has a lane');
+	assert.throws(() => ds.validateSetup({ ...pumpkinSetup, lane: false }), /"pumpkin-outliers".*60 is past the axis, which ends at 30/);
+	// 320px spacing: on a 0–60 kg axis the ordinary pumpkins, 1 kg apart, could not be told apart.
+	assert.throws(() => ds.validateSetup({ ...pumpkinSetup, axis: { min: 0, max: 60, tickStep: 10, narrowTickStep: 20 } }), /"pumpkin-outliers" the opening: 4 and 5 sit 4\.2px apart at 320px/);
+	assert.throws(() => ds.validateSetup({ ...ds.getSetup('class-lineup'), opening: [...dd.CLASS_HEIGHTS, 130] }), /"class-lineup".*distinct and odd/);
+	assert.throws(() => ds.validateSetup({ ...ds.getSetup('class-lineup'), waitsForCheck: ['box'] }), /"class-lineup".*stage "box"/);
+	assert.throws(() => ds.validateSetup({ ...spread, waitsForCheck: ['symbols'] }), /"class-spread".*only line-up setups have a Check/);
+	assert.throws(() => ds.validateSetup({ ...spread, presets: [...spread.presets, ...box.presets.map((p) => ({ ...p, id: `${p.id}-2` }))] }), /"class-spread".*5 presets/);
+	assert.throws(() => ds.validateSetup({ ...ds.getSetup('cafe-millionaire'), presets: [{ id: 'rich', label: 'Richer', newcomer: 2000 }] }), /"cafe-millionaire".*"Richer".*2000 is outside the slider's 0 to 1000/);
+	assert.throws(() => ds.validateSetup({ ...ds.getSetup('marks-scaling'), anaB: 12 }), /"marks-scaling".*Ana's mark on test B is missing/);
+	assert.throws(() => ds.validateSetup({ ...box, axis: { min: 110, max: 170, tickStep: 7, narrowTickStep: 10 } }), /"class-box".*ticks don't fit/);
+
+	// class-lineup: the summary is covered until Check finds the middle child.
+	const lineupOpen = dst.initialState('class-lineup');
+	assert.equal(lineupOpen.stage, 'pictures');
+	assert.equal(dst.isCovered(lineupOpen), true);
+	assert.equal(dst.stageAllowed(lineupOpen, 'symbols'), false, 'Symbols waits for Check');
+	assert.equal(dst.stageAllowed(lineupOpen, 'numbers'), true);
+	assert.equal(dst.reducer(lineupOpen, { type: 'stage', stage: 'symbols' }).stage, 'pictures', 'a held-back stage is ignored');
+	assert.equal(dst.middleChild(dd.CLASS_HEIGHTS), 0);
+	assert.deepEqual(run('class-lineup', { type: 'check' }).refusal, { kind: 'no-pick' });
+	assert.equal(run('class-lineup', { type: 'check' }).failedChecks, 0, 'a refused Check is not a miss');
+	const wrongFive = run('class-lineup', { type: 'pick', child: 4 }, { type: 'check' });
+	assert.deepEqual(wrongFive.feedback, { kind: 'wrong', child: 4 });
+	assert.equal(wrongFive.failedChecks, 1);
+	assert.equal(dst.isCovered(wrongFive), true);
+	assert.equal(dst.reducer(wrongFive, { type: 'pick', child: 6 }).feedback, null, 'a new pick clears the old verdict');
+	const twoWrong = dst.reducer(dst.reducer(wrongFive, { type: 'pick', child: 6 }), { type: 'check' });
+	assert.equal(guidedModule.canShowAnswer(twoWrong), true);
+	const shown = dst.reducer(twoWrong, { type: 'show-answer' });
+	assert.deepEqual(shown.feedback, { kind: 'shown', child: 0 });
+	assert.equal(shown.checked, true);
+	assert.equal(shown.pick, 0);
+	assert.equal(dst.reducer(wrongFive, { type: 'show-answer' }), wrongFive, 'no answer after one miss');
+	const right = run('class-lineup', { type: 'line-up', on: true }, { type: 'pick', child: 0 }, { type: 'check' });
+	assert.deepEqual(right.feedback, { kind: 'right', child: 0 });
+	assert.equal(dst.isCovered(right), false);
+	assert.equal(dst.stageAllowed(right, 'symbols'), true);
+	assert.equal(dst.reducer(right, { type: 'check' }), right, 'Check is ignored once it has passed');
+	assert.equal(dst.reducer(right, { type: 'pick', child: 3 }), right, 'the pick is locked after Check');
+
+	// class-spread: presets keep the previous σ as a ghost; moving a child steps away from every preset.
+	const spreadOpen = dst.initialState('class-spread');
+	assert.equal(spreadOpen.activePreset, 'our-class');
+	const tight = dst.reducer(spreadOpen, { type: 'preset', id: 'tight-class' });
+	assert.deepEqual(tight.values, dd.TIGHT_CLASS);
+	assert.deepEqual(tight.ghost, { sigma: { exact: true, value: fraction(8, 1) }, preset: 'Our class' });
+	const moved = run('class-spread', { type: 'select', child: 3 }, { type: 'set-value', value: 131 });
+	assert.deepEqual(moved.values, [133, 122, 140, 131, 148, 125, 137, 131, 142]);
+	assert.equal(moved.activePreset, null);
+	assert.equal(dst.reducer(moved, { type: 'preset', id: 'tight-class' }).ghost, null, 'no ghost for values that were not a preset');
+	assert.equal(run('class-spread', { type: 'set-value', value: 400 }).values[0], 160, 'the slider clamps');
+	assert.throws(() => run('class-spread', { type: 'set-value', value: 131.5 }), /whole number/);
+	assert.equal(run('class-spread', { type: 'select', child: 9 }).selected, 0, 'no child 10');
+	assert.equal(run('class-spread', { type: 'sample', on: true }).sample, true);
+	assert.equal(dst.reducer(spreadOpen, { type: 'check' }), spreadOpen, 'spread setups have no Check');
+
+	// cafe-millionaire: the switch and the presets agree on who is in the cafe.
+	const cafeOpen = dst.initialState('cafe-millionaire');
+	assert.equal(cafeOpen.activePreset, 'nobody');
+	assert.deepEqual(dst.valuesNow(cafeOpen), dd.CAFE_SAVINGS);
+	const walksIn = dst.reducer(cafeOpen, { type: 'newcomer', on: true });
+	assert.deepEqual(dst.valuesNow(walksIn), [...dd.CAFE_SAVINGS, 1000]);
+	assert.equal(walksIn.activePreset, 'millionaire');
+	const neighbor = dst.reducer(walksIn, { type: 'preset', id: 'neighbor' });
+	assert.equal(neighbor.newcomer, 6);
+	assert.equal(neighbor.activePreset, 'neighbor');
+	assert.equal(dst.reducer(neighbor, { type: 'set-value', value: 7 }).activePreset, null);
+	assert.equal(dst.reducer(dst.reducer(neighbor, { type: 'newcomer', on: false }), { type: 'set-value', value: 20 }).newcomer, null, 'the slider waits while nobody new is in');
+	assert.equal(dst.reducer(neighbor, { type: 'preset', id: 'nobody' }).newcomer, null);
+
+	// pumpkin-outliers: with two giants the slider moves both, and n stays 9.
+	const twoGiants = run('pumpkin-outliers', { type: 'preset', id: 'two-giants' }, { type: 'set-value', value: 45 });
+	assert.deepEqual(twoGiants.values, [4, 5, 5, 6, 6, 6, 7, 45, 45]);
+	assert.equal(twoGiants.activePreset, null);
+	assert.equal(run('pumpkin-outliers', { type: 'set-value', value: 30 }).activePreset, 'one-giant');
+	assert.equal(run('pumpkin-outliers', { type: 'cutoff', cutoff: 3 }).cutoff, 3);
+	assert.equal(run('pumpkin-outliers', { type: 'cutoff', cutoff: 4 }).cutoff, 2);
+	assert.equal(dst.initialState('pumpkin-outliers').activePreset, 'no-giant');
+
+	// marks-scaling and class-box.
+	assert.deepEqual(run('marks-scaling', { type: 'preset', id: 'low-mark' }).values, dd.TEST_B_LOW);
+	assert.equal(run('marks-scaling', { type: 'scale', scale: 'z' }).scale, 'z');
+	assert.equal(run('class-box', { type: 'stage', stage: 'box' }).stage, 'box');
+	assert.equal(run('class-box', { type: 'stage', stage: 'symbols' }).stage, 'line-up');
+	assert.deepEqual(run('class-box', { type: 'stage', stage: 'box' }, { type: 'reset' }), dst.initialState('class-box'));
+}
+
 // ---- VectorBoard2D (decision 0014) ----
 // Whole-number vectors make every sum, scaling, dot product and exact angle an integer fact. These asserts pin the
 // copy word for word and the rule that nothing gives an answer away before the reader commits.
