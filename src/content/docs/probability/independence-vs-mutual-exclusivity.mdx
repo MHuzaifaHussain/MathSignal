@@ -1,0 +1,428 @@
+---
+title: "Independent vs mutually exclusive events"
+description: "Mutually exclusive events can't happen together; independent events tell you nothing about each other. Two dice and a deck of cards show the difference."
+sidebar:
+  order: 7
+draft: true
+topic: probability/independence-vs-mutual-exclusivity
+type: D
+objectives:
+  - Decide whether two events are mutually exclusive by checking whether they share an outcome, and whether they are independent by checking P(A ∩ B) = P(A) P(B).
+  - Explain why two mutually exclusive events with positive probabilities are always dependent.
+  - Give an example of events that overlap and are independent, and of events that overlap and are dependent.
+  - Explain why a softmax output treats classes as mutually exclusive, while one sigmoid per label treats labels as independent given the input.
+takeaways:
+  - Mutually exclusive means A ∩ B is empty, a fact about the sets. Independent means P(A ∩ B) = P(A) P(B), a fact about the probabilities.
+  - On two dice, doubles and sum 7 share no roll, so P(both) = 0, yet P(doubles) P(sum 7) = 1/36. They are exclusive and dependent, because learning one rules the other out.
+  - '"First die is 6" and "sum is 7" overlap in one roll, (6,1), and 1/36 = 1/6 × 1/6, so they are independent.'
+  - Events can be both exclusive and independent only if one of them has probability 0.
+  - Changing the probabilities can make or break independence but never exclusivity. On a fair die, "at most 2" and "even" are independent (1/6 = 1/3 × 1/2). Loaded toward six, they are not (1/12 against 1/8).
+references:
+  - grinstead2003
+  - kelly1986
+  - molnar2016
+  - goodfellow2016
+  - sklearn-multiclass
+author: Muhammad Huzaifa Hussain
+reviewedAt: 2026-11-25
+aiAssisted: true
+primaryQuery: independence vs mutual exclusivity
+searchIntent: compare
+depthStatus: complete
+---
+
+import Analogy from "../../../components/Analogy.astro";
+import CheckYourself from "../../../components/CheckYourself.astro";
+import Cite from "../../../components/Cite.astro";
+import CommonMistakes from "../../../components/CommonMistakes.astro";
+import ConceptHeader from "../../../components/ConceptHeader.astro";
+import ConceptMap from "../../../components/ConceptMap.astro";
+import FormalDefinition from "../../../components/FormalDefinition.astro";
+import Mistake from "../../../components/Mistake.astro";
+import NotationKey from "../../../components/NotationKey.astro";
+import PreciseStatement from "../../../components/PreciseStatement.astro";
+import PyRunner from "../../../components/PyRunner.astro";
+import References from "../../../components/References.astro";
+import SideNote from "../../../components/SideNote.astro";
+import StepThrough from "../../../components/StepThrough.astro";
+import Takeaways from "../../../components/Takeaways.astro";
+import WhyThisMatters from "../../../components/WhyThisMatters.astro";
+import WorkedExample from "../../../components/WorkedExample.astro";
+import EventSpace from "../../../components/react/EventSpace.tsx";
+
+<ConceptHeader
+  oneLiner="Two events are mutually exclusive when they can't both happen, and independent when knowing that one happened doesn't change the probability of the other; apart from events of probability 0, mutually exclusive events are never independent."
+  difficulty="beginner"
+/>
+
+## In everyday terms
+
+<Analogy breaks="A day can be cloudy, so 'rain all day' and 'sun all day' can both be false: mutually exclusive is not the same as 'one or the other must happen'. And a picture can show you whether two events overlap, but not whether they are independent. That needs the numbers, and a loaded die can change the answer while the picture stays the same.">
+
+Pick a day of a school holiday at random. "Rain all day" and "sun all day" can't both be true of the same day, so they are mutually exclusive. Now someone tells you it rained all day. The chance of sun all day drops to 0: the news rules it out completely. So the two events are far from independent: one tells you everything about the other.
+
+Add a friend who tossed a coin that morning. Hearing that it rained tells you nothing about whether the coin came up heads. Rain and heads are independent, and they can easily happen together on the same day.
+
+That second picture covers the first one's blind spot: events that overlap can still be independent. Toss two separate coins. "First is heads" and "second is heads" both happen on HH, yet neither coin tells you anything about the other.
+
+</Analogy>
+
+<WhyThisMatters>
+Choosing between one softmax and one sigmoid per label is choosing between these two ideas. Softmax builds in that the classes are mutually exclusive, so a higher "cat" must lower "dog". One sigmoid per label predicts each label on its own, treating the labels as independent given the input. The wrong choice forces exclusivity on tags that go together, such as "dog" and "outdoor", or treats two labels as unlinked once the input is known when they always appear together.
+</WhyThisMatters>
+
+## Overlap is not the same as dependence
+
+Before you touch anything: event A is "the sum is 7" and event B is "the first die is 6". They share one roll, (6,1). Are they independent? Going further: doubles and "the sum is 7" share no roll at all. Does that make them independent?
+
+The board shows the 36 rolls of two dice, with A's squares tagged "A" and B's tagged "B". The rows labeled "A:" and "B:" hold presets. Under the grid the board gives only P(A) and P(B), starting with "A = sum is 7: 6 of 36 = 1/6 (≈ 0.17)". The switch Compare A and B reveals the verdict, and Shrink the world to B is refused until Compare is on. Your task: for both pairs above, write down P(A) × P(B) and your verdict before you press anything. Then press Compare A and B for the opening pair, and press Doubles in the "B:" row for the second.
+
+<div class="not-content">
+  <EventSpace client:visible setup="dice-independence" />
+</div>
+
+The overlapping pair is independent. The board says "Independent: yes.", "Mutually exclusive: no, A and B share 1 outcome, \{(6,1)\}." and "P(A and B) = 1/36, and P(A) × P(B) = 1/6 × 1/6 = 1/36: equal." Six rolls make 7, one from each first face, so learning that the first die is 6 leaves exactly one way in six.
+
+The pair with no overlap is dependent: "Independent: no.", "Mutually exclusive: yes, A and B share no outcome." and "P(A and B) = 0, but P(A) × P(B) = 1/6 × 1/6 = 1/36 (≈ 0.03): not equal." Once you know the roll is a double, a sum of 7 is impossible: "P(A | B) = 0, while P(A) = 1/6 (≈ 0.17)".
+
+Overlap doesn't settle it either. Press Sum is at least 10 for A and First die is 6 for B. They share three rolls, and the board says "P(A and B) = 1/12 (≈ 0.08), but P(A) × P(B) = 1/6 × 1/6 = 1/36 (≈ 0.03): not equal." with "P(A | B) = 1/2 (0.50)". Finally press Sum is 7 for A and Clear for B. An event that can't happen is "Independent: yes, but only because B can't happen." The product test passes, 0 = 1/6 × 0, while the board also says "P(A | B) is undefined, because B can't happen.": there is nothing left to divide by.
+
+Whether two events overlap is visible in the grid. Whether they are independent needs the two numbers.
+
+## Two different questions about the same pair of events
+
+Mutual exclusivity asks whether A and B share an outcome. Independence asks whether knowing that B happened changes the probability of A. The [independence page](/probability/independence/) defines the second idea; here the two are set side by side.
+
+| | Mutually exclusive | Independent |
+| --- | --- | --- |
+| Definition | A ∩ B = ∅ | P(A ∩ B) = P(A) P(B) |
+| Depends on | Only the sets | The probabilities |
+| P(A and B) | 0 | P(A) P(B) |
+| P(A or B) | P(A) + P(B) | P(A) + P(B) − P(A) P(B) |
+| Learning B happened, P(B) > 0 | P(A \| B) = 0 | P(A \| B) = P(A) |
+| Seen in the grid? | Yes: no shared square | No: you must compute |
+| Dice | Doubles; sum 7 | First die 6; sum 7 |
+| Cards | Hearts; spades | King; diamond |
+| ML | Softmax classes | One sigmoid per label, given the input |
+
+The "or" row comes from [adding, then taking the overlap off once](/probability/probability-axioms/#a-or-b-add-then-take-the-overlap-off-once). For doubles and sum 7 it gives 1/6 + 1/6 = 1/3; for first die 6 and sum 7, 1/6 + 1/6 − 1/36 = 11/36.
+
+### Exclusive events with positive probability are always dependent
+
+If A and B can't happen together, P(A ∩ B) = 0, but P(A) P(B) is above 0 whenever both events are possible. So the product test fails, and learning that B happened drops P(A) to 0. Kelly and Zwiers call the concept of mutually exclusive events, except in certain pathological cases, "the exact antithesis of the concept of independent events" (§3) <Cite id="kelly1986" />.
+
+### Independent events with positive probability must overlap
+
+The same fact read backward: if A and B are independent and both possible, P(A ∩ B) = P(A) P(B) > 0, so they share at least one outcome. First die 6 and second die 6 share (6,6), with 1/36 = 1/6 × 1/6.
+
+### When are they both true?
+
+Only when P(A) = 0 or P(B) = 0. Grinstead and Snell's Definition 4.1 counts two events as independent when at least one of them has probability 0 (p. 139) <Cite id="grinstead2003" />. An impossible event is exclusive of and independent of everything, which is why the board's Clear gives both verdicts.
+
+### When to use which
+
+- Use exclusivity to add probabilities, as in [events that can't happen together add up](/probability/probability-axioms/#events-that-cant-happen-together-add-up), and for one-of-K labels.
+- Use independence to multiply probabilities: separate dice, coins or devices, and draws with replacement.
+- Exclusivity is a question about the sets, answered by listing outcomes. Independence is a question about the probabilities, answered by numbers from data or from how the experiment works.
+
+<SideNote>De Moivre defined independent events as ones where "the happening of one neither forwards nor obstructs" the other (quoted in Grinstead and Snell, p. 148) <Cite id="grinstead2003" />. Exclusive events obstruct each other completely.</SideNote>
+
+## Load the die, keep the sets
+
+Before you look: on a fair die, A = "at most 2" and B = "even" are independent. Load the die toward six. Do A and B stay independent? Do they stay overlapping?
+
+This board shows one die as a list of six faces, each with its share of 12 units ("2/12" on a fair die). A and B come from presets only, and the "Die" choice switches between Fair die and Loaded toward six. Your task: press Even in the "B:" row, press Compare A and B, then choose Loaded toward six.
+
+<div class="not-content">
+  <EventSpace client:visible setup="die-compare" />
+</div>
+
+The overlap stays and the independence goes. On the fair die the board says "P(A and B) = 1/6, and P(A) × P(B) = 1/3 × 1/2 = 1/6: equal." Loaded toward six, the faces carry 1, 1, 1, 1, 1 and 7 units, and it says "Independent: no." with "P(A and B) = 1/12 (≈ 0.08), but P(A) × P(B) = 1/6 × 3/4 = 1/8 (≈ 0.13): not equal." and "P(A | B) = 1/9 (≈ 0.11), while P(A) = 1/6 (≈ 0.17)". The line "Mutually exclusive: no, A and B share 1 outcome, \{2\}." never changes: the sets did not move.
+
+Now press 5 or 6 for B. "At most 2" and "5 or 6" are exclusive, and dependent under both dice, 0 against 1/9. Even against odd stays exclusive however the die is loaded. Last, press Clear for A: the board says "Independent: yes, but only because A can't happen." and "Mutually exclusive: yes, A and B share no outcome.", the one pair that is both.
+
+## Notation
+
+<NotationKey symbols={["sample-space", "event-collection", "event", "intersection", "union", "empty-set", "complement", "probability", "conditional", "independent", "softmax", "sigmoid"]} />
+
+<PreciseStatement>
+
+Let $(\Omega, \mathcal{F}, P)$ be a probability space and $A, B \in \mathcal{F}$.
+
+(i) $A$ and $B$ are mutually exclusive, or disjoint, if $A \cap B = \emptyset$. Then $P(A \cap B) = 0$ and $P(A \cup B) = P(A) + P(B)$.
+
+(ii) $A$ and $B$ are independent, written $A \perp\!\!\!\perp B$, if $P(A \cap B) = P(A)\,P(B)$. If $P(B) > 0$, this is equivalent to $P(A \mid B) = P(A)$.
+
+Boundary cases: an event of probability 0 is independent of every event, itself included, and $A$ is independent of itself exactly when $P(A) \in \{0, 1\}$. Exclusive does not mean complementary. For three or more events, independence of every pair is not enough; see the [independence page](/probability/independence/).
+
+</PreciseStatement>
+
+<FormalDefinition>
+
+<StepThrough title="Exclusive and independent forces a probability of 0" rigor="full">
+
+1. Assume $A \cap B = \emptyset$ and $P(A \cap B) = P(A)\,P(B)$.
+2. Then $P(A \cap B) = P(\emptyset) = 0$.
+3. So $P(A)\,P(B) = 0$.
+4. A product of two real numbers is 0 only if one of them is, so $P(A) = 0$ or $P(B) = 0$.
+5. Contrapositive: if $P(A) > 0$ and $P(B) > 0$, exclusive events are dependent, and independent events overlap with $P(A \cap B) > 0$.
+
+</StepThrough>
+
+</FormalDefinition>
+
+## Worked examples
+
+<WorkedExample number={1} title="Hearts and spades">
+
+Draw one card from 52. $P(\text{heart}) = P(\text{spade}) = 13/52 = 1/4$. No card is both, so $P(\text{both}) = 0$ against $1/4 \times 1/4 = 1/16$: exclusive and dependent, with $P(\text{heart} \mid \text{spade}) = 0$. And $P(\text{heart or spade}) = 1/4 + 1/4 = 1/2$, so half the deck is neither.
+
+</WorkedExample>
+
+<WorkedExample number={2} title="A king and a diamond">
+
+$P(\text{king}) = 4/52 = 1/13$, $P(\text{diamond}) = 13/52 = 1/4$, and $P(\text{king of diamonds}) = 1/52 = 1/13 \times 1/4$: they overlap and are independent. Among the 13 diamonds, one is a king, so $P(\text{king} \mid \text{diamond}) = 1/13 = P(\text{king})$. Molnar reports a teacher calling exactly this pair dependent because the king of diamonds is in both <Cite id="molnar2016" />.
+
+</WorkedExample>
+
+<WorkedExample number={3} title="Three tags on 200 photos" faded>
+
+Of 200 photos, 60 show a dog, 120 are outdoor and the other 80 indoor, 20 are beach photos (all outdoor), and 36 show a dog outdoors. Pick a photo at random. For each pair, dog and outdoor, beach and outdoor, indoor and outdoor, say whether it is exclusive and whether it is independent.
+
+<div slot="solution">
+
+- Dog and outdoor: $36/200 = 0.18 = 0.3 \times 0.6$, so they overlap and are independent, with $P(\text{outdoor} \mid \text{dog}) = 36/60 = 3/5 = P(\text{outdoor})$.
+- Beach and outdoor: $20/200 = 0.1$ against $0.1 \times 0.6 = 0.06$, so they overlap and are dependent, with $P(\text{outdoor} \mid \text{beach}) = 1$.
+- Indoor and outdoor: $0$ against $0.4 \times 0.6 = 0.24$, so they are exclusive and dependent.
+
+</div>
+
+</WorkedExample>
+
+## Exclusive classes and independent labels in ML
+
+A classifier's output layer commits to one of the two ideas. The [probability axioms page](/probability/probability-axioms/#softmax-outputs) shows why softmax outputs form one distribution and why [one sigmoid per label](/probability/probability-axioms/#one-sigmoid-per-label) does not; this section uses the same logits, $(2, 1, 0)$ for cat, dog and bird, to look at dependence.
+
+### Softmax: classes that exclude each other
+
+Softmax turns the logits into $(0.665, 0.245, 0.090)$, which add up to 1. "The class is cat" and "the class is dog" are mutually exclusive by construction, so $P(\text{cat and dog} \mid x) = 0$ and the classes are dependent. Raise the cat logit from 2 to 3 and the output becomes $(0.844, 0.114, 0.042)$: dog falls although its own score did not change. Goodfellow and coauthors note that because the outputs sum to 1, an increase in one must lower the others (§6.2.2.3) <Cite id="goodfellow2016" />.
+
+### One sigmoid per label: labels that are independent given the input
+
+The same logits through $\operatorname{sigmoid}(z) = 1/(1 + e^{-z})$ give $(0.881, 0.731, 0.500)$. Raise cat to 3 and the outputs become $(0.953, 0.731, 0.500)$: dog doesn't move. Read as one joint distribution, the model multiplies, so $P(\text{cat and dog} \mid x) = 0.881 \times 0.731 = 0.644$, $P(\text{no label} \mid x) = 0.016$ and $P(\text{exactly one label} \mid x) = 0.178$. That is independence given the input $x$, which is [conditional independence](/probability/conditional-independence/), not independence over the whole dataset.
+
+### When the labels are linked
+
+Over a dataset, labels can be dependent, like beach and outdoor in worked example 3. scikit-learn describes multiclass classification as giving each sample one and only one label (§1.12.1), and fitting one binary classifier per label as treating each label independently (§1.12.2). Classifier chains instead combine binary classifiers into a model that can exploit correlations among targets (§1.12.2.3) <Cite id="sklearn-multiclass" />. Shared features still let per-label outputs move together across images; what the product can't express is a link that remains once $x$ is known.
+
+## Check every pair in code
+
+This runs in your browser and stops with an error if any number on this page is off. It uses exact fractions, then rolls two dice 100,000 times with a fixed seed.
+
+<PyRunner
+  title="exclusive_vs_independent.py"
+  code={`
+import math
+import random
+from fractions import Fraction as F
+from itertools import product
+
+
+def prob(event, space, weight=None):
+    """Exact probability: count outcomes, or add their weights."""
+    if weight is None:
+        return F(len(event), len(space))
+    return sum((weight[outcome] for outcome in event), F(0))
+
+
+def compare(a, b, space, weight=None):
+    """Exclusive comes from the sets; independent from the probabilities."""
+    exclusive = len(a & b) == 0
+    independent = prob(a & b, space, weight) == prob(a, space, weight) * prob(b, space, weight)
+    return exclusive, independent
+
+
+# Two dice: 36 equally likely ordered pairs.
+dice = set(product(range(1, 7), repeat=2))
+first6 = {roll for roll in dice if roll[0] == 6}
+second6 = {roll for roll in dice if roll[1] == 6}
+sum7 = {roll for roll in dice if sum(roll) == 7}
+sum10 = {roll for roll in dice if sum(roll) >= 10}
+double = {roll for roll in dice if roll[0] == roll[1]}
+empty = set()
+p = lambda event: prob(event, dice)
+
+assert len(dice) == 36 and len(first6) == len(sum7) == len(double) == len(sum10) == 6
+assert sum7 & first6 == {(6, 1)} and p(sum7 & first6) == F(1, 36) == p(sum7) * p(first6)
+assert compare(sum7, first6, dice) == (False, True)
+assert p(sum7 & first6) / p(first6) == F(1, 6) == p(sum7)
+assert sum7 & double == set() and p(sum7) * p(double) == F(1, 36)
+assert compare(sum7, double, dice) == (True, False)
+assert p(sum7 & double) / p(double) == 0
+assert sum10 & first6 == {(6, 4), (6, 5), (6, 6)} and p(sum10 & first6) == F(3, 36) == F(1, 12)
+assert compare(sum10, first6, dice) == (False, False)
+assert p(sum10 & first6) / p(first6) == F(1, 2) == p(sum10 & first6) / p(sum10)
+assert compare(sum7, empty, dice) == (True, True) and p(sum7) * p(empty) == 0
+assert compare(sum7, second6, dice) == (False, True) and sum7 & second6 == {(1, 6)}
+assert compare(first6, second6, dice) == (False, True) and p(first6 & second6) == F(1, 36)
+assert compare(double, first6, dice) == (False, True)
+assert compare(sum10, sum7, dice) == (True, False)
+assert p(double | sum7) == F(1, 3) == p(double) + p(sum7)
+assert p(first6 | sum7) == F(11, 36) == p(first6) + p(sum7) - p(first6) * p(sum7)
+
+# A deck of 52 cards.
+deck = set(product("A23456789TJQK", "SHDC"))
+card = lambda event: prob(event, deck)
+king = {c for c in deck if c[0] == "K"}
+diamond = {c for c in deck if c[1] == "D"}
+heart = {c for c in deck if c[1] == "H"}
+spade = {c for c in deck if c[1] == "S"}
+assert card(king) == F(1, 13) and card(diamond) == F(1, 4) and card(heart) == F(13, 52) == F(1, 4)
+assert king & diamond == {("K", "D")} and card(king & diamond) == F(1, 52) == card(king) * card(diamond)
+assert card(king & diamond) / card(diamond) == F(1, 13)
+assert heart & spade == set() and card(heart) * card(spade) == F(1, 16)
+assert card(heart & spade) / card(spade) == 0 and card(heart | spade) == F(1, 2)
+
+# One die, fair and loaded (units out of 12), with the board's events.
+die = set(range(1, 7))
+fair = {face: F(2, 12) for face in die}
+loaded = {face: F(1, 12) for face in die}
+loaded[6] = F(7, 12)
+assert sum(fair.values()) == 1 and sum(loaded.values()) == 1
+at_most_2, even, five_or_six, at_least_4 = {1, 2}, {2, 4, 6}, {5, 6}, {4, 5, 6}
+assert at_most_2 & even == {2}
+pf = lambda event: prob(event, die, fair)
+pl = lambda event: prob(event, die, loaded)
+assert pf(at_most_2) == F(1, 3) and pf(even) == F(1, 2) and pf(at_most_2 & even) == F(1, 6) == F(1, 3) * F(1, 2)
+assert compare(at_most_2, even, die, fair) == (False, True)
+assert pl(at_most_2) == F(2, 12) == F(1, 6) and pl(even) == F(9, 12) == F(3, 4)
+assert pl(at_most_2 & even) == F(1, 12) and pl(at_most_2) * pl(even) == F(1, 8)
+assert compare(at_most_2, even, die, loaded) == (False, False)
+assert pl(at_most_2 & even) / pl(even) == F(1, 9)
+assert pl(at_most_2 & even) / pl(at_most_2) == F(1, 2)
+assert compare(at_most_2, five_or_six, die, fair) == (True, False) and pf(at_most_2) * pf(five_or_six) == F(1, 9)
+assert compare(at_most_2, five_or_six, die, loaded) == (True, False) and pl(five_or_six) == F(2, 3)
+assert pl(at_most_2) * pl(five_or_six) == F(1, 9)
+assert compare(even, at_least_4, die, fair) == (False, False) and pf(even & at_least_4) == F(1, 3)
+assert pf(even) * pf(at_least_4) == F(1, 4) and pf(even & at_least_4) / pf(at_least_4) == F(2, 3)
+assert compare(empty, five_or_six, die, fair) == (True, True) == compare(empty, five_or_six, die, loaded)
+# Any loading keeps even and odd exclusive.
+assert compare(even, die - even, die, loaded) == (True, False)
+
+# Worked example 3: 200 photos.
+total, dog, outdoor, indoor, beach, dog_outdoor = 200, 60, 120, 80, 20, 36
+assert indoor + outdoor == total
+assert F(dog_outdoor, total) == F(dog, total) * F(outdoor, total) == F(9, 50) == F(18, 100)
+assert F(dog_outdoor, dog) == F(3, 5) == F(outdoor, total)
+assert F(beach, total) == F(1, 10) != F(beach, total) * F(outdoor, total) == F(6, 100)
+assert F(beach, beach) == 1
+assert F(indoor, total) * F(outdoor, total) == F(24, 100) != 0
+
+# Check yourself.
+pa, pb = F(3, 10), F(5, 10)
+assert (0, pa + pb) == (0, F(8, 10))
+assert (pa * pb, pa + pb - pa * pb) == (F(15, 100), F(65, 100))
+tosses = set(product("HT", repeat=6))
+last_two = {t for t in tosses if t[4:] == ("H", "H")}
+three = {t for t in tosses if t.count("H") == 3}
+assert len(tosses) == 64 and len(last_two) == 16 and len(three) == 20 and len(last_two & three) == 4
+assert F(len(last_two), 64) == F(1, 4) and F(len(three), 64) == F(5, 16)
+assert F(len(last_two & three), len(three)) == F(1, 5)
+assert F(len(last_two & three), 64) == F(1, 16) != F(1, 4) * F(5, 16) == F(5, 64)
+first_h = {t for t in tosses if t[0] == "H"}
+third_h = {t for t in tosses if t[2] == "H"}
+assert compare(first_h, third_h, tosses) == (False, True)
+for share in (F(0), F(1, 2), F(1)):
+    assert (share == share * share) == (share in (0, 1))
+
+
+# ML: the same logits (2, 1, 0) for cat, dog and bird.
+def softmax(logits):
+    exps = [math.exp(z) for z in logits]
+    return [e / sum(exps) for e in exps]
+
+
+def sigmoid(z):
+    return 1 / (1 + math.exp(-z))
+
+
+close = lambda xs, ys: all(math.isclose(x, y, abs_tol=5e-4) for x, y in zip(xs, ys))
+before, after = softmax([2, 1, 0]), softmax([3, 1, 0])
+assert close(before, [0.6652, 0.2447, 0.0900]) and math.isclose(sum(before), 1)
+assert close(after, [0.8438, 0.1142, 0.0420]) and after[1] < before[1]
+labels, raised = [sigmoid(z) for z in (2, 1, 0)], [sigmoid(z) for z in (3, 1, 0)]
+assert close(labels, [0.8808, 0.7311, 0.5]) and close(raised, [0.9526, 0.7311, 0.5])
+assert raised[1:] == labels[1:]
+cat, dog_p, bird = labels
+none = (1 - cat) * (1 - dog_p) * (1 - bird)
+exactly_one = cat * (1 - dog_p) * (1 - bird) + (1 - cat) * dog_p * (1 - bird) + (1 - cat) * (1 - dog_p) * bird
+assert close([cat * dog_p, none, exactly_one], [0.6439, 0.0160, 0.1780])
+# The page shows three decimals.
+shown = lambda xs: [f"{x:.3f}" for x in xs]
+assert shown(before) == ["0.665", "0.245", "0.090"] and shown(after) == ["0.844", "0.114", "0.042"]
+assert shown(labels) == ["0.881", "0.731", "0.500"] and shown(raised) == ["0.953", "0.731", "0.500"]
+assert shown([cat * dog_p, none, exactly_one]) == ["0.644", "0.016", "0.178"]
+print("softmax(2, 1, 0):", [round(x, 3) for x in before])
+print("sigmoids(2, 1, 0):", [round(x, 3) for x in labels])
+
+# Simulation: first die 6 and sum 7, rolled 100,000 times.
+rng = random.Random(0)
+rolls = [(rng.randint(1, 6), rng.randint(1, 6)) for _ in range(100_000)]
+share_a = sum(r[0] == 6 for r in rolls) / len(rolls)
+share_b = sum(sum(r) == 7 for r in rolls) / len(rolls)
+share_both = sum(r == (6, 1) for r in rolls) / len(rolls)
+print(f"both: {share_both:.5f}, product of shares: {share_a * share_b:.5f}, exact: {1 / 36:.5f}")
+assert abs(share_both - 1 / 36) < 0.003 and abs(share_both - share_a * share_b) < 0.003
+print("every pair checks out")
+`}
+/>
+
+## Check yourself
+
+<CheckYourself level="intuition" question="Two events can't both happen. Does learning that one happened tell you anything about the other?">
+Yes, everything: it rules the other out, so P(B | A) = 0. When both events are possible, that is as far from independent as two events can be.
+</CheckYourself>
+
+<CheckYourself level="standard" question="P(A) = 0.3 and P(B) = 0.5. Find P(A and B) and P(A or B) if A and B are mutually exclusive, then if they are independent.">
+Exclusive: $P(A \cap B) = 0$ and $P(A \cup B) = 0.3 + 0.5 = 0.8$. Independent: $P(A \cap B) = 0.3 \times 0.5 = 0.15$ and $P(A \cup B) = 0.8 - 0.15 = 0.65$.
+</CheckYourself>
+
+<CheckYourself level="standard" question="Toss a fair coin six times. 'The last two tosses are heads' and 'exactly three heads' clearly overlap. Are they independent?">
+No. 16 of the 64 sequences end in two heads, so the chance is 1/4. Exactly three heads happens in 20 sequences, and only 4 of those end in two heads, so given three heads the chance is 4/20 = 1/5. Kelly and Zwiers use this example (§2) <Cite id="kelly1986" />.
+</CheckYourself>
+
+<CheckYourself level="proof" question="Show that A is independent of itself exactly when P(A) is 0 or 1.">
+$A \cap A = A$, so the product test reads $P(A) = P(A)^2$, that is $P(A)\,(1 - P(A)) = 0$. A product is 0 only when a factor is, so $P(A) = 0$ or $P(A) = 1$.
+</CheckYourself>
+
+## Common mistakes
+
+<CommonMistakes>
+  <Mistake wrong="Mutually exclusive events have nothing to do with each other, so they are independent.">
+    One rules the other out. Doubles and sum 7 give $0$ against $1/36$. Kelly and Zwiers report that students very often confuse the two ideas (§3) <Cite id="kelly1986" />.
+  </Mistake>
+  <Mistake wrong="Events that overlap can't be independent.">
+    First die 6 and sum 7 overlap and are independent, and so do a king and a diamond. In Molnar's study, "No, not mutually exclusive" was the most common wrong answer, given by 10 of 25 teachers <Cite id="molnar2016" />.
+  </Mistake>
+  <Mistake wrong="You can see independence in the picture.">
+    The fair and loaded die have the same sets and different verdicts. The picture shows overlap; independence needs the probabilities.
+  </Mistake>
+  <Mistake wrong="Independent means neither event causes the other.">
+    Independence is a statement about probabilities only. Three of Molnar's teachers argued from a lack of effect <Cite id="molnar2016" />, and Kelly and Zwiers warn against reading dependence as cause (§2) <Cite id="kelly1986" />.
+  </Mistake>
+  <Mistake wrong="Mutually exclusive means one of them must happen.">
+    A cloudy day is neither all rain nor all sun, and hearts and spades leave half the deck. Kelly and Zwiers stress that exclusive events need not be complementary (§1) <Cite id="kelly1986" />.
+  </Mistake>
+</CommonMistakes>
+
+## Key takeaways
+
+<Takeaways />
+
+## How this connects
+
+<ConceptMap />
+
+## References
+
+<References />
