@@ -1652,7 +1652,10 @@ const announcerRun = () => {
 	assert.equal(vd.announcementFor(aMoved, moveTo('a', [2, 2])), 'a = (2, 2). a + b = (3, 5). a + b is at the top edge of the board.');
 	const sumMoved = vst.reducer(tripsArrows, moveTo('sum', [5, 5]));
 	assert.deepEqual([sumMoved.a, sumMoved.b], [[3, 2], [2, 3]]);
-	assert.equal(vd.announcementFor(sumMoved, moveTo('sum', [5, 5])), 'b = (2, 3). a + b = (5, 5). a + b is at the right edge of the board. a + b is at the top edge of the board.');
+	assert.equal(vd.announcementFor(sumMoved, moveTo('sum', [5, 5])), 'b = (2, 3). a + b = (5, 5). a + b is at the top-right corner of the board.');
+	// A corner is one sentence, named for what reaches it: moving a can put a + b in the corner.
+	assert.equal(vd.handleAnnouncement(vst.reducer(sumMoved, moveTo('a', [3, 2])), 'a'), 'a = (3, 2). a + b = (5, 5). a + b is at the top-right corner of the board.');
+	assert.equal(vd.announcementFor(guessAt([-5, -5]), moveTo('guess', [-5, -5])), 'Your guess: 5 steps west, 5 steps south. Your guess is at the bottom-left corner of the board.');
 	// a moves only where a + b stays on the board, and b (drawn from the origin in "b first") stays on it too.
 	assert.deepEqual(vst.handleBox(tripsArrows, 'a'), { min: [-5, -5], max: [4, 2] });
 	assert.deepEqual(vst.reducer(tripsArrows, moveTo('a', [5, 5])).a, [4, 2]);

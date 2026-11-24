@@ -721,12 +721,28 @@ export function refusalNotes(state: VectorState): readonly { key: string; text: 
 
 // ---- Announcements ----
 
-function edgeSentence(state: VectorState, refusal: Refusal): string {
-	if (refusal.kind === 'edge' || refusal.kind === 'sum-edge') {
+/**
+ * The sentences for a handle's refusals. An edge is named for what reaches it (a + b on a sum-edge); when one thing
+ * reaches an x edge and a y edge, the two become one corner sentence: "a + b is at the top-right corner of the board."
+ */
+function edgeSentences(state: VectorState, refusals: readonly Refusal[]): string[] {
+	const edges = new Map<string, Partial<Record<Axis, Direction>>>();
+	const others: string[] = [];
+	for (const refusal of refusals) {
+		if (refusal.kind !== 'edge' && refusal.kind !== 'sum-edge') {
+			others.push(refusalText(state, refusal));
+			continue;
+		}
 		const name = refusal.kind === 'sum-edge' ? 'a + b' : sentenceName(state, refusal.id);
-		return `${name} is at the ${EDGE_WORDS[refusal.axis][refusal.direction]} edge of the board.`;
+		edges.set(name, { ...edges.get(name), [refusal.axis]: refusal.direction });
 	}
-	return refusalText(state, refusal);
+	const sentences = [...edges].map(([name, { x, y }]) => {
+		if (x !== undefined && y !== undefined) return `${name} is at the ${EDGE_WORDS.y[y]}-${EDGE_WORDS.x[x]} corner of the board.`;
+		const where = x !== undefined ? EDGE_WORDS.x[x] : y !== undefined ? EDGE_WORDS.y[y] : null;
+		if (!where) throw new Error(`VectorBoard2D: edge sentence for "${name}" has no edge.`);
+		return `${name} is at the ${where} edge of the board.`;
+	});
+	return [...sentences, ...others];
 }
 
 function cartShort(state: VectorState): string {
@@ -778,7 +794,7 @@ export function spoken(text: string): string {
 
 /** What a handle's move says when it ends: where things are now, any edge it reached, and stacked handles. */
 export function handleAnnouncement(state: VectorState, handle: HandleId): string {
-	const parts = [positionSentence(state, handle), ...handleRefusals(state, handle).map((refusal) => edgeSentence(state, refusal))];
+	const parts = [positionSentence(state, handle), ...edgeSentences(state, handleRefusals(state, handle))];
 	const points = handleIds(state).map((id) => handlePoint(state, id));
 	if (points.length === 2 && equals(points[0], points[1])) parts.push(`Both handles are at ${pairText(points[0])}.`);
 	return spoken(parts.join(' '));
