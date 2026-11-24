@@ -112,7 +112,7 @@ export const REFERENCES = [
 		title: 'Foundations of the theory of probability',
 		venue: 'Chelsea Publishing Company',
 		url: 'https://archive.org/details/foundationsofthe00kolm',
-		note: 'English translation edited by Nathan Morrison. Chapter I, §1: Axioms I–V; Chapter II, §1: Axiom VI (continuity) and its equivalence, given Axioms I–V, to countable (complete) additivity.',
+		note: 'English translation edited by Nathan Morrison. Chapter I, §1: Axioms I–V; Chapter I, §4: conditional probability, the multiplication theorem, the theorem on total probability and the theorem of Bayes; Chapter II, §1: Axiom VI (continuity) and its equivalence, given Axioms I–V, to countable (complete) additivity; Chapter V, §§1–3: conditional probability with respect to a partition or a random variable, unique only to within equivalence, the Borel paradox, and conditioning on a random variable.',
 		checked: '2026-11-24',
 	},
 	{
@@ -122,7 +122,7 @@ export const REFERENCES = [
 		title: 'Introduction to probability',
 		venue: 'American Mathematical Society, 2nd edition',
 		url: 'https://math.dartmouth.edu/~prob/prob/prob.pdf',
-		note: 'Section 1.2: sample spaces, outcomes, events, set operations and the basic rules of probability. Free version from the Dartmouth Chance Project.',
+		note: 'Section 1.2: sample spaces, outcomes, events, set operations and the basic rules of probability. Section 4.1, pp. 134–146: conditional probability, the reverse tree (p. 136) and Bayes\' formula with the total-probability sum, equation (4.3). Free version from the Dartmouth Chance Project.',
 		checked: '2026-11-24',
 	},
 	{
@@ -142,7 +142,7 @@ export const REFERENCES = [
 		title: 'Deep learning',
 		venue: 'MIT Press',
 		url: 'https://www.deeplearningbook.org/contents/mlp.html',
-		note: 'Sections 6.2.2.2 and 6.2.2.3: sigmoid output units for a binary variable and softmax output units for a distribution over n classes.',
+		note: 'Section 6.2.1.1: learning conditional distributions with maximum likelihood. Sections 6.2.2.2 and 6.2.2.3: sigmoid output units for a binary variable and softmax output units for a distribution over n classes.',
 		checked: '2026-11-24',
 	},
 	{
@@ -182,7 +182,17 @@ export const REFERENCES = [
 		title: 'Weight uncertainty in neural networks',
 		venue: 'ICML 2015',
 		url: 'https://arxiv.org/abs/1505.05424',
-		note: 'Section 1: exact Bayesian inference on the weights of a neural network is intractable, so the paper uses a variational approximation (Bayes by Backprop).',
+		note: 'Section 1: plain networks often make overly confident decisions, and exact Bayesian inference on their weights is intractable, so the paper uses a variational approximation (Bayes by Backprop). Section 3 and equation (1): the variational free energy and the intractable predictive average. Section 3.3: choosing the prior by empirical Bayes.',
+		checked: '2026-11-24',
+	},
+	{
+		id: 'saerens2002',
+		authors: ['Marco Saerens', 'Patrice Latinne', 'Christine Decaestecker'],
+		year: 2002,
+		title: 'Adjusting the outputs of a classifier to new a priori probabilities: a simple procedure',
+		venue: 'Neural Computation 14(1):21–41',
+		url: 'https://doi.org/10.1162/089976602753284446',
+		note: 'Section 2.2, equation (4): reweighting a classifier\'s outputs by the ratio of new to training class priors when the new priors are known. Section 2.3: estimating unknown new priors with the EM algorithm.',
 		checked: '2026-11-24',
 	},
 ];

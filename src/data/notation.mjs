@@ -43,6 +43,7 @@ export const NOTATION = [
 		meaning: 'The collection of events we are allowed to ask about',
 		note: 'Written 𝓕 here, not σ, because σ is the standard deviation on this site.',
 	},
+	{ key: 'density', tex: 'p(x)', say: '"p of x"', meaning: 'A probability density: probability per unit, for continuous quantities' },
 ];
 
 const BY_KEY = new Map(NOTATION.map((entry) => [entry.key, entry]));
