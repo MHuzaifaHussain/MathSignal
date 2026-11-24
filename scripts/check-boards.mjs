@@ -839,7 +839,6 @@ assert.equal(distSay.announcementFor(notEditable, { type: 'step', id: '1', direc
 
 // Chart and stepper labels: the words drawn on the (hidden) chart and above the steppers.
 assert.equal(distSetups.TILT_DEGREES, 6);
-assert.equal(distSetups.MAX_BAR_COLUMNS, 21);
 assert.deepEqual(distSay.stepperHeaders(candyBuild, 'numbers'), { outcome: 'Face', value: 'Candies', group: 'Candies for each face' });
 assert.deepEqual(distSay.stepperHeaders(candyBuild, 'symbols'), { outcome: 'ω', value: 'X(ω)', group: 'Candies for each face' });
 assert.deepEqual(distSay.stepperHeaders(distSetups.getSetup('coins-heads'), 'pictures'), { outcome: 'Outcome', value: 'X', group: 'X for each outcome' });

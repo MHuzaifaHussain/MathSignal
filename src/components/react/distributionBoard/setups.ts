@@ -53,8 +53,6 @@ export interface Setup {
 export const ALL_ZERO = 'All zero';
 export const MAX_PRESETS = 4;
 export const MAX_TILE_COLUMNS = 7;
-/** Beyond the tile limits, bars become plain columns, up to this many. */
-export const MAX_BAR_COLUMNS = 21;
 /** How far the plank tips toward the heavy side once "Balance it" is pressed, in degrees. */
 export const TILT_DEGREES = 6;
 
