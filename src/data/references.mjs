@@ -336,7 +336,7 @@ export const REFERENCES = [
 		title: 'Detecting and correcting for label shift with black box predictors',
 		venue: 'ICML 2018',
 		url: 'https://arxiv.org/abs/1802.03916',
-		note: 'Section 1: a pneumonia predictor trained when .2% of patients had pneumonia (v1) later predicts 5%; label shift means p(y) changes while p(x | y) does not, as when diseases cause symptoms. Section 2: with known new label probabilities the problem reduces to changing base rates.',
+		note: 'Section 1 (v3, the ICML version): a pneumonia predictor trained when .1% of patients had pneumonia later predicts 5%; label shift means p(y) changes while p(x | y) does not, as when diseases cause symptoms. Section 2: when q(y) is known, label shift simplifies to changing base rates. Section 3: assumption A.1, p(x | y) = q(x | y), is "strong but reasonable" in medical diagnosis. Section 4, Lemma 1: a fixed predictor\'s per-class rates are unchanged, q(ŷ | y) = p(ŷ | y).',
 		checked: '2026-11-24',
 	},
 	{
