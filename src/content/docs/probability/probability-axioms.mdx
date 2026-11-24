@@ -71,7 +71,7 @@ The jug has a blind spot. Each drop sits in one cup, but questions overlap: "eve
 </Analogy>
 
 <WhyThisMatters>
-A classifier's output is a probability only if it follows these three rules: no negative numbers, a total of 1 over the labels, and probabilities of separate labels that add. Softmax produces numbers that follow them, a distribution over the labels: a full set of probabilities that sum to 1. Cross-entropy training depends on that. When a model's numbers break one of the rules, for example one sigmoid per label giving outputs that add up to more than 1, they can still be useful, but they are not a distribution over the labels, and reading them as one gives wrong answers.
+A classifier's output is a probability only if it follows these three rules: no negative numbers, a total of 1 over the labels, and probabilities of separate labels that add. Softmax produces numbers that follow them: a distribution over the labels, a full set of probabilities that sum to 1. Cross-entropy training depends on that. When a model's numbers break one of the rules, for example one sigmoid per label giving outputs that add up to more than 1, they can still be useful, but they are not a distribution over the labels, and reading them as one gives wrong answers.
 </WhyThisMatters>
 
 ## Pour a die from a jug
@@ -86,7 +86,7 @@ Once you have decided: no. "Even" and "odd" share no cup and together cover all 
 
 </GoDeeper>
 
-The board shows six cups, Cup 1 to Cup 6, each a column of 12 slots with its share written under it, such as 2/12. Under each cup, the + button pours one unit into it and the − button pours one unit out; the tray shows how much is left in the jug. The Fill buttons pour a whole die at once: Fair die, Loaded toward six, or Start over, which empties every cup back into the jug. The A buttons, Even, At most 2 and Six, choose the event the board adds up, and its cups get an "A" tag. As a goal, press Loaded toward six with A on Even and read the P(even) line, then press Fair die and compare.
+The board shows six cups, Cup 1 to Cup 6, each a column of 12 slots with its share written under it, such as 2/12. Under each cup, the + button pours one unit into it and the − button pours one unit out; the tray shows how much is left in the jug. The Fill buttons pour a whole die at once: Fair die, Loaded toward six, or Start over, which empties every cup back into the jug. The A buttons, Even, At most 2 and Six, choose the event the board adds up, and its cups get an "A" tag. Your task: press Loaded toward six with A on Even and read the P(even) line, then press Fair die and compare.
 
 <div class="not-content">
   <EventSpace client:visible setup="die-pour" />
@@ -110,15 +110,15 @@ Every probability follows three rules, called the axioms of probability. Everyth
 
 ### Never negative
 
-The first rule says a probability is never below 0. A probability of 0 means "no share at all"; there is nothing less than that. A model that outputs −0.1 for a class has not produced a probability, however the rest of its numbers look.
+The first rule is the floor: a probability is never below 0. A probability of 0 means "no share at all", and there is nothing less than that. A model that outputs −0.1 for a class has not produced a probability, however the rest of its numbers look.
 
 ### The whole sample space gets 1
 
-The second rule says the sample space, the event "something happens", has probability 1. Some outcome always occurs, so all the probability is spread over the outcomes and none is left over or missing. The certain event gets probability 1, and (as shown below) no event can have more.
+The second rule gives the sample space, the event "something happens", probability 1. Some outcome always occurs, so all the probability is spread over the outcomes and none is left over or missing. As shown below, no event can have more.
 
 ### Events that can't happen together add up
 
-The third rule says that if two events share no outcome, the probability that one or the other happens is the sum of their probabilities. On a die, "at most 2" and "six" can't both happen, so the chance of either is the chance of the first plus the chance of the second. Events with no outcome in common are called disjoint, or mutually exclusive. On a finite space we usually make every single outcome an event, so the rule can be applied one outcome at a time. Then the probability of any event is the sum of its outcomes' probabilities: "even" holds the water in cups 2, 4 and 6. Counting outcomes, as on [sample spaces and events](/probability/sample-spaces-and-events/), is the special case where every outcome gets the same share.
+By the third rule, if two events share no outcome, the probability that one or the other happens is the sum of their probabilities. On a die, "at most 2" and "six" can't both happen, so the chance of either is the chance of the first plus the chance of the second. Events with no outcome in common are called disjoint, or mutually exclusive. On a finite space we usually make every single outcome an event, so the rule can be applied one outcome at a time. Then the probability of any event is the sum of its outcomes' probabilities: "even" holds the water in cups 2, 4 and 6. Counting outcomes, as on [sample spaces and events](/probability/sample-spaces-and-events/), is the special case where every outcome gets the same share.
 
 <Simpler label="the same rules with a class vote">
 
@@ -136,7 +136,7 @@ The rules you use every day for "not A", for "A or B" and for comparing events a
 
 Before you look: roll two dice. Event A is "the sum is 7" and event B is "the first die shows 6". Each holds 6 of the 36 outcomes. Is the probability of "A or B" equal to 6/36 + 6/36 = 12/36? Decide, then check.
 
-The board opens with A and B already marked: A squares have a solid border and an "A" tag, B squares a dashed outline and a "B" tag. "Editing" chooses which event a tap changes, A or B, and the presets set an event in one press: Sum is 7, Doubles or Clear for A, and First die is 6, Second die is 6 or Clear for B. "Look at" mutes every square outside the set you choose: Everything, A and B, A or B, or Not A. The arrow keys move between squares and Space toggles one. As a goal, set "Look at" to A or B and count the squares still in view.
+The board opens with A and B already marked: A squares have a solid border and an "A" tag, B squares a dashed outline and a "B" tag. "Editing" chooses which event a tap changes, A or B, and the presets set an event in one press: Sum is 7, Doubles or Clear for A, and First die is 6, Second die is 6 or Clear for B. "Look at" mutes every square outside the set you choose: Everything, A and B, A or B, or Not A. The arrow keys move between squares and Space toggles one. Your task: set "Look at" to A or B and count the squares still in view.
 
 <div class="not-content">
   <EventSpace client:visible setup="dice-operations" />
@@ -170,7 +170,7 @@ A probability space is a triple $(\Omega, \mathcal{F}, P)$. Here $\Omega$ is a n
 
 The third axiom contains the two-event rule from above: for two disjoint events $A$ and $B$, take $A_1 = A$, $A_2 = B$ and every later $A_i$ empty, and use $P(\emptyset) = 0$, proved below.
 
-A collection with the closure properties of $\mathcal{F}$ is called a σ-algebra. The σ in that standard name refers to countable unions and has nothing to do with the standard deviation; this site writes the collection itself as $\mathcal{F}$.
+A collection with the closure properties of $\mathcal{F}$ is called a σ-algebra. The σ in the name refers to countable unions and has nothing to do with the standard deviation; this site writes the collection itself as $\mathcal{F}$.
 
 Boundary cases. $P$ gives a value only to events in $\mathcal{F}$. On a finite $\Omega$, a pairwise disjoint sequence has at most $|\Omega|$ nonempty members, so the third axiom reduces to finite additivity, $P(A \cup B) = P(A) + P(B)$ for disjoint $A$ and $B$, together with $P(\emptyset) = 0$, proved below. There we usually take $\mathcal{F} = 2^\Omega$, and $P$ is fixed by one weight per outcome, which on the board is a cup's share of the jug, $p(\omega) = P(\{\omega\}) \ge 0$ with $\sum_{\omega \in \Omega} p(\omega) = 1$, through $P(A) = \sum_{\omega \in A} p(\omega)$. Equally likely outcomes are the case $p(\omega) = 1/|\Omega|$, which gives $P(A) = |A|/|\Omega|$.
 
@@ -182,7 +182,7 @@ Kolmogorov's own fifth axiom was finite additivity: $P(A \cup B) = P(A) + P(B)$ 
 
 What countable additivity buys is continuity. If $A_1 \subseteq A_2 \subseteq \cdots$, then $P\big(\bigcup_n A_n\big) = \lim_{n \to \infty} P(A_n)$: the union splits into the disjoint pieces $A_1, A_2 \setminus A_1, A_3 \setminus A_2, \ldots$, and the first $n$ of them add up to $P(A_n)$. For example, toss a fair coin forever. The event "heads within the first $n$ tosses" grows with $n$ and has probability $1 - 2^{-n}$, and the union of these events is "heads eventually". So $P(\text{heads eventually}) = \lim_{n \to \infty} (1 - 2^{-n}) = 1$.
 
-What countable additivity rules out shows up in a natural-sounding experiment: pick a whole number $1, 2, 3, \ldots$ "uniformly at random". Fairness means every number gets the same probability $c$, which needs every single number $\{n\}$ to be an event. Countable additivity then gives $P(\Omega) = \sum_{n=1}^{\infty} c$, which is $0$ if $c = 0$ and infinite if $c > 0$, never $1$. So there is no uniform probability on a countably infinite sample space <Cite id="grinstead2003" />. With finite additivity alone the argument stops halfway: $P(\{1, \ldots, n\}) = nc \le 1$ for every $n$ forces $c = 0$, but nothing then forces $P(\Omega)$ to be $0$. So this argument does not rule out a "fair lottery" on the whole numbers under finite additivity alone; countable additivity does.
+What countable additivity rules out shows up in a natural-sounding experiment: pick a whole number $1, 2, 3, \ldots$ "uniformly at random". Fairness means every number gets the same probability $c$, which needs every single number $\{n\}$ to be an event. Countable additivity then gives $P(\Omega) = \sum_{n=1}^{\infty} c$, which is $0$ if $c = 0$ and infinite if $c > 0$, never $1$. So there is no uniform probability on a countably infinite sample space <Cite id="grinstead2003" />. With finite additivity alone the argument stops halfway: $P(\{1, \ldots, n\}) = nc \le 1$ for every $n$ forces $c = 0$, but nothing then forces $P(\Omega)$ to be $0$, so a "fair lottery" on the whole numbers survives this argument when only finite additivity is assumed.
 
 </GoDeeper>
 
@@ -313,7 +313,7 @@ where $y$ is the one-hot label. Every entry is non-negative, and the total is $(
 
 ## Check the axioms in code
 
-This runs in your browser, uses exact fractions so every equality is exact, and stops with an error if a result is off. It also checks the label-smoothing and cross-entropy numbers from the fold above. It checks the page's numbers, a function `is_distribution` for axioms 1 and 2, and inclusion–exclusion on all 4,096 pairs of events of the loaded die:
+This runs in your browser and stops with an error if a result is off. It checks the page's numbers, including the label-smoothing and cross-entropy numbers from the fold above, a function `is_distribution` for axioms 1 and 2, and inclusion–exclusion on all 4,096 pairs of events of the loaded die. The dice and jug checks use exact fractions, so their equalities are exact; the softmax, sigmoid and cross-entropy checks use ordinary floating-point numbers:
 
 <PyRunner
   title="axioms.py"
@@ -449,7 +449,7 @@ print("cross-entropy of the softmax output:", round(cross_entropy(one_hot, softm
 `}
 />
 
-The loop over all pairs of events checks inclusion–exclusion on every one of the 64 × 64 = 4,096 pairs of events on the loaded die, including the many pairs the boards never show.
+The loop covers all 64 × 64 = 4,096 pairs, most of which the boards never show.
 
 ## Research frontier
 
