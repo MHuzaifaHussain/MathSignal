@@ -73,7 +73,7 @@ The running site is the visual reference: the Normal distribution page shows eve
 | `npm run tokens` | Regenerates `src/styles/tokens.css` |
 | `npm run check:content` | Registry ids, prerequisite graph, the ids each page uses, draft/topic status, description length, unique titles, descriptions and primary queries, and American spelling in page prose. Runs automatically before `npm run build` |
 | `npm run check:code` | Runs every `PyRunner` example under Pyodide and fails on an error or failed `assert`. Run before merging a page with runnable code |
-| `npm run check:boards` | Asserts the pure logic and copy of the boards (EventSpace's math, sentences and state rules). Runs automatically before `npm run build` |
+| `npm run check:boards` | Asserts the pure logic and copy of the boards and page components: the boards' math, sentences and state rules, the footer's citation, and the distributions registry behind `PropertiesTable`. Runs automatically before `npm run build` |
 | `npm run check:links` | Every internal link, `#anchor` and image in `dist/` resolves, and page links end in a slash. Runs automatically after `npm run build` |
 | `npm run build` | Full static build; fails if the design, content or link check fails, a formula is broken, or concept-page frontmatter is missing |
 | `npm run check` | Type-checks `.astro`, `.ts` and `.tsx` files (`astro check`) |

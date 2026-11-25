@@ -10,7 +10,7 @@ Headings are **topic-specific** ("Move the bell yourself", "Where the normal dis
 4. Board section: a prediction question **before** the board, the drag instructions and a goal, then the `Board`, then the answer.
 5. Explanation sections (`##` and `###`), each opening with a sentence that answers its heading. `Simpler` and `GoDeeper` folds where they add something new; `SideNote`s for asides.
 6. `## Notation`: `NotationKey` with the page's symbols, then `PreciseStatement` with the exact definition, conditions and boundary cases.
-7. `FormalDefinition`: `StepThrough` derivations and a properties table.
+7. `FormalDefinition`: `StepThrough` derivations and a properties table. A distribution family's table is `<PropertiesTable family=…>` from `src/data/distributions.mjs`, never a hand-written copy; the page passes only its example column, as prose with `$…$` math (see `PropertiesTable` in [components.md](components.md)).
 8. `## Worked examples`: three `WorkedExample`s graded from easy to harder; the last is `faded`, with its solution in `<div slot="solution">`.
 9. ML section: each application with its equation and a `Cite` for the paper it comes from. Use plain quantities (not `\vmu`) when the symbol means something else.
 10. Code section: a `PyRunner` with a fixed seed and `assert`s (run by `npm run check:code`), then any display-only blocks, also seeded.

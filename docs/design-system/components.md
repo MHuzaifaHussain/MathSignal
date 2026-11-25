@@ -22,6 +22,20 @@ The ML relevance of the concept, after the everyday section. Paper surface set a
 ### `FormalDefinition` (Astro)
 A `<details>` panel (`id="formal-definition"`, summary "Formal definition, derivations and properties") on the sunk surface, holding `StepThrough` derivations and the properties table. A plain sunk band: no outline, no rounded corners, no inner rule. Closed by default; the precise statement stays outside it, always visible. Slot: KaTeX and prose.
 
+### `PropertiesTable` (Astro)
+A distribution family's properties from `src/data/distributions.mjs` ([decision 0023](../decisions/0023-page-footer-and-properties-table.md)), placed inside `FormalDefinition`, never before the page's board or prediction. The rows and their wording live in the registry; the page supplies only its own third column. A family page uses it instead of a hand-written table, and `npm run check:content` fails the family's owner page without it.
+
+| Prop | Type | Notes |
+|---|---|---|
+| `family` | `string` | An id in `distributions.mjs` (`binomial`, `normal`, `uniform`) |
+| `examples` | `Record<rowId, string>` | Optional. Third-column text for every shown row, or none |
+| `examplesHeading` | `string` | Required with `examples`, e.g. "On the boards" |
+| `rows` | `string[]` | Optional. A subset and its order; default every row |
+| `rowLinks` | `Record<rowId, string>` | Optional. A site path that links a row's label |
+| `id` | `string` | Default `properties`; a second table on a page passes its own |
+
+Every label, statement and example is prose with `$…$` math, never `\text{}`, which can't wrap. In MDX double the backslashes inside the attribute strings: `needs: "Without replacement: $1/15$, not $0.09$"`, `mean: "Fair coin $\\vmu = 5$"`. It renders a focusable region named by the table's caption ("Properties of the binomial distribution"), with row headers, and looks like the markdown tables. Unknown ids, a partial example column or an odd number of `$` fail the build. `#properties` opens the `FormalDefinition` around it.
+
 ### `CommonMistakes` (Astro) and `Mistake` (Astro)
 A list of misconceptions, each as a "Not quite" / "Instead" pair. The page puts a `## Common mistakes` heading above it, so it appears in the table of contents. The misconception is the `wrong` prop; the correction is the slot, so it can hold formulas and links.
 
@@ -293,7 +307,7 @@ Overrides live in `src/components/overrides/` and are registered in `astro.confi
 | `Header` | Adds the subject strip (from `src/design/domains.mjs`) with an underline on the active subject. Search and the theme toggle stay Starlight's own; Search takes the space left beside the strip and drops "Ctrl K", then the word "Search", when it is narrow, so it never runs into the icons. While the search box is empty, the dialog shows "Browse by subject" (`src/components/SearchBrowse.astro`), built from `domains.mjs` and the published topics in `topics.mjs`, so released pages appear in it automatically; it hides as soon as you type |
 | `Sidebar` | Wraps Starlight's own sidebar and adds the subject list at the top of the mobile menu |
 | `TableOfContents` | Wraps Starlight's own "On this page" list and scrolls its panel (never the page) to keep the highlighted section in view when the list is taller than the window; jumps instead of gliding under reduced motion |
-| `Footer` | Wraps Starlight's own footer and adds the author, the licenses (CC BY 4.0 text, MIT code), a prefilled "Report an error on this page" link and a link to the About page |
+| `Footer` | Wraps Starlight's own footer and adds the author (from frontmatter on concept pages), the licenses (CC BY 4.0 text, MIT code), a prefilled "Report an error on this page" link and a link to the About page. Concept pages also get "How this page was made" (from `aiAssisted`, linking to the About page) and a closed "Cite this page" with a plain citation and a BibTeX entry, plus a print-only "Cite as" line ([decision 0023](../decisions/0023-page-footer-and-properties-table.md)). The sentences live in `footerCopy.mjs` and `src/seo/citation.mjs`, pinned by `npm run check:boards` |
 
 The sidebar is narrowed to the active subject by Starlight route middleware (`src/routeData.ts`), not by the override, so Starlight's sidebar markup and state persistence keep working. Subjects are defined once in `src/design/domains.mjs`, which feeds both the sidebar config and the strip; the build fails if they disagree.
 

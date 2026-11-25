@@ -26,3 +26,4 @@ Format: context, decision, consequences, alternatives considered. Number them in
 | [0018](0018-distribution-families-and-density.md) | DistributionBoard families and density mode | Accepted; amends [0012](0012-distribution-board.md) |
 | [0019](0019-normal-distribution-z-mode.md) | NormalDistribution z mode | Accepted |
 | [0020](0020-function-curve-board.md) | FunctionCurve, a Mafs board for slopes, rulers and corners | Accepted; the drawing is provisional until its browser pass |
+| [0023](0023-page-footer-and-properties-table.md) | The full page footer and PropertiesTable | Accepted; extends [0009](0009-single-sources-of-truth.md) |
