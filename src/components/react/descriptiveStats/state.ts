@@ -142,11 +142,17 @@ function applyPreset(setup: Setup, state: DescriptiveState, preset: Preset): Des
 	}
 	if (!preset.values) return state;
 	const next = withValues(state, preset.values, preset.id);
-	if (setup.kind === 'spread' && state.activePreset !== null && state.activePreset !== preset.id) {
-		const previous = presetById(setup, state.activePreset);
-		if (previous) return { ...next, ghost: { sigma: populationSD(state.values), preset: previous.label } };
-	}
-	return next;
+	if (setup.kind !== 'spread' || state.activePreset === preset.id) return next;
+	return { ...next, ghost: spreadGhost(setup, state) };
+}
+
+/**
+ * The dashed σ a spread preset leaves behind: the σ of the preset that was showing, or none when the values were
+ * the reader's own. A ghost kept from before a slider edit would name a preset that may be the one now active.
+ */
+function spreadGhost(setup: Setup, state: DescriptiveState): DescriptiveState['ghost'] {
+	const previous = state.activePreset === null ? null : presetById(setup, state.activePreset);
+	return previous ? { sigma: populationSD(state.values), preset: previous.label } : null;
 }
 
 /** The switch always brings the newcomer the setup names (the millionaire), whatever the slider showed last. */

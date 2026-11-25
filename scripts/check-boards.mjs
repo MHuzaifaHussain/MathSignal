@@ -1631,6 +1631,12 @@ const announcerRun = () => {
 	assert.deepEqual(moved.values, [133, 122, 140, 131, 148, 125, 137, 131, 142]);
 	assert.equal(moved.activePreset, null);
 	assert.equal(dst.reducer(moved, { type: 'preset', id: 'tight-class' }).ghost, null, 'no ghost for values that were not a preset');
+	// A slider edit between two presets drops the old ghost, so it never names the preset that is now showing.
+	const backToOurs = run('class-spread', { type: 'preset', id: 'tight-class' }, { type: 'set-value', value: 150 }, { type: 'preset', id: 'our-class' });
+	assert.equal(backToOurs.activePreset, 'our-class');
+	assert.equal(backToOurs.ghost, null, 'no ghost after a slider edit, even one that kept an older ghost');
+	// Pressing the preset that is already showing changes nothing, so the ghost stays.
+	assert.deepEqual(dst.reducer(tight, { type: 'preset', id: 'tight-class' }).ghost, tight.ghost);
 	assert.equal(run('class-spread', { type: 'set-value', value: 400 }).values[0], 160, 'the slider clamps');
 	assert.throws(() => run('class-spread', { type: 'set-value', value: 131.5 }), /whole number/);
 	assert.equal(run('class-spread', { type: 'select', child: 9 }).selected, 0, 'no child 10');
