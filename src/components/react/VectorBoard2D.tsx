@@ -135,8 +135,22 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
 
   const tray = (
     <>
+      {/* The answer controls come before Check, so a keyboard reader sets the answer and then tabs on to Check. */}
       {setup.kind === "align" && !state.checked && (
         <TrayChoice legend={CONTROL_LABELS.signLegend} options={SIGN_OPTIONS} value={state.signGuess} onChange={(sign) => send({ type: "sign", sign })} />
+      )}
+      {setup.scaleRange && (
+        <TraySlider
+          label={CONTROL_LABELS.scale}
+          value={state.scalar}
+          min={setup.scaleRange.min}
+          max={setup.scaleRange.max}
+          step={setup.scaleRange.step}
+          onValueChange={moveScalar}
+          onValueCommitted={commitScalar}
+          format={scalarFormat}
+          describe={scalarDescription}
+        />
       )}
       <CheckButtons
         progress={state}
@@ -154,19 +168,6 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
         value={state.stage}
         onChange={(stage) => send({ type: "stage", stage })}
       />
-      {setup.scaleRange && (
-        <TraySlider
-          label={CONTROL_LABELS.scale}
-          value={state.scalar}
-          min={setup.scaleRange.min}
-          max={setup.scaleRange.max}
-          step={setup.scaleRange.step}
-          onValueChange={moveScalar}
-          onValueCommitted={commitScalar}
-          format={scalarFormat}
-          describe={scalarDescription}
-        />
-      )}
       {setup.kind === "add" && state.checked && (
         <button
           type="button"
