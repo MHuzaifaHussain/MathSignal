@@ -657,6 +657,7 @@ assert.deepEqual(presetLabelsOf('die-compare'), [['At most 2', 'Even', 'Clear'],
 
 // ---- BayesTheorem scenarios (week 2 presets) ----
 const bayes = await import('../src/components/react/bayesTheorem/scenarios.ts');
+const { formatNumber } = await import('../src/components/react/plotColors.ts');
 const posteriorOf = (id) => bayes.computePosterior(bayes.BAYES_SCENARIOS[id].values);
 const near = (actual, expected) => assert.ok(Math.abs(actual - expected) < 1e-12, `${actual} is not ${expected}`);
 // Medical test: 1 in 100 has the condition, the test is right 9 times in 10. A positive means only 1/12 ≈ 0.083.
@@ -673,6 +674,32 @@ for (const scenario of Object.values(bayes.BAYES_SCENARIOS)) {
 		assert.ok(value >= 0.01 && value <= 0.99 && Math.abs(value * 100 - Math.round(value * 100)) < 1e-9, `${scenario.id}: ${value} is off the slider grid`);
 	}
 }
+// The readouts the week-one pages quote, formatted as the board formats them (three decimals).
+const readoutOf = (id) => {
+	const { evidence, posterior } = posteriorOf(id);
+	return [formatNumber(posterior, 3), formatNumber(evidence, 3)];
+};
+assert.deepEqual(readoutOf('late-bus'), ['0.500', '0.150']);
+assert.deepEqual(readoutOf('same-chance'), ['0.250', '0.400']);
+assert.deepEqual(readoutOf('fraud-flag'), ['0.526', '0.061']);
+assert.deepEqual(readoutOf('screening-test'), ['0.162', '0.117']);
+assert.deepEqual(readoutOf('screening-clinic'), ['0.803', '0.355']);
+// Same chance either way: P(B) is 0.4 wherever P(A) sits, because both cases give B the same chance.
+for (const prior of [0.01, 0.25, 0.99]) near(bayes.computePosterior({ prior, likelihood: 0.4, falsePositive: 0.4 }).evidence, 0.4);
+// Pages pick their presets; with no props the published Bayes page keeps its three, in the order its prose names them.
+assert.deepEqual(bayes.resolveScenarios(), { scenarios: ['any-events', 'medical-test', 'wet-lawn'], initial: 'any-events' });
+assert.deepEqual(bayes.resolveScenarios(['any-events', 'late-bus', 'same-chance', 'fraud-flag']).initial, 'any-events');
+assert.deepEqual(bayes.resolveScenarios(['wet-lawn', 'any-events'], 'any-events'), { scenarios: ['wet-lawn', 'any-events'], initial: 'any-events' });
+assert.throws(() => bayes.resolveScenarios(['any-events', 'late-buss']), /no example scenario "late-buss"/);
+assert.throws(() => bayes.resolveScenarios(['any-events', 'toString']), /no example scenario "toString"/);
+assert.throws(() => bayes.resolveScenarios(['any-events', 'wet-lawn'], 'rainy'), /initialScenario has no example scenario "rainy"/);
+assert.throws(() => bayes.resolveScenarios(['any-events', 'wet-lawn'], 'late-bus'), /must be one of the scenarios/);
+assert.throws(() => bayes.resolveScenarios(['wet-lawn']), /2 to 4 presets, got 1/);
+assert.throws(() => bayes.resolveScenarios([]), /2 to 4 presets, got 0/);
+assert.throws(() => bayes.resolveScenarios(['any-events', 'medical-test', 'wet-lawn', 'late-bus', 'fraud-flag']), /2 to 4 presets, got 5/);
+assert.throws(() => bayes.resolveScenarios(['wet-lawn', 'any-events', 'wet-lawn']), /lists "wet-lawn" twice/);
+// Every scenario names what its table counts.
+for (const scenario of Object.values(bayes.BAYES_SCENARIOS)) assert.ok(scenario.countNoun.length > 0, `${scenario.id}: no countNoun`);
 // P(B) = 0 has no posterior, and impossible inputs fail loudly.
 assert.equal(bayes.computePosterior({ prior: 0.5, likelihood: 0, falsePositive: 0 }).posterior, null);
 assert.throws(() => bayes.computePosterior({ prior: 1.2, likelihood: 0.5, falsePositive: 0.5 }), /prior must be a probability/);

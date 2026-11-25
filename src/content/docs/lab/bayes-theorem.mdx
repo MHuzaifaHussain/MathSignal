@@ -8,6 +8,26 @@ import BayesTheorem from "../../../components/react/BayesTheorem.tsx";
 
 Development only. Use the Example buttons to load each scenario.
 
+## Default presets
+
 <div class="not-content">
   <BayesTheorem client:visible />
+</div>
+
+## Law of total probability presets
+
+<div class="not-content">
+  <BayesTheorem client:visible scenarios={["any-events", "late-bus", "same-chance", "fraud-flag"]} />
+</div>
+
+## Base rate presets
+
+<div class="not-content">
+  <BayesTheorem client:visible scenarios={["any-events", "screening-test", "screening-clinic"]} />
+</div>
+
+## Two presets, opening on the second
+
+<div class="not-content">
+  <BayesTheorem client:visible scenarios={["any-events", "wet-lawn"]} initialScenario="wet-lawn" />
 </div>

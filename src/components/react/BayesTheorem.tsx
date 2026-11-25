@@ -5,13 +5,11 @@ import Board from "./Board";
 import TraySlider from "./TraySlider";
 import PresetButtons from "./guided/PresetButtons.tsx";
 import { formatNumber, plotColors } from "./plotColors";
-import { BAYES_SCENARIOS, DEFAULT_SCENARIO, computePosterior, type BayesScenarioId, type BayesValues } from "./bayesTheorem/scenarios.ts";
+import { BAYES_SCENARIOS, computePosterior, resolveScenarios, type BayesScenarioId, type BayesValues } from "./bayesTheorem/scenarios.ts";
 
 const PROBABILITY_RANGE: vec.Vector2 = [0.01, 0.99];
 const PROBABILITY_STEP = 0.01;
 const BOARD_HEIGHT = 340;
-const SCENARIO_IDS = Object.keys(BAYES_SCENARIOS) as BayesScenarioId[];
-const SCENARIO_PRESETS = SCENARIO_IDS.map((id) => ({ id, label: BAYES_SCENARIOS[id].label }));
 /** A column narrower than this is too thin to hold its labels (the medical test's A is 0.01), so they sit beside it. */
 const NARROW_COLUMN = 0.15;
 const LABEL_GAP = 0.01;
@@ -23,23 +21,27 @@ const rectangle = (x0: number, x1: number, y0: number, y1: number): vec.Vector2[
   [x0, y1],
 ];
 
-function toScenarioId(id: string): BayesScenarioId {
-  const known = SCENARIO_IDS.find((scenarioId) => scenarioId === id);
-  if (!known) throw new Error(`BayesTheorem: no example scenario "${id}".`);
-  return known;
-}
-
 /** "0.083", or the reason there is no posterior when P(B) is 0. */
 const posteriorText = (posterior: number | null) => (posterior === null ? "undefined, because P(B) = 0" : formatNumber(posterior, 3));
+
+interface BayesTheoremProps {
+  /** The preset buttons, 2 to 4 ids from bayesTheorem/scenarios.ts in the page's order. Defaults to Any two events, Medical test and Wet lawn. */
+  scenarios?: BayesScenarioId[];
+  /** The scenario the board opens on and Reset returns to; one of `scenarios`. Defaults to the first of them. */
+  initialScenario?: BayesScenarioId;
+}
 
 /**
  * Bayes' theorem as areas in a unit square: the prior is a column's width, each likelihood is a
  * height within its column, and the posterior is the highlighted area's share of everything that tested positive.
  * Presets load a named scenario (bayesTheorem/scenarios.ts) and say what A and B stand for.
  */
-export default function BayesTheorem() {
-  const initial = BAYES_SCENARIOS[DEFAULT_SCENARIO];
-  const [scenarioId, setScenarioId] = useState<BayesScenarioId>(DEFAULT_SCENARIO);
+export default function BayesTheorem({ scenarios, initialScenario }: BayesTheoremProps) {
+  // Throws on a bad id or list; the island renders at build time, so a page with one fails the build.
+  const choice = resolveScenarios(scenarios, initialScenario);
+  const presets = choice.scenarios.map((id) => ({ id, label: BAYES_SCENARIOS[id].label }));
+  const initial = BAYES_SCENARIOS[choice.initial];
+  const [scenarioId, setScenarioId] = useState<BayesScenarioId>(choice.initial);
   const [prior, setPrior] = useState(initial.values.prior);
   const [likelihood, setLikelihood] = useState(initial.values.likelihood);
   const [falsePositive, setFalsePositive] = useState(initial.values.falsePositive);
@@ -68,7 +70,14 @@ export default function BayesTheorem() {
     [announce],
   );
 
-  const handleReset = useCallback(() => loadScenario(DEFAULT_SCENARIO), [loadScenario]);
+  const handleReset = useCallback(() => loadScenario(choice.initial), [loadScenario, choice.initial]);
+
+  // Only the page's own presets can be picked, so a stray id from the buttons fails loudly.
+  const pickPreset = (id: string) => {
+    const picked = choice.scenarios.find((scenario) => scenario === id);
+    if (!picked) throw new Error(`BayesTheorem: "${id}" is not one of this board's presets (${choice.scenarios.join(", ")}).`);
+    loadScenario(picked);
+  };
 
   // Labels for A's column: centered inside it, or anchored just right of it when the column is too thin.
   const columnLabelPosition =
@@ -96,9 +105,9 @@ export default function BayesTheorem() {
       <PresetButtons
         label="Example scenarios"
         caption="Example"
-        presets={SCENARIO_PRESETS}
+        presets={presets}
         activeId={scenarioId}
-        onPick={(id) => loadScenario(toScenarioId(id))}
+        onPick={pickPreset}
       />
       <p className="ms-event-note-line">{BAYES_SCENARIOS[scenarioId].meaning}</p>
       {probabilitySlider("P(A)", prior, setPrior, (value) => announce({ prior: value, likelihood, falsePositive }))}
