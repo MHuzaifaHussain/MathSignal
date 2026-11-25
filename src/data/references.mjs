@@ -1292,7 +1292,7 @@ export const REFERENCES = [
 		year: 2024,
 		title: 'Growth charts: percentile data files with LMS values',
 		url: 'https://www.cdc.gov/growthcharts/cdc-data-files.htm',
-		note: 'The z-score of a measurement X from the L, M and S values for its age: ((X/M)^L − 1)/(LS) when L ≠ 0 and ln(X/M)/S when L = 0; a stature-for-age file covers ages 2 to 20. Page last reviewed September 2, 2024. Written by the Centers for Disease Control and Prevention.',
+		note: 'The z-score of a measurement X from the L, M and S values for its sex and age (the files list them by sex and single month of age): ((X/M)^L − 1)/(LS) when L ≠ 0 and ln(X/M)/S when L = 0; a stature-for-age file covers ages 2 to 20. Page last reviewed September 2, 2024. Written by the Centers for Disease Control and Prevention.',
 		checked: '2026-11-25',
 	},
 ];

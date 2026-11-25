@@ -69,16 +69,16 @@ Two classes stand along two height tapes on the floor: one of nine-year-olds, on
 </Analogy>
 
 <WhyThisMatters>
-Models see features in different units, such as a house's area in square meters and its age in years. Standardizing each feature to z-scores puts them on one scale, and batch and layer normalization compute z-scores inside the network. Taking the mean or the standard deviation from the wrong data, such as the test set, silently changes what the model sees.
+Models see features in different units, such as a house's area in square meters and its age in years. Standardizing each feature to z-scores puts them on one scale, and batch and layer normalization standardize values inside the network. Taking the mean or the standard deviation from the wrong data, such as the test set, silently changes what the model sees.
 </WhyThisMatters>
 
 ## Taller for their age? Read it on the board
 
 To compare children of different ages, measure each against their own class: subtract the class's mean, then divide by its standard deviation. The nine-year-olds are our class from the [variance page](/statistics/variance-and-standard-deviation/), with mean 134 cm and standard deviation 8 cm; the eleven-year-olds are a second class, with mean 144 cm and standard deviation 12 cm. Both classes are made up.
 
-Before you touch anything: the 140 cm nine-year-old and the 150 cm eleven-year-old both stand 6 cm above their class's mean. Is one of them more unusual for their age, or are they the same? Going further: with standard deviations of 8 and 12 cm, which child's z-score is bigger, and by what factor?
+Before you touch anything: the 140 cm nine-year-old and the 150 cm eleven-year-old both stand 6 cm above their class's mean. Is one of them taller for their age, or are they the same? Going further: with standard deviations of 8 and 12 cm, which child's z-score is bigger, and by what factor?
 
-Your task: answer the board's question and press Check. Then press Eleven-year-old, 150 cm, turn on Shade the share below and compare the shaded areas. The Height slider moves the ochre point (arrow keys 1 cm, Page Up and Page Down 5 cm), or drag it. Table view shows the steps as a table; Reset starts over with nothing shown.
+Your task: answer the board's question and press Check. Then press Eleven-year-old, 150 cm, turn on Shade the share below and compare the shaded areas. The Height slider moves the ochre point (arrow keys 1 cm, Page Up and Page Down 5 cm), or drag it. Table view shows the steps as a table; Reset hides the z ruler and the answer again.
 
 <div class="not-content">
   <NormalDistribution client:visible mode="z" setup="taller-for-age" />
@@ -86,9 +86,9 @@ Your task: answer the board's question and press Check. Then press Eleven-year-o
 
 **The answer.** The nine-year-old. After Check the board adds a z ruler under the centimeters, and its verdict, whatever you picked, gives "z = 6 / 8 = 0.75 for the nine-year-old and only z = 6 / 12 = 0.5 for the eleven-year-old." The same 6 cm divided by a smaller standard deviation gives a z-score 0.75 / 0.5 = 3/2 times as big. In centimeters the eleven-year-old is still taller.
 
-**The shares.** With Shade the share below on, the board reads "If heights in this group follow a normal curve, about 77.3% are below 140 cm: Φ(0.75) ≈ 0.7734." Φ is the share of a standard normal at or below a given z. For the eleven-year-old it reads "about 69.1% are below 150 cm: Φ(0.5) ≈ 0.6915", a smaller area for a smaller z.
+**The shares.** With Shade the share below on, the board reads "If heights in this group follow a normal curve, about 77.3% are below 140 cm: Φ(0.75) ≈ 0.7734." Φ is the share of a standard normal, the normal curve with mean 0 and standard deviation 1, at or below a given z. For the eleven-year-old it reads "about 69.1% are below 150 cm: Φ(0.5) ≈ 0.6915", a smaller area for a smaller z.
 
-**Same shape, new ruler.** Press Standard normal, z = 0.75. The centimeter ruler goes, and the shaded area stays exactly the nine-year-old's: "About 77.3% of a standard normal is below 0.75: Φ(0.75) ≈ 0.7734." Standardizing only relabels the ruler, from centimeters to standard deviations.
+**Same shape, new ruler.** Press Standard normal, z = 0.75. The centimeter ruler goes, and the shaded area stays exactly the nine-year-old's: "About 77.3% of a standard normal is below 0.75: Φ(0.75) ≈ 0.7734." Standardizing, turning every value into its z-score, only relabels the ruler, from centimeters to standard deviations.
 
 ## Notation
 
@@ -102,7 +102,7 @@ $$
 z_i = \frac{x_i - \vmu}{\vsigma}, \qquad x = \vmu + z\,\vsigma.
 $$
 
-The $z_i$ have no units, average 0 and have standard deviation 1. For a random variable $X$ with $\mathbb{E}[X] = \vmu$ and $\operatorname{Var}[X] = \vsigma^2 > 0$, the variable $Z = (X - \vmu)/\vsigma$ has mean 0 and variance 1, and if $X \sim \mathcal{N}(\vmu, \vsigma^2)$, then $Z \sim \mathcal{N}(0, 1)$ and $F_X(x) = \Phi\big((x - \vmu)/\vsigma\big)$.
+The $z_i$ have no units, average 0 and have standard deviation 1. The same holds for a random variable $X$, such as a randomly chosen child's height, with $\mathbb{E}[X] = \vmu$ and $\operatorname{Var}[X] = \vsigma^2 > 0$, the variable $Z = (X - \vmu)/\vsigma$ has mean 0 and variance 1, and if $X \sim \mathcal{N}(\vmu, \vsigma^2)$, then $Z \sim \mathcal{N}(0, 1)$ and $F_X(x) = \Phi\big((x - \vmu)/\vsigma\big)$.
 
 Boundary case: if $\vsigma = 0$, every value is equal and no z-score exists. Convention: some tools divide by $n - 1$, using $s$ in place of $\vsigma$; this page uses $\vsigma$ unless it says otherwise.
 
@@ -114,34 +114,34 @@ Find the group's mean and standard deviation, subtract the mean from the value, 
 
 <StepThrough title="The 140 cm nine-year-old, step by step" rigor="full">
 
-1. **Mean.** The nine heights add up to 1,206 cm, so <Var name="mu" /> = 1,206 / 9 = 134 cm, as worked out on the [variance page](/statistics/variance-and-standard-deviation/#how-far-from-the-mean-on-average).
-2. **Standard deviation.** The squared distances from 134 add up to 576, so <Var name="sigma" /> = √(576 / 9) = √64 = 8 cm, on the same page.
-3. **Subtract.** 140 − 134 = +6 cm. The plus sign says above the mean.
-4. **Divide.** 6 / 8 = 0.75. Centimeters over centimeters cancel, so z has no unit.
-5. **Read it.** The child stands three quarters of a standard deviation above the mean.
+1. **Mean and standard deviation.** The nine heights, in the order the children arrived, are 133, 122, 140, 128, 148, 125, 137, 131 and 142 cm. They add up to 1,206 cm, so <Var name="mu" /> = 1,206 / 9 = 134 cm. Their squared distances from 134 add up to 576, so <Var name="sigma" /> = √(576 / 9) = √64 = 8 cm, as on the [variance page](/statistics/variance-and-standard-deviation/#how-far-from-the-mean-on-average).
+2. **Subtract.** 140 − 134 = +6 cm. The plus sign says above the mean.
+3. **Divide.** 6 / 8 = 0.75. Centimeters over centimeters cancel, so z has no unit.
 
 </StepThrough>
 
+So the child stands three quarters of a standard deviation above the mean.
+
 ### What the sign and the size tell you
 
-A positive z-score is above the mean, a negative one below, and its size counts standard deviations. In arrival order, our class's z-scores are −1/8, −3/2, 3/4, −3/4, 7/4, −9/8, 3/8, −3/8 and 1: the tallest child, 148 cm, has z = 1.75, the shortest, 122 cm, has z = −1.5, and the 142 cm child stands exactly one standard deviation above. They add up to 0 and their squares average 1, as for any list: z-scores have mean 0 and standard deviation 1 (proved below).
+A positive z-score is above the mean, a negative one below, and its size counts standard deviations. In arrival order, our class's z-scores are −1/8, −3/2, 3/4, −3/4, 7/4, −9/8, 3/8, −3/8 and 1: the tallest child, 148 cm, has z = 1.75, the shortest, 122 cm, has z = −1.5, and the 142 cm child stands exactly one standard deviation above. As for any list, they add up to 0 and their squares average 1 (proved below).
 
-A z-score beyond 2 or 3 in size often flags an outlier; [outlier detection: z-score vs IQR](/statistics/outlier-detection-z-score-vs-iqr/) covers when that fails, and the [variance page's research frontier](/statistics/variance-and-standard-deviation/#research-frontier) shows an outlier hiding from it.
+A z-score beyond 2 or 3 in size often flags an outlier, a value far from the rest; [outlier detection: z-score vs IQR](/statistics/outlier-detection-z-score-vs-iqr/) covers when that fails, and the [variance page's research frontier](/statistics/variance-and-standard-deviation/#research-frontier) shows an outlier this rule misses.
 
 <Simpler label="z-scores as a second ruler" id="second-ruler">
 
-Under a centimeter ruler for our class, draw a second ruler with a mark every 8 cm from the mean: 126, 134, 142 and 150 cm, labeled −1, 0, 1 and 2. A height read on the second ruler is its z-score: 140 cm sits three quarters of the way from 0 to 1. The eleven-year-olds' marks, 132, 144 and 156 cm, are 12 cm apart, so the same 6 cm covers only half a gap.
+Under a centimeter ruler for our class, draw a second ruler with a mark every 8 cm from the mean: 126, 134, 142 and 150 cm, labeled −1, 0, 1 and 2. A height read on the second ruler is its z-score: 140 cm sits three quarters of the way from 0 to 1. The eleven-year-olds' marks are 12 cm apart, so 6 cm covers only half a gap.
 
 </Simpler>
 
 ### Comparing across groups
 
-Compare z-scores, not raw values, when the groups have different means or different spreads. With the means subtracted, the board's two children differ only in spread: 6/8 against 6/12. Spread alone can decide: a child 8 cm above the mean has z = 1 among the nine-year-olds (142 cm) but z = 8/12 = 2/3 ≈ 0.67 among the eleven-year-olds (152 cm).
+Compare z-scores, not raw values, when the groups have different means or different spreads. A bigger gap in centimeters can still be the smaller z: a 155 cm eleven-year-old stands 11 cm above the mean, z = 11/12 ≈ 0.92, while a 142 cm nine-year-old stands only 8 cm above, z = 8/8 = 1.
 
-Units don't matter: in meters, (1.40 − 1.34) / 0.08 = 0.75 again. A change of units scales the value, the mean and <Var name="sigma" /> alike, and a shift moves the value and the mean together. This is the [shift and scale rule](/statistics/variance-and-standard-deviation/#shifting-and-stretching-the-whole-class) applied to the top and the bottom of the fraction.
+Units don't matter: in meters, (1.40 − 1.34) / 0.08 = 0.75 again. A change of units scales the value, the mean and <Var name="sigma" /> alike. Adding the same amount to every height moves the value and the mean together and leaves <Var name="sigma" /> alone. This is the [shift and scale rule](/statistics/variance-and-standard-deviation/#shifting-and-stretching-the-whole-class) applied to the top and the bottom of the fraction.
 
 <SideNote>
-Growth charts use the same idea with more care: the CDC computes a child's z-score from three numbers for the child's age, as $((X/M)^L - 1)/(LS)$ when $L \ne 0$ <Cite id="cdc-growth-lms" />.
+Growth charts use the same idea with more care: the CDC computes the z-score of a height $X$ from three numbers, $L$, $M$ and $S$, published for each sex and age, as $((X/M)^L - 1)/(LS)$ when $L \ne 0$ <Cite id="cdc-growth-lms" />.
 </SideNote>
 
 <GoDeeper label="what z says when the data are not normal" id="without-normality">
@@ -152,11 +152,11 @@ For any list and any $k > 0$, at most $1/k^2$ of the values have $|z| \ge k$. Th
 
 ## From z to a share: the normal model
 
-If the group's values follow a normal curve, the share below a value with z-score z is Φ(z), the same for every normal group, because standardizing only relabels the ruler. Grinstead and Snell call $Z = (X - \vmu)/\vsigma$ the standardized version of $X$ (§5.2, p. 214) <Cite id="grinstead2003" />. The Normal page gives the [68-95-99.7 shares](/statistics/normal-distribution/#the-68-95-997-rule) and the [standardizing step](/statistics/normal-distribution/#formal-definition).
+If the group's values follow a normal curve, the share below a value with z-score z is Φ(z), the same for every normal group, because standardizing only relabels the ruler. Grinstead and Snell call $Z = (X - \vmu)/\vsigma$ the standardized version of the random variable $X$ (§5.2, p. 214) <Cite id="grinstead2003" />. The Normal page gives the [68-95-99.7 shares](/statistics/normal-distribution/#the-68-95-997-rule) and the [standardizing step](/statistics/normal-distribution/#formal-definition).
 
-**Reading a printed table.** Many tables, including Grinstead and Snell's Appendix A (p. 500), give the area from 0 to z, not the share below z <Cite id="grinstead2003" />. For z = 0.75 such a table reads .2734 (row 0.7, column .05); add the left half, 0.5, to get Φ(0.75) ≈ 0.7734. Other tables print Φ itself; the picture at the top of a table shows which kind it is.
+**Reading a printed table.** Many tables, including Grinstead and Snell's Appendix A (p. 500), give the area from 0 to z, not the share below z <Cite id="grinstead2003" />. For z = 0.75 such a table reads .2734; add the left half, 0.5, to get Φ(0.75) ≈ 0.7734. Other tables print Φ itself; the picture at the top of a table shows which kind it is.
 
-**Going backward.** The inverse of Φ turns a share into z; Python has it as `NormalDist().inv_cdf` <Cite id="python-statistics" />. The 90th percentile has z ≈ 1.2816, so under a normal model it is 134 + 1.2816 × 8 ≈ 144.25 cm for the nine-year-olds and 144 + 1.2816 × 12 ≈ 159.38 cm for the eleven-year-olds.
+**Going backward.** The inverse of Φ turns a share into z; Python has it as `NormalDist().inv_cdf` <Cite id="python-statistics" />. The 90th percentile, the height with 90% of the group below it, has z ≈ 1.2816, so under a normal model it is 134 + 1.2816 × 8 ≈ 144.25 cm for the nine-year-olds and 144 + 1.2816 × 12 ≈ 159.38 cm for the eleven-year-olds.
 
 <SideNote>
 The 77% describes a normal model of all nine-year-olds, not our 9 children: in the class itself, 6 of the 9 are below 140 cm, 6/9 ≈ 0.67.
@@ -211,13 +211,7 @@ Find every z-score of the eleven-year-olds: 150, 138, 161, 126, 147, 134, 158, 1
 
 </WorkedExample>
 
-<WorkedExample number={2} title="Taller for their age, on paper">
-
-The board's group lines give steps 1 and 2: 134 and 8 cm, 144 and 12 cm. Both distances are 6 cm; dividing by 8 and by 12 decides it, 0.75 against 0.5.
-
-</WorkedExample>
-
-<WorkedExample number={3} title="Back to centimeters" faded>
+<WorkedExample number={2} title="Back to centimeters" faded>
 
 (a) Which eleven-year-old height has z = 2? Use $x = \vmu + z\vsigma$: 144 + 2 × 12 = 168 cm, taller than anyone in the class. That is fine: a z-score can describe a height nobody has.
 
@@ -231,7 +225,7 @@ Nine-year-olds: 134 − 1.25 × 8 = 124 cm. Eleven-year-olds: 144 − 1.25 × 12
 
 </WorkedExample>
 
-<WorkedExample number={4} title="Find the slip" faded>
+<WorkedExample number={3} title="Find the slip" faded>
 
 Four students work on the 140 cm nine-year-old.
 
@@ -259,7 +253,7 @@ What went wrong in each?
 
 </WorkedExample>
 
-<WorkedExample number={5} title="A share between two heights" faded>
+<WorkedExample number={4} title="A share between two heights" faded>
 
 Under a normal model for the nine-year-olds (mean 134 cm, standard deviation 8 cm), what share is between 130 and 146 cm?
 
@@ -271,9 +265,9 @@ The z-scores are −0.5 and 1.5, so the share is Φ(1.5) − Φ(−0.5) ≈ 0.93
 
 </WorkedExample>
 
-<WorkedExample number={6} title="Standardize a new house with the training numbers" faded>
+<WorkedExample number={5} title="Standardize a new house with the training numbers" faded>
 
-A model's training houses have mean area 120 m² and standard deviation 30 m². (a) What does the scaler send to the model for a new 75 m² house? (b) Which area becomes 2.5? (c) A classmate refits the scaler on new houses with mean 90 m² (standard deviation still 30 m²) and gets a different input for the same house. Why is that wrong?
+A model's training houses have mean area 120 m² and standard deviation 30 m². A scaler turns each input into its z-score with the training numbers. (a) What does it send to the model for a new 75 m² house? (b) Which area becomes 2.5? (c) A classmate refits the scaler on new houses with mean 90 m² (standard deviation still 30 m²) and gets a different input for the same house. Why is that wrong?
 
 <div slot="solution">
 
@@ -287,7 +281,7 @@ A model's training houses have mean area 120 m² and standard deviation 30 m². 
 
 ### Standardizing features with the training set's numbers
 
-scikit-learn's `StandardScaler` computes z = (x − u)/s, where u and s are the mean and standard deviation of the training samples, stored at `fit` and reused in `transform`, so new data are measured against the training group, as in worked example 6. Its s divides by n, and a feature with zero variance keeps scale 1 <Cite id="sklearn-standardscaler" />. The variance page compares both versions of s for [feature scaling](/statistics/variance-and-standard-deviation/#feature-scaling).
+scikit-learn's `StandardScaler` computes z = (x − u)/s, where u and s are the mean and standard deviation of the training samples, stored at `fit` and reused in `transform`, so new data are measured against the training group, as in worked example 5. Its s is our σ, dividing by n, and a feature with zero variance keeps scale 1 <Cite id="sklearn-standardscaler" />. The variance page compares both versions of s for [feature scaling](/statistics/variance-and-standard-deviation/#feature-scaling).
 
 ### Normalization layers compute z-scores inside the network
 
@@ -373,8 +367,9 @@ assert Fraction(576, 64) == 9
 assert max(nine_z) == Fraction(7, 4) == z(148, nine) and min(nine_z) == Fraction(-3, 2) == z(122, nine)
 assert z(142, nine) == 1 and z(161, eleven) == Fraction(17, 12) and round(17 / 12, 2) == 1.42
 
-# Spread alone, and units.
-assert z(152, eleven) == Fraction(2, 3) and round(2 / 3, 2) == 0.67
+# A bigger gap in cm can be a smaller z; and units.
+assert z(155, eleven) == Fraction(11, 12) and round(11 / 12, 2) == 0.92 and 155 - 144 > 142 - 134
+assert z(142, nine) == Fraction(8, 8) == 1 and z(155, eleven) < z(142, nine)
 assert (Fraction(140, 100) - Fraction(134, 100)) / Fraction(8, 100) == Fraction(3, 4)
 for a in (Fraction(1, 100), 2, -1):
     for b in (0, 10):
@@ -387,6 +382,8 @@ assert 144 + 2 * 12 == 168 and 168 > max(eleven)
 assert 134 + Fraction(-5, 4) * 8 == 124 and 144 + Fraction(-5, 4) * 12 == 129 and eleven[7] == 129
 assert 134 + 1 * 8 == 142 and 134 + Fraction(1, 2) * 8 == 138 and 144 + Fraction(1, 2) * 12 == 150
 assert z(122, nine) == z(126, eleven) == Fraction(-3, 2)
+assert z(118, nine) == z(120, eleven) == -2 and Fraction(-16, 8) == Fraction(-24, 12) == -2
+assert z(156, eleven) == 1
 
 # The slips.
 assert Fraction(6, 64) == Fraction(3, 32) and round(3 / 32, 3) == 0.094
@@ -407,7 +404,7 @@ for value, text in ((0.75, "0.2734"), (1.5, "0.4332"), (0.5, "0.1915")):
     assert f"{phi(value) - 0.5:.4f}" == text
 assert abs(phi(0.75) - 0.5 - 0.2734) < 5e-5
 
-# Worked example 5: between 130 and 146 cm.
+# Worked example 4: between 130 and 146 cm.
 assert Fraction(130 - 134, 8) == Fraction(-1, 2) and Fraction(146 - 134, 8) == Fraction(3, 2)
 between = phi(1.5) - phi(-0.5)
 assert f"{phi(1.5):.4f}" == "0.9332" and f"{phi(-0.5):.4f}" == "0.3085" and f"{between:.4f}" == "0.6247"
@@ -430,7 +427,7 @@ for zs in (nine_z, eleven_z):
     for k in (Fraction(3, 2), 2, 3):
         assert Fraction(sum(1 for v in zs if abs(v) >= k), len(zs)) <= 1 / Fraction(k) ** 2
 
-# Worked example 6: the training mean and sigma, not the new batch's.
+# Worked example 5: the training mean and sigma, not the new batch's.
 assert Fraction(75 - 120, 30) == Fraction(-3, 2) and 120 + Fraction(5, 2) * 30 == 195
 assert Fraction(75 - 90, 30) == Fraction(-1, 2) != Fraction(-3, 2)
 
@@ -450,7 +447,7 @@ print("scipy:", round(float(stats.zscore(nine)[2]), 4), "with ddof=1:", round(fl
 `}
 />
 
-Worked example 6 with scikit-learn, display-only, to run on your own machine:
+Worked example 5 with scikit-learn, display-only, to run on your own machine:
 
 ```python title="standardize_houses.py"
 from sklearn.preprocessing import StandardScaler
@@ -463,16 +460,16 @@ print(scaler.transform([[75.0]]))  # a new house, measured against the training 
 
 ## Check yourself
 
-<CheckYourself level="intuition" question="A 122 cm nine-year-old and a 126 cm eleven-year-old: which is shorter for their age?">
-Neither. Both have z = −1.5: (122 − 134)/8 = −12/8 and (126 − 144)/12 = −18/12. The eleven-year-old is 18 cm below a class whose standard deviation is 12 cm, which is the same number of standard deviations as 12 cm below a class with 8 cm.
+<CheckYourself level="intuition" question="A 118 cm nine-year-old and a 120 cm eleven-year-old: which is shorter for their age?">
+Neither. Both have z = −2: (118 − 134)/8 = −16/8 and (120 − 144)/12 = −24/12. The eleven-year-old is 24 cm below a class whose standard deviation is 12 cm, which is the same number of standard deviations as 16 cm below a class with 8 cm.
 </CheckYourself>
 
 <CheckYourself level="standard" question="Which height in each class has z = 0.5?">
 138 cm for the nine-year-olds (134 + 0.5 × 8) and 150 cm for the eleven-year-olds (144 + 0.5 × 12). 150 cm is the board's eleven-year-old, so a 138 cm nine-year-old is exactly as tall for their age.
 </CheckYourself>
 
-<CheckYourself level="standard" question="Under a normal model for the eleven-year-olds (mean 144 cm, standard deviation 12 cm), about what share is shorter than 150 cm?">
-About 69%. The z-score is (150 − 144)/12 = 0.5, and Φ(0.5) ≈ 0.6915, the share the board shades for the eleven-year-old.
+<CheckYourself level="standard" question="Under a normal model for the eleven-year-olds (mean 144 cm, standard deviation 12 cm), about what share is shorter than 156 cm?">
+About 84%. The z-score is (156 − 144)/12 = 1, and Φ(1) ≈ 0.8413.
 </CheckYourself>
 
 <CheckYourself level="proof" question="Show that if every height is written in meters, every z-score stays the same.">
@@ -486,7 +483,7 @@ Every height is multiplied by 1/100, so the mean and $\vsigma$ are too. Then $z 
     Compare z-scores: 0.75 for the nine-year-old against 0.5 for the taller eleven-year-old.
   </Mistake>
   <Mistake wrong="A z-score of 1 always means about 84% are below.">
-    Only under a normal model, where Φ(1) ≈ 0.8413. In our class the 142 cm child has z = 1 and 7 of the 9 children are below, 7/9 ≈ 78%. Without a model, Chebyshev's inequality only guarantees at least 1 − 1/k² within k standard deviations, for k > 1.
+    Only under a normal model, where Φ(1) ≈ 0.8413. In our class the 142 cm child has z = 1 and 7 of the 9 children are below, 7/9 ≈ 78%.
   </Mistake>
   <Mistake wrong="Any standard deviation will do.">
     Dividing by n and by n − 1 give 0.75 and about 0.7071 for the same child. Use one version throughout, and say which.
