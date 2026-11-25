@@ -8,6 +8,7 @@
 // "≈" appears only when the decimal is rounded.
 import { compareFractions, formatFraction, fraction, multiplyFractions, toNumber, type Fraction } from '../boardMath.ts';
 import { capitalize, joinWords, plural } from '../boardText.ts';
+import { CHECKS_BEFORE_ANSWER } from '../guided/guided.ts';
 import { formatNumber } from '../plotColors.ts';
 import { CAFE_SAVINGS, TEST_B } from './datasets.ts';
 import {
@@ -789,6 +790,12 @@ export function tickLabel(value: number): string {
 
 // ---- Announcements ----
 
+/** The second wrong Check reveals "Show the answer"; saying so also keeps it from repeating the first. */
+function checkAnnouncement(state: DescriptiveState): string {
+	const line = feedbackLine(state) ?? '';
+	return state.feedback?.kind === 'wrong' && state.failedChecks === CHECKS_BEFORE_ANSWER ? `${line} You can now show the answer.` : line;
+}
+
 /** What the live region says when an interaction ends: the sentence that answers it. */
 export function announcementFor(state: DescriptiveState, action: Action): string {
 	const setup = setupOf(state);
@@ -800,7 +807,7 @@ export function announcementFor(state: DescriptiveState, action: Action): string
 		case 'pick':
 			return `Your middle child: child ${action.child + 1}, ${state.values[action.child]} cm.`;
 		case 'check':
-			return state.refusal ? (checkRefusal(state) ?? '') : (feedbackLine(state) ?? '');
+			return state.refusal ? (checkRefusal(state) ?? '') : checkAnnouncement(state);
 		case 'show-answer':
 			return feedbackLine(state) ?? '';
 		case 'select':

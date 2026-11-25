@@ -1727,6 +1727,11 @@ const announcerRun = () => {
 	);
 	assert.equal(dsay.feedbackLine(run('class-lineup', { type: 'pick', child: 6 }, { type: 'check' })), 'Child 7 (137 cm) has 5 children shorter and 3 taller. Try a shorter child.');
 	assert.equal(dsay.feedbackLine(run('class-lineup', { type: 'pick', child: 1 }, { type: 'check' })), 'Child 2 (122 cm) has 0 children shorter and 8 taller. Try a taller child.');
+	// The second wrong Check says that "Show the answer" has appeared; the first doesn't.
+	const missOnce = run('class-lineup', { type: 'line-up', on: true }, { type: 'pick', child: 8 }, { type: 'check' });
+	assert.equal(dsay.announcementFor(missOnce, { type: 'check' }), dsay.feedbackLine(missOnce));
+	const missTwice = dst.reducer(missOnce, { type: 'check' });
+	assert.equal(dsay.announcementFor(missTwice, { type: 'check' }), `${dsay.feedbackLine(missTwice)} You can now show the answer.`);
 	const found = run('class-lineup', { type: 'pick', child: 0 }, { type: 'check' });
 	assert.equal(dsay.feedbackLine(found), 'Yes. Child 1 (133 cm) has 4 children shorter and 4 taller, so the median height is 133 cm.');
 	assert.deepEqual(dsay.readoutLines(found), [
