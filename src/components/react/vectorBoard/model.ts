@@ -5,7 +5,7 @@
 // Every constraint is "round to the grid, then clamp each component to an interval" (a box). Never write one that
 // rejects grid points inside the box, such as leaving out the zero vector: Mafs' keyboard loop tries larger and
 // larger steps until the constrained point moves, so a hole makes one arrow press jump several units.
-import { isPerfectSquare } from '../boardMath.ts';
+import { divideFractions, fraction, isPerfectSquare, type Fraction } from '../boardMath.ts';
 import { formatNumber } from '../plotColors.ts';
 
 export type Vec2 = readonly [number, number];
@@ -158,6 +158,113 @@ export function classifyScale(c: number, target: number): ScaleGuess {
 	if (c === 0) return 'zero';
 	if (c > 0) return 'same-direction';
 	return Math.abs(c) > 1 ? 'flipped-longer' : 'flipped-shorter';
+}
+
+// ---- Linear combinations and span ----
+
+/** c a + d b. The weights move in steps of 0.5, so every result is exact in floating point. */
+export const combine = (c: number, a: Vec2, d: number, b: Vec2): Vec2 => add(scale(c, a), scale(d, b));
+
+/** What every c a + d b can reach: only the origin, one line through it, or the whole plane. */
+export type SpanKind = 'origin' | 'line' | 'plane';
+
+/** Integer tests, in this order: both zero, then lined up (cross product 0), else the whole plane. */
+export function spanKind(a: Vec2, b: Vec2): SpanKind {
+	if (isZero(a) && isZero(b)) return 'origin';
+	return cross(a, b) === 0 ? 'line' : 'plane';
+}
+
+/** The exact k with to = k × from, or null when `from` is the zero vector or the two don't line up. */
+export function lineMultiple(from: Vec2, to: Vec2): Fraction | null {
+	if (isZero(from) || cross(from, to) !== 0) return null;
+	const index = from[0] !== 0 ? 0 : 1;
+	return divideFractions(fraction(to[index], 1), fraction(from[index], 1));
+}
+
+/**
+ * The exact weights [c, d] with c a + d b = target, by Cramer's rule, or null when a and b line up (no unique answer).
+ * boardMath's divideFractions moves a negative determinant's sign to the numerator.
+ */
+export function flagWeights(target: Vec2, a: Vec2, b: Vec2): readonly [Fraction, Fraction] | null {
+	const determinant = cross(a, b);
+	if (determinant === 0) return null;
+	const [x, y] = target;
+	const over = fraction(determinant, 1);
+	return [divideFractions(fraction(x * b[1] - y * b[0], 1), over), divideFractions(fraction(a[0] * y - a[1] * x, 1), over)];
+}
+
+export type CombineGuess = 'match' | 'swapped' | 'other';
+
+/**
+ * Judges c a + d b against the flag. `swapped` is the flag mirrored across the diagonal, so a verdict that says "east
+ * and north swapped" is literally true for any a and b.
+ */
+export function classifyCombine(a: Vec2, b: Vec2, c: number, d: number, target: Vec2): CombineGuess {
+	const sum = combine(c, a, d, b);
+	if (equals(sum, target)) return 'match';
+	return equals(sum, [target[1], target[0]]) ? 'swapped' : 'other';
+}
+
+/** Below this, floating-point noise from the clip: an end this close to an edge is on it, a piece this short is none. */
+const CLIP_TOLERANCE = 1e-9;
+
+const snapToEdge = (value: number): number => {
+	if (Math.abs(value - VIEW_LIMIT) < CLIP_TOLERANCE) return VIEW_LIMIT;
+	return Math.abs(value + VIEW_LIMIT) < CLIP_TOLERANCE ? -VIEW_LIMIT : value + 0;
+};
+
+export interface ClippedSegment {
+	from: Vec2;
+	to: Vec2;
+	/** True when the segment's own end is on the board, so an arrowhead there tells the truth. */
+	tipShown: boolean;
+}
+
+/**
+ * The part of the segment from → to inside the closed view [−5, 5]² (Liang–Barsky), or null when no part is inside or
+ * the part inside has no length (a corner touch). The box is closed, so a segment along x = 5 is kept whole.
+ */
+export function clipSegment(from: Vec2, to: Vec2): ClippedSegment | null {
+	const direction = subtract(to, from);
+	let enter = 0;
+	let leave = 1;
+	const edges: readonly (readonly [number, number])[] = [
+		[-direction[0], from[0] + VIEW_LIMIT],
+		[direction[0], VIEW_LIMIT - from[0]],
+		[-direction[1], from[1] + VIEW_LIMIT],
+		[direction[1], VIEW_LIMIT - from[1]],
+	];
+	for (const [toward, room] of edges) {
+		if (toward === 0) {
+			if (room < 0) return null;
+			continue;
+		}
+		const crossing = room / toward;
+		if (toward < 0) {
+			if (crossing > leave) return null;
+			enter = Math.max(enter, crossing);
+		} else {
+			if (crossing < enter) return null;
+			leave = Math.min(leave, crossing);
+		}
+	}
+	const pointAt = (t: number, exact: Vec2): Vec2 => {
+		if (t === 0 || t === 1) return exact;
+		const point = add(from, scale(t, direction));
+		return [snapToEdge(point[0]), snapToEdge(point[1])];
+	};
+	const start = pointAt(enter, enter === 0 ? from : to);
+	const end = pointAt(leave, leave === 1 ? to : from);
+	if (Math.sqrt(lengthSquared(subtract(end, start))) < CLIP_TOLERANCE) return null;
+	return { from: start, to: end, tipShown: withinView(to) };
+}
+
+/** The line through the origin along a nonzero v, cut at the view's edge: ±(5 ÷ max(|v₁|, |v₂|)) v. */
+export function spanLineEnds(v: Vec2): readonly [Vec2, Vec2] {
+	if (isZero(v)) throw new Error('VectorBoard2D: the zero vector has no direction, so it spans no line.');
+	const reach = VIEW_LIMIT / Math.max(Math.abs(v[0]), Math.abs(v[1]));
+	const end: Vec2 = [snapToEdge(reach * v[0]), snapToEdge(reach * v[1])];
+	return [scale(-1, end), end];
 }
 
 /** Distance of a label from the middle of its arrow, in grid units. */

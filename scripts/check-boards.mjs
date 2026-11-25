@@ -3757,6 +3757,81 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	assert.equal(vm.classifyScale(-2, -1), 'flipped-longer');
 	assert.equal(vm.classifyScale(-0.5, -1), 'flipped-shorter');
 
+	// Linear combinations and span (span-reach, span-shape; 0014 amendment). Exact values from fractions.Fraction.
+	assert.deepEqual(vm.combine(1, [2, 1], 2, [1, 2]), [4, 5]);
+	assert.deepEqual(vm.combine(0.5, [4, 2], 1, [2, 1]), [4, 2]);
+	assert.equal(vm.spanKind([0, 0], [0, 0]), 'origin');
+	assert.equal(vm.spanKind([2, 1], [-4, -2]), 'line');
+	assert.equal(vm.spanKind([3, 1], [0, 0]), 'line');
+	assert.equal(vm.spanKind([4, 2], [3, 2]), 'plane');
+	{
+		const spanCounts = { origin: 0, line: 0, plane: 0 };
+		for (let ax = -5; ax <= 5; ax++) for (let ay = -5; ay <= 5; ay++) for (let bx = -5; bx <= 5; bx++) for (let by = -5; by <= 5; by++) spanCounts[vm.spanKind([ax, ay], [bx, by])]++;
+		assert.deepEqual(spanCounts, { origin: 1, line: 832, plane: 13808 });
+	}
+	assert.deepEqual(vm.lineMultiple([2, 1], [-4, -2]), fraction(-2, 1));
+	assert.deepEqual(vm.lineMultiple([3, 3], [1, 1]), fraction(1, 3));
+	assert.deepEqual(vm.lineMultiple([3, 3], [4, 4]), fraction(4, 3));
+	assert.deepEqual(vm.lineMultiple([3, 1], [0, 0]), fraction(0, 1));
+	assert.deepEqual(vm.lineMultiple([0, -2], [0, 3]), fraction(-3, 2));
+	assert.equal(vm.lineMultiple([0, 0], [1, 1]), null);
+	assert.equal(vm.lineMultiple([2, 1], [1, 2]), null);
+	assert.deepEqual(vm.flagWeights([4, 5], [2, 1], [1, 2]), [fraction(1, 1), fraction(2, 1)]);
+	assert.deepEqual(vm.flagWeights([4, 5], [3, 1], [1, 3]), [fraction(7, 8), fraction(11, 8)]);
+	assert.deepEqual(vm.flagWeights([4, 5], [4, 2], [3, 2]), [fraction(-7, 2), fraction(6, 1)]);
+	assert.deepEqual(vm.flagWeights([4, 5], [1, 0], [0, 1]), [fraction(4, 1), fraction(5, 1)]);
+	assert.deepEqual(vm.flagWeights([4, 5], [1, 2], [2, 1]), [fraction(2, 1), fraction(1, 1)], 'a negative determinant keeps the denominator positive');
+	assert.equal(vm.flagWeights([4, 5], [2, 1], [4, 2]), null);
+	assert.equal(vm.classifyCombine([2, 1], [1, 2], 1, 2, [4, 5]), 'match');
+	assert.equal(vm.classifyCombine([2, 1], [1, 2], 2, 1, [4, 5]), 'swapped');
+	assert.equal(vm.classifyCombine([2, 1], [1, 2], 1, 1, [4, 5]), 'other');
+	{
+		const near = (actual, expected) => actual.every((value, index) => Math.abs(value - expected[index]) < 1e-9);
+		const clipCase = (from, to, expected) => {
+			const clipped = vm.clipSegment(from, to);
+			if (expected === null) return assert.equal(clipped, null, `clip ${from} → ${to}`);
+			assert.ok(clipped && near(clipped.from, expected.from) && near(clipped.to, expected.to), `clip ${from} → ${to}: ${JSON.stringify(clipped)}`);
+			assert.equal(clipped.tipShown, expected.tipShown, `clip ${from} → ${to} tip`);
+		};
+		clipCase([0, 0], [10, 5], { from: [0, 0], to: [5, 2.5], tipShown: false });
+		clipCase([6, 3], [4, -1], { from: [5, 1], to: [4, -1], tipShown: true });
+		clipCase([-6, 0], [0, 6], { from: [-5, 1], to: [-1, 5], tipShown: false });
+		clipCase([10, 5], [15, 15], null);
+		clipCase([10, 5], [5, -5], null);
+		clipCase([5, -5], [5, 5], { from: [5, -5], to: [5, 5], tipShown: true });
+		clipCase([-2, 1], [3, 4], { from: [-2, 1], to: [3, 4], tipShown: true });
+		// Ends that land on an edge are exactly ±5, so a drawn arrow never stops a hair short of it.
+		assert.deepEqual(vm.clipSegment([-6, 0], [0, 6]).from, [-5, 1]);
+	}
+	assert.deepEqual(vm.spanLineEnds([2, 1]), [[-5, -2.5], [5, 2.5]]);
+	assert.deepEqual(vm.spanLineEnds([4, 2]), [[-5, -2.5], [5, 2.5]]);
+	assert.ok(Math.abs(vm.spanLineEnds([3, 1])[1][1] - 5 / 3) < 1e-12 && vm.spanLineEnds([3, 1])[1][0] === 5);
+	assert.throws(() => vm.spanLineEnds([0, 0]), /zero vector has no direction/);
+	for (let x = -5; x <= 5; x++) {
+		for (let y = -5; y <= 5; y++) {
+			if (x === 0 && y === 0) continue;
+			for (const end of vm.spanLineEnds([x, y])) {
+				assert.equal(Math.max(Math.abs(end[0]), Math.abs(end[1])), 5, `span line end of (${x}, ${y})`);
+				assert.ok(Math.abs(vm.cross([x, y], end)) < 1e-9, `span line end of (${x}, ${y}) off the line`);
+			}
+		}
+	}
+	// The slider reaches 41 of the 121 grid points with the opening a = (2, 1), b = (1, 2): exactly those with
+	// 2x − y a multiple of 3, so (1, 0) is out of reach although the span is the whole plane.
+	{
+		const weights = Array.from({ length: 21 }, (_, index) => -5 + index * 0.5);
+		const hits = new Set();
+		for (const c of weights) for (const d of weights) {
+			const point = vm.combine(c, [2, 1], d, [1, 2]);
+			if (point.every(Number.isInteger) && vm.withinView(point)) hits.add(String(point));
+		}
+		const expected = new Set();
+		for (let x = -5; x <= 5; x++) for (let y = -5; y <= 5; y++) if ((((2 * x - y) % 3) + 3) % 3 === 0) expected.add(String([x, y]));
+		assert.equal(hits.size, 41);
+		assert.ok(!hits.has('1,0'));
+		assert.deepEqual([...hits].sort(), [...expected].sort());
+	}
+
 	// Labels sit off the arrow's middle, written by hand (never vec.lerp, which gives NaN for a zero arrow).
 	const anchor = vm.labelAnchor([0, 0], [4, 0], 1);
 	assert.ok(Math.abs(anchor[0] - 2) < 1e-12 && anchor[1] > 0);
