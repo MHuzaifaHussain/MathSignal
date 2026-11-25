@@ -62,7 +62,7 @@ import DistributionBoard from "../../../components/react/DistributionBoard.tsx";
 
 ## In everyday terms
 
-<Analogy breaks="A real ruler has its own weight, and a pencil has width; the math has neither: only the blocks count, and the balance point is one exact number. The ruler also hides that 'expected' does not mean 'likely': on a plain die you can never roll 3.5 candies, yet that is the balance point. And the spinning picture only says which game spreads more, not by how much in candies; for that you take the square root, the standard deviation.">
+<Analogy breaks="A real ruler has its own weight, and a pencil has width; the math has neither: only the blocks count, and the balance point is one exact number. And the spinning picture only says which game spreads more, not by how much in candies; for that you take the square root, the standard deviation.">
 
 At the school fair, each face of a plain die wins its own number of candies: face 1 wins 1, face 2 wins 2, up to 6. Put one block on a ruler for each face, at the mark for the candies it wins, and rest the ruler on a pencil. Where must the pencil go so the ruler stays level? Halfway, at 3.5, because the blocks on each side are mirror images. That point is the expected value: what the game pays per roll on average, if you play it many times.
 
@@ -73,7 +73,7 @@ A balanced ruler says nothing about how far out the blocks sit. For that, spin t
 </Analogy>
 
 <WhyThisMatters>
-Training a model means making an expected value small: the expected loss over the examples the model will meet, called the risk. The training loss you watch is the same formula with every training example given an equal chance. Variance is the other half: a minibatch gradient is right on average but noisy, and how noisy decides how fast training can go. Judging a model, a game or a policy by its most likely outcome instead of its expected value picks the wrong one whenever a rare, large outcome is involved.
+Training a model means making an expected value small: the average loss over the examples the model will meet, called the risk. The training loss you watch is the same formula with every training example given an equal chance. Variance is the other half: training estimates that average from small batches, right on average but noisy, and the noise sets how fast training can go. Judging a model or a game by its most likely outcome instead of its expected value can pick the wrong one when a rare, large outcome is involved.
 </WhyThisMatters>
 
 ## Balance the bars on a pencil
@@ -86,9 +86,9 @@ Exactly where? Give the balance point as a number of candies, and say why the ba
 
 </GoDeeper>
 
-The board stacks one tile per face on the amount it wins, with each bar's faces and chance listed below (Table view shows them as a table). Move the ochre pencil with the Pencil position slider (arrow keys move it one sixth of a candy) or by dragging along the strip under the axis. The plank stays level while you move it, so it gives no hint. Balance it marks the mean in pink and tilts the plank toward the heavy side. Each preset (Plain die, One big prize, Lopsided, All win 1) parks the pencil and hides the balance point again. The − and + buttons wait until you have pressed Balance it.
+The board stacks one tile per face on the amount it wins, with each bar's faces and chance listed below (Table view shows them as a table). Move the ochre pencil with the Pencil position slider (arrow keys move it one sixth of a candy) or by dragging along the strip under the axis. Balance it marks the mean in pink and tilts the plank toward the heavy side. After that, − and + change how many candies a face wins. Picking a preset (Plain die, One big prize, Lopsided, All win 1) parks the pencil and hides the balance point again.
 
-Your task: start with the plain die. Slide the pencil to where the bars balance and press Balance it. Then press One big prize, slide the pencil to your guess, and press Balance it again.
+Your task: first try the controls on the plain die, where the ruler already told you the answer, 3.5. Then press One big prize, slide the pencil to your guess, and press Balance it again.
 
 <div class="not-content">
   <DistributionBoard client:visible setup="candy-balance" />
@@ -98,7 +98,7 @@ On the plain die, a pencil at 3.5 gets "Balanced: your pencil at 3.50 is right u
 
 One big prize balances at 1 candy, between the two guesses: "Average over the faces: (0 + 0 + 0 + 0 + 0 + 6) / 6 = 1 candy." and "The same from the bars: 0 × 5/6 + 6 × 1/6 = 1."
 
-The tall bar is not the balance point. With the pencil at 0 the board says "The plank tips down on the right. You put the pencil under the tallest bar, at 0, but the bar out at 6 sits far from the pencil and pulls harder." A bar pulls with its height times its distance from the balance point: the short bar sits 5 candies away and the tall bar only 1, and 5/6 × 1 = 1/6 × 5. Halfway fails too: "You put the pencil halfway between the smallest and largest amounts, at 3, but 5 of the 6 faces sit at 0." The halfway mark ignores how many faces sit at each end.
+The tall bar is not the balance point. With the pencil at 0 the board says "The plank tips down on the right. You put the pencil under the tallest bar, at 0, but the bar out at 6 sits far from the pencil and pulls harder." A bar pulls with its height times its distance from the balance point: the short bar sits 5 candies away and the tall bar only 1, and 5/6 × 1 = 1/6 × 5. Halfway fails too: "You put the pencil halfway between the smallest and largest amounts, at 3, but 5 of the 6 faces sit at 0."
 
 After Balance it, a live line gives the pull, such as "Pencil at 1.50: the bars pull 1 − 1.50 = −0.50 candies from it, so the plank tips left." Lopsided and All win 1 also balance at 1, with very different shapes. The expected value is one number, and it forgets the shape; the second board measures part of what it forgets.
 
@@ -108,17 +108,16 @@ The expected value of a random variable X is the sum of its values, each multipl
 
 ### Two ways to get the same number
 
-The board's two lines are the two ways. "Average over the faces" weights each face's candies by 1/6, outcome by outcome; "The same from the bars" weights each value by its bar's chance. They agree because a bar just groups the faces that win the same amount, as on the [random variables](/probability/random-variables-and-distributions/#a-random-variable-is-a-rule-not-a-number) page. Grinstead and Snell define the expected value over the values, provided the sum converges absolutely, and also call it the mean, <Var name="mu" /> (Definition 6.1, p. 226) <Cite id="grinstead2003" />. Goodfellow and coauthors write the same sum as their equation (3.9) (§3.8) <Cite id="goodfellow2016prob" />.
-
+The board's two lines are the two ways. "Average over the faces" weights each face's candies by 1/6, outcome by outcome; "The same from the bars" weights each value by its bar's chance. They agree because a bar just groups the faces that win the same amount, as on the [random variables](/probability/random-variables-and-distributions/#a-random-variable-is-a-rule-not-a-number) page. Grinstead and Snell define the expected value over the values, as long as the sum of |x| P(X = x) is finite (always true when X has finitely many values), and also call it the mean, <Var name="mu" /> (Definition 6.1, p. 226) <Cite id="grinstead2003" />.
 ### Why it is the balance point
 
-Put the pencil at a point t. Each bar pulls with (x − t) P(X = x): its height times its signed distance from the pencil, negative on the left. Adding the pulls gives Σ (x − t) P(X = x) = 𝔼[X] − t, because the bars' heights add up to 1. The total is 0 exactly when t = 𝔼[X]. That is the board's live line: "the bars pull 1 − 1.50 = −0.50 candies". The plank tips toward the side with the larger total pull, not toward the taller bar.
+The bars' total pull on a pencil at t is 𝔼[X] − t, so it vanishes only at the expected value. Each bar pulls with (x − t) P(X = x): its height times its signed distance from the pencil, negative on the left. Adding the pulls gives Σ x P(X = x) − t Σ P(X = x) = 𝔼[X] − t × 1, because the bars' heights add up to 1. That is the board's live line: "the bars pull 1 − 1.50 = −0.50 candies". When the total is positive the plank tips right, when negative it tips left: the side is decided by the total pull, not by the taller bar.
 
 ### What "expected" means: the long run, not the likely
 
-Grinstead and Snell open their chapter with a die game: you gain the number on an odd face and lose the number on an even face, in points. Each face comes up about 1/6 of the time, so over many plays the average gain settles near (1 − 2 + 3 − 4 + 5 − 6)/6 = −1/2. Their simulation averaged −0.57 over 100 plays and −0.4949 over 10,000 (§6.1, pp. 225–226, Table 6.1) <Cite id="grinstead2003" />. Why averages settle is the law of large numbers, a later page.
+The expected value is what the average settles toward over many plays, not a forecast of one play. Grinstead and Snell open their chapter with a die game: you gain the number on an odd face and lose the number on an even face, in points. Each face comes up about 1/6 of the time, so over many plays the average gain settles near (1 − 2 + 3 − 4 + 5 − 6)/6 = −1/2. Their simulation averaged −0.57 over 100 plays and −0.4949 over 10,000 (§6.1, pp. 225–226, Table 6.1) <Cite id="grinstead2003" />. Why averages settle is the law of large numbers, a later page.
 
-So the expected value is not a forecast of one play. It need not be a possible value: no roll of a plain die wins 3.5 candies. Nor is it the most likely value or the middle one: on One big prize both are 0, while 𝔼[X] = 1.
+It need not be a possible value: no roll of a plain die wins 3.5 candies. Nor is it the most likely value or the middle value of the sorted list (the median): on One big prize both are 0, while 𝔼[X] = 1.
 
 <CheckYourself level="intuition" question="A game pays 10 candies with chance 1/10 and nothing otherwise. Is 'expect 1 candy' a prediction of what you will win on one play?">
 No. One play gives 0 or 10 candies, never 1. The 1 is the average over many plays: 10 × 1/10 = 1.
@@ -126,7 +125,7 @@ No. One play gives 0 or 10 candies, never 1. The 1 is the average over many play
 
 <GoDeeper label="when there is no expected value" id="no-expected-value">
 
-Grinstead and Snell's definition asks for Σ |x| P(X = x) to be finite. Their Example 6.3 (p. 227), the St. Petersburg paradox, shows why: toss a coin until the first head, and if that takes n tosses, win 2ⁿ points. That prize has chance 1/2ⁿ, so each term of the sum is 2ⁿ × 1/2ⁿ = 1. The first N terms add up to N, and the sum grows without end: the game has no expected value <Cite id="grinstead2003" />. They point out that hardly anyone would pay more than a small fixed amount to play, which is the paradox. Finite games, like every board on this page, never meet this. Variables with infinitely many values, such as the number of tosses itself, have to be checked.
+Grinstead and Snell's definition asks for Σ |x| P(X = x) to be finite. Their Example 6.3 (p. 227), the St. Petersburg paradox, shows why: toss a coin until the first head, and if that takes n tosses, win 2ⁿ points. That prize has chance 1/2ⁿ, so each term of the sum is 2ⁿ × 1/2ⁿ = 1. The first N terms add up to N, and the sum grows without end: the game has no expected value <Cite id="grinstead2003" />. The infinite sum suggests paying any fixed fee to play, yet they point out that hardly anyone would pay more than a small amount; that is the paradox. Finite games, like every board on this page, never meet this. Variables with infinitely many values, such as the number of tosses itself, have to be checked.
 
 </GoDeeper>
 
@@ -136,17 +135,23 @@ To find the expected value of g(X), weight g(x) by P(X = x); there is no need to
 
 Take the Game card from the random variables page: faces 1, 2 and 3 win nothing, faces 4 and 5 win 1 candy and face 6 wins 5. Its expected value is (0 + 0 + 0 + 1 + 1 + 5)/6 = 7/6.
 
-Straight lines pass through. If playing costs 2 candies, your net gain is X − 2, and 𝔼[X − 2] = 7/6 − 2 = −5/6: you lose 5/6 of a candy per play on average. In general 𝔼[cX + d] = c𝔼[X] + d, Grinstead and Snell's Theorem 6.2 (p. 231) <Cite id="grinstead2003" /> and Goodfellow and coauthors' equation (3.11) <Cite id="goodfellow2016prob" />. The same theorem adds expected values of two random variables, 𝔼[X + Y] = 𝔼[X] + 𝔼[Y], even when they depend on each other.
+Straight lines pass through. If playing costs 2 candies, your net gain is X − 2, and 𝔼[X − 2] = 7/6 − 2 = −5/6: you lose 5/6 of a candy per play on average. In general 𝔼[cX + d] = c𝔼[X] + d, which follows from Grinstead and Snell's Theorem 6.2 (p. 231) <Cite id="grinstead2003" /> and is Goodfellow and coauthors' equation (3.11) <Cite id="goodfellow2016prob" />. This rule is called linearity.
 
-Squares do not pass through. 𝔼[X²] = (0 + 0 + 0 + 1 + 1 + 25)/6 = 9/2, but (𝔼[X])² = 49/36. In general 𝔼[g(X)] is not g(𝔼[X]) unless g is a straight line. You will meet the gap between 9/2 and 49/36 again below.
+<GoDeeper label="adding two random variables" id="adding-expected-values">
+
+The same theorem adds the finite expected values of any two random variables X and Y on the same experiment, 𝔼[X + Y] = 𝔼[X] + 𝔼[Y], even when one affects the other (p. 232) <Cite id="grinstead2003" />. On the Game card, X + X = 2X has expected value 7/6 + 7/6 = 7/3. Variances don't add this freely, as the variance sections show.
+
+</GoDeeper>
+
+Squares do not pass through. 𝔼[X²] = (0 + 0 + 0 + 1 + 1 + 25)/6 = 9/2, but (𝔼[X])² = 49/36. In general 𝔼[g(X)] need not equal g(𝔼[X]); only a straight line keeps them equal for every X. You will meet the gap between 9/2 and 49/36 again below.
 
 <GoDeeper label="split into cases, then average the averages" id="law-of-total-expectation">
 
-If cases H₁, …, Hₘ split the outcomes, each with P(H_k) > 0, then 𝔼[X] = Σ_k 𝔼[X | H_k] P(H_k). Here 𝔼[X | H] is the expected value of X counting only the outcomes in H, with their chances divided by P(H). This is the expected-value version of the [law of total probability](/probability/law-of-total-probability/#the-answer-sits-between-the-cases), and Grinstead and Snell state it as Theorem 6.5 (p. 239) <Cite id="grinstead2003" />.
+If cases H₁, …, Hₘ split the outcomes, each with P(Hₖ) > 0, then 𝔼[X] = Σₖ 𝔼[X | Hₖ] P(Hₖ). Here 𝔼[X | H] is the expected value of X counting only the outcomes in H, with their chances divided by P(H). This is the expected-value version of the [law of total probability](/probability/law-of-total-probability/#the-answer-sits-between-the-cases), and Grinstead and Snell state it as Theorem 6.5 (p. 239) <Cite id="grinstead2003" />.
 
 On the Game card, split the faces into even and odd, each with chance 1/2. Faces 2, 4 and 6 win 0, 1 and 5, so 𝔼[X | even] = 6/3 = 2. Faces 1, 3 and 5 win 0, 0 and 1, so 𝔼[X | odd] = 1/3. Then 2 × 1/2 + 1/3 × 1/2 = 7/6, the expected value again.
 
-The variance splits too, stated here and checked on numbers, not proved: it is the average spread inside the cases plus the spread of the case averages, Var[X] = Σ_k Var[X | H_k] P(H_k) + Σ_k (𝔼[X | H_k] − <Var name="mu" />)² P(H_k). Inside the cases, Var[X | even] = 14/3 and Var[X | odd] = 2/9, which average 22/9. The case averages 2 and 1/3 sit 5/6 on either side of 7/6, which gives 25/36. And 22/9 + 25/36 = 113/36, the Game card's variance from the next sections.
+The variance splits too, stated here and checked on numbers, not proved: it is the average spread inside the cases plus the spread of the case averages, Var[X] = Σₖ Var[X | Hₖ] P(Hₖ) + Σₖ (𝔼[X | Hₖ] − <Var name="mu" />)² P(Hₖ). Inside the cases, Var[X | even] = 14/3 and Var[X | odd] = 2/9, which average 22/9. The case averages 2 and 1/3 sit 5/6 on either side of 7/6, which gives 25/36. And 22/9 + 25/36 = 113/36, the Game card's variance from the next sections.
 
 </GoDeeper>
 
@@ -160,7 +165,7 @@ By what factor is the variance of the wider game bigger? And is the standard dev
 
 </GoDeeper>
 
-The faces are fixed here; − and + only say "These values are fixed. Switch presets to compare." The pink triangle marks the mean, <Var name="mu" /> = 2. Show the spread draws an arm from the mean to each bar off the mean and a blue span from <Var name="mu" /> − <Var name="sigma" /> to <Var name="mu" /> + <Var name="sigma" />; while it is on, switching presets leaves a dashed span at the previous game's <Var name="sigma" />. The presets are Steady, Many amounts and All or nothing.
+The faces are fixed here; − and + only say "These values are fixed. Switch presets to compare." The pink triangle marks the mean, <Var name="mu" /> = 2. Show the spread draws an arm from the mean to each bar off the mean and a blue span from <Var name="mu" /> − <Var name="sigma" /> to <Var name="mu" /> + <Var name="sigma" />; while it is on, switching presets leaves a dashed span at the previous game's <Var name="sigma" />.
 
 Your task: turn on Show the spread, then switch between the presets and read the variance line each time.
 
@@ -176,31 +181,37 @@ The variance of a random variable is the expected value of its squared distance 
 
 ### From a list to a random variable
 
-This is the definition from the [variance of a list](/statistics/variance-and-standard-deviation/#how-far-from-the-mean-on-average), with the equal weights 1/n replaced by the chances: Var[X] = Σ (x − <Var name="mu" />)² P(X = x). That page explains why the distances are squared. It is Grinstead and Snell's Definition 6.3 (p. 257); for a plain die they find Var[X] = 35/12, so <Var name="sigma" /> ≈ 1.71 candies (Example 6.17, pp. 257–258) <Cite id="grinstead2003" />. Here <Var name="mu" /> and <Var name="sigma" /> describe a whole distribution, so nothing divides by n − 1; the sample versions x̄ and s live on the [variance page](/statistics/variance-and-standard-deviation/#two-versions-the-whole-group-or-a-sample).
+This is the definition from the [variance of a list](/statistics/variance-and-standard-deviation/#how-far-from-the-mean-on-average), with the equal weights 1/n replaced by the chances: Var[X] = Σ (x − <Var name="mu" />)² P(X = x). It is Grinstead and Snell's Definition 6.3 (p. 257); for a plain die they find Var[X] = 35/12, so <Var name="sigma" /> ≈ 1.71 candies (Example 6.17, pp. 257–258) <Cite id="grinstead2003" />. Here <Var name="mu" /> and <Var name="sigma" /> describe a whole distribution, so nothing divides by n − 1; the sample versions x̄ and s live on the [variance page](/statistics/variance-and-standard-deviation/#two-versions-the-whole-group-or-a-sample).
 
 ### The shortcut: mean of the square minus square of the mean
 
-The variance is also Var[X] = 𝔼[X²] − <Var name="mu" />², Grinstead and Snell's Theorem 6.6 (p. 258) <Cite id="grinstead2003" />. On a random variable it takes two lines, from linearity; the formal definition below writes them out. For the Game card, 𝔼[X²] = 9/2 and <Var name="mu" />² = 49/36, so Var[X] = 113/36 ≈ 3.14 and <Var name="sigma" /> ≈ 1.77 candies: the gap promised above. Deisenroth and coauthors call this the raw-score formula and warn in a margin note that when both terms are huge and nearly equal, floating-point arithmetic can lose precision (equation (6.44)) <Cite id="deisenroth2020" />.
+The variance is also Var[X] = 𝔼[X²] − <Var name="mu" />², Grinstead and Snell's Theorem 6.6 (p. 258) <Cite id="grinstead2003" />. It follows from linearity in two lines: expand (X − <Var name="mu" />)² = X² − 2<Var name="mu" />X + <Var name="mu" />², then take expected values: 𝔼[X²] − 2<Var name="mu" />·<Var name="mu" /> + <Var name="mu" />² = 𝔼[X²] − <Var name="mu" />². For the Game card, 𝔼[X²] = 9/2 and <Var name="mu" />² = 49/36, so Var[X] = 113/36 ≈ 3.14 and <Var name="sigma" /> ≈ 1.77 candies: the gap promised above.
+
+<GoDeeper label="why software avoids this formula">
+
+Deisenroth and coauthors call this the raw-score formula and warn in a margin note that when both terms are huge and nearly equal, floating-point arithmetic can lose precision (equation (6.44)) <Cite id="deisenroth2020" />.
+
+</GoDeeper>
 
 ### Shifting and scaling
 
 Adding a number d to every value leaves the variance alone, and multiplying every value by c multiplies it by c², so <Var name="sigma" /> scales by |c| (Theorem 6.7, p. 259) <Cite id="grinstead2003" />. The net game X − 2 has the same variance as X, 113/36; paying out double, 2X, has variance 4 × 113/36 = 113/9. The variance page shows the [same rule for a list](/statistics/variance-and-standard-deviation/#shifting-and-stretching-the-whole-class).
 
-Variances, unlike expected values, don't always add. With Y = −X, X + Y is always 0, so Var[X + Y] = 0, not Var[X] + Var[Y] (p. 259) <Cite id="grinstead2003" />. They do add for independent variables, a later page.
+Variances don't always add. With Y = −X and Var[X] > 0, X + Y is always 0, so Var[X + Y] = 0, not Var[X] + Var[Y] (p. 259) <Cite id="grinstead2003" />. They do add for independent variables, a later page.
 
 ### The mean is the best single guess
 
-If you must guess X with one number t and pay the squared miss, the expected cost is 𝔼[(X − t)²] = Var[X] + (<Var name="mu" /> − t)², smallest at t = <Var name="mu" />. On One big prize, guessing 0, 1 or 3 costs 6, 5 or 9 on average.
+If you must guess X with one number t and pay the squared miss, the expected cost is 𝔼[(X − t)²] = Var[X] + (<Var name="mu" /> − t)². Write X − t as (X − <Var name="mu" />) + (<Var name="mu" /> − t) and square: the middle term averages to 0, because 𝔼[X − <Var name="mu" />] = 0. The first part doesn't depend on t, and the second is never negative, so the cost is smallest at t = <Var name="mu" />. On One big prize, guessing 0, 1 or 3 costs 6, 5 or 9 on average.
 
 <Simpler label="a yes-or-no variable">
 
-The indicator of an event A is 1 when A happens and 0 when it doesn't. Its expected value is 1 × P(A) + 0 × (1 − P(A)) = P(A). Since 0² = 0 and 1² = 1, its square is itself, so the shortcut gives Var = P(A) − P(A)² = P(A)(1 − P(A)). Coins match from the random variables page is 1 with chance 1/2: expected value 1/2, variance 1/4. This yes-or-no case is the building block of the binomial distribution, a later page.
+The indicator of an event A is 1 when A happens and 0 when it doesn't. Its expected value is 1 × P(A) + 0 × (1 − P(A)) = P(A). Since 0² = 0 and 1² = 1, its square is itself, so the shortcut gives Var = P(A) − P(A)² = P(A)(1 − P(A)). Toss two coins and let Coins match be 1 when they land the same way (HH or TT) and 0 otherwise: it is 1 with chance 2/4 = 1/2, so its expected value is 1/2 and its variance 1/2 × 1/2 = 1/4. This yes-or-no case is the building block of the binomial distribution, a later page.
 
 </Simpler>
 
 ## Notation
 
-<NotationKey symbols={["random-variable", "outcome", "pmf", "sum-over-values", "expectation", "mu", "function-of-random-variable", "scalar", "shift", "pivot-point", "variance", "sigma2", "sigma", "indicator", "partition", "conditional-expectation", "conditional-variance"]} />
+<NotationKey symbols={["random-variable", "sample-space", "outcome", "pmf", "sum-over-values", "expectation", "mu", "function-of-random-variable", "scalar", "shift", "pivot-point", "variance", "sigma2", "sigma", "indicator", "partition", "conditional-expectation", "conditional-variance"]} />
 
 <PreciseStatement>
 
@@ -216,7 +227,7 @@ $$
 \operatorname{Var}[X] = \mathbb{E}\big[(X - \vmu)^2\big] = \mathbb{E}[X^2] - \vmu^2, \qquad \vsigma = \sqrt{\operatorname{Var}[X]}, \qquad \text{with } \vmu = \mathbb{E}[X].
 $$
 
-Conventions: $\vmu$ and $\vsigma^2$ describe the distribution, so there is no $n - 1$. Square brackets follow Goodfellow and coauthors; Grinstead and Snell write $E(X)$, $V(X)$ and $D(X)$. Boundary cases: a constant $X = a$ has $\mathbb{E}[X] = a$ and $\operatorname{Var}[X] = 0$; $\operatorname{Var}[X] = 0$ exactly when $X = \vmu$ with probability 1; $\mathbb{E}[X]$ may be a value $X$ never takes; without absolute convergence there is no expected value (St. Petersburg). Scope: discrete $X$. For a density, sums become integrals, Goodfellow and coauthors' equation (3.10) <Cite id="goodfellow2016prob" />; that case gets its own page.
+Conventions: $\vmu$ and $\vsigma^2$ describe the distribution, so there is no $n - 1$. Square brackets on $\mathbb{E}$ follow Goodfellow and coauthors, and this page uses them on $\operatorname{Var}$ too; Grinstead and Snell write $E(X)$, $V(X)$ and $D(X)$. Boundary cases: a constant $X = a$ has $\mathbb{E}[X] = a$ and $\operatorname{Var}[X] = 0$; $\operatorname{Var}[X] = 0$ exactly when $X = \vmu$ with probability 1; $\mathbb{E}[X]$ may be a value $X$ never takes; without absolute convergence there is no expected value (St. Petersburg). Scope: discrete $X$. For a density, sums become integrals, Goodfellow and coauthors' equation (3.10) <Cite id="goodfellow2016prob" />; that case gets its own page.
 
 </PreciseStatement>
 
@@ -261,7 +272,7 @@ Conventions: $\vmu$ and $\vsigma^2$ describe the distribution, so there is no $n
 | Between the extremes | $\min X \le \mathbb{E}[X] \le \max X$ | One big prize: $0 \le 1 \le 6$ |
 | Constants | $\mathbb{E}[a] = a$, $\operatorname{Var}[a] = 0$ | All win 1; Steady |
 | Linearity | $\mathbb{E}[cX + d] = c\,\mathbb{E}[X] + d$; $\mathbb{E}[X + Y] = \mathbb{E}[X] + \mathbb{E}[Y]$ | net game: $7/6 - 2 = -5/6$ |
-| Not through squares | $\mathbb{E}[X^2] \ge (\mathbb{E}[X])^2$, equal only for a constant, because the variance is never negative | Game card: $9/2$ against $49/36$ |
+| Not through squares | $\mathbb{E}[X^2] \ge (\mathbb{E}[X])^2$, with equality only when $X = \vmu$ with probability 1, because the variance is never negative | Game card: $9/2$ against $49/36$ |
 | Variance shortcut | $\operatorname{Var}[X] = \mathbb{E}[X^2] - \vmu^2$ | $9/2 - 49/36 = 113/36$ |
 | Shift and scale | $\operatorname{Var}[cX + d] = c^2 \operatorname{Var}[X]$ | Game card: $\operatorname{Var}[2X] = 113/9$ |
 | Indicator | $\mathbb{E}[\mathbf{1}_A] = P(A)$, $\operatorname{Var}[\mathbf{1}_A] = P(A)(1 - P(A))$ | Coins match: $1/2$ and $1/4$ |
@@ -299,7 +310,7 @@ $\mathbb{E}[L^2] = 16 \times 5/6 + 4 \times 1/6 = 84/6 = 14$. The shortcut gives
 
 ### Training minimizes an expected loss
 
-Goodfellow and coauthors define the risk as the expected loss over the distribution the data come from, and the empirical risk as the same expected value under the training set, where each of the $m$ examples has chance $1/m$ (§8.1, equations (8.2) and (8.3)) <Cite id="goodfellow2016opt" />:
+Goodfellow and coauthors define the risk as the expected loss over the distribution the data come from, and the empirical risk as the same expected value under the training set, where each of the $m$ examples has chance $1/m$ (§8.1, equations (8.2) and (8.3)) <Cite id="goodfellow2016opt" />. Here $\theta$ is the model's adjustable numbers, $f(\mathbf{x}; \theta)$ its prediction for an input $\mathbf{x}$, $y$ the right answer, $L$ a score of how wrong the prediction is, and $p_{\text{data}}$ the distribution the examples come from:
 
 $$
 J^*(\theta) = \mathbb{E}_{(\mathbf{x}, y) \sim p_{\text{data}}}\, L(f(\mathbf{x}; \theta), y), \qquad \frac{1}{m} \sum_{i=1}^{m} L\big(f(\mathbf{x}^{(i)}; \theta), y^{(i)}\big).
@@ -309,7 +320,7 @@ So a list average is an expected value with equal chances: losses of 0.2, 0.2, 0
 
 ### Accuracy is an average of 1s and 0s
 
-Let C be 1 when the model is right on a random test example and 0 when it is wrong, as on the [random variables page](/probability/random-variables-and-distributions/#being-right-and-the-loss-are-rules-on-outcomes-too). Then $\mathbb{E}[C] = 1 \times P(C = 1) + 0 \times P(C = 0) = P(C = 1)$: true accuracy is an expected value, and test-set accuracy is its list average. The sampling classifier there is right with chance 1/2, so $\mathbb{E}[C] = 1/2$.
+Let R be 1 when the model is right on a random test example and 0 when it is wrong, as on the [random variables page](/probability/random-variables-and-distributions/#being-right-and-the-loss-are-rules-on-outcomes-too). Then $\mathbb{E}[R] = 1 \times P(R = 1) + 0 \times P(R = 0) = P(R = 1)$: true accuracy is an expected value, and test-set accuracy is its list average. For the one cat image on that page, the classifier guesses cat, dog or bird by sampling its own chances 1/2, 1/3 and 1/6, so it is right with chance 1/2, and there $\mathbb{E}[R] = 1/2$.
 
 ### Dropout keeps the expected output
 
@@ -317,7 +328,7 @@ Dropout keeps each unit with probability p during training. At test time every u
 
 ### Noisy gradients: why variance costs compute
 
-The gradient of the training objective is an expected value over the training set too, equation (8.6), estimated from a minibatch that is right on average but noisy. The standard error of such an average falls like $\vsigma/\sqrt{n}$, so 10,000 examples cost 100 times more computation than 100 but cut the standard error only by a factor of 10 (§8.1.3) <Cite id="goodfellow2016opt" />. The research frontier below reduces the variance another way.
+The gradient of the training objective is an expected value over the training set too, estimated from a minibatch that is right on average but noisy (equation (8.6)) <Cite id="goodfellow2016opt" />. For n independent examples, the typical error of their average, its standard error, is $\vsigma/\sqrt{n}$, with $\vsigma$ the standard deviation of one example's gradient. So 10,000 examples cost 100 times more computation than 100 but cut the standard error only by a factor of 10 (§8.1.3) <Cite id="goodfellow2016opt" />.
 
 ## Weight values by their chances in code
 
@@ -353,7 +364,7 @@ def variance(bars):
     return expected(bars, lambda x: (x - mu) ** 2)
 
 
-# The presets of both boards: candies won by faces 1 to 6.
+# The presets of both boards, plus the Game card from the random variables page: candies won by faces 1 to 6.
 presets = {
     "Plain die": [1, 2, 3, 4, 5, 6],
     "One big prize": [0, 0, 0, 0, 0, 6],
@@ -409,7 +420,7 @@ assert abs(sigma - 1.77) < 0.005 and abs(113 / 36 - 3.14) < 0.005
 net = distribution([x - 2 for x in presets["Game card"]])
 double = distribution([2 * x for x in presets["Game card"]])
 assert variance(net) == F(113, 36) and variance(double) == F(113, 9) == 4 * F(113, 36)
-assert 3 * mu - 2 == F(3, 2)
+assert expected(game, lambda x: x + x) == mu + mu == F(7, 3)  # X + X = 2X
 
 # Split into cases: even faces 2, 4, 6 win 0, 1, 5; odd faces 1, 3, 5 win 0, 0, 1.
 even = distribution([0, 1, 5])
@@ -460,8 +471,9 @@ assert variance(legs) == F(5, 9) == 14 - F(121, 9) and abs(math.sqrt(5 / 9) - 0.
 # Machine learning: the empirical risk is an expected value with chance 1/m per example.
 losses = [F(1, 5), F(1, 5), F(1, 2), F(11, 10)]
 assert sum(losses) / 4 == F(1, 2) == sum(loss * F(1, 4) for loss in losses)
-right = distribution([1, 0], [F(1, 2), F(1, 2)])
-assert expected(right) == F(1, 2)  # accuracy as the expected value of a 0/1 variable
+# The cat image: the classifier samples cat 1/2, dog 1/3, bird 1/6, so R = 1 only for cat.
+R = distribution([1, 0, 0], [F(1, 2), F(1, 3), F(1, 6)])
+assert expected(R) == F(1, 2)  # accuracy as the expected value of a 0/1 variable
 
 # Dropout: a unit that outputs 4 is kept with chance 1/2.
 kept = distribution([4, 0], [F(1, 2), F(1, 2)])
@@ -505,8 +517,6 @@ assert abs(sum(plays) / len(plays) + 0.5) < 0.16
 `}
 />
 
-The two seeded simulations roll the Game card 60,000 times and play the points game 10,000 times. Their averages land near 7/6 and −1/2, and the rolls' variance near 113/36, without hitting them exactly.
-
 ## Research frontier
 
 <ResearchFrontier reviewed="2026-11-25">
@@ -515,7 +525,7 @@ The two seeded simulations roll the Game card 60,000 times and play the points g
 
 **Control variates.** Mohamed and coauthors' survey states the general method: to estimate $\mathbb{E}[f(x)]$, average $f(x) - \beta\,(h(x) - \mathbb{E}[h(x)])$ instead, for any $h$ whose expected value is known. The estimate stays unbiased, the best $\beta$ is how $f$ and $h$ move together divided by the variance of $h$, and the variance is then multiplied by $1 - \operatorname{Corr}(f, h)^2$ (§7.4, equations (52)–(58), pp. 34–35); a baseline is this method with the score function as $h$ (§7.4.3, equation (61), p. 36) <Cite id="mohamed2019" />. On a plain die, estimate $\mathbb{E}[X^2] = 91/6$ by rolling, with $h = X$, whose expected value $7/2$ is known. The best $\beta$ is $(245/12)/(35/12) = 7$, so you average $X^2 - 7(X - 7/2)$ instead of $X^2$. Its six values are $37/2, 29/2, 25/2, 25/2, 29/2, 37/2$: the same expected value, but variance $56/9 \approx 6.22$ instead of $5369/36 \approx 149.1$: multiplied by $1 - \operatorname{Corr}^2 = 32/767$, about 24 times smaller. In practice $\beta$ is estimated from the same samples, which adds a small bias (§7.4.1, p. 35) <Cite id="mohamed2019" />.
 
-**What is open.** The survey's future-work section says that "New tools for variance reduction are needed", especially for complex systems such as Markov processes, and lists non-linear control variates among the questions that remain open (§10.2, p. 53) <Cite id="mohamed2019" />.
+**What is open.** The survey's future-work section says that "New tools for variance reduction are needed", especially for complex systems such as Markov processes, and lists non-linear control covariates among the questions that remain open (§10.2, p. 53) <Cite id="mohamed2019" />.
 
 </ResearchFrontier>
 
@@ -547,13 +557,13 @@ $\operatorname{Var}[X] = \sum_x (x - \vmu)^2 P(X = x)$ is a sum of terms that ar
     Halfway ignores how many outcomes sit where. One big prize balances at 1, not at 3, because 5 of its 6 faces sit at 0.
   </Mistake>
   <Mistake wrong="𝔼[X²] = (𝔼[X])², and more generally 𝔼[g(X)] = g(𝔼[X]).">
-    Only when g is a straight line. On the Game card $\mathbb{E}[X^2] = 9/2$ but $(\mathbb{E}[X])^2 = 49/36$, and the difference, $113/36$, is the variance.
+    It holds for every X only when g is a straight line, and for X² only when the variance is 0. On the Game card $\mathbb{E}[X^2] = 9/2$ but $(\mathbb{E}[X])^2 = 49/36$, and the difference, $113/36$, is the variance.
   </Mistake>
   <Mistake wrong="If the variance is 6 times bigger, the spread in candies is 6 times bigger.">
     The variance is in squared units. The standard deviation grows by $\sqrt{6} \approx 2.45$: from about 0.82 to 2 candies on the second board.
   </Mistake>
   <Mistake wrong="Variances add like expected values.">
-    $\mathbb{E}[X + Y] = \mathbb{E}[X] + \mathbb{E}[Y]$ always, but with $Y = -X$ the sum is always 0, so $\operatorname{Var}[X + Y] = 0$, not $2\operatorname{Var}[X]$. Variances add for independent variables, a later page.
+    $\mathbb{E}[X + Y] = \mathbb{E}[X] + \mathbb{E}[Y]$ always, but if $\operatorname{Var}[X] > 0$ and $Y = -X$, the sum is always 0, so $\operatorname{Var}[X + Y] = 0$, not $2\operatorname{Var}[X]$. Variances add for independent variables, a later page.
   </Mistake>
 </CommonMistakes>
 
