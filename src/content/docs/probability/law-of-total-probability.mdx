@@ -22,7 +22,7 @@ references:
   - grinstead2003
   - deisenroth2020
 author: Muhammad Huzaifa Hussain
-reviewedAt: 2026-11-24
+reviewedAt: 2026-11-25
 aiAssisted: true
 primaryQuery: law of total probability
 searchIntent: solve
@@ -77,15 +77,15 @@ To find the chance of an event, split the world into cases, find the chance of t
 
 It rains on 1 day in 4. On a rainy day the bus is late 30% of the time; on a dry day, 10%. Before you touch anything: is the chance of a late bus closer to 0.10, 0.15 or 0.20? Going further: the rainy-day piece is rain's weight times its late chance, and the dry-day piece is the same for dry days. Which is bigger, or are they the same?
 
-The board's square stands for all days, and its area is 1, so any region's area is that region's probability. A is a rainy day and B is a late bus. P(A) is the weight of rain; P(B | A) and P(B | not A) are the chances within each case. The block labeled "B and A" is the rainy-day piece, the strip labeled "B and not A" the dry-day piece, and P(B) their total area. Ignore the buttons after "Example:". Your task: set P(A) to 0.25 and P(B | A) to 0.30, leave P(B | not A) at 0.10, and read P(B). The arrow keys move a slider by 0.01, and Page Up and Page Down by 0.10.
+The board's square stands for all days, and its area is 1, so any region's area is that region's probability. A is a rainy day and B is a late bus. P(A) is the weight of rain; P(B | A) and P(B | not A) are the chances within each case. The block labeled "B and A" is the rainy-day piece, the strip labeled "B and not A" the dry-day piece, and P(B) their total area. Your task: press Late bus, which loads these numbers, and read P(B). The sliders also move with the arrow keys.
 
 <div class="not-content">
-  <BayesTheorem client:visible />
+  <BayesTheorem client:visible scenarios={["any-events", "late-bus", "same-chance", "fraud-flag"]} />
 </div>
 
-Exactly 0.15: the readout says "P(A | B) = 0.500   P(B) = 0.150". The rainy-day piece is 0.30 × 0.25 = 0.075 and the dry-day piece is 0.10 × 0.75 = 0.075, so the pieces are equal. Rain triples the chance of a late bus, but dry days are three times as common. The readout's P(A | B) turns the question around, "given a late bus, how likely is rain?", and belongs to [Bayes' theorem](/probability/bayes-theorem/).
+Exactly 0.15: the readout says "P(A | B) = 0.500   P(B) = 0.150". The rainy-day piece is 0.30 × 0.25 = 0.075 and the dry-day piece is 0.10 × 0.75 = 0.075, so the pieces are equal. Turn on "Show as table" to see them as counts out of 1,000 days: 75 late and rainy, 75 late and dry, 150 late in all. Rain triples the chance of a late bus, but dry days are three times as common. The readout's P(A | B) turns the question around, "given a late bus, how likely is rain?", and belongs to [Bayes' theorem](/probability/bayes-theorem/).
 
-Now press Page Up once on P(B | A) and three times on P(B | not A), so both read 0.40. The readout says "P(A | B) = 0.250   P(B) = 0.400", and P(B) stays at 0.400 wherever you drag P(A): with the same chance in every case, the weights stop mattering.
+Now press Same chance either way, which makes the bus late 4 times in 10 on rainy and dry days alike. The readout says "P(A | B) = 0.250   P(B) = 0.400", and P(B) stays at 0.400 wherever you move P(A): with the same chance in every case, the weights stop mattering.
 
 ## Four steps, one sum
 
@@ -225,7 +225,7 @@ What went wrong in each?
 
 $P(\text{flag}) = 0.80 \times 0.04 + 0.03 \times 0.96 = 0.032 + 0.0288 = 0.0608$, so 608 of 10,000 are flagged. At 10% fraud: $0.80 \times 0.10 + 0.03 \times 0.90 = 0.08 + 0.027 = 0.107$, so 1,070. Both lie between $0.03$ and $0.80$.
 
-On the board, press Reset, which leaves P(B | A) at 0.80, then set P(A) to 0.04 and P(B | not A) to 0.03. The readout says "P(A | B) = 0.526   P(B) = 0.061", which is 0.0608 rounded to three decimals. Its 0.526, the share of flags that are fraud, belongs to [Bayes' theorem](/probability/bayes-theorem/).
+On the board, press Fraud flag. The readout says "P(A | B) = 0.526   P(B) = 0.061", which is 0.0608 rounded to three decimals, and the table counts the 608 flags of 10,000, 320 of them fraud. Its 0.526, the share of flags that are fraud, belongs to [Bayes' theorem](/probability/bayes-theorem/).
 
 </div>
 
@@ -321,6 +321,8 @@ assert F(10, 100) <= F(15, 100) <= F(30, 100)
 assert F(30, 100) / F(10, 100) == 3 and F(3, 4) / F(1, 4) == 3
 posterior = terms_of(*bus)[0] / total_probability(*bus)
 assert (readout(posterior), readout(total_probability(*bus))) == ("0.500", "0.150")
+# The board's table counts 1,000 days.
+assert [1000 * term for term in terms_of(*bus)] == [75, 75] and 1000 * total_probability(*bus) == 150
 on_time = ([F(1, 4), F(3, 4)], [F(70, 100), F(90, 100)])
 assert terms_of(*on_time) == [F(175, 1000), F(675, 1000)]
 assert total_probability(*on_time) == F(85, 100) == 1 - F(15, 100)
@@ -330,8 +332,6 @@ for p in (F(1, 100), F(1, 4), F(99, 100)):
     assert total_probability([p, 1 - p], [F(40, 100), F(40, 100)]) == F(40, 100)
     assert readout(total_probability([p, 1 - p], [F(40, 100), F(40, 100)])) == "0.400"
 assert readout(F(1, 4) * F(40, 100) / F(40, 100)) == "0.250"
-# Keyboard path: Page Up moves 0.10, so 0.30 to 0.40 is one press and 0.10 to 0.40 is three.
-assert F(30, 100) + F(10, 100) == F(40, 100) and F(10, 100) + 3 * F(10, 100) == F(40, 100)
 
 # A sum of 1 is necessary, not sufficient: "roll 1 to 3" and "roll even" overlap on 2 and miss 5.
 assert F(3, 6) + F(3, 6) == 1 and F(3, 6) == F(1, 2)
@@ -368,6 +368,7 @@ except ValueError as error:
 fraud = ([F(4, 100), F(96, 100)], [F(80, 100), F(3, 100)])
 assert terms_of(*fraud) == [F(32, 1000), F(288, 10000)]
 assert total_probability(*fraud) == F(608, 10000) and 10000 * total_probability(*fraud) == 608
+assert 10000 * terms_of(*fraud)[0] == 320
 assert (readout(F(32, 1000) / total_probability(*fraud)), readout(total_probability(*fraud))) == ("0.526", "0.061")
 more_fraud = ([F(10, 100), F(90, 100)], [F(80, 100), F(3, 100)])
 assert terms_of(*more_fraud) == [F(8, 100), F(27, 1000)]
