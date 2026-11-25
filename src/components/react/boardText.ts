@@ -35,7 +35,7 @@ export function fractionText(value: Fraction): string {
 }
 
 /** The most decimal places an amount is written with before it falls back to a fraction and a rounded value. */
-const AMOUNT_DECIMAL_PLACES = 3;
+export const AMOUNT_DECIMAL_PLACES = 3;
 /** Decimal places of the rounded value after "≈" in an amount that doesn't terminate. */
 const APPROXIMATE_DECIMAL_PLACES = 2;
 

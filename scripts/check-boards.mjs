@@ -2602,6 +2602,11 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	assert.ok(spread('Lopsided heap').includes('μ = 5/3 ≈ 1.67 cm') && spread('Lopsided heap').includes('13/18 ≈ 0.72 cm²') && spread('Lopsided heap').includes('√(13/18) ≈ 0.85 cm'));
 	assert.ok(spread('Sand heap').includes('μ = 2 cm') && spread('Sand heap').includes('√(2/3) ≈ 0.82 cm'));
 	assert.ok(spread('Even sand').includes('4/3 ≈ 1.33 cm²') && spread('Even sand').includes('√(4/3) ≈ 1.15 cm'));
+	// "about" and the μ label's "≈" follow the exact value, not the formatted text.
+	assert.ok(interval().spoken.includes('is 1/4, or 0.25.'), interval().spoken);
+	const muLabel = (name) => densSay.chartLabels(densRun('sand-interval', { type: 'preset', name }, { type: 'spread', on: true })).mu;
+	assert.equal(muLabel('Lopsided heap'), 'μ ≈ 1.67');
+	assert.equal(muLabel('Sand heap'), 'μ = 2');
 	const table = densSay.tableOf(densRun('sand-interval', { type: 'preset', name: 'Sand heap' }, { type: 'to', quarters: 12 }));
 	assert.deepEqual(table.footer, { label: 'Shaded, from 1 to 3 cm', value: '3/4 of the sand' });
 	assert.deepEqual(table.rows[7], ['1.75 (shaded)', '2', '15/128', '15/32']);

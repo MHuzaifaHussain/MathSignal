@@ -1,7 +1,7 @@
 // Every sentence the density mode shows or speaks (decision 0018), built from state. Shares and heights stay
 // fractions ("7/32 of the sand", "7/16 per cm"); positions and widths are decimals in cm, exact on the quarter grid.
 import { compareFractions, fraction, toNumber, type Fraction } from '../boardMath.ts';
-import { amountText, decimalText, fractionText } from '../boardText.ts';
+import { AMOUNT_DECIMAL_PLACES, amountText, decimalText, fractionText, terminatesWithin } from '../boardText.ts';
 import { tableFoldAnnouncement } from '../guided/tableFold.ts';
 import { formatNumber } from '../plotColors.ts';
 import { areaBetween, bins, heightAt, meanOf, RULER_CM, supportOf, varianceOf, type Bin, type PiecewiseLinear } from './density.ts';
@@ -127,7 +127,7 @@ export function intervalLine(state: DensityState): SpokenLine | null {
 	const exact = fractionChance(share);
 	const decimal = formatNumber(toNumber(share), SENTENCE_PLACES);
 	const tiny = underThreshold(share.numerator, share.denominator, SENTENCE_PLACES);
-	const decimalWords = tiny ? underText(SENTENCE_PLACES) : `${exact.includes('≈') ? 'about ' : ''}${decimal}`;
+	const decimalWords = tiny ? underText(SENTENCE_PLACES) : `${terminatesWithin(share, SENTENCE_PLACES) ? '' : 'about '}${decimal}`;
 	const spokenValue = isOne(share) || share.numerator === 0 ? fractionText(share) : `${fractionText(share)}, or ${decimalWords}`;
 	return {
 		visible: `${lead} P(${cm(a)} ≤ X ≤ ${cm(b)}) = ${exact}.`,
@@ -169,7 +169,7 @@ export function chartLabels(state: DensityState): DensityChartLabels {
 	const shape = shapeNow(state);
 	const variance = varianceOf(shape);
 	const mean = meanOf(shape);
-	const muValue = amountText(mean).includes('≈') ? `≈ ${formatNumber(toNumber(mean), SENTENCE_PLACES)}` : `= ${amountText(mean)}`;
+	const muValue = terminatesWithin(mean, AMOUNT_DECIMAL_PLACES) ? `= ${amountText(mean)}` : `≈ ${formatNumber(toNumber(mean), SENTENCE_PLACES)}`;
 	return {
 		axis: DENSITY_LABELS.axis,
 		heightAxis: DENSITY_LABELS.heightAxis,
