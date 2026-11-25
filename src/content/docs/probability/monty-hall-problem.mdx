@@ -23,7 +23,7 @@ references:
   - rosenthal2008
   - zadrozny2004
 author: Muhammad Huzaifa Hussain
-reviewedAt: 2026-11-24
+reviewedAt: 2026-11-25
 aiAssisted: true
 primaryQuery: monty hall problem
 searchIntent: solve
@@ -48,6 +48,7 @@ import StepThrough from "../../../components/StepThrough.astro";
 import Takeaways from "../../../components/Takeaways.astro";
 import WhyThisMatters from "../../../components/WhyThisMatters.astro";
 import WorkedExample from "../../../components/WorkedExample.astro";
+import EventSpace from "../../../components/react/EventSpace.tsx";
 
 <ConceptHeader
   oneLiner="The Monty Hall problem asks whether you should switch doors after a host who knows where the car is opens another door to show a goat. Under the standard rules, switching wins 2 times in 3."
@@ -72,25 +73,28 @@ A model only sees the data that some process chose to show it, and whether that 
 
 A car is behind one of three doors, each equally likely, with goats behind the others. You pick door 1. The host knows where the car is, always opens another door hiding a goat, and offers the switch. He tosses a coin in every game, but it decides only when both other doors hide goats: heads he opens door 2, tails door 3.
 
-Before you count: switching is said to win 2 times in 3, but where does that come from? Guess how often the host opens door 3 when the car is behind door 1, when it is behind door 2 and when it is behind door 3. Then count.
+Before you touch the board, commit to an answer:
 
-Your goal: shrink the world to B = "host opens door 3", then read P(A | B) as on the [conditional probability](/probability/conditional-probability/) page, with A set to "car behind door 1", then "car behind door 2". Each cell is one game, with probability 1/3 × 1/2 = 1/6, and names the door the host opens.
+- You picked door 1 and the host opened door 3. Switch, stick, or does it not matter?
+- Deeper: of all the games in which the host opens door 3, what share have the car behind door 1?
 
-| Car behind | Coin heads | Coin tails |
-| --- | --- | --- |
-| **door 1** | opens 2 | opens 3 |
-| **door 2** | opens 3 | opens 3 |
-| **door 3** | opens 2 | opens 2 |
+Your goal: shrink the world to "host opens door 3", then read P(A | B) with A set to car behind door 1, and then to car behind door 2. Shrinking works as on the [conditional probability](/probability/conditional-probability/) page.
+
+Rows say where the car is and columns show the host's coin. Each cell is one game, with probability 1/3 × 1/2 = 1/6, and names the door the host opens. Games in A have a solid border and an "A" tag, games in B a dashed outline and a "B" tag. The games are fixed: the arrow keys move between cells, and tapping changes nothing. The presets set A to the car's door and B to the door opened. Until you shrink, the board gives only each event's size, starting with "A = car behind door 1: 2 of 6 = 1/3 (≈ 0.33)".
+
+<div class="not-content">
+  <EventSpace client:visible setup="monty-condition" />
+</div>
 
 Read the rows first. The host opens door 3 in 1 of 2 cells of row 1, both cells of row 2, and neither of row 3. Those shares, 1/2, 1 and 0, are the likelihoods: how likely his action is for each place the car could be. They are the whole puzzle. The coin only matters in row 1, where both other doors hide goats; that is his tie-break.
 
-Then shrink the world to B, and the answer is to switch. B holds 3 of the 6 cells, and one of them has the car behind door 1, so P(car 1 | opens 3) = 1/3. Two have the car behind door 2, so P(car 2 | opens 3) = 2/3, and the car-3 row has no cell in B. If he opens door 2, the count gives 1/3 for door 1 and 2/3 for door 3.
+Press Shrink the world to B, and the answer is to switch. Every game where the host opens door 2 is struck out, and the board says "Inside B: 3 outcomes, 1 of them also in A, \{(car 1, tails)\}. P(A | B) = 1/3 ≈ 0.33, while P(A) = 2/6 = 1/3 ≈ 0.33." Your door keeps the 1/3 it started with. Press Car behind door 2 and the line becomes "2 of them also in A, \{(car 2, heads), (car 2, tails)\}. P(A | B) = 2/3 ≈ 0.67". With Car behind door 3 it reads "none of them also in A", since the host never opens the car's door. Press Host opens door 2 to check the other half: 1/3 for door 1 and 2/3 for door 3.
 
 ## Decide before the host moves: stick wins 1 game in 3
 
 Decided in advance, sticking wins 1 game in 3 and switching wins the other 2. In 300 games the car is behind door 1 in 100 on average, and sticking wins those. In the other 200, the host has opened the only other goat door, so switching lands on the car.
 
-Grinstead and Snell call this count correct but note that it does not quite answer the question asked, which is conditional: switching given that you chose door 1 and the host opened door 3 (Example 4.6, p. 137) <Cite id="grinstead2003" />. The table answered that, and agrees.
+Grinstead and Snell call this count correct but note that it does not quite answer the question asked, which is conditional: switching given that you chose door 1 and the host opened door 3 (Example 4.6, p. 137) <Cite id="grinstead2003" />. The board answered that, and agrees.
 
 ## Turn it around with Bayes' theorem
 
@@ -141,7 +145,7 @@ $$
 P(C_2 \mid O_3) = \frac{1}{1 + q}, \quad P(C_1 \mid O_3) = \frac{q}{1 + q}, \quad P(C_3 \mid O_2) = \frac{1}{2 - q}, \quad P(C_1 \mid O_2) = \frac{1 - q}{2 - q}.
 $$
 
-Boundary cases. $P(O_3) = (1 + q)/3$ and $P(O_2) = (2 - q)/3$ are at least $1/3$, so both conditionals exist. With $q = 1/2$, switching wins $2/3$, as the table's count shows; with $q = 1$, $O_3$ leaves $1/2$ each; with $q = 0$, $O_3$ makes $C_2$ certain. If the host doesn't know where the car is, (ii) fails: given that an accidental door 3 shows a goat, $C_1$ and $C_1^\complement$ have $1/2$ each.
+Boundary cases. $P(O_3) = (1 + q)/3$ and $P(O_2) = (2 - q)/3$ are at least $1/3$, so both conditionals exist. With $q = 1/2$, switching wins $2/3$, as the board's count shows; with $q = 1$, $O_3$ leaves $1/2$ each; with $q = 0$, $O_3$ makes $C_2$ certain. If the host doesn't know where the car is, (ii) fails: given that an accidental door 3 shows a goat, $C_1$ and $C_1^\complement$ have $1/2$ each.
 
 </PreciseStatement>
 
@@ -267,6 +271,11 @@ assert [len({cell for cell in opened_3 if cell[0] == car}) for car in (1, 2, 3)]
 assert [F(len({cell for cell in opened_3 if cell[0] == car}), len(opened_3)) for car in (1, 2)] == [F(1, 3), F(2, 3)]
 opened_2 = {cell for cell, door in opens.items() if door == 2}
 assert [F(len({cell for cell in opened_2 if cell[0] == car}), len(opened_2)) for car in (1, 3)] == [F(1, 3), F(2, 3)]
+# The board's readouts: A = car behind door 1 holds 2 of 6 cells, and B = opens door 3 holds 3.
+car_1 = {cell for cell in opens if cell[0] == 1}
+assert len(car_1) == 2 and F(len(car_1), 6) == F(2, 6) == F(1, 3) and F(len(opened_3), 6) == half
+assert (decimal(F(1, 3), 2), decimal(F(2, 3), 2)) == ("0.33", "0.67")
+assert F(len(car_1 & opened_3), len(opened_3)) == F(1, 3) == F(len(car_1), 6)  # your door keeps 1/3
 # Reading the rows: the host opens door 3 in 1 of 2, 2 of 2 and 0 of 2 cells.
 assert [F(sum(1 for coin in "HT" if opens[(car, coin)] == 3), 2) for car in (1, 2, 3)] == [half, 1, 0]
 
