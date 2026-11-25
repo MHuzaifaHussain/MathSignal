@@ -226,7 +226,7 @@ export const REFERENCES = [
 		title: 'Deep learning',
 		venue: 'MIT Press',
 		url: 'https://www.deeplearningbook.org/contents/linear_algebra.html',
-		note: 'Chapter 2, linear algebra. Section 2.1: a vector is an ordered array of numbers with a bold lower-case name, in Rⁿ, written as a column, and can be read as a point in space; the transpose (equation 2.3); adding a vector to every row of a matrix is called broadcasting. Section 2.4, pp. 34–35: Ax as a linear combination of the columns, equation (2.27); a linear combination, equation (2.28); the span of a set of vectors; the column space (range); and linear dependence.',
+		note: 'Chapter 2, linear algebra. Section 2.1: a vector is an ordered array of numbers with a bold lower-case name, in Rⁿ, written as a column, and can be read as a point in space; the transpose (equation 2.3); adding a vector to every row of a matrix is called broadcasting. Section 2.4, pp. 35–36: Ax as a linear combination of the columns, equation (2.27); a linear combination, equation (2.28); the span of a set of vectors; the column space (range); and linear dependence.',
 		checked: '2026-11-25',
 	},
 	{
@@ -534,7 +534,7 @@ export const REFERENCES = [
 		year: 2017,
 		title: 'Attention is all you need',
 		url: 'https://arxiv.org/abs/1706.03762',
-		note: 'Section 3.2.1, equation (1): scaled dot-product attention, and the suspicion that large dot products push the softmax into regions with extremely small gradients. Footnote 4 (v7): with independent entries of mean 0 and variance 1, q · k has mean 0 and variance d_k. Section 3.2.2: d_k = 64.',
+		note: 'Section 3.2: the output is computed as a weighted sum of the values. Section 3.2.1, equation (1): scaled dot-product attention, and the suspicion that large dot products push the softmax into regions with extremely small gradients. Footnote 4 (v7): with independent entries of mean 0 and variance 1, q · k has mean 0 and variance d_k. Section 3.2.2: d_k = 64.',
 		checked: '2026-11-25',
 	},
 	{
@@ -747,7 +747,7 @@ export const REFERENCES = [
 		year: 2021,
 		title: 'LoRA: low-rank adaptation of large language models',
 		url: 'https://arxiv.org/abs/2106.09685',
-		note: 'Abstract: frozen pretrained weights plus trainable rank-decomposition matrices, reducing trainable parameters by 10,000 times for GPT-3. Section 4.1, equation (3): W₀ + ΔW = W₀ + BA with a small rank r. Section 7.2 and Table 6: a very small rank suffices for the tasks studied. Year is arXiv v1 (June 2021); the author list is the current arXiv one.',
+		note: 'Abstract: frozen pretrained weights plus trainable rank-decomposition matrices, reducing trainable parameters by 10,000 times for GPT-3. Section 4.1, equation (3): W₀ + ΔW = W₀ + BA with a small rank r. Section 7.2 and Table 6: a very small rank suffices for the tasks studied; a rank as small as one suffices for adapting W_q and W_v on WikiSQL and MultiNLI. Footnote 6: a small r is not expected to work for every task or dataset. Year is arXiv v1 (June 2021); the author list is the current arXiv one.',
 		checked: '2026-11-25',
 	},
 	{
@@ -757,7 +757,7 @@ export const REFERENCES = [
 		title: 'Breaking the softmax bottleneck: a high-rank RNN language model',
 		venue: 'ICLR 2018',
 		url: 'https://arxiv.org/abs/1711.03953',
-		note: 'Section 2.1: the rank of the logit matrix is bounded by the embedding size d, so a softmax over a much larger vocabulary cannot express every context\'s distribution (the softmax bottleneck). Section 2.4: the mixture of softmaxes. Abstract: perplexities 47.69 on Penn Treebank and 40.68 on WikiText-2. Year is arXiv v1 (November 2017).',
+		note: 'Section 2.1: the rank of the logit matrix is bounded by the embedding size d, so a softmax over a much larger vocabulary cannot express every context\'s distribution (the softmax bottleneck). Section 2.1, Corollary 1: if d < rank(A) − 1, some context gets a wrong distribution. Section 2.2: d is usually about 10², while the rank of A can be as high as M, about 10⁵. Section 2.4: the mixture of softmaxes. Abstract: perplexities 47.69 on Penn Treebank and 40.68 on WikiText-2. Year is arXiv v1 (November 2017).',
 		checked: '2026-11-25',
 	},
 	{

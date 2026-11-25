@@ -60,18 +60,18 @@ import VectorBoard2D from "../../../components/react/VectorBoard2D.tsx";
 
 ## In everyday terms
 
-<Analogy breaks="Whole steps reach every grid spot only by luck of the east and north cards. With 1 east, 1 north and 1 west, 2 north, the spot 1 east needs two thirds of the first card and minus one third of the second: a span uses every real number of steps. And backward walking is not optional; without it, two cards reach only a wedge of the field.">
+<Analogy breaks='Whole steps reach every grid spot only by luck of the east and north cards. With the cards "1 east, 1 north" and "1 west, 2 north", the spot 1 east needs two thirds of the first card and minus one third of the second: a span uses every real number of steps. And backward walking is not optional; without it, two cards reach only a wedge of the field.'>
 
 On the playground grid from the vectors page, you start at the gate with two trip cards: "1 step east" and "1 step north". You may walk each card as many times as you like, part of a time, or backward. To reach the bench 4 east and 5 north, walk the east card 4 times and the north card 5 times. Every spot can be reached this way, and the two counts are the spot's coordinates.
 
-Swap the cards for "1 east, 1 north" and "1 west, 2 north". Can you still reach every spot? Now take "1 east, 1 north" and "3 east, 3 north". The second card is the first walked three times, so however you mix them, you stay on one diagonal path through the gate. And walking every card zero times leaves you at the gate, so the gate is always reachable.
+Swap the cards for "1 east, 1 north" and "1 west, 2 north". Can you still reach every spot? Yes, though some spots need a fraction of a card or a card walked backward. Now take "1 east, 1 north" and "3 east, 3 north". The second card is the first walked three times, so however you mix them, you stay on one diagonal path through the gate. And walking every card zero times leaves you at the gate, so the gate is always reachable.
 
 The field hides one thing. A drone in a sports hall with only the controls "forward" and "left" can reach any spot at its own height, but never the ceiling. Two directions in a three-dimensional room give a flat floor, not the whole room.
 
 </Analogy>
 
 <WhyThisMatters>
-A layer of a neural network multiplies its input by a weight matrix, and that product is a linear combination of the matrix's columns, with the input's entries as the weights. So every output the layer can produce lies in the span of those columns, and a layer with 2 inputs and 3 outputs can only ever produce points of one plane in R³. Fine-tuning methods such as LoRA use the same fact on purpose: they let a layer's weights change only within the span of a few vectors, which cuts the number of numbers to train.
+A layer of a neural network multiplies its input by a weight matrix, and that product is a linear combination of the matrix's columns, with the input's entries as the weights. So every output the layer can produce lies in the span of those columns, and a layer with 2 inputs and 3 outputs can only ever produce points of one plane in R³. Fine-tuning methods such as LoRA (low-rank adaptation) use the same fact on purpose: they let a layer's weights change only within the span of a few vectors, which cuts how many numbers have to be trained.
 </WhyThisMatters>
 
 ## Reach the flag with two trips
@@ -80,7 +80,7 @@ To reach a point with two vectors, you choose how many times to walk each one, a
 
 Before you touch it: the board gives you two trips, **a** = (2, 1) and **b** = (1, 2). You can walk each one any number of times, including part of a time or backward. Can you reach the flag at (4, 5), and how many times do you walk each trip? Going further: is there any point of the plane you could never reach with these two trips?
 
-Your task: set the sliders Scale c and Scale d so that c **a** + d **b** lands on the ochre flag, then press Check. **a** and **b** are drawn thin and muted; the solid arrow from the origin is c **a**, and the dashed arrow from its tip is d **b**. Both sliders run from −5 to 5 in steps of 0.5: drag them, or focus one and use the arrow keys. The board opens at "c = 1, d = 1. c a + d b = (3, 3). The flag is at (4, 5)." Under Show as, Lists writes the same sum as numbers. **a** and **b** are the question, so they stay fixed until you check ("a and b are the question. Press Check first."). After two misses, a Show the answer button appears.
+Your task: set the sliders Scale c and Scale d (the numbers c and d are called weights) so that c **a** + d **b** lands on the ochre flag, then press Check. The solid arrow from the origin is c **a**, and the dashed arrow from its tip is d **b**. Each slider runs from −5 to 5 in steps of 0.5; drag it, or focus it and use the arrow keys. **a** and **b** stay fixed until you check, and after two misses a Show the answer button appears.
 
 <div class="not-content">
   <VectorBoard2D client:visible setup="span-reach" />
@@ -88,19 +88,19 @@ Your task: set the sliders Scale c and Scale d so that c **a** + d **b** lands o
 
 c = 1 and d = 2. Check says "Yes. 1 × a + 2 × b = (2, 1) + (2, 4) = (4, 5), the flag." If you tried c = 2 and d = 1 first, the board says "Not quite. 2 × a + 1 × b = (5, 4), the flag with east and north swapped. Look again at which weight scales a." The 2 belongs to **b**, the trip that leans north.
 
-After Check the readout adds "a and b point along different lines, so their span is the whole plane." That answers the deeper question: every point can be reached, but not always with the slider's half steps. The point (1, 0) needs c = 2/3 and d = −1/3, and of the board's 121 whole-number points the sliders reach only 41.
+After Check the readout adds "a and b point along different lines, so their span is the whole plane." (The span is every point c **a** + d **b** can reach.) That answers the deeper question: every point can be reached, but not always with the slider's half steps. The point (1, 0) needs c = 2/3 and d = −1/3: 2/3 × (2, 1) − 1/3 × (1, 2) = (1, 0). Of the 121 whole-number points from (−5, −5) to (5, 5), the half-step sliders reach only 41.
 
-Now try the presets. East and north ends "The flag is 4 × a + 5 × b.": with east and north steps, the weights are the coordinates. A step back reads "c = −1, d = 1. c a + d b = (−1, 1). The flag is at (4, 5)." Both trips head east, so a point to the west needs a negative weight. Leave Same line until after the second board.
+Now try the presets. East and north ends "The flag is 4 × a + 5 × b.": with east and north steps, the weights are the coordinates. A step back opens its readout with "c = −1, d = 1. c a + d b = (−1, 1). The flag is at (4, 5)." Both trips head east, so a point to the west needs a negative weight. Under Show as, Lists writes the same sum as numbers. Leave Same line until after the second board.
 
 ## Scale, then add: a linear combination
 
-A linear combination of two vectors **a** and **b** is c **a** + d **b**: scale each one by a number, its weight, and add the results. On the board, 1 × (2, 1) + 2 × (1, 2) = (2, 1) + (2, 4) = (4, 5). Goodfellow, Bengio and Courville give the general version, for any number of vectors: multiply each vector by a scalar coefficient and add the results (Section 2.4, equation 2.28, p. 34) <Cite id="goodfellow2016linalg" />. Sanderson calls scaling two vectors and adding them a linear combination too <Cite id="sanderson2016span" />.
+A linear combination of two vectors **a** and **b** is c **a** + d **b**: scale each one by a number, its weight, and add the results. On the board, 1 × (2, 1) + 2 × (1, 2) = (2, 1) + (2, 4) = (4, 5). Goodfellow, Bengio and Courville give the general version, for any number of vectors: multiply each vector by a scalar coefficient and add the results (Section 2.4, equation 2.28, p. 35) <Cite id="goodfellow2016linalg" />.
 
 The word "linear" has a picture behind it: fix d = 1 and let c run, and the tips c (2, 1) + (1, 2) march along a straight line through (1, 2), parallel to **a**. A single vector is a linear combination too (take d = 0), and so is the zero vector **0** (take both weights 0).
 
 ### The weights are the coordinates, for east and north
 
-Coordinates are weights: the point (4, 5) is 4 steps east plus 5 steps north, 4 **e**₁ + 5 **e**₂, where **e**₁ = (1, 0) and **e**₂ = (0, 1). Sanderson reads coordinates the same way, as scalars that stretch the two unit vectors along the axes <Cite id="sanderson2016span" />. He writes them î and ĵ. Other pairs give other weights for the same point, as (2, 1) and (1, 2) give 1 and 2 for (4, 5), an idea the page on basis and dimension takes up.
+Coordinates are weights: the point (4, 5) is 4 steps east plus 5 steps north, 4 **e**₁ + 5 **e**₂, where **e**₁ = (1, 0) and **e**₂ = (0, 1). Sanderson reads coordinates the same way, as scalars that stretch the two unit vectors along the axes <Cite id="sanderson2016span" />. Other pairs give other weights for the same point, an idea the page on basis and dimension takes up.
 
 ### Which weight goes with which vector matters
 
@@ -114,23 +114,23 @@ For the flag, c (2, 1) + d (1, 2) = (4, 5) means one equation per entry: 2c + d 
 
 <GoDeeper label="a formula for every point" id="finding-the-weights">
 
-With **a** = (2, 1) and **b** = (1, 2), any point (x, y) is reached with $c = (2x - y)/3$ and $d = (2y - x)/3$. Check: (4, 5) gives $c = 3/3 = 1$ and $d = 6/3 = 2$. The point (1, 0) gives $c = 2/3$, $d = -1/3$, and (0, 1) gives $c = -1/3$, $d = 2/3$: fractions that no half-step slider reaches. A slider weight is a multiple of 1/2, and $(2x - y)/3$ is one exactly when 3 divides $2x - y$, which is where the board's 41 points come from. The 3 in the denominator is $2 \times 2 - 1 \times 1$; the third proof under Formal definition derives the formula for any pair.
+With **a** = (2, 1) and **b** = (1, 2), any point (x, y) is reached with $c = (2x - y)/3$ and $d = (2y - x)/3$. Check: (4, 5) gives $c = 3/3 = 1$ and $d = 6/3 = 2$. The point (1, 0) gives $c = 2/3$, $d = -1/3$, and (0, 1) gives $c = -1/3$, $d = 2/3$: fractions that no half-step slider reaches. A slider weight is a multiple of 1/2, and $(2x - y)/3$ is one exactly when 3 divides $2x - y$. Then 3 divides $2y - x$ too, and on the grid both weights stay within 5, so the board's 41 points are exactly the $(x, y)$ with $2x - y$ a multiple of 3. The 3 in the denominator is $2 \times 2 - 1 \times 1$; the third proof under Formal definition derives the formula for any pair.
 
 </GoDeeper>
 
 ## Span: every point you can reach
 
-The span of some vectors is the set of every linear combination of them: all the points you can reach by scaling them and adding. Margalit and Rabinoff define it as the collection of all linear combinations of v₁, …, v_k (Section 2.2) <Cite id="margalit-ila-spans" />, and Goodfellow et al. as the set of all points obtainable by linear combination of the original vectors (Section 2.4, p. 34) <Cite id="goodfellow2016linalg" />.
+The span of some vectors is the set of every linear combination of them: all the points you can reach by scaling them and adding. Margalit and Rabinoff define it, for any number k of vectors **v**₁, …, **v**_k, as the collection of all their linear combinations (Section 2.2) <Cite id="margalit-ila-spans" />, and Goodfellow et al. as the set of all points obtainable by linear combination of the original vectors (Section 2.4, p. 35) <Cite id="goodfellow2016linalg" />.
 
-The span always contains the origin, because you can take every weight 0, so a span is never a line that misses the origin. The span of one nonzero vector is the line through the origin and its tip: as the [vectors page's section on scaling](/linear-algebra/vectors/#multiplying-a-vector-by-a-number) showed, c **a** never leaves that line. The zero vector alone spans just the origin. When there are many vectors to picture, Sanderson suggests drawing each one as a point at its tip rather than as an arrow <Cite id="sanderson2016span" />, so a span becomes a set of points: a dot, a line or a filled plane.
+The span always contains the origin, because you can take every weight 0, so a span is never a line that misses the origin. The span of one nonzero vector is the line through the origin and its tip: as the [vectors page's section on scaling](/linear-algebra/vectors/#multiplying-a-vector-by-a-number) showed, c **a** never leaves that line. The zero vector alone spans just the origin.
 
 ### A line or the whole plane?
 
 Two vectors in the plane reach either a line or the whole plane (or, if both are zero, only the origin), and the board below asks you to say which before it shows you.
 
-Before you look: **a** = (2, 1) and **b** = (−4, −2). What can c **a** + d **b** reach: only the origin, a line, or the whole plane? Going further: if you nudge **b** so the two arrows almost line up, does the span shrink a little?
+Before you look: **a** = (2, 1) and **b** = (−4, −2). What can c **a** + d **b** reach: only the origin, a line, or the whole plane? Going further: if you nudge **b** so the two arrows almost line up, do you need bigger or smaller weights to reach (1, 0)?
 
-Your task: under Your guess: the span of a and b is, choose Only the origin, A line or The whole plane, then press Check. You get one guess, and **a** and **b** stay fixed until you check.
+Your task: under "Your guess: the span of a and b is", choose Only the origin, A line or The whole plane, then press Check. You get one guess, and **a** and **b** stay fixed until you check.
 
 <div class="not-content">
   <VectorBoard2D client:visible setup="span-shape" />
@@ -138,13 +138,13 @@ Your task: under Your guess: the span of a and b is, choose Only the origin, A l
 
 A line. Check says "Yes. b = −2 × a, so a and b lie on one line through the origin, and every c a + d b stays on it. The span is that line." and draws that line in ochre. The guess The whole plane gets "Not quite. b = −2 × a points exactly opposite a, so every c a + d b = (c − 2d) × a stays on the line through a. The span is that line." Two arrows pointing opposite ways share one line.
 
-Now press Nearly lined up: **a** = (4, 2) and **b** = (3, 2). The readout says "a and b point along different lines, so their span is the whole plane." The span doesn't shrink a little as the arrows close in. It stays the whole plane until they line up exactly, and then it jumps to a line. Both zero reads "a and b are both the zero vector, so every c a + d b is (0, 0). The span is just the origin." On the first board, Same line sets **b** = (4, 2) and ends "The flag is off that line, so no c and d reach it."
+Now press Nearly lined up: **a** = (4, 2) and **b** = (3, 2). The readout says "a and b point along different lines, so their span is the whole plane." The span doesn't shrink a little as the arrows close in. It stays the whole plane until they line up exactly, and then it jumps to a line. Both zero ends "a and b are both the zero vector, so every c a + d b is (0, 0). The span is just the origin." On the first board, Same line sets **b** = (4, 2) and ends "The flag is off that line, so no c and d reach it."
 
 So two vectors in the plane span a line, not the plane, exactly when one is a multiple of the other. Sanderson gives the same three cases: for most pairs the span is the whole plane, it is a line when the two line up, and only the origin when both are zero <Cite id="sanderson2016span" />.
 
-There is a test with two numbers. For **a** = (a₁, a₂) and **b** = (b₁, b₂), the vectors lie on one line exactly when a₁b₂ − a₂b₁ = 0. For this board's pair, 2 × (−2) − 1 × (−4) = 0, a line. For the first board's pair, 2 × 2 − 1 × 1 = 3, the whole plane, and for the nearly lined-up pair 4 × 2 − 2 × 3 = 2, still the whole plane. This number gets its own name later, on the page about the determinant.
+There is a one-number test. For **a** = (a₁, a₂) and **b** = (b₁, b₂), compute a₁b₂ − a₂b₁: it is 0 exactly when **b**'s entries are in the same ratio as **a**'s, so the two lie on one line. For this board's pair, 2 × (−2) − 1 × (−4) = 0, a line. For the first board's pair, 2 × 2 − 1 × 1 = 3, the whole plane, and for the nearly lined-up pair 4 × 2 − 2 × 3 = 2, still the whole plane. This number gets its own name later, on the page about the determinant.
 
-A lined-up vector adds nothing new: with **b** = −2 **a**, every c **a** + d **b** equals (c − 2d) **a**. Vectors that each bring a new direction are called linearly independent, the subject of a later page.
+Vectors that each bring a new direction are called linearly independent, the subject of a later page.
 
 <GoDeeper label="nearly lined up: still the whole plane, at a price" id="nearly-lined-up">
 
@@ -162,9 +162,9 @@ A line through the origin. $(-6, 4) = -2 \times (3, -2)$, so the two vectors lie
 
 ### Two vectors in space: a plane, not all of space
 
-In three dimensions, two vectors that don't line up span a flat plane through the origin, so most points of space are out of reach. Margalit and Rabinoff describe it as the plane containing the origin and the heads of the vectors, and note that three vectors in one plane span only that plane (Section 2.2) <Cite id="margalit-ila-spans" />. Sanderson pictures a flat sheet through the origin, which a third vector widens only if it points off the sheet <Cite id="sanderson2016span" />.
+In three dimensions, two vectors that don't line up span a flat plane through the origin, so most points of space are out of reach. Margalit and Rabinoff describe it as the plane containing the origin and the tips of the vectors, and note that three vectors in one plane, not all on one line, span that plane and not all of space (Section 2.2) <Cite id="margalit-ila-spans" />. Sanderson pictures a flat sheet through the origin, which a third vector widens only if it points off the sheet <Cite id="sanderson2016span" />.
 
-Take **u** = (1, 0, 1) and **v** = (0, 1, 1). Then 2 **u** + 3 **v** = (2, 3, 5), in the span. The point (1, 1, 0) is not: the first two entries force c = 1 and d = 1, and then the third entry is 2, not 0. This is the drone in the hall: two controls, one floor. Goodfellow et al. make the same point with a matrix of 3 rows and 2 columns: changing its 2-entry input traces out at best a 2-D plane within R³ (Section 2.4, p. 35) <Cite id="goodfellow2016linalg" />.
+Take **u** = (1, 0, 1) and **v** = (0, 1, 1). Then 2 **u** + 3 **v** = (2, 3, 5), in the span. The point (1, 1, 0) is not. The first entry of c **u** + d **v** is c and the second is d, so c = 1 and d = 1; then the third entry is c + d = 2, not 0. This is the drone in the hall: two controls, one floor.
 
 ## Notation
 
@@ -262,15 +262,17 @@ Every output of a linear layer, every attention output and every low-rank weight
 
 ### A layer's outputs live in the span of its columns
 
-A matrix times a vector is a linear combination of the matrix's columns. Goodfellow et al. read the columns of a matrix as directions to travel from the origin, with each entry of the input saying how far to move along its column (Section 2.4, equation 2.27, p. 34) <Cite id="goodfellow2016linalg" />:
+A matrix times a vector is a linear combination of the matrix's columns. Goodfellow et al. read the columns of a matrix as directions to travel from the origin, with each entry of the input saying how far to move along its column (Section 2.4, equation 2.27, p. 35) <Cite id="goodfellow2016linalg" />:
 
 $$
 \mathbf{W}\mathbf{x} = x_1\,\mathbf{W}_{:,1} + \cdots + x_n\,\mathbf{W}_{:,n}.
 $$
 
-With the columns (1, 0, 1) and (0, 1, 1) of worked example 2, the input (2, 3) gives (2, 3, 5), and no input gives (1, 1, 0). The equation $\mathbf{W}\mathbf{x} = \mathbf{y}$ has a solution exactly when $\mathbf{y}$ is in the span of the columns, the column space, and reaching every $\mathbf{y}$ in $\mathbb{R}^m$ needs at least $m$ columns (p. 35) <Cite id="goodfellow2016linalg" />.
+Here $\mathbf{W}$ has $m$ rows and $n$ columns, and $\mathbf{W}_{:,j}$ is its $j$-th column.
 
-So a linear layer from 2 inputs to 3 outputs can only produce points of one plane, whatever the input. A bias shifts that plane off the origin, and an activation function after the layer bends it.
+With the columns (1, 0, 1) and (0, 1, 1) of worked example 2, the input (2, 3) gives (2, 3, 5), and no input gives (1, 1, 0). The equation $\mathbf{W}\mathbf{x} = \mathbf{y}$ has a solution exactly when $\mathbf{y}$ is in the span of the columns, the column space, and reaching every $\mathbf{y}$ in $\mathbb{R}^m$ needs at least $m$ columns (p. 36) <Cite id="goodfellow2016linalg" />.
+
+So a linear layer from 2 inputs to 3 outputs can only produce points of one plane, whatever the input. Goodfellow et al. make the same point with a matrix of 3 rows and 2 columns: changing its 2-entry input traces out at best a 2-D plane within R³ (p. 36) <Cite id="goodfellow2016linalg" />. A bias moves that plane parallel to itself, usually off the origin, and an activation function after the layer bends it.
 
 ### An attention output is a weighted sum of values
 
@@ -290,7 +292,7 @@ A small illustration of our own: take $d = k = 4$ and $r = 1$, with $\mathbf{B} 
 
 ### The softmax bottleneck
 
-A language model turns a context into a vector of $d$ numbers $h_1, \ldots, h_d$, and its scores for every word in the vocabulary are $h_1\,\mathbf{w}_1 + \cdots + h_d\,\mathbf{w}_d$, a linear combination of the $d$ columns of the word-embedding matrix. So every context's scores lie in the span of $d$ vectors, however many words there are, and Yang, Dai, Salakhutdinov and Cohen show that this can leave some context with the wrong next-word distribution <Cite id="yang2017" />.
+A language model turns a context into a vector of $d$ numbers $h_1, \ldots, h_d$, and its scores for every word in the vocabulary are $h_1\,\mathbf{w}_1 + \cdots + h_d\,\mathbf{w}_d$, a linear combination of the $d$ columns of the word-embedding matrix. The softmax function then turns those scores into next-word probabilities. So every context's scores lie in the span of $d$ vectors, however many words there are, and Yang, Dai, Salakhutdinov and Cohen show that this can leave some context with the wrong next-word distribution <Cite id="yang2017" />.
 
 <GoDeeper label="the bound, and the limit with three words" id="softmax-bottleneck-toy">
 
@@ -347,6 +349,7 @@ assert comb(1, a, 2, b) == (4, 5) and scale(2, b) == (2, 4)
 assert comb(2, a, 1, b) == (5, 4)
 assert comb(-1, a, 1, b) == (-1, 1)
 assert comb(F(1), a, F(1, 2), (4, 2)) == (4, 2) and det2(a, (4, 2)) == 0
+assert det2(a, (4, 5)) == 6  # the flag is off the line through a
 print("1 a + 2 b =", comb(1, a, 2, b), " 2 a + 1 b =", comb(2, a, 1, b))
 
 # The weights by hand and the formula c = (2x - y)/3, d = (2y - x)/3.
@@ -373,7 +376,7 @@ assert det2((2, 1), (-4, -2)) == 0 and (-4, -2) == scale(-2, (2, 1))
 for c in range(-3, 4):
     for d in range(-3, 4):
         assert comb(c, (2, 1), d, (-4, -2)) == scale(c - 2 * d, (2, 1))
-assert det2((4, 2), (3, 2)) == 2 and det2((3, 1), (0, 0)) == 0
+assert det2((4, 2), (3, 2)) == 2
 assert det2((2, 1), (-4, -2)) == 2 * (-2) - 1 * (-4) == 0
 
 # Nearly lined up: the same plane, bigger weights.
