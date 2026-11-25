@@ -24,6 +24,8 @@ references:
   - ba2016
   - rousseeuw2017
   - numpy-std
+  - pandas-std
+  - sklearn-standardscaler
   - pytorch-batchnorm
 author: Muhammad Huzaifa Hussain
 reviewedAt: 2026-11-25
@@ -67,21 +69,21 @@ import DescriptiveStats from "../../../components/react/DescriptiveStats.tsx";
 
 Nine children from one class stand along a long measuring tape on the floor, each on the mark for their own height. Lay a plank along the tape and it balances at one point: the class's average height, 134 cm. Each child stretches a string to that balance point.
 
-Could the strings tell you how spread out the class is? Not as they are. Count the strings on the left as negative and those on the right as positive, and they cancel exactly, so their average is always 0. Instead, make each string the side of a square tile. Every tile has a positive area, and a long string makes a much bigger tile. The average tile area is the variance, 64 square centimeters. The side of a tile with that average area is the standard deviation, 8 cm, back in centimeters. If every child were 134 cm tall there would be no strings and no tiles, and the spread would be 0. Double every gap and every tile becomes 4 times as big, so the variance quadruples and the standard deviation doubles.
+Could the strings tell you how spread out the class is? Not as they are. Count the strings on the left as negative and those on the right as positive, and they cancel exactly, so their average is always 0. Instead, make each string the side of a square tile. Every tile has a positive area, and a long string makes a much bigger tile. The average tile area is the variance, 64 square centimeters. The side of a tile with that average area is the standard deviation, 8 cm, back in centimeters. If every child were 134 cm tall there would be no strings and no tiles, and the spread would be 0.
 
-So far you could see the whole class. Now guess the spread of the whole school from just a few of its children. You can only measure their strings to your little group's own balance point, which always sits among them, so the strings come out shorter, on average, than strings to the school's true average would be. Dividing the tile areas by one fewer than the number of children makes up for it. With a single child the problem is plain: the string has length 0, and "one fewer" would mean dividing by 0.
+So far you could see the whole class. Now guess the spread of the whole school from just a few of its children. You can only measure their strings to your little group's own balance point, which always sits among them, so the strings come out shorter, on average, than strings to the school's true average would be. Adding up the tile areas and dividing by one fewer than the number of children, instead of by the number of children, makes up for it. With a single child the problem is plain: the string has length 0, and "one fewer" would mean dividing by 0.
 
 </Analogy>
 
 <WhyThisMatters>
-Batch normalization and layer normalization divide every activation by a standard deviation computed on the fly, and feature scaling divides every input by one. A reported result such as "accuracy 91.1 ± 0.3 over five seeds" is a mean and a standard deviation. The two versions of the standard deviation really do give different numbers: on the class below, NumPy's `np.std` returns 8 and pandas' `.std()` returns about 8.49. So copying a formula from one library to another, or from a paper to its code, can change a result without any error. Batch normalization even uses both versions, one while training and the other at inference.
+Batch normalization and layer normalization divide every activation by a standard deviation computed on the fly, and feature scaling divides every input by one. A reported result such as "accuracy 91.1 ± 0.3 over five seeds" is a mean and a standard deviation. The two versions of the standard deviation really do give different numbers on the same data, so copying a formula from one library to another, or from a paper to its code, can change a result without any error. Batch normalization even uses both versions, one while training and the other at inference.
 </WhyThisMatters>
 
 ## Spread the class out, pull it in
 
-The board below opens on our class and already shows its standard deviation, 8 cm. Before you touch the presets: the **Tight class** has the same average height, 134 cm, but its children stand closer to it. Will its standard deviation be half of ours, a quarter of ours, or something else? Going further: by what factor does the variance shrink, and why is that factor the square of the first one?
+The board below opens on our class and already shows its standard deviation, 8 cm. Before you touch the presets: the **Tight class** has the same average height, 134 cm, but its children stand closer to it. Will its standard deviation be half of ours, a quarter of ours, or something else? Going further: by what factor does the variance shrink?
 
-Pick a child under Child to move, then change their Height with the slider (the arrow keys move 1 cm, Page Up and Page Down 5 cm), or drag along the strip under the axis. The pink triangle marks the mean <Var name="mu" />, and the blue span marks one standard deviation <Var name="sigma" /> on each side of it. Show distances draws each child's distance to the mean. The presets Our class, Tight class and Everyone 134 cm load whole classes, and the stage choice switches between Numbers and Symbols.
+Pick a child under Child to move, then change their Height with the slider (arrow keys 1 cm, Page Up and Page Down 5 cm) or drag along the strip under the axis. The pink triangle marks the mean <Var name="mu" />, and the blue span one standard deviation <Var name="sigma" /> on each side. Show distances draws each child's distance to the mean. The presets Our class, Tight class and Everyone 134 cm load whole classes; after one, a dashed span keeps the previous class's σ. Show as switches between Numbers and Symbols.
 
 Your task, before you press any preset: using Child to move and Height, make <Var name="sigma" /> smaller than 8 cm without changing the mean. One move can't do it, because moving one child also moves the mean, so plan two.
 
@@ -91,7 +93,7 @@ Your task, before you press any preset: using Child to move and Height, make <Va
 
 **The goal.** One way: move child 5 from 148 cm down to 141. The board says "The mean is now ≈ 133.22 cm. Move another child to bring it back to 134 cm." and <Var name="sigma" /> has dropped to about 6.86 cm. Then move child 2 from 122 cm up to 129. The board says "Done: the mean is still 134 cm and σ ≈ 5.87 cm is smaller than 8 cm." The tallest child came 7 cm in from above and the shortest 7 cm in from below, so the two changes to the total cancel and the mean stays put, while both of the longest distances got shorter.
 
-**The prediction.** Press Reset, then Tight class. The board reads "Variance: 144 / 9 = 16 cm². Standard deviation: √16 = 4 cm." and "Dashed: σ for Our class was 8 cm; now it is 4 cm." The standard deviation halved, and the variance fell to a quarter, from 64 to 16. That is no coincidence of this class: the variance is the standard deviation squared, so whenever the spread halves, the variance becomes (1/2)² = 1/4 of what it was. Now press Everyone 134 cm: "Every child is 134 cm: every distance is 0, so the variance is 0 and σ = 0 cm."
+**The prediction.** Press Reset, then Tight class. The board reads "Variance: 144 / 9 = 16 cm². Standard deviation: √16 = 4 cm." and "Dashed: σ for Our class was 8 cm; now it is 4 cm." The standard deviation halved, and the variance fell to a quarter, from 64 to 16. That is no coincidence of this class: the variance is the standard deviation squared, so whenever the spread halves, the variance becomes (1/2)² = 1/4 of what it was. Now press Everyone 134 cm: "Every child is 134 cm: every distance is 0, so the variance is 0 and σ = 0 cm." After either preset the goal line also says "Done", because the preset's own heights meet the goal; the task was to get there with your own two moves.
 
 **The distances.** Press Reset again and turn on Show distances. The board lists "Distances from the mean, 134 cm: −12, −9, −6, −3, −1, +3, +6, +8 and +14 cm. They add up to 0, so their plain average is always 0." and then "Squared: 144 + 81 + 36 + 9 + 1 + 9 + 36 + 64 + 196 = 576 cm²." Those two lines are the whole recipe, and the next section walks through it.
 
@@ -104,7 +106,7 @@ The variance is the average of the squared distances from the mean, and the stan
 3. **Squares.** 144 + 81 + 36 + 9 + 1 + 9 + 36 + 64 + 196 = 576.
 4. **Average, then root.** The variance is 576 / 9 = 64 cm², and the standard deviation is √64 = 8 cm.
 
-Why square at all? The signed distances can't measure spread, because they always add up to 0: the children above the mean exactly balance those below it, which is what makes it the mean. Dropping the signs works too, and the absolute distances average 62/9 ≈ 6.89 cm, but absolute values are awkward in algebra. Squares behave well. They give the shortcut, the shifting and scaling rules and the "divide by n − 1" result below, and they connect to the fact that the mean is the point from which the squared distances are smallest, which the page on the mean, the median and the mode covers in more depth.
+Why square at all? The signed distances can't measure spread, because they always add up to 0: the children above the mean exactly balance those below it, which is what makes it the mean. Dropping the signs works too, and the absolute distances average 62/9 ≈ 6.89 cm. Squares are used instead because they lead to simple rules, such as the shifting and scaling rules and the n − 1 correction below, and because the mean is exactly the point that makes the total of the squared distances smallest.
 
 Squaring has a side effect: the variance comes out in squared units, cm² for heights. The square root at the end puts the standard deviation back in centimeters, so it can sit on the same axis as the heights, as the blue span does on the board.
 
@@ -116,11 +118,11 @@ Three steps of a staircase are 1, 2 and 3 bricks high. Their mean is 2. The dist
 
 ### Shifting and stretching the whole class
 
-Adding the same amount to every value leaves the standard deviation unchanged; multiplying every value by a number c multiplies it by the size of c, and the variance by c². If every child wears shoes with 10 cm soles, the mean moves to 144 cm, but every distance from the mean stays the same, so <Var name="sigma" /> stays 8 cm. If you write the heights in meters instead, every value is multiplied by 1/100. The distances shrink by the same factor, so <Var name="sigma" /> becomes 0.08 m, and the variance shrinks by (1/100)², to 4/625 = 0.0064 m². Grinstead and Snell state the same rule for a random variable as their Theorem 6.7 (p. 259), and the same algebra holds for a list <Cite id="grinstead2003" />.
+Adding the same amount to every value leaves the standard deviation unchanged; multiplying every value by a number c multiplies it by c with any minus sign dropped, written |c|, and the variance by c². If every child wears shoes with 10 cm soles, the mean moves to 144 cm, but every distance from the mean stays the same, so <Var name="sigma" /> stays 8 cm. If you write the heights in meters instead, every value is multiplied by 1/100. The distances shrink by the same factor, so <Var name="sigma" /> becomes 0.08 m, and the variance shrinks by (1/100)², to 4/625 = 0.0064 m². Grinstead and Snell state the same rule as their Theorem 6.7 (p. 259), and the same algebra holds for a list <Cite id="grinstead2003" />.
 
 ### Two versions: the whole group or a sample
 
-Divide by n when the list is the whole group you care about; divide by n − 1 when the list is a sample and you want to estimate the spread of the bigger group it came from. Before you look: if our 9 children were a sample from a whole school, would the "divide by n − 1" spread be bigger or smaller than 8 cm?
+Divide by n when the list is the whole group you care about; divide by n − 1 when the list is a sample and you want to estimate the spread of the bigger group it came from. Before you look: the two versions differ for our 9 children. Would they differ more or less for a class of 101 children with the same spread?
 
 On the board, turn on Also as a sample. Two lines appear: "As a sample of a bigger group, the same mean is written x̄ = 134 cm." and "Sample variance: 576 / 8 = 72 cm². s = √72 ≈ 8.49 cm." The squares are the same 576; only the divisor changed, from 9 to 8. So s² = (9/8) × 64 = 72, and s is bigger than <Var name="sigma" />. It always is, unless both are 0, because dividing by n − 1 is the same as multiplying the ÷ n variance by n/(n − 1), a number above 1. The difference shrinks as the list grows: the factor is 9/8 for our class and 101/100 for a list of 101 values.
 
@@ -138,33 +140,33 @@ The libraries disagree on the default, so the same 9 heights give two answers:
 NumPy's documentation calls the ÷ n version "sometimes called the population standard deviation", and names the n − 1 divisor Bessel's correction <Cite id="numpy-std" />.
 
 <SideNote>
-The pandas row is from the [DataFrame.std documentation](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.std.html) (version 3.1.1: `ddof` defaults to 1, and passing `ddof=0` with `skipna=False` matches `numpy.std`). The scikit-learn row is from the Notes of [StandardScaler](https://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html) (version 1.9.1), which uses a biased estimator equivalent to `numpy.std(x, ddof=0)`. Textbooks differ too. Grinstead and Snell define the sample variance with 1/n in their Exercise 17 (p. 265) and add that many statisticians use 1/(n − 1) instead <Cite id="grinstead2003" />. So when a source says "sample variance", check which one it means.
+The pandas row is from the `DataFrame.std` documentation: `ddof` defaults to 1, and passing `ddof=0` with `skipna=False` matches `numpy.std` <Cite id="pandas-std" />. The scikit-learn row is from the Notes of `StandardScaler`, which uses a biased estimator equivalent to `numpy.std(x, ddof=0)` <Cite id="sklearn-standardscaler" />. Textbooks differ too. Grinstead and Snell define the sample variance with 1/n in their Exercise 17 (p. 265) and add that many statisticians use 1/(n − 1) instead <Cite id="grinstead2003" />. So when a source says "sample variance", check which one it means.
 </SideNote>
 
 ### Why the sample version divides by one less
 
-Distances measured from the sample's own mean are, on average, a little shorter than distances to the true mean, and dividing by n − 1 instead of n exactly makes up for it. You can check this without any probability theory by listing every possible sample.
+Squared distances measured from the sample's own mean add up, on average, to a little less than squared distances to the true mean, and dividing by n − 1 instead of n exactly makes up for it. An estimate that comes out right when averaged over every possible sample is called unbiased: when each child is drawn independently, put back each time, the ÷ (n − 1) variance is unbiased and the ÷ n one is not. You can check this without any probability theory by listing every possible sample.
 
-Treat our class of 9 as the whole group, so its true variance is 64 cm². Draw 2 children one after the other, putting the first back before the second draw, so the same child can come up twice. There are 9 × 9 = 81 equally likely ordered pairs. For each pair, work out the variance both ways and average over all 81:
+Treat our class of 9 as the whole group, so its true variance is 64 cm². Draw 2 children one after the other, putting the first back before the second draw, so the same child can come up twice. There are 9 × 9 = 81 equally likely ordered pairs. For each pair, work out the variance both ways and average over all 81. In this table n is the size of each sample, 2 or 3, not the 9 children in the class.
 
-| Sample size | Samples | Average of the ÷ n version | Average of the ÷ (n − 1) version |
+| Sample size | Samples | Average, dividing by the sample size | Average, dividing by one less than the sample size |
 | --- | --- | --- | --- |
 | 2 children | 81 | 32, half of 64 | 64 |
 | 3 children | 729 | 128/3, two thirds of 64 | 64 |
 
-The ÷ n version comes out too small by exactly the factor (n − 1)/n, and the ÷ (n − 1) version lands on 64 every time. The reason is that a sample's own mean always sits in the middle of that sample. As the third derivation below shows, the mean of a list is the point from which its squared distances are smallest, so they are smaller than the distances to the class's true mean, 134 cm, unless the sample's mean happens to be exactly 134. The fold [why the factor is exactly (n − 1)/n](#why-n-minus-1), after that derivation, works out the size of the shortfall.
+The ÷ n version comes out too small by exactly the factor (n − 1)/n, and the ÷ (n − 1) version lands on 64 every time. The reason is that a sample's own mean always sits in the middle of that sample. The mean of a list is the point from which the total of its squared distances is smallest (the Formal definition fold below proves it), so that total is smaller than the total of squared distances to the class's true mean, 134 cm, unless the sample's mean happens to be exactly 134. The fold [why the factor is exactly (n − 1)/n](#why-n-minus-1) works out the size of the shortfall.
 
 <SideNote>
-Putting each child back matters. If the 2 children must be different, the 36 possible pairs average a sample variance of 72, not 64, and the 84 possible groups of 3 also average 72: the class's own ÷ (N − 1) value. A sample that can't repeat a child is a little more spread out. When the bigger group is far larger than the sample, as with real data sets, the two ways of drawing agree to many decimal places.
+Putting each child back matters. If the 2 children must be different, the 36 possible pairs average a sample variance of 72, not 64, and the 84 possible groups of 3 also average 72: the class's own value when you divide its 576 by 8 instead of 9. A sample that can't repeat a child is a little more spread out. Without putting back, the average comes out larger by the factor (group size)/(group size − 1): 9/8 here, but only 1,000,000/999,999 for a group of a million, so for real data sets the two ways of drawing barely differ.
 </SideNote>
 
 <CheckYourself level="intuition" question="Your sample is a single child, 137 cm tall. What are σ and s?">
-σ = 0, because the child's distance from their own mean, 137 cm, is 0. The sample variance would be 0/0, so s is undefined. One value can't show any spread, which is the extreme case of the sample's own mean sitting too close to its values.
+<Var name="sigma" /> = 0, because the child's distance from their own mean, 137 cm, is 0. The sample variance would be 0/0, so s is undefined. One value can't show any spread, which is the extreme case of the sample's own mean sitting too close to its values.
 </CheckYourself>
 
 ## Notation
 
-<NotationKey symbols={["data-value", "sample-size", "sum", "mu", "sigma2", "sigma", "sample-mean", "sample-variance", "sample-sd"]} />
+<NotationKey symbols={["data-value", "sample-size", "sum", "mu", "sigma2", "sigma", "sample-mean", "sample-variance", "sample-sd", "scalar", "absolute-value", "expectation", "variance", "batch-size", "batch-mean", "batch-variance", "epsilon", "normalized-value", "layer-width", "activation", "qn-estimator"]} />
 
 <PreciseStatement>
 
@@ -225,7 +227,7 @@ $$
 \sum_{i=1}^{n} (x_i - \bar{x})^2 = \sum_{i=1}^{n} (x_i - \vmu)^2 - n(\bar{x} - \vmu)^2.
 $$
 
-Now average both sides over every possible sample. Each $x_i$ is a child drawn from the whole class, so each $(x_i - \vmu)^2$ averages $\vsigma^2$, and the first sum averages $n\vsigma^2$. The step this sketch does not prove is that $(\bar{x} - \vmu)^2$ averages $\vsigma^2/n$; the code below confirms it for our class, with averages 32 = 64/2 over the 81 pairs and 64/3 over the 729 triples. So the second term averages $n \times \vsigma^2/n = \vsigma^2$, and
+Now average both sides over every possible sample. Each $x_i$ is a child drawn from the whole class, so each $(x_i - \vmu)^2$ averages $\vsigma^2$, and the first sum averages $n\vsigma^2$. The step this sketch does not prove is that $(\bar{x} - \vmu)^2$ averages $\vsigma^2/n$, which is part (b) of Grinstead and Snell's Exercise 18 (p. 266) <Cite id="grinstead2003" />; the code below confirms it for our class, with averages 32 = 64/2 over the 81 pairs and 64/3 over the 729 triples. So the second term averages $n \times \vsigma^2/n = \vsigma^2$, and
 
 $$
 \text{the average of } \sum_{i=1}^{n} (x_i - \bar{x})^2 \text{ is } n\vsigma^2 - \vsigma^2 = (n - 1)\,\vsigma^2.
@@ -252,7 +254,7 @@ For our class the 81 ordered pairs give an average squared gap of 128, which is 
 | Property | Statement | Our class |
 | --- | --- | --- |
 | Never negative | $\vsigma^2 \ge 0$, and $\vsigma^2 = 0$ only when every value is equal | Everyone 134 cm: 0 |
-| Shift | Adding $a$ to every value leaves $\vsigma$ unchanged | 10 cm soles: still 8 cm |
+| Shift | Adding the same number to every value leaves $\vsigma$ unchanged | 10 cm soles: still 8 cm |
 | Scale | Multiplying by $c$ gives $\lvert c \rvert\,\vsigma$ and $c^2\vsigma^2$ | In meters: 0.08 m and 0.0064 m² |
 | Shortcut | $\vsigma^2 = \tfrac{1}{n}\sum x_i^2 - \vmu^2$ | 64 |
 | Pairs | The $n^2$ squared gaps average $2\vsigma^2$ | 128 |
@@ -279,7 +281,7 @@ Our class has $\vsigma = 8$ cm and variance 64 cm². In meters every height is d
 
 <WorkedExample number={3} title="One batch normalization step" faded>
 
-A mini-batch holds 4 values of one activation: 1, 3, 5 and 7, with batch mean 4. Find (a) the variance batch normalization divides by while training, which divides by the batch size $m$; (b) the normalized value of 7, ignoring the small $\epsilon$; (c) the unbiased version PyTorch folds into its running estimate; and (d) the new running variance, if the running variance is 1 before this batch and the momentum is 0.1, PyTorch's default.
+Batch normalization (next section) rescales each value in a small group of training values, the mini-batch. It also keeps a running variance for later use: each step it keeps 0.9 of the old value and adds 0.1 of the new one, and 0.1 is called the momentum. A mini-batch holds 4 values of one activation: 1, 3, 5 and 7, with batch mean 4. Find (a) the variance batch normalization divides by while training, which divides by the batch size $m$; (b) the normalized value of 7, ignoring the small $\epsilon$; (c) the unbiased version PyTorch folds into its running estimate; and (d) the new running variance, if the running variance is 1 before this batch and the momentum is 0.1, PyTorch's default.
 
 <div slot="solution">
 
@@ -293,11 +295,13 @@ A mini-batch holds 4 values of one activation: 1, 3, 5 and 7, with batch mean 4.
 
 ### Batch normalization uses both versions
 
-During training, batch normalization standardizes each activation with its mini-batch mean $\mu_B$ and mini-batch variance $\sigma_B^2 = \tfrac{1}{m}\sum_{i=1}^{m} (x_i - \mu_B)^2$, which divides by the batch size $m$ (Algorithm 1, p. 3):
+During training, batch normalization standardizes each activation with its mini-batch mean $\vmu_B$ and mini-batch variance $\vsigma_B^2 = \tfrac{1}{m}\sum_{i=1}^{m} (x_i - \vmu_B)^2$, which divides by the batch size $m$ (Algorithm 1, p. 3):
 
 $$
-\hat{x}_i = \frac{x_i - \mu_B}{\sqrt{\sigma_B^2 + \epsilon}}.
+\hat{x}_i = \frac{x_i - \vmu_B}{\sqrt{\vsigma_B^2 + \epsilon}}.
 $$
+
+These are this page's $\vmu$ and $\vsigma^2$, computed over the mini-batch; the subscript $B$ is the paper's name for it.
 
 At inference there is no batch to average over, so the network uses fixed statistics instead. Ioffe and Szegedy use the unbiased variance estimate, $\tfrac{m}{m-1}$ times the average of the mini-batch variances over training batches of size $m$ (§3.1 and Algorithm 2, step 10, p. 4) <Cite id="ioffe2015" />. PyTorch's `BatchNorm1d` does the same with a moving average: in training it normalizes with the biased variance, equivalent to `torch.var(input, correction=0)`, while the running variance it keeps for inference uses the unbiased one, with a default momentum of 0.1 <Cite id="pytorch-batchnorm" />. Worked example 3 runs one step with numbers. With $m = 4$ the two variances differ by a factor of 4/3; with $m = 256$ only by 256/255. For the view of batch normalization as a z-score, see the [normal distribution page](/statistics/normal-distribution/#batch-normalization).
 
@@ -306,18 +310,18 @@ At inference there is no batch to average over, so the network uses fixed statis
 Layer normalization computes the mean and standard deviation over the $H$ hidden units of one layer, for each example separately, and divides by $H$ in both (§3, equation (3), p. 2) <Cite id="ba2016" />:
 
 $$
-\mu = \frac{1}{H}\sum_{i=1}^{H} a_i, \qquad \sigma = \sqrt{\frac{1}{H}\sum_{i=1}^{H} (a_i - \mu)^2}.
+\vmu = \frac{1}{H}\sum_{i=1}^{H} a_i, \qquad \vsigma = \sqrt{\frac{1}{H}\sum_{i=1}^{H} (a_i - \vmu)^2}.
 $$
 
-Because the statistics come from a single example, Ba, Kiros and Hinton note that it puts no constraint on the mini-batch size and works even with a batch size of 1 <Cite id="ba2016" />. If one layer's 4 units output 1, 3, 5 and 7, then $\sigma = \sqrt{5} \approx 2.236$, with no n − 1. With a single unit the ÷ n version simply gives $\sigma = 0$, while a ÷ (n − 1) version would divide by 0.
+These are exactly this page's $\vmu$ and $\vsigma$, for the list of the layer's $H$ outputs. Because the statistics come from a single example, Ba, Kiros and Hinton note that it puts no constraint on the mini-batch size and works even with a batch size of 1 <Cite id="ba2016" />. If one layer's 4 units output 1, 3, 5 and 7, then $\vsigma = \sqrt{5} \approx 2.236$, with no n − 1. With a single unit the ÷ n version simply gives $\vsigma = 0$, while a ÷ (n − 1) version would divide by 0.
 
 ### Reporting results: a mean and its spread
 
-When a model is trained with 5 different random seeds, the spread of the 5 accuracies is a sample standard deviation $s$, dividing by 4, because the 5 runs stand in for all the runs you could have made. Take five illustrative accuracies: 90.8, 90.9, 91.1, 91.2 and 91.5%. Their mean is 91.1%, the squared distances add up to 0.30, so $s^2 = 0.30/4 = 0.075$ and $s \approx 0.274$, reported as 91.1 ± 0.3. How precisely 5 runs pin down the mean is a different number, the standard error of the mean, $\sigma/\sqrt{m}$ for $m$ runs (§5.4.3, equation (5.46), p. 126) <Cite id="goodfellow2016ml" />. In practice $\sigma$ is unknown and replaced by $s$, which gives $0.274/\sqrt{5} \approx 0.122$. Goodfellow and coauthors point out that this estimate tends to come out a little small. Sampling distributions get their own page.
+When a model is trained with 5 different random seeds, the spread of the 5 accuracies is a sample standard deviation $s$, dividing by 4, because the 5 runs stand in for all the runs you could have made. Take five illustrative accuracies: 90.8, 90.9, 91.1, 91.2 and 91.5%. Their mean is 91.1%, the squared distances add up to 0.30, so $s^2 = 0.30/4 = 0.075$ and $s \approx 0.274$, reported as 91.1 ± 0.3. How precisely 5 runs pin down the mean is a different number, the standard error of the mean: the true spread of all the runs you could have made, divided by the square root of the number of runs (§5.4.3, equation (5.46), p. 126) <Cite id="goodfellow2016ml" />. That true spread is unknown, so $s$ stands in for it, which gives $0.274/\sqrt{5} \approx 0.122$. Goodfellow and coauthors point out that this estimate tends to come out a little small. Sampling distributions get their own page.
 
 ### Feature scaling
 
-Standardizing a feature means subtracting its mean and dividing by its standard deviation. scikit-learn's `StandardScaler` uses the ÷ n version, the same as `np.std` with its default (see the scikit-learn link in the side note above), so a feature with our class's heights would be divided by 8, not 8.49. The two differ by the factor √(n/(n − 1)): about 6% for our 9 children, under 0.01% for 10,000 training examples. Z-scores and the comparison of standardization with min–max scaling each get their own page.
+Standardizing a feature means subtracting its mean and dividing by its standard deviation. scikit-learn's `StandardScaler` uses the ÷ n version, the same as `np.std` with its default <Cite id="sklearn-standardscaler" />, so a feature with our class's heights would be divided by 8, not 8.49. The two differ by the factor √(n/(n − 1)): about 6% for our 9 children, under 0.01% for 10,000 training examples. Z-scores and the comparison of standardization with min–max scaling each get their own page.
 
 ## Compute spread in code
 
@@ -360,6 +364,7 @@ heights = [133, 122, 140, 128, 148, 125, 137, 131, 142]
 n = len(heights)
 mu = mean(heights)
 assert n == 9 and sum(heights) == 1206 and mu == 134
+assert statistics.median(heights) == 133 and sorted(heights)[4] == 133
 distances = sorted(x - mu for x in heights)
 assert distances == [-12, -9, -6, -3, -1, 3, 6, 8, 14]
 assert sum(distances) == 0
@@ -433,13 +438,16 @@ for size, count, divide_by_n in ((2, 81, 32), (3, 729, Fraction(128, 3))):
 # s itself still comes out small on average.
 average_s = sum(math.sqrt(sample_variance(list(pair))) for pair in product(heights, repeat=2)) / 81
 assert average_s < 8 and abs(average_s - 6.46) < 0.005
-# Without replacement the samples average the class's own divide-by-(N - 1) value, 72, not 64:
+# Without replacement the samples average 576 / 8 = 72, not 64:
 # a sample that can't repeat a child is a little more spread out.
 pairs = list(combinations(heights, 2))
 triples = list(combinations(heights, 3))
 assert len(pairs) == 36 and len(triples) == 84
-assert Fraction(sum(sample_variance(list(p)) for p in pairs), 36) == 72
+assert Fraction(sum(sample_variance(list(p)) for p in pairs), 36) == 72 == Fraction(576, 8)
 assert Fraction(sum(sample_variance(list(t)) for t in triples), 84) == 72
+# The factor is (group size) / (group size - 1): 9/8 here, 1,000,000/999,999 for a million.
+assert Fraction(72, 64) == Fraction(9, 8) == Fraction(n, n - 1)
+assert Fraction(10**6, 10**6 - 1) == Fraction(1_000_000, 999_999)
 # A sample of one child: sigma is 0, s is undefined.
 assert variance([137]) == 0
 try:
@@ -591,20 +599,20 @@ print(norm.running_var)
 
 <ResearchFrontier reviewed="2026-11-25">
 
-**One value can ruin σ.** The breakdown value of an estimate is the smallest share of the data that has to be replaced to carry the estimate arbitrarily far away. For the standard deviation it is 0%: a single outlier can make it as large as you like. Rousseeuw and Hubert show this with five measurements of a length, 6.27, 6.34, 6.25, 6.31 and 6.28 <Cite id="rousseeuw2017" />. Type the fourth one as 63.1 instead of 6.31 and the mean jumps from 6.29 to 17.65, while the standard deviation, which they compute as $s$ with n − 1, jumps from 0.035 to 25.41. The median absolute deviation (MAD), the median of each value's distance from the median, times 1.4826 so that it matches $\vsigma$ for normal data, is 0.044 for both lists. The outlier also hides itself. Its z-score, its distance from the mean in standard deviations, is only 1.79 with $s$, below the cutoff of 2.5 they use as an example, because the outlier has inflated the very $s$ it is measured with. This is the masking effect. With this site's ÷ n version $\vsigma$ the z-score is about 2.00, no better. With 5 values a z-score can never pass $4/\sqrt{5} \approx 1.79$ with $s$, or $\sqrt{4} = 2$ with $\vsigma$, however wrong the typo, so that rule could never flag it. Outlier rules get their own page.
+**One value can ruin σ.** The breakdown value of an estimate is the smallest share of the data that has to be replaced to carry the estimate arbitrarily far away. For the standard deviation it is 0%: a single outlier can make it as large as you like. Rousseeuw and Hubert show this with five measurements of a length, 6.27, 6.34, 6.25, 6.31 and 6.28 <Cite id="rousseeuw2017" />. Type the fourth one as 63.1 instead of 6.31 and the mean jumps from 6.29 to 17.65, while the standard deviation, which they compute as $s$ with n − 1, jumps from 0.035 to 25.41. The median absolute deviation (MAD), the median of each value's distance from the median, times 1.4826 so that it matches $\vsigma$ for data that follow a [normal distribution](/statistics/normal-distribution/), is 0.044 for both lists. The outlier also hides itself. Its z-score, its distance from the mean in standard deviations, is only 1.79 with $s$, below the cutoff of 2.5 they use as an example, because the outlier has inflated the very $s$ it is measured with. This is the masking effect. With this site's ÷ n version $\vsigma$ the z-score is about 2.00, no better. With 5 values a z-score can never pass $4/\sqrt{5} \approx 1.79$ with $s$, or $\sqrt{4} = 2$ with $\vsigma$, however wrong the typo, so that rule could never flag it. Outlier rules get their own page.
 
-**Robust scales, and their price.** The MAD and the $Q_n$ estimator both have a breakdown value of 50%, the best possible, since the clean values have to be the majority; the normalized interquartile range has 25% (section "Estimating univariate location and scale", pp. 3–4) <Cite id="rousseeuw2017" />. $Q_n$ is a scaled first quartile of all the pairwise distances $\lvert x_i - x_j \rvert$, the same gaps as in the [pairwise fold](#pairwise-variance) above. The robustness has a price: on clean normal data the median and the MAD are less efficient than the mean and the standard deviation, so they wobble more from sample to sample (p. 4). For high-dimensional data, sparse and regularized robust methods are recent work. The review's conclusions name the open problem plainly: future research should "further improve the efficiency of the robust methodologies", in both predictive accuracy and computational cost (p. 23) <Cite id="rousseeuw2017" />.
+**Robust scales, and their price.** The MAD and the $Q_n$ estimator both have a breakdown value of 50%, the best possible, since the clean values have to be the majority; the normalized interquartile range has 25% (section "Estimating univariate location and scale", pp. 3–4) <Cite id="rousseeuw2017" />. $Q_n$ is a scaled first quartile of all the pairwise distances $\lvert x_i - x_j \rvert$, the same gaps as in the [pairwise fold](#pairwise-variance) above. The robustness has a price: on clean normal data the median and the MAD are less efficient than the mean and the standard deviation, so they wobble more from sample to sample (p. 4). For high-dimensional data, sparse and regularized robust methods were being developed when this review was written (2017). The review's conclusions name the open problem plainly: future research should "further improve the efficiency of the robust methodologies", in both predictive accuracy and computational cost (p. 23) <Cite id="rousseeuw2017" />.
 
 </ResearchFrontier>
 
 ## Check yourself
 
 <CheckYourself level="intuition" question="Every child in the class grows exactly 5 cm over the summer. What happens to the mean and to σ?">
-The mean rises by 5 cm, to 139 cm, and σ stays 8 cm. Every child moved by the same amount, so every distance from the mean is unchanged, and the variance is built only from those distances.
+The mean rises by 5 cm, to 139 cm, and <Var name="sigma" /> stays 8 cm. Every child moved by the same amount, so every distance from the mean is unchanged, and the variance is built only from those distances.
 </CheckYourself>
 
 <CheckYourself level="standard" question="Find σ² and s for the list 3, 5, 10.">
-The mean is 18/3 = 6, the distances are −3, −1 and +4, and the squares add up to 9 + 1 + 16 = 26. Dividing by 3 gives σ² = 26/3 ≈ 8.67. Dividing by 2 gives s² = 13, so s = √13 ≈ 3.61.
+The mean is 18/3 = 6, the distances are −3, −1 and +4, and the squares add up to 9 + 1 + 16 = 26. Dividing by 3 gives $\vsigma^2 = 26/3 \approx 8.67$. Dividing by 2 gives s² = 13, so s = √13 ≈ 3.61.
 </CheckYourself>
 
 <CheckYourself level="standard" question="np.std gives 8 for our class and pandas' .std() gives about 8.49. Which one is wrong?">

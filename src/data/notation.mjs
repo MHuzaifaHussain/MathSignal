@@ -32,6 +32,24 @@ export const NOTATION = [
 		meaning: 'The sample standard deviation: the square root of s²',
 		note: 'Not the selection indicator s on the Monty Hall page.',
 	},
+	{ key: 'batch-size', tex: 'm', say: '"m"', meaning: 'The batch size: how many examples one mini-batch holds' },
+	{ key: 'batch-mean', tex: '\\vmu_B', say: '"mu B"', meaning: 'The mini-batch mean: μ computed over the m values of one mini-batch' },
+	{
+		key: 'batch-variance',
+		tex: '\\vsigma_B^2',
+		say: '"sigma B squared"',
+		meaning: 'The mini-batch variance: σ² computed over one mini-batch, dividing by m',
+	},
+	{ key: 'epsilon', tex: '\\epsilon', say: '"epsilon"', meaning: 'A small positive constant added so that a division by 0 can never happen' },
+	{ key: 'normalized-value', tex: '\\hat{x}_i', say: '"x i hat"', meaning: 'The i-th value after normalization: its distance from the mean in standard deviations' },
+	{ key: 'layer-width', tex: 'H', say: '"H"', meaning: 'How many hidden units one layer has' },
+	{ key: 'activation', tex: 'a_i', say: '"a i"', meaning: 'The output of the i-th hidden unit in a layer, for one example' },
+	{
+		key: 'qn-estimator',
+		tex: 'Q_n',
+		say: '"Q n"',
+		meaning: 'A robust scale estimate: a scaled first quartile of all the pairwise distances between n values',
+	},
 	{
 		key: 'normal',
 		tex: '\\mathcal{N}(\\vmu, \\vsigma^2)',
@@ -202,7 +220,7 @@ export const NOTATION = [
 		note: 'Inline we write (3, 2) for the same column. A NumPy 1-D array has shape (n,) and no orientation.',
 	},
 	{ key: 'real-space', tex: '\\mathbf{v} \\in \\mathbb{R}^n', say: '"v is in R n"', meaning: 'v has n real-number entries' },
-	{ key: 'scalar', tex: 'c', say: '"c"', meaning: 'A scalar: a single real number that scales a vector' },
+	{ key: 'scalar', tex: 'c', say: '"c"', meaning: 'A scalar: a single real number that multiplies a vector, or every value of a list' },
 	{
 		key: 'vector-sum',
 		tex: '\\mathbf{u} + \\mathbf{v}',
