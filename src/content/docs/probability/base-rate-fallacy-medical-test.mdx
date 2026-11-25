@@ -81,7 +81,7 @@ On the board, A is "has the condition" and B is "tests positive". The A column's
   <BayesTheorem client:visible scenarios={["any-events", "screening-test", "screening-clinic"]} />
 </div>
 
-About 16%, which rounds to 20%: far below the 95% the test's accuracy suggests. The readout says "P(A | B) = 0.162   P(B) = 0.117"; P(B) is the share who test positive, 117 in 1,000, and "Show as table" counts those 1,000 people. Raising P(A), the readout reaches 0.484 at 0.09 and 0.514 at 0.10, so the even-chance point, your second guess, lies between them: exactly 2/21 ≈ 0.095, as [how common the condition has to be](#how-common-does-the-condition-have-to-be) shows. Now press Clinic, where 30 in 100 patients with symptoms have the condition: "P(A | B) = 0.803   P(B) = 0.355". The test never changed; only who was tested did.
+About 16%, which rounds to 20%: far below the 95% the test's accuracy suggests. The readout says "P(A | B) = 0.162   P(B) = 0.117"; P(B) is the share who test positive, 117 in 1,000. Raising P(A), the readout reaches 0.484 at 0.09 and 0.514 at 0.10, so the even-chance point, your second guess, lies between them: exactly 2/21 ≈ 0.095, as [how common the condition has to be](#how-common-does-the-condition-have-to-be) shows. Now press Clinic, where 30 in 100 patients with symptoms have the condition: "P(A | B) = 0.803   P(B) = 0.355". The test never changed; only who was tested did.
 
 ## Count four groups, then read one column
 
@@ -210,7 +210,7 @@ A fraud model has recall (sensitivity) 0.90 and a false positive rate of 1% (spe
 
 <WorkedExample number={6} title="When is a positive a coin flip?" faded>
 
-A test has sensitivity 80% and specificity 90%. At what prevalence is a positive an even chance, and what is the NPV at that prevalence? Then check the crossing on the board with Medical test and P(B | A) set to 0.80.
+A test has sensitivity 80% and specificity 90%. At what prevalence is a positive an even chance, and what is the NPV at that prevalence? Then check the crossing on the board with Screening test and P(B | A) set to 0.80.
 
 <div slot="solution">
 
