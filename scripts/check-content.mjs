@@ -8,7 +8,8 @@
 //   - SEO: descriptions 120-160 characters; titles, descriptions and primary queries unique (docs/seo/README.md);
 //     searchIntent matches the page type
 //   - spelling: page prose uses American English (decision 0010)
-//   - length: each concept page's reader-prose word count, printed, and held to its type's limits when complete
+//   - length: each concept page's reader-prose word count (visible prose on A and B pages), printed, and held to its
+//     type's limits when complete
 // Frontmatter is parsed the way Astro parses it (the `yaml` package, core schema), so `draft: True`, comments,
 // quoting and multi-line values mean the same here as in the build.
 // Required frontmatter on concept pages is enforced during the build by src/routeData.ts.
@@ -269,50 +270,58 @@ function intentProblems(pages) {
 	});
 }
 
-// ---- Reader-prose word count (owner ruling, 2026-11-25; rules in docs/design-system/writing-a-concept-page.md) ----
-// A page type's word limits count what a reader reads in the spine and folds, nothing else. Left out: frontmatter,
-// imports, code (fences, inline code and PyRunner), tables (markdown and HTML), the reference list, CheckYourself
-// answers, and JSX tags with their attributes. Every formula, display or inline, counts as one word. The prose
-// children of components count (Fold, Simpler, GoDeeper, SideNote, Mistake, Analogy, WorkedExample, StepThrough,
-// WhyThisMatters, PreciseStatement, FormalDefinition, ResearchFrontier and any new one), and so do the attributes
-// in PROSE_ATTRIBUTES, which a reader reads as sentences.
+// ---- Reader-prose word count (owner rulings, 2026-11-25; rules in docs/design-system/writing-a-concept-page.md) ----
+// A page type's word limits count what a reader reads, nothing else. Left out: frontmatter, imports, code (fences,
+// inline code and PyRunner), tables (markdown and HTML), the reference list, CheckYourself answers, and JSX tags
+// with their attributes. Every formula, display or inline, counts as one word. The prose children of components
+// count (SideNote, Mistake, Analogy, WorkedExample, StepThrough, WhyThisMatters and any new one), and so do the
+// attributes in PROSE_ATTRIBUTES, which a reader reads as sentences. Two modes:
+//   - `all`: the spine and every fold. C to F pages are held to it.
+//   - `visible`: what shows with every fold closed. A and B pages are held to it. The folds (Fold, Simpler and
+//     GoDeeper, with the proofs inside them), PreciseStatement, FormalDefinition and ResearchFrontier are left out,
+//     since they have their own caps. A Fold with `open` is left out too; no page opens one by default.
+
+/** The two ways of counting: the spine plus every fold, or only the prose a reader sees with every fold closed. */
+export const WORD_COUNT_MODES = ['all', 'visible'];
 
 /**
- * Word limits by page type, enforced on pages with `depthStatus: complete`. C to F are the content plan's satellite
- * range (§4). A and B take the plan's spine range, applied to the whole count of spine and folds. F is a reference
- * page made mostly of tables, so it has a cap and no floor.
+ * Word limits by page type, enforced on pages with `depthStatus: complete`, and the mode each type is counted in.
+ * C to F are the content plan's satellite range (§4), over spine and folds. A and B take the plan's 1,500 to 3,000
+ * visible words. F is a reference page made mostly of tables, so it has a cap and no floor.
  */
 export const WORD_LIMITS = {
-	A: { min: 1500, max: 3000 },
-	B: { min: 1500, max: 3000 },
-	C: { min: 1200, max: 2500 },
-	D: { min: 1200, max: 2500 },
-	E: { min: 1200, max: 2500 },
-	F: { min: 0, max: 2500 },
+	A: { min: 1500, max: 3000, mode: 'visible' },
+	B: { min: 1500, max: 3000, mode: 'visible' },
+	C: { min: 1200, max: 2500, mode: 'all' },
+	D: { min: 1200, max: 2500, mode: 'all' },
+	E: { min: 1200, max: 2500, mode: 'all' },
+	F: { min: 0, max: 2500, mode: 'all' },
 };
 
 /**
- * Pages written before the counter existed that fall outside their type's limits, with the count measured when
- * the counter landed (2026-11-25). They warn instead of failing, so the build passes until each page is cut or
- * the owner rules on it. Remove an entry once its page fits; an entry for a page that doesn't exist fails the check.
+ * Pages written before the counter existed that fall outside their type's limits, with the count measured in their
+ * type's mode (re-measured 2026-11-25 when A and B moved to visible prose). They warn instead of failing, so the
+ * build passes until each page is cut or the owner rules on it. Remove an entry once its page fits; an entry for a
+ * page that doesn't exist fails the check.
  */
 export const WORD_COUNT_EXCEPTIONS = {
-	'linear-algebra/dot-product': { measured: 4431 },
-	'linear-algebra/vectors': { measured: 4523 },
-	'probability/bayes-theorem': { measured: 4901 },
-	'probability/conditional-probability': { measured: 3716 },
-	'probability/independence': { measured: 4353 },
+	'linear-algebra/dot-product': { measured: 3348 },
+	'linear-algebra/vectors': { measured: 3156 },
+	'probability/bayes-theorem': { measured: 3568 },
+	'probability/independence': { measured: 3402 },
 	'probability/naive-bayes-classifier': { measured: 2723 },
-	'probability/probability-axioms': { measured: 4138 },
-	'probability/random-variables-and-distributions': { measured: 4796 },
-	'probability/sample-spaces-and-events': { measured: 3229 },
-	'statistics/variance-and-standard-deviation': { measured: 4569 },
+	'probability/random-variables-and-distributions': { measured: 3665 },
+	'statistics/normal-distribution': { measured: 1425 },
+	'statistics/variance-and-standard-deviation': { measured: 3482 },
 };
 
 /** Attributes that are reader prose: the CheckYourself question, the Analogy's limit, the Mistake, the one-liner. */
 const PROSE_ATTRIBUTES = new Set(['question', 'breaks', 'wrong', 'oneLiner']);
 /** Elements whose whole content is left out: code, tables, answers, and the generated lists. */
 const SKIPPED_ELEMENTS = new Set(['CheckYourself', 'PyRunner', 'References', 'PropertiesTable', 'NotationKey', 'Takeaways', 'ConceptMap', 'table', 'pre', 'code', 'svg', 'style', 'script']);
+/** Elements a reader opens to see, or that have their own caps: also left out in `visible` mode. */
+const FOLDED_ELEMENTS = ['Fold', 'Simpler', 'GoDeeper', 'PreciseStatement', 'FormalDefinition', 'ResearchFrontier'];
+const SKIPPED_BY_MODE = { all: SKIPPED_ELEMENTS, visible: new Set([...SKIPPED_ELEMENTS, ...FOLDED_ELEMENTS]) };
 /** Elements that render a single symbol, so they count like a formula. */
 const ONE_WORD_ELEMENTS = new Set(['Var']);
 /** Stands in for a formula, an inline code span or a symbol: one word each. */
@@ -400,8 +409,8 @@ function spanEnd(source, start) {
 	return end + fence.length;
 }
 
-/** The page's markdown with every tag removed, skipped elements dropped and prose attributes on their own lines. */
-function withoutMarkup(source) {
+/** The page's markdown with every tag removed, `skipped` elements dropped and prose attributes on their own lines. */
+function withoutMarkup(source, skipped) {
 	const pieces = [];
 	let index = 0;
 	while (index < source.length) {
@@ -421,7 +430,7 @@ function withoutMarkup(source) {
 			const tag = readTag(source, index);
 			for (const [name, value] of tag.attributes) if (!tag.closing && PROSE_ATTRIBUTES.has(name)) pieces.push(`\n\n${value}\n\n`);
 			if (!tag.closing && ONE_WORD_ELEMENTS.has(tag.name)) pieces.push(ONE_WORD);
-			index = !tag.closing && !tag.selfClosing && SKIPPED_ELEMENTS.has(tag.name) ? skipElement(source, tag.end, tag.name) : tag.end;
+			index = !tag.closing && !tag.selfClosing && skipped.has(tag.name) ? skipElement(source, tag.end, tag.name) : tag.end;
 			pieces.push(' ');
 		} else {
 			pieces.push(character);
@@ -431,14 +440,19 @@ function withoutMarkup(source) {
 	return pieces.join('');
 }
 
-/** The number of words a reader reads in a page's spine and folds, counted from its MDX source. */
-export function countReaderWords(source) {
+/**
+ * The number of words a reader reads in a page, counted from its MDX source: the spine and every fold in `all`
+ * mode, or only the prose shown with every fold closed in `visible` mode.
+ */
+export function countReaderWords(source, mode = 'all') {
+	const skipped = SKIPPED_BY_MODE[mode];
+	if (!skipped) throw new Error(`word count: unknown mode "${mode}"; use one of ${WORD_COUNT_MODES.join(', ')}`);
 	const markdown = source
 		.replace(FRONTMATTER, '')
 		.replace(/^[ \t]*(```|~~~)[\s\S]*?^[ \t]*\1[^\n]*$/gm, '')
 		.replace(/\{\/\*[\s\S]*?\*\/\}|<!--[\s\S]*?-->/g, '')
 		.replace(/^(?:import|export)\s.*$/gm, '');
-	const prose = withoutMarkup(markdown)
+	const prose = withoutMarkup(markdown, skipped)
 		.replace(/^[ \t]*\|.*$/gm, '')
 		.replace(/\$\$[\s\S]*?\$\$/g, ONE_WORD)
 		.replace(/(?<!\\)\$(?:(?!\n\s*\n)[^$])+?(?<!\\)\$/g, ONE_WORD)
@@ -467,6 +481,31 @@ function checkWordCounter() {
 	assert.equal(countReaderWords('{/* a note for writers */}\nTwo words.'), 2);
 	assert.equal(countReaderWords('<CheckYourself question="Q one?">\n$0<p<1$ and `a<b` and $x_{1}<y$.\n</CheckYourself>\n\nAfter.'), 3, 'a < inside a skipped answer is not a tag');
 	assert.equal(countReaderWords('Costs 5 $ today.\n\nThree more words $x$.'), 7, 'a stray $ never swallows the next paragraph');
+	checkVisibleWordCounter(sentence);
+}
+
+/** Pins `visible` mode: every fold and capped component is left out, and the spine around it still counts. */
+function checkVisibleWordCounter(sentence) {
+	const around = (element) => `${sentence}\n\n${element}\n\nTwo more.`;
+	const folded = {
+		Fold: '<Fold kind="answer" label="the check">\n\nHidden fold words here.\n\n</Fold>',
+		Simpler: '<Simpler label="the same idea with dice">\n\nHidden simpler words.\n\n</Simpler>',
+		GoDeeper: '<GoDeeper label="why it works" id="why">\n\nHidden proof words.\n\n</GoDeeper>',
+		PreciseStatement: '<PreciseStatement>\n\nHidden exact statement $x$.\n\n</PreciseStatement>',
+		FormalDefinition: '<FormalDefinition>\n\n<StepThrough title="Step" rigor="full">\nHidden step words.\n</StepThrough>\n\n</FormalDefinition>',
+		ResearchFrontier: '<ResearchFrontier reviewed="2026-11-25">\n\nHidden frontier words.\n\n</ResearchFrontier>',
+	};
+	for (const [name, element] of Object.entries(folded)) {
+		assert.equal(countReaderWords(around(element), 'visible'), 7, `visible mode leaves out ${name}`);
+		assert.ok(countReaderWords(around(element)) > 7, `all mode counts ${name}`);
+	}
+	const nested = '<FormalDefinition>\n\n<Simpler label="inner">\nInner words.\n</Simpler>\n\nOuter words.\n\n</FormalDefinition>';
+	assert.equal(countReaderWords(around(nested), 'visible'), 7, 'a fold inside a capped component goes with it');
+	assert.equal(countReaderWords(around(nested)), 11, 'all mode counts both levels');
+	const spine = '<StepThrough title="Worked" rigor="full">\nSpine step words.\n</StepThrough>\n\n<SideNote>\nAside here.\n</SideNote>';
+	assert.equal(countReaderWords(spine, 'visible'), 5, 'spine walk-throughs and side notes stay visible');
+	assert.equal(countReaderWords('<Mistake wrong="Wrong idea.">\nRight idea.\n</Mistake>', 'visible'), 4, 'prose attributes stay visible');
+	assert.throws(() => countReaderWords(sentence, 'spine'), /unknown mode "spine"/);
 }
 
 /** A page's word count against its type's limits: a problem, or a warning when the page has a recorded exception. */
@@ -479,19 +518,20 @@ function wordCountProblems(pages) {
 	for (const { name, id, source, data, error } of pages) {
 		const type = text(data.type);
 		if (error || !type) continue;
+		const limits = WORD_LIMITS[type];
+		const mode = limits?.mode ?? 'all';
 		let words;
 		try {
-			words = countReaderWords(source);
+			words = countReaderWords(source, mode);
 		} catch (countError) {
 			problems.push(`${name}: ${countError.message}`);
 			continue;
 		}
-		counts.push({ id, type, words, depthStatus: text(data.depthStatus) });
-		const limits = WORD_LIMITS[type];
+		counts.push({ id, type, mode, words, depthStatus: text(data.depthStatus) });
 		if (!limits || text(data.depthStatus) !== 'complete') continue;
 		const exception = WORD_COUNT_EXCEPTIONS[id];
 		const inRange = words >= limits.min && words <= limits.max;
-		const range = limits.min > 0 ? `${limits.min}-${limits.max}` : `at most ${limits.max}`;
+		const range = `${limits.min > 0 ? `${limits.min}-${limits.max}` : `at most ${limits.max}`} ${limits.mode} words`;
 		if (inRange && exception) warnings.push(`${name}: ${words} reader words now fits type ${type} (${range}); remove it from WORD_COUNT_EXCEPTIONS`);
 		else if (!inRange && exception) warnings.push(`${name}: ${words} reader words, outside type ${type}'s ${range} (recorded exception, measured ${exception.measured})`);
 		else if (!inRange) problems.push(`${name}: ${words} reader words; a complete type ${type} page has ${range} (docs/design-system/writing-a-concept-page.md, Length)`);
@@ -517,9 +557,9 @@ async function main() {
 		...spellingProblems(pages),
 		...wordCounts.problems,
 	];
-	console.log('Reader words per concept page (type, depthStatus):');
-	for (const { id, type, words, depthStatus } of [...wordCounts.counts].sort((a, b) => a.id.localeCompare(b.id))) {
-		console.log(`  ${String(words).padStart(5)}  ${type}  ${depthStatus ?? 'no depthStatus'}  ${id}`);
+	console.log('Reader words per concept page (type, mode, depthStatus):');
+	for (const { id, type, mode, words, depthStatus } of [...wordCounts.counts].sort((a, b) => a.id.localeCompare(b.id))) {
+		console.log(`  ${String(words).padStart(5)}  ${type}  ${mode.padEnd(7)}  ${depthStatus ?? 'no depthStatus'}  ${id}`);
 	}
 	for (const warning of [...seo.warnings, ...wordCounts.warnings]) console.warn(`  warning: ${warning}`);
 	if (problems.length > 0) {
