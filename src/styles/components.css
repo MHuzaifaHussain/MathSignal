@@ -2180,6 +2180,46 @@
 	}
 }
 
+/* ── NormalDistribution z mode: a fixed standard normal over two rulers (decision 0019) ──
+ * The curve and the shading are ink, the z ruler muted ink; pink is the μ guide, blue the σ span, and the one ochre
+ * element is the value marker with its handle, all drawn in Mafs code. */
+.ms-normal-z-readouts .ms-board-readout {
+	margin: 0.15rem 0;
+	overflow-wrap: anywhere;
+}
+
+.ms-normal-z-verdict {
+	margin: 0.25rem 0;
+	line-height: 1.5;
+	overflow-wrap: anywhere;
+}
+
+.ms-normal-z-table {
+	margin: 0.75rem 0 0;
+	border-collapse: collapse;
+	font-size: 0.875rem;
+	font-variant-numeric: tabular-nums;
+	color: var(--ms-board-ink);
+}
+
+.ms-normal-z-table caption {
+	padding-block-end: 0.25rem;
+	font-weight: 600;
+	text-align: start;
+}
+
+.ms-normal-z-table th,
+.ms-normal-z-table td {
+	padding: 0.25rem 0.75rem 0.25rem 0;
+	border-block-end: 1px solid var(--ms-board-axis);
+	text-align: start;
+	vertical-align: top;
+}
+
+.ms-normal-z-table th {
+	font-weight: 500;
+}
+
 @media (prefers-reduced-motion: no-preference) {
 	.ms-event-cell {
 		transition: background-color 120ms, border-color 120ms;
@@ -2240,6 +2280,23 @@
 		--ms-board: Canvas;
 		--ms-board-grid: GrayText;
 		--ms-board-axis: CanvasText;
+	}
+
+	/* The z mode's curve takes the same mapping. μ and σ stay apart by line style (a dashed guide, a solid span) and by
+	 * their labels, not by hue. */
+	.ms-normal-z {
+		--ms-board-ink: CanvasText;
+		--ms-board-ink-muted: GrayText;
+		--ms-attention: Highlight;
+		--ms-board: Canvas;
+		--ms-board-grid: GrayText;
+		--ms-board-axis: CanvasText;
+		--ms-mu: CanvasText;
+		--ms-sigma: CanvasText;
+	}
+
+	.ms-normal-z-verdict:focus-visible {
+		outline-color: Highlight;
 	}
 
 	.ms-vec-column-body {

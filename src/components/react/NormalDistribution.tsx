@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { Suspense, lazy, useCallback, useMemo, useState } from "react";
 import { Coordinates, Line, Mafs, MovablePoint, Plot, Text } from "mafs";
 import type { vec } from "mafs";
 import Board from "./Board";
@@ -18,7 +18,11 @@ import {
   describeState,
   gaussian,
 } from "./normalDistribution/bell.ts";
+import { resolveNormalProps, type ZSetupId } from "./normalDistribution/props.ts";
 import { formatNumber, plotColors } from "./plotColors";
+
+/** Its own chunk, so the published bell pages don't load the z mode (decision 0019). */
+const ZBoard = lazy(() => import("./normalDistribution/ZBoard.tsx"));
 
 const clamp = (value: number, [min, max]: vec.Vector2) => Math.min(max, Math.max(min, value));
 /** Tick labels at the very edge of the view get cut in half by the plot's frame, so they are left out. */
@@ -32,7 +36,7 @@ const sigmaSide = (mu: number) => (mu > 0 ? -1 : 1);
 const sigmaFromHandleX = (x: number, mu: number) => clamp(sigmaSide(mu) * (x - mu), SIGMA_RANGE);
 
 /** Normal distribution board: drag μ along the axis, drag σ along the curve's inflection point. */
-export default function NormalDistribution() {
+function BellBoard() {
   const [mu, setMu] = useState(INITIAL_MU);
   const [sigma, setSigma] = useState(INITIAL_SIGMA);
   const [announcement, setAnnouncement] = useState("");
@@ -143,5 +147,27 @@ export default function NormalDistribution() {
       </Mafs>
       <ChalkNote long="widen the bell and watch the peak" short="widen it, watch the peak" />
     </Board>
+  );
+}
+
+interface NormalDistributionProps {
+  /** "bell" (the default): μ and σ to drag. "z": a fixed standard normal over two rulers, with a setup (decision 0019). */
+  mode?: "bell" | "z";
+  /** The z mode's setup; see src/components/react/normalDistribution/setups.ts. */
+  setup?: ZSetupId;
+}
+
+/**
+ * Picks the board. It holds no hooks, so returning one board or the other can't break the Rules of Hooks; with no
+ * props it renders the bell exactly as before. An unknown prop, mode or setup fails the build.
+ */
+export default function NormalDistribution(props: NormalDistributionProps) {
+  const choice = resolveNormalProps(props as Readonly<Record<string, unknown>>);
+  // The bell sits outside any Suspense boundary, so its server render is byte-identical to the board before z mode.
+  if (choice.mode === "bell") return <BellBoard />;
+  return (
+    <Suspense fallback={null}>
+      <ZBoard setup={choice.setup} />
+    </Suspense>
   );
 }

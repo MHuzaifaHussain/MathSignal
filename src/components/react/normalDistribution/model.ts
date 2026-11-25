@@ -21,7 +21,7 @@ export const Z_BOARD_HEIGHT = 240;
 export const UNIT_ROW_Y = -0.045;
 export const Z_ROW_Y = -0.095;
 /** Where each row's caption ("cm", "z") sits, left of the −3 tick. */
-export const ROW_CAPTION_X = -3.7;
+export const ROW_CAPTION_X = -3.75;
 /** The ruler labels' text size in px. */
 export const RULER_LABEL_SIZE = 14;
 /**

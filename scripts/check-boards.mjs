@@ -1787,7 +1787,7 @@ const assertTableFoldSays = (where, announce) => {
 	assert.ok(printRule > screenRule, 'a later @media print block shows .ms-board-table-fold.is-folded, so print wins');
 	// Every component a board wraps in <TableFold>, as a path under src/components/react/. A file joins in the commit
 	// that wraps it, and must stay read-only: folding a control would hide a keyboard path.
-	const TABLE_FOLD_CHILDREN = ['bayesTheorem/CountTable.tsx', 'descriptiveStats/StatsTables.tsx', 'distributionBoard/DistributionTable.tsx', 'distributionBoard/ValueTable.tsx', 'vectorBoard/CoordinateTable.tsx'];
+	const TABLE_FOLD_CHILDREN = ['bayesTheorem/CountTable.tsx', 'descriptiveStats/StatsTables.tsx', 'distributionBoard/DistributionTable.tsx', 'distributionBoard/ValueTable.tsx', 'normalDistribution/ZTable.tsx', 'vectorBoard/CoordinateTable.tsx'];
 	const CONTROL_TOKENS = ['<button', '<input', '<select', '<textarea', 'tabIndex', 'onFocus', 'onKeyDown', 'onClick'];
 	const wrapped = new Set();
 	for (const file of filesUnder('src/components/react').filter((name) => name.endsWith('.tsx'))) {
@@ -4331,7 +4331,7 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 const zSetups = await import('../src/components/react/normalDistribution/setups.ts');
 const zModel = await import('../src/components/react/normalDistribution/model.ts');
 {
-	const { resolveNormalProps } = zSetups;
+	const { resolveNormalProps } = await import('../src/components/react/normalDistribution/props.ts');
 	for (const props of [{}, { mode: 'bell' }, { children: undefined }, { mode: undefined, setup: undefined }, { children: { type: 'astro-slot' } }, { children: 'text' }]) {
 		assert.deepEqual(resolveNormalProps(props), { mode: 'bell' }, JSON.stringify(props));
 	}
@@ -4422,7 +4422,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	for (const bad of [6.5, -7, Number.NaN, Infinity]) assert.throws(() => zModel.standardNormalCdf(bad), /z must be finite and within ±6/);
 	// The drawing: pinned constants, and the pixel offsets they give on the 240 px canvas.
 	assert.deepEqual([zModel.Z_VIEW_X, zModel.Z_VIEW_Y, zModel.Z_BOARD_HEIGHT], [[-4, 4], [-0.125, 0.47], 240]);
-	assert.deepEqual([zModel.UNIT_ROW_Y, zModel.Z_ROW_Y, zModel.ROW_CAPTION_X, zModel.RULER_LABEL_SIZE], [-0.045, -0.095, -3.7, 14]);
+	assert.deepEqual([zModel.UNIT_ROW_Y, zModel.Z_ROW_Y, zModel.ROW_CAPTION_X, zModel.RULER_LABEL_SIZE], [-0.045, -0.095, -3.75, 14]);
 	assert.deepEqual([zModel.MU_LABEL_AT, zModel.SIGMA_LABEL_AT, zModel.LABEL_HALF_SIZE], [[0, 0.43], [1.2, 0.27], [0.15, 0.02]]);
 	const pxPerUnit = zModel.Z_BOARD_HEIGHT / (zModel.Z_VIEW_Y[1] - zModel.Z_VIEW_Y[0]);
 	assert.equal(Math.round(pxPerUnit), 403);
@@ -4754,6 +4754,29 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		guard.moved('value');
 		assert.equal(guard.take('value', true), true, 'preset, then a new key press, then commit: announces');
 	}
+}
+
+// File scans: color budget, the one gate, the shared slider guard, the hook-less dispatcher and forced colors.
+{
+	const { readFileSync } = await import('node:fs');
+	const dir = 'src/components/react/normalDistribution';
+	const zBoard = readFileSync(`${dir}/ZBoard.tsx`, 'utf8');
+	const count = (source, token) => source.split(token).length - 1;
+	for (const color of ['mu', 'sigma', 'attention']) assert.equal(count(zBoard, `plotColors.${color}`), 2, `ZBoard.tsx uses plotColors.${color} twice`);
+	assert.ok(!/#[0-9a-fA-F]{3,8}\b/.test(zBoard) && !zBoard.includes('Theme.'), 'ZBoard.tsx has no hex colors and no Mafs Theme');
+	assert.ok(zBoard.includes('aria-hidden="true"') && !zBoard.includes('handleLabels'), 'the chart is aria-hidden and its handle stays out of the tab order');
+	assert.ok(zBoard.includes('useCommittedSlider') && /const send = useCallback\(\s*\(action: ZAction\) => \{\s*sliderGuard\.interrupt\(\);/.test(zBoard), 'every non-slider action interrupts the shared slider guard first');
+	for (const file of ['ZBoard.tsx', 'ZTable.tsx', 'describe.ts']) {
+		assert.ok(!readFileSync(`${dir}/${file}`, 'utf8').includes('.checked'), `${file} reads revealed(state), never .checked`);
+	}
+	const dispatcher = readFileSync('src/components/react/NormalDistribution.tsx', 'utf8').split('export default function NormalDistribution')[1];
+	assert.ok(dispatcher && !/\buse[A-Z]\w*\(/.test(dispatcher), 'the default export holds no hooks');
+	const css = readFileSync('src/styles/components.css', 'utf8');
+	const forced = css.slice(css.indexOf('@media (forced-colors: active)'));
+	const block = forced.match(/\.ms-normal-z\s*\{([^}]*)\}/);
+	assert.ok(block, 'components.css maps .ms-normal-z in forced colors');
+	const declarations = ['--ms-board-ink: CanvasText', '--ms-board-ink-muted: GrayText', '--ms-attention: Highlight', '--ms-board: Canvas', '--ms-board-grid: GrayText', '--ms-board-axis: CanvasText', '--ms-mu: CanvasText', '--ms-sigma: CanvasText'];
+	for (const declaration of declarations) assert.ok(block[1].includes(`${declaration};`), `the .ms-normal-z forced-colors block sets ${declaration}`);
 }
 
 console.log('Board check passed.');

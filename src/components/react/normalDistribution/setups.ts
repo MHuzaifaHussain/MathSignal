@@ -1,10 +1,12 @@
 // The z mode's groups and its one setup (decision 0019), checked when this module loads so a bad setup fails the
-// build. Also the prop guard that picks the bell or the z mode: MDX props aren't type-checked, so it is the only one.
+// build. The prop guard that picks the bell or the z mode is in props.ts.
 import { compareFractions, fraction, type Fraction } from '../boardMath.ts';
 import { maxIndex, valueAt, distanceAt, zAt } from './model.ts';
+import { Z_SETUP_IDS, type ZSetupId } from './props.ts';
+
+export type { ZSetupId };
 
 export type ZPresetId = 'nine-140' | 'eleven-150' | 'standard-075';
-export type ZSetupId = 'taller-for-age';
 export type ZGuess = 'first' | 'second' | 'same';
 
 export interface ZPreset {
@@ -169,33 +171,9 @@ export function validateSetup(setup: ZSetup, presets: Readonly<Record<string, ZP
 }
 
 for (const setup of Object.values(Z_SETUPS)) validateSetup(setup);
+if (Object.keys(Z_SETUPS).join() !== Z_SETUP_IDS.join()) {
+	throw new Error(`normalDistribution setups: props.ts lists ${Z_SETUP_IDS.join(', ')} but the registry holds ${Object.keys(Z_SETUPS).join(', ')}`);
+}
 
 export const getZSetup = (id: ZSetupId): ZSetup => Z_SETUPS[id];
 export const getZPreset = (id: ZPresetId): ZPreset => Z_PRESETS[id];
-
-export type NormalBoardChoice = { mode: 'bell' } | { mode: 'z'; setup: ZSetupId };
-
-const MODES = ['bell', 'z'] as const;
-
-/**
- * The bell with no props (or mode="bell"), or the z mode with a known setup. Runs at build time and again at
- * hydration. Keys whose value is undefined are ignored, and `children` is always allowed and ignored, because Astro's
- * React client may pass one at hydration that the server render didn't have. Anything else throws, naming the prop.
- */
-export function resolveNormalProps(props: Readonly<Record<string, unknown>>): NormalBoardChoice {
-	const fail = (why: string) => {
-		throw new Error(`NormalDistribution: ${why}`);
-	};
-	for (const [key, value] of Object.entries(props)) {
-		if (value !== undefined && key !== 'children' && key !== 'mode' && key !== 'setup') fail(`unknown prop "${key}"; the props are mode ("bell" or "z") and setup (${Object.keys(Z_SETUPS).join(', ')})`);
-	}
-	const { mode, setup } = props;
-	if (mode !== undefined && !MODES.includes(mode as (typeof MODES)[number])) fail(`mode must be "bell" or "z", got ${JSON.stringify(mode)}`);
-	if (mode === 'z') {
-		if (setup === undefined) fail(`mode="z" needs a setup: ${Object.keys(Z_SETUPS).join(', ')}`);
-		if (typeof setup !== 'string' || !Object.hasOwn(Z_SETUPS, setup)) fail(`unknown setup ${JSON.stringify(setup)}; the setups are ${Object.keys(Z_SETUPS).join(', ')}`);
-		return { mode: 'z', setup: setup as ZSetupId };
-	}
-	if (setup !== undefined) fail('a setup needs mode="z"');
-	return { mode: 'bell' };
-}
