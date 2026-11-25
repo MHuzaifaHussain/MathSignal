@@ -41,7 +41,6 @@ export const TOPICS = [
 		status: 'published',
 		prerequisites: ['probability/conditional-probability'],
 		leadsTo: [
-			'probability/law-of-total-probability',
 			'probability/base-rate-fallacy-medical-test',
 			'probability/conditional-independence',
 			'probability/naive-bayes-classifier',
@@ -73,7 +72,7 @@ export const TOPICS = [
 		description: 'Finding the chance of an event by splitting the world into cases and adding up what each case contributes.',
 		recap: 'The law of total probability finds P(B) by splitting the world into cases that share no outcome and cover everything, then adding P(B | case) × P(case) over the cases. So P(B) is a weighted average of the chances within each case.',
 		status: 'planned',
-		prerequisites: ['probability/conditional-probability', 'probability/bayes-theorem'],
+		prerequisites: ['probability/conditional-probability'],
 		leadsTo: [],
 	},
 	{
