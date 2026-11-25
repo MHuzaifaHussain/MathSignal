@@ -729,6 +729,13 @@ export function dataTable(state: DescriptiveState): TableData {
 type SummaryRow = { header: string; cells: string[] };
 const row = (header: string, value: string, how: string): SummaryRow => ({ header, cells: [value, how] });
 
+/** The Mode row: none, one most common value, or several tied for most common, each with its unit. */
+function modeRow(found: readonly number[], setup: Setup): SummaryRow {
+	if (found.length === 0) return row('Mode', 'None', 'Every value appears equally often');
+	const value = joinWords(found.map((entry) => withUnit(groupThousands(entry), setup)));
+	return row('Mode', value, found.length === 1 ? 'The most common value' : 'The most common values, tied');
+}
+
 function centerRows(values: readonly number[], setup: Setup): SummaryRow[] {
 	const count = n(values);
 	const middle = count % 2 === 1 ? `The ${ordinal((count + 1) / 2)} of ${count} in order` : `The average of the ${ordinal(count / 2)} and ${ordinal(count / 2 + 1)} in order`;
@@ -737,7 +744,7 @@ function centerRows(values: readonly number[], setup: Setup): SummaryRow[] {
 		row('Count, n', String(count), `How many ${setup.words.items}`),
 		row('Mean', withUnit(amount(mean(values)), setup), `The sum, ${groupThousands(sum(values))}, divided by ${count}`),
 		row('Median', withUnit(amount(median(values)), setup), middle),
-		row('Mode', found.length === 0 ? 'None' : joinWords(found.map(groupThousands)), found.length === 0 ? 'Every value appears equally often' : 'The most common value'),
+		modeRow(found, setup),
 	];
 }
 

@@ -1960,7 +1960,11 @@ const announcerRun = () => {
 		'Mode: 127 cm and 141 cm, each held by 2 children.',
 		'Range: 149 − 123 = 26 cm.',
 	]);
-	assert.deepEqual(dsay.summaryTable(sharedFound).rows.find((entry) => entry.header === 'Mode'), { header: 'Mode', cells: ['127 and 141', 'The most common value'] });
+	const modeRowOf = (state) => dsay.summaryTable(state).rows.find((entry) => entry.header === 'Mode');
+	assert.deepEqual(modeRowOf(sharedFound), { header: 'Mode', cells: ['127 cm and 141 cm', 'The most common values, tied'] });
+	assert.deepEqual(modeRowOf(found), { header: 'Mode', cells: ['None', 'Every value appears equally often'] });
+	assert.deepEqual(modeRowOf(dst.initialState('cafe-millionaire')), { header: 'Mode', cells: ['5', 'The most common value'] }, 'no unit on the cafe, as in its readout');
+	assert.deepEqual(modeRowOf(run('cafe-millionaire', { type: 'newcomer', on: true }, { type: 'set-value', value: 4 })), { header: 'Mode', cells: ['4 and 5', 'The most common values, tied'] });
 	// Equal heights share the first place they take.
 	assert.deepEqual(dsay.dataTable(sharedFound).rows.map((entry) => entry.cells[1]), ['7th', '2nd', '6th', '9th', '1st', '4th', '5th', '2nd', '7th']);
 
@@ -2150,6 +2154,16 @@ const announcerRun = () => {
 			{ type: 'select', child: 2 }, { type: 'distances', on: true }, { type: 'sample', on: true }, { type: 'newcomer', on: true }, { type: 'newcomer', on: false },
 			...['raw', 'minmax', 'z'].map((scale) => ({ type: 'scale', scale })), { type: 'cutoff', cutoff: 3 }, { type: 'cutoff', cutoff: 2 },
 			...setup.stages.map((stage) => ({ type: 'stage', stage })), ...setup.presets.map((preset) => ({ type: 'preset', id: preset.id })), { type: 'reset' },
+			// Line-up presets: each class's wrong, shown and right verdicts and its stages after Check.
+			...(setup.kind === 'lineup'
+				? setup.presets.flatMap((preset) => {
+						const load = [{ type: 'reset' }, { type: 'preset', id: preset.id }];
+						const after = setup.stages.map((stage) => ({ type: 'stage', stage }));
+						const shown = [{ type: 'pick', child: 4 }, { type: 'check' }, { type: 'check' }, { type: 'show-answer' }];
+						const everyPick = preset.values.flatMap((_, child) => [{ type: 'pick', child }, { type: 'check' }]);
+						return [...load, ...shown, ...after, ...load, ...everyPick, ...after];
+					})
+				: []),
 			...(setup.slider ? [setup.slider.min, setup.slider.max].map((value) => ({ type: 'set-value', value })) : []),
 		];
 		let state = dst.initialState(id);
