@@ -5,16 +5,15 @@ import { toNumber } from "../boardMath";
 import { Segment } from "../planeLines";
 import { plotColors } from "../plotColors";
 import { evaluate, pieceCurve } from "./functions.ts";
-import { LABEL_DISTANCE, LABEL_SIZE, fitLabel, viewNumbers } from "./model.ts";
-import { planeMarks, type Mark, type MarkColor } from "./marks.ts";
+import { LABEL_DISTANCE, LABEL_SIZE, axisNumber, fitLabel, viewNumbers } from "./model.ts";
+import { planeMarks, type Mark, type MarkColor, type MarkFill } from "./marks.ts";
 import { pointValue, viewOf } from "./setups.ts";
 import { curveFor, type CurveState } from "./state.ts";
 
 /** The only place mark colors become CSS: marks.ts decides which mark is ink, muted or ochre. */
 export const MARK_COLORS: Readonly<Record<MarkColor, string>> = { ink: plotColors.ink, muted: plotColors.inkMuted, ochre: plotColors.attention };
-
-/** An axis number with a real minus sign. */
-const axisNumber = (value: number) => (value < 0 ? `−${Math.abs(value)}` : String(value));
+/** The only place a dot's fill becomes CSS: marks.ts decides which dots are open. */
+export const MARK_FILLS: Readonly<Record<MarkFill, string>> = { board: "var(--ms-board)" };
 
 interface CurvePlaneProps {
   state: CurveState;

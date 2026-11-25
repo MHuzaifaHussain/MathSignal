@@ -5,18 +5,19 @@
 import { toNumber, type Fraction } from '../boardMath.ts';
 import type { LineStyle } from '../planeLines.tsx';
 import { derivativeCoefficients, evaluate, slopeAt } from './functions.ts';
-import { absolute, numberText, ruler, type CurvePoint } from './model.ts';
+import { absolute, numberText, ruler, type Attach, type CurvePoint } from './model.ts';
 import { viewOf } from './setups.ts';
 import { covered, curveFor, hOf, lineSlopeOf, pointOf, type CurveState } from './state.ts';
 
 export type MarkColor = 'ink' | 'muted' | 'ochre';
+/** What fills a dot's middle: the board's own color, so an open dot reads as "no value here". */
+export type MarkFill = 'board';
 export type Vec = readonly [number, number];
-export type LabelAttach = 'n' | 's' | 'e' | 'w';
 
 export interface MarkLabel {
 	text: string;
 	at: Vec;
-	attach: LabelAttach;
+	attach: Attach;
 	color: MarkColor;
 }
 
@@ -36,12 +37,16 @@ export type Mark = MarkStyle &
 		| { kind: 'tangent'; point: Vec; slope: number }
 		| { kind: 'corner-line'; slope: number }
 		| { kind: 'ruler-end' | 'point'; at: Vec; movable: boolean }
-		| { kind: 'open-dot' | 'value-dot'; at: Vec }
+		| { kind: 'open-dot'; at: Vec; fill: MarkFill }
+		| { kind: 'value-dot'; at: Vec }
 		| { kind: 'axis-name'; at: Vec }
 	);
 
-/** Line weights in pixels. The tangent and the corner line are heavier, so the one ochre line stands out by weight too. */
-export const WEIGHTS = { curve: 2.5, ruler: 2.5, tangent: 3, leg: 2, cornerLine: 3, ground: 1.5, dot: 0 } as const;
+/**
+ * Line weights in pixels. The tangent and the corner line are heavier, so the one ochre line stands out by weight too.
+ * A filled dot has no stroke weight; an open dot's ring is 2px.
+ */
+export const WEIGHTS = { curve: 2.5, ruler: 2.5, tangent: 3, leg: 2, cornerLine: 3, ground: 1.5, dot: 0, openDot: 2 } as const;
 
 /** Rise and run legs are labeled only when they are long enough to hold a label (|h| ≥ 0.5). */
 const LABELED_RUN = 0.5;
@@ -62,7 +67,7 @@ export function ochreElement(state: CurveState): OchreElement {
 }
 
 const asVec = (point: CurvePoint): Vec => [toNumber(point.x), toNumber(point.y)];
-const label = (text: string, at: Vec, attach: LabelAttach): MarkLabel => ({ text, at, attach, color: 'ink' });
+const label = (text: string, at: Vec, attach: Attach): MarkLabel => ({ text, at, attach, color: 'ink' });
 
 function curveMarks(state: CurveState): Mark[] {
 	const f = curveFor(state);
@@ -107,8 +112,8 @@ function rulerMarks(state: CurveState, ochre: OchreElement): Mark[] {
 	const runMiddle: Vec = [(start[0] + corner[0]) / 2, start[1]];
 	const riseMiddle: Vec = [corner[0], (corner[1] + end[1]) / 2];
 	// The run label sits on the side of the run leg away from the rise; the rise label outside the triangle.
-	const runAttach: LabelAttach = r.rise.numerator > 0 ? 's' : 'n';
-	const riseAttach: LabelAttach = r.run.numerator > 0 ? 'e' : 'w';
+	const runAttach: Attach = r.rise.numerator > 0 ? 's' : 'n';
+	const riseAttach: Attach = r.run.numerator > 0 ? 'e' : 'w';
 	return [
 		{ kind: 'run-leg', from: start, to: corner, color: 'muted', lineStyle: 'dotted', weight: WEIGHTS.leg, label: labeled ? label(words.run, runMiddle, runAttach) : undefined },
 		{
@@ -218,7 +223,7 @@ export function stripMarks(state: CurveState): readonly Mark[] {
 		const slope = slopeAt(f, at);
 		if (slope.kind !== 'corner') continue;
 		for (const value of [slope.left, slope.right]) {
-			marks.push({ kind: 'open-dot', at: [toNumber(at), toNumber(value)], color: 'ink', lineStyle: 'solid', weight: WEIGHTS.dot });
+			marks.push({ kind: 'open-dot', at: [toNumber(at), toNumber(value)], fill: 'board', color: 'ink', lineStyle: 'solid', weight: WEIGHTS.openDot });
 		}
 	}
 	const here = slopeAt(f, pointOf(state));
@@ -226,6 +231,7 @@ export function stripMarks(state: CurveState): readonly Mark[] {
 		marks.push({ kind: 'value-dot', at: [toNumber(pointOf(state)), toNumber(here.value)], color: 'ink', lineStyle: 'solid', weight: WEIGHTS.dot });
 	}
 	const top = viewOf(state.preset).strip.y[1];
-	marks.push({ kind: 'axis-name', at: [left, top], color: 'ink', lineStyle: 'solid', weight: WEIGHTS.dot, label: label('slope', [left, top], 'e') });
+	// "slope" hangs below and right of the strip's top-left corner, so it sits inside the strip.
+	marks.push({ kind: 'axis-name', at: [left, top], color: 'ink', lineStyle: 'solid', weight: WEIGHTS.dot, label: label('slope', [left, top], 'se') });
 	return marks;
 }

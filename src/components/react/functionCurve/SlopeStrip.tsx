@@ -1,18 +1,13 @@
 import { Coordinates, Mafs, Plot, Point, Text } from "mafs";
 import { pieceCurve } from "./functions.ts";
-import { LABEL_SIZE, viewNumbers } from "./model.ts";
+import { LABEL_DISTANCE, LABEL_SIZE, axisNumber, viewNumbers } from "./model.ts";
 import { stripMarks } from "./marks.ts";
 import { viewOf } from "./setups.ts";
 import type { CurveState } from "./state.ts";
-import { MARK_COLORS } from "./CurvePlane.tsx";
+import { MARK_COLORS, MARK_FILLS } from "./CurvePlane.tsx";
 
 /** The strip is a quarter as tall as the plane is wide. */
 export const STRIP_HEIGHT_RATIO = 0.25;
-/** Open dots keep the board's color inside, so a jump reads as "no value here". */
-const OPEN_DOT_STYLE = { fill: "var(--ms-board)", strokeWidth: 2 } as const;
-const LABEL_DISTANCE = 6;
-
-const axisNumber = (value: number) => (value < 0 ? `−${Math.abs(value)}` : String(value));
 
 interface SlopeStripProps {
   state: CurveState;
@@ -40,13 +35,13 @@ export default function SlopeStrip({ state, width }: SlopeStripProps) {
           case "curve":
             return <Plot.OfX key={index} y={pieceCurve(mark.coefficients)} domain={[mark.domain[0], mark.domain[1]]} color={color} weight={mark.weight} />;
           case "open-dot":
-            return <Point key={index} x={mark.at[0]} y={mark.at[1]} color={color} svgCircleProps={{ stroke: color, style: OPEN_DOT_STYLE }} />;
+            return <Point key={index} x={mark.at[0]} y={mark.at[1]} color={color} svgCircleProps={{ stroke: color, style: { fill: MARK_FILLS[mark.fill], strokeWidth: mark.weight } }} />;
           case "value-dot":
             return <Point key={index} x={mark.at[0]} y={mark.at[1]} color={color} />;
           case "axis-name":
             return (
               mark.label && (
-                <Text key={index} x={mark.label.at[0]} y={mark.label.at[1]} attach="se" attachDistance={LABEL_DISTANCE} size={LABEL_SIZE} color={MARK_COLORS[mark.label.color]}>
+                <Text key={index} x={mark.label.at[0]} y={mark.label.at[1]} attach={mark.label.attach} attachDistance={LABEL_DISTANCE} size={LABEL_SIZE} color={MARK_COLORS[mark.label.color]}>
                   {mark.label.text}
                 </Text>
               )

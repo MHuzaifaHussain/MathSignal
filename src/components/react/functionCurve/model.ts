@@ -115,6 +115,9 @@ const LABEL_LINE_HEIGHT = 1.2;
 /** Room kept between a label's box and the plane's edge, in pixels: Mafs' 3px text halo plus a little air. */
 export const LABEL_EDGE_MARGIN = 4;
 
+/** An axis number with a real minus sign, on the plane and the strip. */
+export const axisNumber = (value: number): string => (value < 0 ? `−${Math.abs(value)}` : String(value));
+
 /** A label's box in grid units. */
 export interface LabelBox {
 	left: number;

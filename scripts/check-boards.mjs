@@ -6127,6 +6127,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 			'rise-leg': ['dotted', 2],
 			tangent: ['solid', 3],
 			'corner-line': ['solid', 3],
+			'open-dot': ['solid', 2],
 		};
 		const straightSolid = new Set(['tangent', 'corner-line', 'ground']);
 		const reachable = [];
@@ -6231,6 +6232,10 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		assert.equal(fcMarks.planeMarks(hinge).filter((mark) => mark.kind === 'curve').length, 2);
 		assert.deepEqual(fcMarks.stripMarks(hinge).filter((mark) => mark.kind === 'open-dot').map((mark) => mark.at), [[0, 0], [0, 1]]);
 		assert.equal(fcMarks.stripMarks(hinge).filter((mark) => mark.kind === 'value-dot').length, 0);
+		// The open dots' board fill and ring weight, and the strip's "slope" label hanging inside its top-left corner, are
+		// decided in marks.ts, so SlopeStrip only maps them.
+		assert.ok(fcMarks.stripMarks(hinge).filter((mark) => mark.kind === 'open-dot').every((mark) => mark.fill === 'board' && mark.weight === 2));
+		assert.deepEqual(fcMarks.stripMarks(hinge).find((mark) => mark.kind === 'axis-name').label, { text: 'slope', at: [-2.5, 1.5], attach: 'se', color: 'ink' });
 		assert.deepEqual(fcMarks.stripMarks(fcAfter('corner', { stage: 'slope-curve', xIndex: 2 })).find((mark) => mark.kind === 'value-dot').at, [1, 1]);
 		assert.deepEqual(fcMarks.stripMarks(fcAfter('corner', { stage: 'tangent' })), [], 'no strip outside Slope curve');
 	}
@@ -6268,10 +6273,14 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 			if (source.includes('<Segment')) assert.ok(source.includes('import { Segment } from "../planeLines";'), `${file} draws segments with the shared helper`);
 		}
 	}
-	// Colors appear only in CurvePlane's MARK_COLORS map; every other .tsx takes them from it.
+	// Colors and fills appear only in CurvePlane's MARK_COLORS and MARK_FILLS maps; every other .tsx takes them from
+	// there, and every label's attach side and every weight from its mark.
 	for (const [file, source] of Object.entries(sources).filter(([name]) => name.endsWith('.tsx'))) {
 		const uses = source.split('plotColors.').length - 1;
-		assert.equal(uses, file.endsWith('CurvePlane.tsx') ? 3 : 0, `${file} picks plot colors itself`);
+		const mapsMarks = file.endsWith('CurvePlane.tsx');
+		assert.equal(uses, mapsMarks ? 3 : 0, `${file} picks plot colors itself`);
+		assert.equal(source.split('var(--').length - 1, mapsMarks ? 1 : 0, `${file} picks a CSS color itself`);
+		assert.ok(!/attach="|strokeWidth: \d|weight=\{\d/.test(source), `${file} fixes a label side or a weight itself`);
 	}
 	assert.ok(sources[`${dir}/CurvePlane.tsx`].includes('<Segment'), 'the legs and the ruler are drawn with Segment');
 	const board = sources['src/components/react/FunctionCurve.tsx'];
