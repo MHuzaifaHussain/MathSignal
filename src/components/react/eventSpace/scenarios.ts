@@ -317,7 +317,7 @@ function montyHall(): Scenario {
 			const id = `${car}-${coin.value}`;
 			const opens = montyOpens(car, coin);
 			opensById.set(id, opens);
-			return { id, row, col, label: `opens ${opens}`, spoken: `car behind door ${car}, coin ${coin.word}`, setLabel: `car ${car}, ${coin.word}` };
+			return { id, row, col, label: `opens ${opens}`, spoken: `car behind door ${car}, coin ${coin.word}, host opens door ${opens}`, setLabel: `car ${car}, ${coin.word}` };
 		}),
 	);
 	const carOf = (outcome: Outcome) => Number(outcome.id.split('-')[0]);

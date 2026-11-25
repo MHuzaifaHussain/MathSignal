@@ -317,7 +317,7 @@ assert.deepEqual(monty.rowValues, ['door 1', 'door 2', 'door 3']);
 // Only worded row headers get the no-wrap rule; every other scenario keeps its single-symbol header column.
 assert.deepEqual(Object.values(SCENARIOS).filter(hasWordedRowHeaders).map((scenario) => scenario.id), ['monty-hall']);
 assert.deepEqual(monty.colValues, ['heads', 'tails']);
-assert.equal(monty.outcomes[2].spoken, 'car behind door 2, coin heads');
+assert.equal(monty.outcomes[2].spoken, 'car behind door 2, coin heads, host opens door 3');
 assert.equal(monty.mirrorOf('1-H'), undefined);
 // Every cell is one game of 1/3 × 1/2 = 1/6: the coin turns the host's 50/50 tie-break into equal cells.
 assert.deepEqual(multiplyFractions(fraction(1, 3), fraction(1, 2)), probability(new Set(['1-H']), monty.outcomes));
@@ -363,10 +363,10 @@ assert.equal(describe.announcementFor(montyRun(shrinkOn, montyA('car-2')), monty
 // The second preset for B: the host opens door 2.
 assert.deepEqual(describe.readoutLines(montyRun(montyB('opens-2'), shrinkOn)), ['Inside B: 3 outcomes, 1 of them also in A, {(car 1, heads)}. P(A | B) = 1/3 ≈ 0.33, while P(A) = 2/6 = 1/3 ≈ 0.33.']);
 assert.deepEqual(describe.readoutLines(montyRun(montyB('opens-2'), shrinkOn, montyA('car-3'))), ['Inside B: 3 outcomes, 2 of them also in A, {(car 3, heads), (car 3, tails)}. P(A | B) = 2/3 ≈ 0.67, while P(A) = 2/6 = 1/3 ≈ 0.33.']);
-// Cells say the game, then membership; the visible "opens 3" is the label.
-assert.equal(describe.cellName(montyShrunk, monty.outcomes[1]), 'opens 3. Car behind door 1, coin tails. In A and B.');
-assert.equal(describe.cellName(montyShrunk, monty.outcomes[0]), 'opens 2. Car behind door 1, coin heads. In A. Ruled out.');
-assert.equal(describe.cellName(montyShrunk, monty.outcomes[4]), 'opens 2. Car behind door 3, coin heads. Ruled out.');
+// Cells start with the visible label "opens 3" (label in name), then say the game with its subject, then membership.
+assert.equal(describe.cellName(montyShrunk, monty.outcomes[1]), 'opens 3. Car behind door 1, coin tails, host opens door 3. In A and B.');
+assert.equal(describe.cellName(montyShrunk, monty.outcomes[0]), 'opens 2. Car behind door 1, coin heads, host opens door 2. In A. Ruled out.');
+assert.equal(describe.cellName(montyShrunk, monty.outcomes[4]), 'opens 2. Car behind door 3, coin heads, host opens door 2. Ruled out.');
 // Un-shrinking holds the line again, and Reset returns to the opening.
 assert.deepEqual(describe.readoutLines(reducer(montyShrunk, { type: 'shrink', on: false })), describe.readoutLines(montyFresh));
 assert.deepEqual(reducer(montyRun(shrinkOn, montyA('car-2')), { type: 'reset' }), montyFresh);
