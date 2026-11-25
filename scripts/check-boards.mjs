@@ -5926,6 +5926,18 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 			visible: 'Showing Ruler: the slide picture covers seats from x = 1 to x = 2.',
 			spoken: 'Showing Ruler: the slide picture covers seats from x equals 1 to x equals 2.',
 		});
+		// The notice lasts through the rest of the slider burst or drag that raised it, so the commit says it once.
+		const seatsNotice = 'Showing Ruler: the slide picture covers seats from x equals 1 to x equals 2. Point: x equals ';
+		for (const next of [1, 0]) {
+			const burst = fcReduce(outside, { type: 'point', xIndex: next, continues: true });
+			assert.equal(burst.notice, 'slide-range', `point 1 then point ${next} in one burst keeps the notice`);
+			assert.ok(fcSay.announcementFor(burst, { type: 'point', xIndex: next }).startsWith(`${seatsNotice}${fcText(fcSetups.pointValue(next))},`), `the commit after point 1 then point ${next} says the notice`);
+		}
+		assert.equal(fcReduce(outside, { type: 'point', xIndex: 1, continues: true }), outside, 'a repeated drag move at the same seat changes nothing');
+		assert.equal(fcReduce(outside, { type: 'point', xIndex: 0 }).notice, null, 'a fresh point move after the commit: the notice was said once');
+		assert.equal(fcReduce(outside, { type: 'point', xIndex: 1 }).notice, null, 'a fresh point move to the same seat clears it too');
+		assert.equal(fcReduce(toCube, { type: 'point', xIndex: 0 }).notice, null, 'the preset press said its notice; the next point move clears it');
+		assert.equal(fcReduce(outside, { type: 'h', index: 10 }).notice, null, 'any other action clears it');
 		assert.equal(fcReduce(passed, { type: 'point', xIndex: 4 }).stage, 'slide');
 		assert.equal(fcReduce(passed, { type: 'point', xIndex: 2 }).stage, 'slide');
 		const rulerStage = fcReduce(passed, { type: 'stage', stage: 'ruler' });
@@ -6216,6 +6228,8 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	const board = sources['src/components/react/FunctionCurve.tsx'];
 	assert.ok(!board.includes('handleLabels'), "the point's handle stays out of the tab order: the Point slider is the keyboard path");
 	assert.ok(/const send = useCallback\(\s*\(action: Action\) => \{\s*sliderGuard\.interrupt\(\);/.test(board), 'every non-slider action interrupts the shared slider guard first');
+	assert.ok(board.includes('dispatch({ type: "point", xIndex, continues });'), 'a drag marks its later moves as continuing, so its notice lasts until the drag ends');
+	assert.ok(board.includes('return { type: "point", xIndex: value, continues };'), 'a Point slider burst marks its later moves as continuing');
 	const css = readFileSync('src/styles/components.css', 'utf8');
 	const forced = css.slice(css.lastIndexOf('@media (forced-colors: active)'));
 	const block = forced.match(/\.ms-fncurve,\s*\.ms-fncurve-table-wrap\s*\{([^}]*)\}/);

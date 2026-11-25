@@ -58,15 +58,18 @@ import useSquarePlane from "./vectorBoard/useSquarePlane.ts";
 
 const STAGE_OPTIONS: readonly { value: Stage; label: string }[] = (["slide", "ruler", "tangent", "slope-curve"] as const).map((value) => ({ value, label: STAGE_LABELS[value] }));
 
-/** The action a slider's value stands for, so a move and its commit go through the same reducer. */
-function sliderAction(state: CurveState, key: SliderKey, value: number): Action {
+/**
+ * The action a slider's value stands for, so a move and its commit go through the same reducer. `continues` marks a
+ * point move that follows another before the commit, so a notice the burst raised survives until it is announced.
+ */
+function sliderAction(state: CurveState, key: SliderKey, value: number, continues = false): Action {
   switch (key) {
     case "guess":
       return { type: "guess", index: value };
     case "h":
       return { type: "h", index: allowedHIndices(state)[value] };
     case "point":
-      return { type: "point", xIndex: value };
+      return { type: "point", xIndex: value, continues };
     case "line-slope":
       return { type: "line-slope", index: value };
   }
@@ -102,7 +105,8 @@ export default function FunctionCurve({ setup: setupId }: FunctionCurveProps) {
   const [announcement, announce] = useAnnouncer();
   const checkReasonId = useId();
   const lastAction = useRef<Action | null>(null);
-  const pointMoved = useRef(false);
+  /** The point interaction not yet announced: a Point slider burst or a drag of the handle. */
+  const pointInteraction = useRef<"slider" | "drag" | null>(null);
   const sliderGuard = useCommittedSlider<SliderKey>();
   const stateRef = useRef(state);
   // A layout effect, so a commit that ends a drag reads the state of the drag's last move.
@@ -116,6 +120,7 @@ export default function FunctionCurve({ setup: setupId }: FunctionCurveProps) {
   const send = useCallback(
     (action: Action) => {
       sliderGuard.interrupt();
+      pointInteraction.current = null;
       lastAction.current = action;
       dispatch(action);
     },
@@ -127,7 +132,9 @@ export default function FunctionCurve({ setup: setupId }: FunctionCurveProps) {
     (key: SliderKey, value: number) => {
       lastAction.current = null;
       sliderGuard.moved(key);
-      const action = sliderAction(stateRef.current, key, value);
+      const continues = key === "point" && pointInteraction.current === "slider";
+      pointInteraction.current = key === "point" ? "slider" : null;
+      const action = sliderAction(stateRef.current, key, value, continues);
       stateRef.current = reducer(stateRef.current, action);
       dispatch(action);
     },
@@ -137,6 +144,7 @@ export default function FunctionCurve({ setup: setupId }: FunctionCurveProps) {
   const commitSlider = useCallback(
     (key: SliderKey, value: number) => {
       const current = stateRef.current;
+      if (key === "point") pointInteraction.current = null;
       if (!sliderGuard.take(key, sliderHolds(current, key, value))) return;
       const said = announcementFor(current, sliderAction(current, key, value));
       if (said) announce(said);
@@ -149,16 +157,17 @@ export default function FunctionCurve({ setup: setupId }: FunctionCurveProps) {
     (xIndex: number) => {
       sliderGuard.interrupt();
       lastAction.current = null;
-      pointMoved.current = true;
-      dispatch({ type: "point", xIndex });
+      const continues = pointInteraction.current === "drag";
+      pointInteraction.current = "drag";
+      dispatch({ type: "point", xIndex, continues });
     },
     [sliderGuard],
   );
 
   const handleInteractionEnd = useCallback(
     (source: InteractionSource) => {
-      if (source !== "pointer" || !pointMoved.current) return;
-      pointMoved.current = false;
+      if (source !== "pointer" || pointInteraction.current !== "drag") return;
+      pointInteraction.current = null;
       const current = stateRef.current;
       const said = announcementFor(current, { type: "point", xIndex: current.xIndex });
       if (said) announce(said);

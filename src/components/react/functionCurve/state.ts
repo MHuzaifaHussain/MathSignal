@@ -26,7 +26,11 @@ import {
 import { compareFractions, type Fraction } from '../boardMath.ts';
 import type { ExactFunction } from './functions.ts';
 
-/** Why Slide just left the choice: another preset, or a seat outside the slide. Said once, then cleared. */
+/**
+ * Why Slide just left the choice: another preset, or a seat outside the slide. It lasts until the interaction that
+ * caused it has been announced (a point move that continues the same slider burst or drag keeps it), then the next
+ * action clears it, so it is said once.
+ */
 export type Notice = 'slide-preset' | 'slide-range';
 
 export interface CurveState extends guided.CheckProgress {
@@ -60,7 +64,8 @@ export type SliderKey = 'guess' | 'h' | 'point' | 'line-slope';
 export type Action =
 	| { type: 'guess'; index: number }
 	| { type: 'h'; index: number }
-	| { type: 'point'; xIndex: number }
+	/** `continues`: another move in the same slider burst or drag, which keeps a notice the burst raised. */
+	| { type: 'point'; xIndex: number; continues?: boolean }
 	| { type: 'choice'; choice: Choice }
 	| { type: 'check' }
 	| { type: 'show-answer' }
@@ -165,7 +170,7 @@ function choosePreset(state: CurveState, id: PresetId): CurveState {
 	return keepStageFitting(moved, 'slide-preset');
 }
 
-/** Every action but the ones that set it clears the notice; every value change clears a stale miss. */
+/** Every value change clears a stale miss. */
 function step(state: CurveState, action: Action): CurveState {
 	const setup = setupOf(state);
 	switch (action.type) {
@@ -211,8 +216,11 @@ function step(state: CurveState, action: Action): CurveState {
 	}
 }
 
+/** Every action but a continuing point move clears the notice; the action itself may raise a new one. */
+const keepsNotice = (action: Action): boolean => action.type === 'point' && action.continues === true;
+
 export function reducer(state: CurveState, action: Action): CurveState {
-	const next = step({ ...state, notice: null }, action);
+	const next = step(keepsNotice(action) ? state : { ...state, notice: null }, action);
 	// An action that changes nothing returns the same object, so React skips the render.
 	return sameState(next, state) ? state : next;
 }
