@@ -17,9 +17,10 @@ Format: context, decision, consequences, alternatives considered. Number them in
 | [0009](0009-single-sources-of-truth.md) | Single sources of truth for topics, notation and references | Accepted |
 | [0010](0010-american-english.md) | American English | Accepted |
 | [0011](0011-eventspace-html-board.md) | EventSpace, the first HTML board | Accepted; amended 2026-11-24 (condition and compare modes) and by [0013](0013-shared-board-modules.md) |
-| [0012](0012-distribution-board.md) | DistributionBoard, the second HTML board | Accepted; amended by [0013](0013-shared-board-modules.md) and [0017](0017-table-view-fold.md) |
+| [0012](0012-distribution-board.md) | DistributionBoard, the second HTML board | Accepted; amended by [0013](0013-shared-board-modules.md), [0017](0017-table-view-fold.md) and [0018](0018-distribution-families-and-density.md) |
 | [0013](0013-shared-board-modules.md) | Shared guided board modules | Accepted; amended by [0017](0017-table-view-fold.md) |
 | [0014](0014-vector-board.md) | VectorBoard2D, a Mafs board for vectors | Accepted; amended by [0017](0017-table-view-fold.md) |
 | [0015](0015-descriptive-stats-board.md) | DescriptiveStats, the third HTML board | Accepted; amended 2026-11-25 (line-up presets, answer gating) and by [0017](0017-table-view-fold.md) |
 | [0016](0016-bayes-board-presets-and-table.md) | Page presets and a count table on the BayesTheorem board | Accepted; amended by [0017](0017-table-view-fold.md) |
 | [0017](0017-table-view-fold.md) | A "Table view" fold for tall boards | Accepted |
+| [0018](0018-distribution-families-and-density.md) | DistributionBoard families and density mode | Accepted; amends [0012](0012-distribution-board.md) |

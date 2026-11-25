@@ -1,6 +1,6 @@
 # 0012: DistributionBoard, the second HTML board
 
-Status: accepted, 2026-11-24
+Status: accepted, 2026-11-24. Amended by [0018](0018-distribution-families-and-density.md) (family and density modes).
 
 ## Context
 The week-3 probability pages (random variables and distributions, then expectation and variance) need a board for three ideas beginners often get wrong: a random variable is a function that gives every outcome one number, and outcomes that share a number have their chances added; the mean is the balance point of the bar chart, not its tallest bar or the middle of its range; and variance is spread around the mean, not the number of different amounts. About twenty later pages, starting with the binomial and density pages in week 5, need the same board. The design compared one general model with swappable views, an exact-rational board with its own range slider, and extending EventSpace.
@@ -15,7 +15,7 @@ The week-3 probability pages (random variables and distributions, then expectati
 - **On goal setups the chart starts covered.** The reader sets a value for each outcome, commits to an answer in prose, and passes Check; only then are the chart, the fractions and the table shown. After that the bars merge live as values change. Before Check, no string on the board states a probability, bar count or grouping computed from the reader's values.
 - **Fraction and wording helpers are shared.** `fraction`, `formatFraction` and `greatestCommonDivisor` live in `src/components/react/boardMath.ts`, which also gains `add`, `multiply` and `compare`; every intermediate passes a safe-integer check that throws. The wording helpers (`plural`, `joinWords`, `capitalize` and the rounding helpers) live in `boardText.ts`. EventSpace and `check-boards.mjs` import them directly. The live-announcement helper is copied into DistributionBoard for now and shared after a screen-reader pass of both boards.
 - **Stages, locks, Check and Show the answer stay board-local.** DistributionBoard copies EventSpace's shapes (a stage union, a lock with a visible reason, a limit on wrong Checks before the answer is offered). Decision 0011 kept presets, Check, the wrong-model view and modes inside EventSpace and said they would be lifted into `Board` when a second board needs the same behavior. That trigger is now met; the lift is deferred to the third board, when there are three consumers to design it from. (Superseded: shared as composable modules, not `Board` props; see [0013](0013-shared-board-modules.md).)
-- **The continuous mode is proposed as a separate `DensityBoard.tsx`** for week 4, a Mafs entry that shares the summary functions and wording through a continuous distribution.
+- **The continuous mode is proposed as a separate `DensityBoard.tsx`** for week 4, a Mafs entry that shares the summary functions and wording through a continuous distribution. (Superseded: the density mode is HTML inside this island, see [0018](0018-distribution-families-and-density.md).)
 - **`NormalDistribution` is left untouched.** Whether the continuous mode replaces it or only shares its summaries is a week-4 choice with its own record.
 - **All math, copy and state transitions are pure TypeScript** checked by `scripts/check-boards.mjs`, as for EventSpace. The board has a draft lab page showing every setup.
 

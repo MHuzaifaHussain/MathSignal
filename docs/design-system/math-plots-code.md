@@ -140,6 +140,18 @@ Number format, one rule per kind of number (all in `describe.ts`, plain Unicode,
 
 "≈" appears only when the decimal is rounded. A whole number has no fraction chain ("6/6 = 1").
 
+**Family and density modes** ([decision 0018](../decisions/0018-distribution-families-and-density.md)) draw plain ink columns instead of tiles, on a fixed scale per setup with gridlines labeled in a gutter (dotted; a solid one where a setup asks). A scale never follows the bars, so two presets compare on one scale. The one ochre element is the read column (`--ms-highlight` fill, `--ms-attention` border) or, on `sand-interval`, the shaded stretch with ochre edges. Pink μ and blue σ appear only on `binomial-spread` and on `sand-interval` after its switch; `coins-binomial` and `sand-pour` use neither. Any nonzero chance draws at least a 2px stub. The density curve is an inline SVG stretched over the column area, so it holds no text; every label is HTML. Bins, curve, ticks, shaded edges and marks share one mapping along the ruler.
+
+| Kind | Format | Example |
+|---|---|---|
+| A fair-coin chance | Count, reduced fraction, two decimals | "210/1024 = 105/512 ≈ 0.21" |
+| Any other binomial chance | Two decimals in sentences, four in the table | "≈ 0.39", "0.3874" |
+| A nonzero chance too small to show | "under 0.01", or "under 0.0001" in four-place tables; never "≈ 0.00" | "1/1024, under 0.01" |
+| An amount (μ, variance, p) | `amountText`: whole, else up to 3 decimals, else the fraction and two decimals | "2.5", "19/400 ≈ 0.05" |
+| σ | "√" and the variance as `amountText` writes it, parenthesized when a fraction | "√2.5 ≈ 1.58", "√(9/16) = 0.75" |
+| Sand shares and heights | Fractions; positions and widths in cm | "7/32 of the sand", "7/16 per cm", "0.25 cm" |
+| Counts and powers | Grouped counts, never grouped fractions; superscript powers, spoken "to the power" | "1,024 sequences", "1024/1024", "2¹⁰" |
+
 ### Data summaries (DescriptiveStats)
 
 DescriptiveStats draws a short list of numbers as dots on a value-positioned axis ([decision 0015](../decisions/0015-descriptive-stats-board.md)). It is HTML like EventSpace and DistributionBoard and follows the same color rules with these conventions:
