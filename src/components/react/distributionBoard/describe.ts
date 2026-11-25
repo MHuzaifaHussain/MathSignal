@@ -397,7 +397,7 @@ export function balanceLine(state: DistributionState): string | null {
 		case 'tallest-bar':
 			return `The plank tips down on the ${side}. You put the pencil under the tallest bar, ${tallestBarReason(d, side)}. The balance point is ${mu}.`;
 		case 'other':
-			return `The plank tips down on the ${side}, so the balance point is further ${side}. The mean is ${mu}; your pencil was at ${pencil}.`;
+			return `The plank tips down on the ${side}, so the balance point is farther ${side}. The mean is ${mu}; your pencil was at ${pencil}.`;
 	}
 }
 

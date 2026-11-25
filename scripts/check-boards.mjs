@@ -1251,7 +1251,7 @@ assert.equal(
 );
 assert.equal(
 	distSay.balanceLine(balancedAt('One big prize', 3)),
-	'The plank tips down on the right, so the balance point is further right. The mean is μ = 1 candy; your pencil was at 0.50.',
+	'The plank tips down on the right, so the balance point is farther right. The mean is μ = 1 candy; your pencil was at 0.50.',
 );
 // Written from the templates (owner review in Task 7).
 assert.equal(
@@ -1264,16 +1264,16 @@ assert.equal(
 );
 assert.equal(
 	distSay.balanceLine(balancedAt('Lopsided', 30)),
-	'The plank tips down on the left, so the balance point is further left. The mean is μ = 1 candy; your pencil was at 5.00.',
+	'The plank tips down on the left, so the balance point is farther left. The mean is μ = 1 candy; your pencil was at 5.00.',
 );
 assert.equal(
 	distSay.balanceLine(balancedAt('Plain die', 3)),
-	'The plank tips down on the right, so the balance point is further right. The mean is μ = 7/2 = 3.5 candies; your pencil was at 0.50.',
+	'The plank tips down on the right, so the balance point is farther right. The mean is μ = 7/2 = 3.5 candies; your pencil was at 0.50.',
 );
 assert.equal(distSay.balanceLine(balancedAt('All win 1', 6)), 'Balanced: your pencil at 1.00 is right under the mean, μ = 1 candy.');
 assert.equal(
 	distSay.balanceLine(balancedAt('All win 1', 0)),
-	'The plank tips down on the right, so the balance point is further right. The mean is μ = 1 candy; your pencil was at 0.00.',
+	'The plank tips down on the right, so the balance point is farther right. The mean is μ = 1 candy; your pencil was at 0.00.',
 );
 
 // The verdict stays on the reader's guess when the pencil moves after the reveal; the live readout follows the pencil.
@@ -1287,7 +1287,7 @@ assert.equal(
 assert.equal(distSay.pencilLine(guessedAtZero), 'Pencil at 1.50: the bars pull 1 − 1.50 = −0.50 candies from it, so the plank tips left.');
 assert.equal(
 	distSay.balanceLine({ ...balancedAt('One big prize', 3), pencil: 30 }),
-	'The plank tips down on the right, so the balance point is further right. The mean is μ = 1 candy; your pencil was at 0.50.',
+	'The plank tips down on the right, so the balance point is farther right. The mean is μ = 1 candy; your pencil was at 0.50.',
 );
 
 // Changing the values after the reveal drops the verdict: the old guess was about a different problem.
