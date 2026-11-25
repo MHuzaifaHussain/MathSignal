@@ -80,15 +80,15 @@ Before you touch the board, commit to an answer:
 
 Your goal: shrink the world to "host opens door 3", then read P(A | B) with A set to car behind door 1, and then to car behind door 2. Shrinking works as on the [conditional probability](/probability/conditional-probability/) page.
 
-Rows say where the car is and columns show the host's coin. Each cell is one game, with probability 1/3 × 1/2 = 1/6, and names the door the host opens. Games in A have a solid border and an "A" tag, games in B a dashed outline and a "B" tag. The games are fixed: the arrow keys move between cells, and tapping changes nothing. The presets set A to the car's door and B to the door opened. Until you shrink, the board gives only each event's size, starting with "A = car behind door 1: 2 of 6 = 1/3 (≈ 0.33)".
+Each cell is one game, with probability 1/3 × 1/2 = 1/6, and names the door the host opens. The presets set A to the car's door and B to the door opened.
 
 <div class="not-content">
   <EventSpace client:visible setup="monty-condition" />
 </div>
 
-Read the rows first. The host opens door 3 in 1 of 2 cells of row 1, both cells of row 2, and neither of row 3. Those shares, 1/2, 1 and 0, are the likelihoods: how likely his action is for each place the car could be. They are the whole puzzle. The coin only matters in row 1, where both other doors hide goats; that is his tie-break.
+Read the rows first. The host opens door 3 in 1 of 2 cells of row 1, both cells of row 2, and neither of row 3. Those shares, 1/2, 1 and 0, are the likelihoods, and they are the whole puzzle. The coin matters only in row 1, as his tie-break.
 
-Press Shrink the world to B, and the answer is to switch. Every game where the host opens door 2 is struck out, and the board says "Inside B: 3 outcomes, 1 of them also in A, \{(car 1, tails)\}. P(A | B) = 1/3 ≈ 0.33, while P(A) = 2/6 = 1/3 ≈ 0.33." Your door keeps the 1/3 it started with. Press Car behind door 2 and the line becomes "2 of them also in A, \{(car 2, heads), (car 2, tails)\}. P(A | B) = 2/3 ≈ 0.67". With Car behind door 3 it reads "none of them also in A", since the host never opens the car's door. Press Host opens door 2 to check the other half: 1/3 for door 1 and 2/3 for door 3.
+Press Shrink the world to B, and the answer is to switch. The board reads "P(A | B) = 1/3 ≈ 0.33, while P(A) = 2/6 = 1/3 ≈ 0.33": your door keeps the 1/3 it started with. Press Car behind door 2 and P(A | B) becomes 2/3. Host opens door 2 gives the same split: 1/3 for door 1, 2/3 for door 3.
 
 ## Decide before the host moves: stick wins 1 game in 3
 
@@ -119,7 +119,7 @@ With equal priors, the posteriors are proportional to the likelihoods, 1/2 : 1 :
 
 ## Why the host's rule decides the answer
 
-The answer depends on how the open door was chosen. Grinstead and Snell list the assumptions behind 2/3: each door equally likely for the car, a host who knows where it is and always opens a goat door, and, when he has a choice, each door with probability 1/2 (p. 137) <Cite id="grinstead2003" />. An accidental door that shows a goat leaves 1/2 each (worked example 3). A host who opens door 3 three times in four when he can choose makes switching after it win 4/7 (worked example 4).
+The answer depends on how the open door was chosen. Grinstead and Snell list the assumptions behind 2/3: each door equally likely for the car, a host who knows where it is and always opens a goat door, and, when he has a choice, each door with probability 1/2 (p. 137) <Cite id="grinstead2003" />. Change the last two and the answer moves.
 
 <GoDeeper label="a host who opens a door by accident" id="falling-host">
 
