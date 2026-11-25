@@ -93,7 +93,7 @@ A labeled slider for the tray, built on Base UI's Slider. Props: `label`, `value
 A segmented choice for the tray: a fieldset of native radios styled as buttons, so arrow keys and screen readers work natively. Props: `legend`, `options` (`{ value, label }[]`), `value` (`null` while nothing is picked yet, for a guess the reader must make first), `onChange`. The selected option is shown by fill and weight, never by color alone.
 
 ### Guided pieces (`src/components/react/guided/`)
-Small modules every guided board composes in its tray ([decision 0013](../decisions/0013-shared-board-modules.md)), so Check, stages, presets, refusals and announcements behave the same on every board. `Board` itself knows nothing about them. None of them holds wording: labels, legends and reasons come from each board's own copy.
+Small modules every guided board composes in its tray ([decision 0013](../decisions/0013-shared-board-modules.md)), so Check, stages, presets, refusals, announcements and the table fold behave the same on every board. `Board` itself knows nothing about them. Only `TableFold` holds wording, its switch name and two fixed sentences; every other label, legend and reason comes from each board's own copy.
 
 | Piece | What it does |
 |---|---|
@@ -102,6 +102,7 @@ Small modules every guided board composes in its tray ([decision 0013](../decisi
 | `CheckButtons` | Check until it passes, then nothing; "Show the answer" once `canShowAnswer` is true. Props: `progress`, `checkLabel`, `showAnswerLabel`, `onCheck`, `onShowAnswer`, and `checkRefusalId` while Check is refused (for example before a sign is picked). Move focus to the verdict sentence when they disappear |
 | `StageChoice` | A `TrayChoice` (usually legend "Show as") that offers only the stages `isAllowed` lets through, and draws nothing when fewer than two are left. Stages are left out, never shown disabled |
 | `PresetButtons` | One labeled group of preset buttons: `label` (the group's name), `caption` (short visible text, hidden from screen readers), `presets`, `onPick`. Pass `activeId` when a preset stays selected (`aria-pressed`); pass `refusalId` while presets are refused |
+| `TableFold` | The "Table view" switch and, directly under it, the region holding the board's one read-only table ([decision 0017](../decisions/0017-table-view-fold.md)). Props: `open`, `onToggle(open)`, `children`. Off at the start and after Reset (the board's reducer owns `tableOpen`), `display: none` when folded, always printed. The board announces `tableFoldAnnouncement(open, body)` from `tableFold.ts`: "Table shown under the switch." plus its own body, or "Table hidden.". The last tray item before Reset; never wrap a control, which `npm run check:boards` enforces. Every board with a table uses it |
 | `refusedBy(reasonId)`, `RefusalNote` | A refused control stays focusable and pressable (`aria-disabled`, never `disabled`) and points at a `RefusalNote` with the visible reason through `aria-describedby`. The board's own handler decides what a refused press says. Notes are hidden in print with the controls they explain |
 
 ### Chart marks and pointer scrub
@@ -171,7 +172,7 @@ A random variable as a bar chart ([decision 0012](../decisions/0012-distribution
 </div>
 ```
 
-The reader gives each outcome a number with a − / + pair. Outcomes that share a number stack into one bar, and their chances add. The bars, the readout sentences and a table (`Value`, `Faces` or `Outcomes`, `P(X = x)`) all say the same thing.
+The reader gives each outcome a number with a − / + pair. Outcomes that share a number stack into one bar, and their chances add. The bars, the readout sentences and a table (`Value`, `Faces` or `Outcomes`, `P(X = x)`) all say the same thing. The table folds behind Table view; while a goal setup is covered there is no table and no switch.
 
 - **Goal setups** (`candy-build`, `coins-heads`): a die whose faces win candies, or two coins counted by heads. The chart, fractions and table start covered, and only the − / + steppers work. The reader sets a value for each outcome and presses **Check**, which names the wrong faces; "Show the answer" appears after two wrong Checks. Once Check passes, the chart appears and the bars merge live as values change. A "Show as" choice offers Pictures and Numbers from the start; Symbols, which writes X as a function, and the presets wait for the match. `candy-build` then sets a follow-up goal, "make P(X = 1) = 1/2", with a **Check goal** button.
 - **Balance setup** (`candy-balance`): an ochre pencil under the chart, moved by dragging the strip under the axis or with the tray's "Pencil position" slider. The plank stays level while the pencil moves. **"Balance it"** locks in the guess, shows the pink μ and tips the plank a fixed 6 degrees toward the heavy side, and a sentence always says which way and why. The − / + steppers are refused until then. Presets start a new game: the pencil parks and μ hides again.
@@ -189,7 +190,7 @@ Vectors on a whole-number grid, as a Mafs board ([decision 0014](../decisions/00
 </div>
 ```
 
-Every setup holds its answer until the reader commits with Check. Handles snap to the grid, and every handle also moves with the − / + buttons of the coordinate table under the plane.
+Every setup holds its answer until the reader commits with Check. Handles snap to the grid, and every handle also moves with the step buttons under the plane: a strip with a row per movable vector and − / + buttons per axis. The read-only coordinate table (x, y, length) folds behind Table view.
 
 - **`trips-add`** (vectors): trip a = (3, 2), then trip b = (1, 3) drawn from a's tip. The only handle is an ochre "your guess" ring; a and b are locked and their steppers refused ("a and b are the question. Press Check first."). Check names the mistake (east and north swapped, stopped after trip a, and so on), and "Show the answer" appears after two misses. After Check the guess goes, a + b is drawn in ochre, the tips of a and of trip b become handles, a "Show b first too" switch draws the other route (the parallelogram), and four presets appear: Two trips, There and back, Same direction, Square corner. Stages: Trips (steps in words, no numbers on the axes), Arrows, and Lists (column vectors), which waits for Check.
 - **`trips-scale`** (vectors): a = (2, 1), entries within ±2, and a "Scale c" slider from −2 to 2 in steps of 0.5. Goal: the c that turns a around without changing its length. Before Check the readout gives only "c = …. c a = (…)."; after Check it says what c did ("−1 × a = (−2, −1): opposite direction, same length."), and the presets Double, Half, Turn around and Zero appear. Stages: Arrows and Lists.
@@ -199,7 +200,7 @@ Every setup holds its answer until the reader commits with Check. Handles snap t
 - Check, the stages, the presets, the refusal notes and the live region are the guided pieces above. All math and copy live in pure modules (`model.ts`, `setups.ts`, `state.ts`, `describe.ts`) checked by `npm run check:boards`; the Mafs code is `VectorPlane.tsx` and the table `CoordinateTable.tsx`. Island CSS lives under the `.ms-vec-*` section of `components.css`. Try every setup at `/lab/vector-board/` in the dev server.
 
 ### `DescriptiveStats`
-A short list of whole numbers as dot plots on a value-positioned axis, with a data table and a summary table ([decision 0015](../decisions/0015-descriptive-stats-board.md)). One prop: `setup`, the id of a configuration in `src/components/react/descriptiveStats/setups.ts` (`class-lineup`, `cafe-millionaire`, `class-spread`, `class-box`, `marks-scaling`, `pumpkin-outliers`); an unknown id, or a setup the board can't draw at 320px, fails the build.
+A short list of whole numbers as dot plots on a value-positioned axis, with a data table and a summary table behind Table view ([decision 0015](../decisions/0015-descriptive-stats-board.md), [decision 0017](../decisions/0017-table-view-fold.md)). The summary shows only what the reader has committed to: nothing on `class-lineup` before Check, the quartile rows from the Quartiles step on `class-box`, and on `marks-scaling` only the numbers the chosen scale uses (none on Raw marks, where a note stands in). One prop: `setup`, the id of a configuration in `src/components/react/descriptiveStats/setups.ts` (`class-lineup`, `cafe-millionaire`, `class-spread`, `class-box`, `marks-scaling`, `pumpkin-outliers`); an unknown id, or a setup the board can't draw at 320px, fails the build.
 
 ```mdx
 <div class="not-content">

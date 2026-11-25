@@ -17,6 +17,7 @@ The plan also named this work as a Board API with a `stages[]` prop, and later a
   - `PresetButtons.tsx`: one labeled group of preset buttons, with `aria-pressed` only on boards whose presets stay selected.
   - `refusal.tsx`: `refusedBy(reasonId)` for a refused control (`aria-disabled` and `aria-describedby`, never `disabled`) and `RefusalNote` for its visible reason.
 - **The pieces own no wording.** Labels, legends and refusal sentences come from each board's own copy, as before.
+  - amended 2026-11-25 by [0017](0017-table-view-fold.md): `TableFold` owns `TABLE_FOLD_LABEL`, `TABLE_FOLD_SHOWN` and `TABLE_FOLD_HIDDEN`, because one switch must read and speak the same on every board; each board still writes the body of its opening sentence. Every other piece still owns none.
 - **Each board keeps its state shape and its own rules.** Reducers spread `recordCheck` into their state and call `stageAllowed`, and they still decide what is locked, covered or refused and why. EventSpace keeps its small-grid rule for pictures; DistributionBoard keeps Symbols waiting for the match.
 - **Goal sentences stay with each board**, because each board states its goal differently (a status line, a goal line with its own Check). Presets are lifted as a component, not as a `presets[]` prop on `Board`.
 - **The plan's "minimal Board API" item (goal, `presets[]`, predict, describe/table) is superseded by these modules.** Goal, predict and the describe and table text stay with each board, in its own `describe.ts` and components.
