@@ -63,25 +63,25 @@ import DescriptiveStats from "../../../components/react/DescriptiveStats.tsx";
 
 ## In everyday terms
 
-<Analogy breaks="The ruler hangs on just two children, so if one of them has a bad day the whole ruler stretches and everyone's share moves. The typical step uses every child, but one far-off child still lengthens it. Neither picture says whether one test was harder, and a new child above the old top mark lands past the end of the ruler.">
+<Analogy breaks="The ruler hangs on just two children, so one bad day stretches it for everyone. The typical step uses every child, but one far-off child still lengthens it. A new child above the old top mark lands past the end of the ruler.">
 
 Ana's class sat two tests, one marked out of 50 and one out of 80. Her teacher wants to know which test went better for Ana, compared with the rest of the class.
 
 The first picture is a stretchy ruler. Pin one end at the lowest mark in the class and the other at the highest. Ana's place is a share of the way along: 0 at the bottom pin, 1 at the top. Do this for both tests and compare the two shares.
 
-The second picture is a typical step. Stand at the class average and count how far above it Ana is in steps, where one step is how far a typical classmate stands from the average on that test. The ruler looks only at the two end children; the step looks at everyone.
+The second picture is a typical step. Stand at the class average and count how far above it Ana is in steps, where one step is how far a typical classmate stands from the average on that test.
 
-The two pictures can give different answers, and the board below shows when.
+The stretchy ruler is called min-max scaling; the typical-step count is a z-score, and turning every value into one is called standardization. The two pictures can give different answers, and the board below shows when.
 
 </Analogy>
 
 <WhyThisMatters>
-Models that measure distances between examples, or that learn by gradient descent, see raw numbers, not units. A house's area in square meters runs in the hundreds and its bedroom count stays under 10, so the area decides almost every distance and stretches the loss into a long, narrow valley. Rescaling fixes that, but the choice matters: a comparison of 5 scaling techniques on 82 datasets found that an inadequate one can do more harm than not scaling at all (§7) <Cite id="deamorim2022" />.
+Models that measure distances between examples, or that learn by gradient descent, see raw numbers, not units. A house's area in square meters runs in the hundreds and its bedroom count stays under 10, so the area decides almost every distance and stretches the model's error (its loss) into a long, narrow valley. Rescaling fixes that, but the choice matters: a comparison of 5 scaling techniques on 82 datasets found that an inadequate one can do more harm than not scaling at all (§7) <Cite id="deamorim2022" />.
 </WhyThisMatters>
 
 ## Which test did Ana do better on?
 
-Ana scored 36 out of 50 on test A and 58 out of 80 on test B. Compared with her eight classmates, did she do better on A, on B, or equally well? Decide before you touch the board. Sharper: will min-max and z-scores agree? And if one classmate's 38 on test B had been a 10, which way would each of Ana's B scores move?
+Ana scored 36 out of 50 on test A and 58 out of 80 on test B. Compared with her eight classmates, did she do better on A, on B, or equally well? Decide before you switch Scale off Raw marks; Table view lists every mark. Two more: will the ruler (min-max) and the step count (z-score) agree? And if one classmate's 38 on test B had been a 10, which way would each of Ana's B scores move?
 
 Scale switches the view between Raw marks, Min–max (0 to 1) and z-scores. The presets Two tests and One very low mark on B load the marks. Ana's two marks are ringed. Table view lists every mark, and each test's summary joins it once you pick a scale.
 
@@ -93,15 +93,15 @@ Your task: switch Scale through all three views and note which test each one fav
 
 **It depends on the yardstick.** On Raw marks the board says "Ana scored 36 out of 50 on test A (72%) and 58 out of 80 on test B (72.5%)." Percentages compare her with the top possible mark, not with her classmates.
 
-On Min–max (0 to 1): "Test A: (36 − 21) / (39 − 21) = 15/18 = 5/6 ≈ 0.83. Test B: (58 − 38) / (64 − 38) = 20/26 = 10/13 ≈ 0.77. Min–max says test A." On test A one classmate is above Ana, by 3 marks; on test B the top mark, 64, is 6 above her.
+On Min–max (0 to 1): "Test A: (36 − 21) / (39 − 21) = 15/18 = 5/6 ≈ 0.83. Test B: (58 − 38) / (64 − 38) = 20/26 = 10/13 ≈ 0.77. Min–max says test A." Min-max only asks where Ana sits between the lowest and highest mark: 3 below the top on A, 6 below it on B.
 
-On z-scores: "Test A: (36 − 30) / 6 = 1. Test B: (58 − 50) / 8 = 1. Ana is exactly one standard deviation above the mean on both." So the two scales already disagree, because each answers a different question: min-max measures against the two extreme classmates, z-scores against the whole class's average and typical spread.
+On z-scores: "Test A: (36 − 30) / 6 = 1. Test B: (58 − 50) / 8 = 1. Ana is exactly one standard deviation above the mean on both." So the two scales already disagree: min-max measures against the two extreme classmates, z-scores against the whole class.
 
-**One very low mark.** With a scale showing, the preset is announced as "One mark of 10 moved both scores for test B: min–max rose from ≈ 0.77 to 48/54 = 8/9 ≈ 0.89, the z-score fell from 1 to ≈ 0.76. Ana's 58 did not change." Min–max now says test B, and z says test A. Min-max rose because the bottom pin moved down 28 marks. The z-score fell because <Var name="sigma" /> grew faster than Ana's distance above the mean: the lower mean, 422/9 ≈ 46.89, puts her 100/9 ≈ 11.11 above it instead of 8, about 1.39 times as far, but <Var name="sigma" /> grew from 8 to ≈ 14.70, about 1.84 times as large. Neither scale is protected from a single extreme value.
+**One very low mark.** With a scale showing, the preset is announced as "One mark of 10 moved both scores for test B: min–max rose from ≈ 0.77 to 48/54 = 8/9 ≈ 0.89, the z-score fell from 1 to ≈ 0.76. Ana's 58 did not change." Min-max now says test B, and z says test A. Min-max rose because the bottom pin moved down 28 marks. Two changes pulled the z-score opposite ways. The mean dropped to 422/9 ≈ 46.89, so Ana now stands 100/9 ≈ 11.11 marks above it instead of 8, about 1.39 times as far. But the standard deviation, <Var name="sigma" />, grew from 8 to ≈ 14.70, about 1.84 times as large. The bigger step wins, so her z-score falls. Neither scale is protected from a single extreme value.
 
 ## What each scale pins down
 
-Standardization pins the mean at 0 and the standard deviation at 1; min-max scaling pins the smallest value at 0 and the largest at 1. Everything else follows from which two numbers each one fixes.
+Standardization pins the mean at 0 and the standard deviation at 1; min-max scaling pins the smallest value at 0 and the largest at 1.
 
 |  | Standardization (z-scores) | Min-max scaling |
 | --- | --- | --- |
@@ -112,40 +112,34 @@ Standardization pins the mean at 0 and the standard deviation at 1; min-max scal
 | Test A after scaling | mean 0, standard deviation 1 | mean 1/2, standard deviation 1/3 |
 | Test B after scaling | mean 0, standard deviation 1 | mean 6/13, standard deviation 4/13 |
 | One low mark on B (38 → 10) | Ana 1 → ≈ 0.76 | Ana 10/13 → 8/9 |
-| A new mark of 70 on B, scaler fitted on the nine | 5/2 | 16/13, past 1 |
+| A new student's 70 on B, using the nine marks' mean, σ and ends | 5/2 | 16/13, past 1 |
 | scikit-learn | `StandardScaler` | `MinMaxScaler` |
 | Good default for | features without fixed bounds, roughly bell-shaped, and most models trained by gradient descent | features with known, fixed bounds and few outliers (pixel values 0–255, ages 0–100) |
 
 ### Min-max equalizes the ends, not the spread
 
-After min-max scaling both tests run from 0 to 1, but test A has standard deviation 1/3 and test B 4/13, because B's top mark sits far from the rest. de Amorim and coauthors note that without outliers min-max has an effect similar to standardization, but with outliers it fails to equalize the means and variances (§2.2) <Cite id="deamorim2022" />. Standardization makes every <Var name="sigma" /> exactly 1. Both keep the order within a test, so they disagree only across tests or features.
+After min-max scaling both tests run from 0 to 1, but every distance is divided by the range, so the new standard deviation is the old one over the range: 6/18 = 1/3 on test A and 8/26 = 4/13 on test B. de Amorim and coauthors note that without outliers min-max has an effect similar to standardization, but with outliers it fails to equalize the means and variances (§2.2) <Cite id="deamorim2022" />. Standardization makes every <Var name="sigma" /> exactly 1. Both keep the order within a test, so they disagree only across tests or features.
 
 ### One extreme value moves both
 
-On the board one low mark took Ana's min-max score from 10/13 to 8/9 and her z-score from 1 to ≈ 0.76, though her own mark never changed. scikit-learn's comparison of scalers on California housing data finds that "Both StandardScaler and MinMaxScaler are very sensitive to the presence of outliers", and shows min-max squeezing the ordinary values of average house occupancy into the narrow range [0, 0.005] <Cite id="sklearn-scaler-outliers" />. The `StandardScaler` page itself warns that it is sensitive to outliers and that features may then scale differently from each other <Cite id="sklearn-standardscaler" />.
+scikit-learn's comparison of scalers on California housing data finds that "Both StandardScaler and MinMaxScaler are very sensitive to the presence of outliers", and shows min-max squeezing the ordinary values of average house occupancy into the narrow range [0, 0.005] <Cite id="sklearn-scaler-outliers" />. The `StandardScaler` page itself warns that it is sensitive to outliers and that features may then scale differently from each other <Cite id="sklearn-standardscaler" />.
 
 ### When neither fits: the median and the IQR
 
-A third scaler subtracts the median and divides by the interquartile range (IQR), so one extreme value can't move it. scikit-learn's `RobustScaler` does this, with the IQR running from the 25th to the 75th percentile by default <Cite id="sklearn-robustscaler" />. With NumPy's default quartiles, as on the box plots page, test B has quartiles 44, 49 and 56, so the IQR is 12 and Ana scores (58 − 49)/12 = 3/4, with the 38 or with the 10. On test A the quartiles are 24, 30 and 36, so she scores (36 − 30)/12 = 1/2. A third yardstick, with its own verdict. The outliers themselves stay in the data <Cite id="sklearn-scaler-outliers" />.
+A third scaler subtracts the median and divides by the interquartile range (IQR), so one extreme value can't move it. scikit-learn's `RobustScaler` does this, with the IQR running from the 25th to the 75th percentile by default <Cite id="sklearn-robustscaler" />. With NumPy's default quartiles (the [box plot page](/statistics/reading-box-plots-quartiles-iqr/) shows how they're found), test B has lower quartile 44, median 49 and upper quartile 56, so the IQR is 12 and Ana scores (58 − 49)/12 = 3/4, with the 38 or with the 10. On test A the quartiles are 24, 30 and 36, so she scores (36 − 30)/12 = 1/2. This third yardstick says test B. The extreme mark itself stays in the scaled data <Cite id="sklearn-scaler-outliers" />.
 
 ### When to use which
 
-- **Standardization** for most features, especially for models that compare distances or train by gradient descent. Google's Machine Learning Crash Course calls Z-score scaling typically a better choice than linear scaling, and a good one when the data look roughly normal <Cite id="google-mlcc-normalization" />.
+- **Standardization** for most features, especially for models that compare distances or train by gradient descent. Google's Machine Learning Crash Course calls Z-score scaling typically a better choice than linear scaling, its name for min-max, and a good one when the data look roughly normal <Cite id="google-mlcc-normalization" />.
 - **Min-max** when the feature has fixed, known bounds and few outliers, such as age, bounded at about 0 and 100 in the crash course's example <Cite id="google-mlcc-normalization" />, or when a model needs inputs in [0, 1].
 - **Median and IQR** when a few extreme values would otherwise set the scale.
 - **No scaling** for decision trees and ensembles built on them, which de Amorim and coauthors found virtually insensitive to the choice (§7) <Cite id="deamorim2022" />.
 
 <Simpler label="the same idea with three numbers">
 
-Take 2, 4 and 9: mean 5, standard deviation √(26/3) ≈ 2.94. Min-max gives 0, 2/7 and 1; z-scores give about −1.02, −0.34 and 1.36. If the 9 becomes 30, min-max gives 0, 1/14 and 1: the 4 slides toward 0.
+Take 2, 4 and 9: mean 5, standard deviation √(26/3) ≈ 2.94. Min-max gives 0, 2/7 and 1; z-scores give about −1.02, −0.34 and 1.36. If the 9 becomes 30, min-max gives 0, 1/14 and 1: the 4 slides toward 0. z-scores move too: the mean becomes 12 and the 4 lands at about −0.63.
 
 </Simpler>
-
-<GoDeeper label="names that clash: normalization" id="normalization-names">
-
-Google's crash course calls both methods normalization <Cite id="google-mlcc-normalization" />, and de Amorim and coauthors call standardization Z-score normalization (§2.1) <Cite id="deamorim2022" />. In scikit-learn, normalization scales each example, a row, to length 1 (§8.3.3) <Cite id="sklearn-preprocessing" />. Say which formula you mean.
-
-</GoDeeper>
 
 ## Notation
 
@@ -161,7 +155,7 @@ $$
 z_i = \frac{x_i - \vmu}{\vsigma}.
 $$
 
-They have mean 0 and standard deviation 1, and no fixed bounds, although with $n$ values no $|z_i|$ can exceed $\sqrt{n - 1}$.
+They have mean 0 and standard deviation 1, and no fixed bounds, although with $n$ values no $|z_i|$ can exceed $\sqrt{n - 1}$ ([how far a z-score can go](/statistics/outlier-detection-z-score-vs-iqr/#most-z-can-reach)).
 
 **Min-max scaling.** Provided $x_{\max} > x_{\min}$,
 
@@ -182,7 +176,7 @@ Boundary cases. If every value is the same, both formulas divide by 0. A new val
 1. Both maps are $x \mapsto (x - a)/b$ with $b > 0$: $a = \vmu$, $b = \vsigma$ for standardization; $a = x_{\min}$, $b = x_{\max} - x_{\min}$ for min-max.
 2. Change units by $y_i = c\,x_i + d$ with $c > 0$; percentages on test A use $c = 2$. Then $\vmu_y = c\,\vmu + d$ and $\vsigma_y = c\,\vsigma$ ([shifting and stretching](/statistics/variance-and-standard-deviation/#shifting-and-stretching-the-whole-class)), and $y_{\min} = c\,x_{\min} + d$, $y_{\max} = c\,x_{\max} + d$.
 3. In $(y_i - a_y)/b_y$ the $d$ cancels in the difference and the $c$ in the ratio, so both scores are unchanged.
-4. Because $b > 0$, the order is kept. A one-to-one map moves values without merging them, so the shape of the distribution is kept too, as one-to-one functions only move the bars in the [random variables worked examples](/probability/random-variables-and-distributions/#worked-examples).
+4. Because $b > 0$, the order is kept. Every gap between two values is divided by the same $b$, so a histogram keeps its shape and only slides and stretches; a one-to-one map that is not a shift and stretch, such as a log, keeps the order but changes the shape.
 5. If $c < 0$, every $z$ flips sign and $x'$ becomes $1 - x'$.
 
 </StepThrough>
@@ -197,7 +191,7 @@ These four houses come back in the machine learning section: areas 135, 65, 105 
 
 <WorkedExample number={1} title="Standardize the house areas">
 
-The mean is $\vmu = 100$ m² and the distances are 35, −35, 5 and −5, so the variance is $(1{,}225 + 1{,}225 + 25 + 25)/4 = 625$ and $\vsigma = 25$ m². The z-scores are 1.4, −1.4, 0.2 and −0.2, with mean 0 and standard deviation 1.
+The mean is $\vmu = 100$ m² and the differences from the mean are 35, −35, 5 and −5, so the variance is $(1{,}225 + 1{,}225 + 25 + 25)/4 = 625$ and $\vsigma = 25$ m². The z-scores are 1.4, −1.4, 0.2 and −0.2, with mean 0 and standard deviation 1.
 
 </WorkedExample>
 
@@ -213,7 +207,7 @@ Use the scalers fitted on the four houses. Find the new house's z-score and min-
 
 <div slot="solution">
 
-$z = (150 - 100)/25 = 2$, a perfectly ordinary z-score. $x' = (150 - 65)/70 = 85/70 = 17/14 \approx 1.21$, past 1. `MinMaxScaler` leaves it there, because its `clip` option is off by default <Cite id="sklearn-minmaxscaler" />.
+$z = (150 - 100)/25 = 2$, past the four houses' largest z of 1.4, but z-scores have no fixed ends, so nothing marks it as out of range. $x' = (150 - 65)/70 = 85/70 = 17/14 \approx 1.21$, past 1. `MinMaxScaler` leaves it there, because its `clip` option is off by default <Cite id="sklearn-minmaxscaler" />.
 
 </div>
 
@@ -225,13 +219,13 @@ Scaling matters for models that compare distances or learn by gradient descent, 
 
 ### Distances let the biggest unit win
 
-Take three houses as (area, bedrooms): P = (100, 3), Q = (102, 2) and R = (110, 3). Which is nearest to P? Raw squared distances give P to Q $2^2 + 1^2 = 5$ and P to R $10^2 = 100$, so Q, though it has a bedroom fewer. Divide by the four houses' standard deviations, 25 m² and 1 bedroom, and they become $629/625$ and $100/625$: now R is nearest. Min-max with ranges 70 and 2 gives 1,229/4,900 against 100/4,900, also R. scikit-learn warns that a feature with a far larger variance might dominate the objective function (§8.3.1) <Cite id="sklearn-preprocessing" />. de Amorim and coauthors found SVMs, Gaussian processes, perceptrons and multilayer networks very sensitive to the choice of scaler (§7) <Cite id="deamorim2022" />.
+Take three houses as (area, bedrooms): P = (100, 3), Q = (102, 2) and R = (110, 3). Which is nearest to P? Raw squared distances give P to Q $2^2 + 1^2 = 5$ and P to R $10^2 = 100$, so Q, though it has a bedroom fewer. Divide by the four houses' standard deviations, 25 m² and 1 bedroom, and they become $629/625$ and $100/625$: now R is nearest. Min-max with ranges 70 and 2 gives 1,229/4,900 against 100/4,900, also R. scikit-learn warns that a feature with a far larger variance might dominate the objective function (§8.3.1) <Cite id="sklearn-preprocessing" />.
 
 ### Gradient descent on a stretched valley
 
-Scaling changes the shape of the loss, and with it the speed of gradient descent (its own page is coming soon). With the four houses' features centered, a linear model's squared-error loss curves 625 times more steeply along the area weight than along the bedroom weight. Goodfellow, Bengio and Courville write that when the Hessian has a poor condition number, gradient descent performs poorly: a step size that avoids overshooting in the steep direction is usually too small for progress where the curvature is less (§4.3.1, Figure 4.6) <Cite id="goodfellow2016numerical" />. The condition number is the ratio of the largest to the smallest eigenvalue magnitude (§4.2, equation (4.2)).
+Scaling changes the shape of the loss, and with it the speed of gradient descent (its own page is coming soon). A linear model gives each feature a weight, a number it learns. With the four houses' features centered, the error curves 625 times more steeply as you change the area's weight than as you change the bedrooms' weight. Goodfellow, Bengio and Courville explain why that hurts: a step small enough not to overshoot in the steep direction is usually too small to make progress in the shallow one (§4.3.1, Figure 4.6) <Cite id="goodfellow2016numerical" />. That ratio of steepest to shallowest curvature is called the condition number (§4.2, equation (4.2)) <Cite id="goodfellow2016numerical" />.
 
-Steps until the shallow error falls to 1% or below, with each step set to settle the steep direction in one move:
+Steps until the error along the shallow direction is down to 1% of where it started, with each step sized to settle the steep direction in one move:
 
 | Scaling | Curvature ratio | Steps |
 | --- | --- | --- |
@@ -239,16 +233,16 @@ Steps until the shallow error falls to 1% or below, with each step set to settle
 | min-max | 49/25 = 1.96 | 7 |
 | standardized | 1 | 1 |
 
-Min-max helps but not fully: the area's range is 2.8 of its standard deviations, the bedrooms' 2 of theirs, and $(2.8/2)^2 = 1.96$. Google's crash course lists faster convergence as the first benefit of normalizing <Cite id="google-mlcc-normalization" />. The step counts are this page's own derivation, checked in the code below.
+Min-max helps but not fully: the area's range is 2.8 of its standard deviations, the bedrooms' 2 of theirs. Curvature grows with the square of a feature's spread, so the ratio is $(2.8/2)^2 = 1.96$. The step counts are this page's own derivation, checked in the code below.
 
 <GoDeeper label="where 625, 49/25 and 1 come from" id="conditioning-derivation">
 
 <StepThrough title="Curvature ratios on the four houses" rigor="sketch">
 
-1. For the loss $\frac{1}{n}\sum_{i=1}^{n} (y_i - w_1 a_i - w_2 b_i)^2$ on centered features $a$ (area) and $b$ (bedrooms), the Hessian, the matrix of second derivatives, is $\frac{2}{n}X^\top X$.
-2. Here $\sum_i a_i b_i = 0$, so it is diagonal, with entries $2\operatorname{Var}(a)$ and $2\operatorname{Var}(b)$. The condition number is the larger over the smaller: $625$ raw, $(1/4)/(25/196) = 49/25$ after min-max, $1$ standardized.
+1. For the loss $\frac{1}{n}\sum_{i=1}^{n} (y_i - w_1 a_i - w_2 b_i)^2$ on centered features $a$ (area) and $b$ (bedrooms), the Hessian, the matrix of second derivatives, is $\frac{2}{n}\mathbf{X}^\top\mathbf{X}$, where row $i$ of $\mathbf{X}$ is $(a_i, b_i)$.
+2. Here $\sum_i a_i b_i = 0$, so it is diagonal, with entries $2\vsigma_a^2$ and $2\vsigma_b^2$. The condition number is the larger over the smaller: $625$ raw, $(1/4)/(25/196) = 49/25$ after min-max, $1$ standardized.
 3. With step size 1 over the largest curvature (stable up to twice that), each step multiplies the shallow error by $1 - 1/\kappa$, with $\kappa$ the condition number: $624/625$, $24/49$ and 0.
-4. Standardizing can't fix correlated features: with correlation $r = 3/5$ the curvatures are proportional to $1 \pm r$, so $\kappa = (8/5)/(2/5) = 4$. Nor uncentered inputs: min-max leaves every mean near 1/2, which ties each weight to the intercept.
+4. Standardizing can't fix correlated features: with correlation $r = 3/5$ the curvatures are proportional to $1 \pm r$, so $\kappa = (8/5)/(2/5) = 4$. Nor uncentered inputs: min-max leaves each mean somewhere between 0 and 1 (1/2 for both house features), not at 0, which ties each weight to the intercept.
 
 </StepThrough>
 
@@ -372,6 +366,8 @@ assert abs(sigma_small - 2.94) < 5e-3
 zs_small = [(x - 5) / sigma_small for x in small]
 assert all(abs(z - t) < 5e-3 for z, t in zip(zs_small, (-1.02, -0.34, 1.36)))
 assert [min_max(x, [2, 4, 30]) for x in (2, 4, 30)] == [0, Fraction(1, 14), 1]
+assert mean([2, 4, 30]) == 12 and variance([2, 4, 30]) == Fraction(488, 3)
+assert abs((4 - 12) / math.sqrt(488 / 3) - (-0.63)) < 5e-3
 
 # Four houses: areas in square meters and bedrooms.
 areas, beds = [135, 65, 105, 95], [2, 2, 4, 4]
@@ -382,6 +378,7 @@ mm_areas = [min_max(a, areas) for a in areas]
 assert mm_areas == [1, 0, Fraction(4, 7), Fraction(3, 7)]
 assert mean(mm_areas) == Fraction(1, 2) and variance(mm_areas) == Fraction(25, 196)  # sigma 5/14
 assert z_score(150, areas) == 2 and min_max(150, areas) == Fraction(17, 14)
+assert max(z_score(a, areas) for a in areas) == Fraction(7, 5) < 2  # the new house is past the largest z
 assert abs(float(Fraction(17, 14)) - 1.21) < 5e-3
 
 # Nearest neighbor of P among Q and R, by squared distance.
@@ -407,6 +404,7 @@ curvatures = {
     "min-max": (2 * variance(mm_areas), 2 * variance([min_max(b, beds) for b in beds])),
     "standardized": (Fraction(2), Fraction(2)),
 }
+assert mean([min_max(b, beds) for b in beds]) == Fraction(1, 2)  # min-max means: 1/2, not 0
 assert curvatures["raw"] == (1250, 2) and curvatures["min-max"] == (Fraction(25, 98), Fraction(1, 2))
 kappa = {name: max(c) / min(c) for name, c in curvatures.items()}
 assert kappa == {"raw": 625, "min-max": Fraction(49, 25), "standardized": 1}
@@ -453,7 +451,7 @@ except ValueError as error:
 ## Check yourself
 
 <CheckYourself level="intuition" question="Test A is re-marked out of 100, so every mark doubles. What happens to Ana's min-max score and z-score?">
-Neither changes: 5/6 and 1. Doubling multiplies the mean, the standard deviation, the smallest and the largest mark by 2, and the 2 cancels in each ratio (the StepThrough above).
+Neither changes: 5/6 and 1. Doubling multiplies the mean, the standard deviation, the smallest and the largest mark by 2, and the 2 cancels in each ratio: (36 − 21)/(39 − 21) becomes (72 − 42)/(78 − 42) = 30/36 = 5/6, and (36 − 30)/6 becomes (72 − 60)/12 = 1.
 </CheckYourself>
 
 <CheckYourself level="standard" question="After fitting on the nine test B marks, a new student scores 70. Find the min-max score and the z-score.">
