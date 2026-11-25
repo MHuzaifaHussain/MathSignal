@@ -32,6 +32,8 @@ export type HandleId = VectorId | 'sum';
 export type Axis = 'x' | 'y';
 export type Direction = 1 | -1;
 export type Sign = 'positive' | 'zero' | 'negative';
+/** The two weights a slider sets: c scales a, and d scales b on the combine setup. */
+export type Weight = 'c' | 'd';
 
 /** Check's verdict, or `shown` when the reader gave up and pressed "Show the answer" (no "Yes" for that). */
 export type Feedback =
@@ -44,10 +46,11 @@ export type Feedback =
 /**
  * Why a press did nothing. `edge`: the thing would leave the board. `limit`: the setup keeps its entries smaller
  * than the board. `sum-edge`: a + b would leave the board. `locked`: a and b are the question until Check.
+ * `no-guess`: Check needs a guess picked first (the sign on align).
  */
 export type Refusal =
 	| { kind: 'locked' }
-	| { kind: 'no-sign' }
+	| { kind: 'no-guess' }
 	| { kind: 'edge' | 'limit' | 'sum-edge'; id: HandleId; axis: Axis; direction: Direction };
 
 /** The previous preset on the align setup, so the board can compare a · b before and after. */
@@ -85,7 +88,7 @@ export type Action =
 	| { type: 'show-answer' }
 	| { type: 'preset'; id: string }
 	| { type: 'stage'; stage: Stage }
-	| { type: 'scalar'; value: number }
+	| { type: 'scalar'; weight: Weight; value: number }
 	| { type: 'other-order'; on: boolean }
 	| { type: 'table'; open: boolean }
 	| { type: 'reset' };
@@ -269,7 +272,7 @@ function check(setup: Setup, state: VectorState): VectorState {
 			return { ...state, ...guided.recordCheck(state, result === 'match', 'retry'), feedback: { kind: 'cart', result }, refusal: null };
 		}
 		case 'align': {
-			if (state.signGuess === null) return { ...state, refusal: { kind: 'no-sign' } };
+			if (state.signGuess === null) return { ...state, refusal: { kind: 'no-guess' } };
 			const correct = state.signGuess === signOf(dot(state.a, state.b));
 			return { ...state, ...guided.recordCheck(state, correct, 'once'), feedback: { kind: 'sign', guess: state.signGuess, correct }, refusal: null };
 		}
@@ -308,11 +311,16 @@ function applyPreset(setup: Setup, state: VectorState, id: string): VectorState 
 	return { ...withValues(state, { a: preset.a, b: preset.b, scalar: preset.scalar ?? state.scalar }), activePreset: id, before };
 }
 
-function setScalar(setup: Setup, state: VectorState, value: number): VectorState {
+/** The weights a setup's sliders set: c on scale, nothing elsewhere. */
+function settableWeights(setup: Setup): readonly Weight[] {
+	return setup.kind === 'scale' ? ['c'] : [];
+}
+
+function setScalar(setup: Setup, state: VectorState, weight: Weight, value: number): VectorState {
 	const range = setup.scaleRange;
-	if (setup.kind !== 'scale' || !range) return state;
-	if (value < range.min || value > range.max) throw new Error(`VectorBoard2D: c = ${value} is outside ${range.min < 0 ? '−' : ''}${Math.abs(range.min)} to ${range.max}.`);
-	if (!isOnScale(range, value)) throw new Error(`VectorBoard2D: c = ${value} isn't a step of ${range.step}.`);
+	if (!range || !settableWeights(setup).includes(weight)) return state;
+	if (value < range.min || value > range.max) throw new Error(`VectorBoard2D: ${weight} = ${value} is outside ${range.min < 0 ? '−' : ''}${Math.abs(range.min)} to ${range.max}.`);
+	if (!isOnScale(range, value)) throw new Error(`VectorBoard2D: ${weight} = ${value} isn't a step of ${range.step}.`);
 	return value === state.scalar ? state : withValues(state, { scalar: value });
 }
 
@@ -335,7 +343,7 @@ export function reducer(state: VectorState, action: Action): VectorState {
 		case 'stage':
 			return stageAllowed(state, action.stage) ? { ...state, stage: action.stage, refusal: null } : state;
 		case 'scalar':
-			return setScalar(setup, state, action.value);
+			return setScalar(setup, state, action.weight, action.value);
 		case 'other-order':
 			return setup.kind === 'add' && state.checked ? { ...state, otherOrder: action.on, refusal: null } : state;
 		case 'table':

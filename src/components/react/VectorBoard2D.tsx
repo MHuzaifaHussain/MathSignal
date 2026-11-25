@@ -97,7 +97,7 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
   const moveScalar = useCallback((value: number) => {
     lastAction.current = null;
     scalarMoving.current = true;
-    dispatch({ type: "scalar", value });
+    dispatch({ type: "scalar", weight: "c", value });
   }, []);
 
   const commitScalar = useCallback(
@@ -105,7 +105,7 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
       const current = stateRef.current;
       if (!scalarMoving.current || current.scalar !== value) return;
       scalarMoving.current = false;
-      announce(announcementFor(current, { type: "scalar", value }));
+      announce(announcementFor(current, { type: "scalar", weight: "c", value }));
     },
     [announce],
   );

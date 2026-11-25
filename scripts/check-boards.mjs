@@ -4024,14 +4024,18 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	assert.equal(vd.scalarFormat(-0.5), '−0.5');
 	// Before Check the readout gives coordinates only, never the verdict words.
 	for (const c of [-2, -1.5, -1, -0.5, 0, 0.5, 1, 1.5, 2]) {
-		const state = runVec('trips-scale', { type: 'scalar', value: c });
+		const state = runVec('trips-scale', { type: 'scalar', weight: 'c', value: c });
 		assertNone(answerFreeText(state), ['opposite', 'same length', 'same direction', 'times as long', 'half as long', 'no direction'], `trips-scale c = ${c}`);
-		assertNone([vd.announcementFor(state, { type: 'scalar', value: c })], ['opposite', 'same length'], `trips-scale commit c = ${c}`);
+		assertNone([vd.announcementFor(state, { type: 'scalar', weight: 'c', value: c })], ['opposite', 'same length'], `trips-scale commit c = ${c}`);
 	}
-	assert.equal(vd.announcementFor(runVec('trips-scale', { type: 'scalar', value: -1 }), { type: 'scalar', value: -1 }), 'c = −1. c a = (−2, −1).');
-	assert.throws(() => vst.reducer(scaleOpen, { type: 'scalar', value: 0.3 }), /step of 0.5/);
-	assert.throws(() => vst.reducer(scaleOpen, { type: 'scalar', value: 9 }), /outside −2 to 2/);
-	const scaleCheck = (c) => runVec('trips-scale', { type: 'scalar', value: c }, { type: 'check' });
+	assert.equal(vd.announcementFor(runVec('trips-scale', { type: 'scalar', weight: 'c', value: -1 }), { type: 'scalar', weight: 'c', value: -1 }), 'c = −1. c a = (−2, −1).');
+	assert.throws(() => vst.reducer(scaleOpen, { type: 'scalar', weight: 'c', value: 0.3 }), (error) => error.message === "VectorBoard2D: c = 0.3 isn't a step of 0.5.");
+	assert.throws(() => vst.reducer(scaleOpen, { type: 'scalar', weight: 'c', value: 9 }), (error) => error.message === 'VectorBoard2D: c = 9 is outside −2 to 2.');
+	// trips-scale has one slider, so a weight d action changes nothing.
+	assert.equal(vst.reducer(scaleOpen, { type: 'scalar', weight: 'd', value: 2 }), scaleOpen);
+	// validateSetup checks every kind; an unknown one fails instead of passing unchecked.
+	assert.throws(() => vs.validateSetup({ ...vs.getSetup('align'), kind: 'spin' }), /has kind "spin", which validateSetup doesn't check/);
+	const scaleCheck = (c) => runVec('trips-scale', { type: 'scalar', weight: 'c', value: c }, { type: 'check' });
 	assert.equal(vd.feedbackLine(scaleCheck(-1)), 'Yes. −1 × a = (−2, −1): the same length as a, pointing the opposite way.');
 	assert.equal(vd.feedbackLine(scaleCheck(1)), 'Not quite. 1 × a is a itself. Find a c that turns it around.');
 	assert.equal(vd.feedbackLine(scaleCheck(0)), 'Not quite. 0 × a is the zero vector: it has no direction and no length left.');
@@ -4050,8 +4054,8 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	assert.deepEqual(scalePreset('turn-around'), ['−1 × a = (−2, −1): opposite direction, same length.']);
 	assert.deepEqual(scalePreset('zero'), ['0 × a = (0, 0): the zero vector. It has no direction.']);
 	assert.equal(vd.ochreElement(vst.reducer(scaleDone, { type: 'preset', id: 'zero' })), null);
-	assert.deepEqual(vd.readoutLines(runVec('trips-scale', { type: 'check' }, { type: 'check' }, { type: 'show-answer' }, { type: 'scalar', value: 1 })), ['1 × a = (2, 1): the same as a.']);
-	assert.deepEqual(vd.readoutLines(vst.reducer(scaleDone, { type: 'scalar', value: -1.5 })), ['−1.5 × a = (−3, −1.5): opposite direction, 1.5 times as long. Length 1.5 × √5 ≈ 3.35.']);
+	assert.deepEqual(vd.readoutLines(runVec('trips-scale', { type: 'check' }, { type: 'check' }, { type: 'show-answer' }, { type: 'scalar', weight: 'c', value: 1 })), ['1 × a = (2, 1): the same as a.']);
+	assert.deepEqual(vd.readoutLines(vst.reducer(scaleDone, { type: 'scalar', weight: 'c', value: -1.5 })), ['−1.5 × a = (−3, −1.5): opposite direction, 1.5 times as long. Length 1.5 × √5 ≈ 3.35.']);
 	assert.deepEqual(vd.tableRows(vst.reducer(scaleDone, { type: 'preset', id: 'half' })).map((row) => [row.name, row.x, row.y, row.length]), [
 		['a', '2', '1', '√5 ≈ 2.24'],
 		['c a', '1', '0.5', '≈ 1.12'],
@@ -4060,7 +4064,7 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	assert.deepEqual(runVec('trips-scale', ...steps('a', 'x', 1, 3)).a, [2, 1]);
 	assert.equal(vd.refusalText(runVec('trips-scale'), { kind: 'limit', id: 'a', axis: 'x', direction: 1 }), "a can't go further east: its entries stay between −2 and 2.");
 	assert.equal(vd.listsLine(vst.reducer(scaleOpen, { type: 'stage', stage: 'lists' })), 'c a = (1 × 2, 1 × 1) = (2, 1)');
-	assert.equal(vd.listsLine(runVec('trips-scale', { type: 'stage', stage: 'lists' }, { type: 'scalar', value: -1.5 })), 'c a = ((−1.5) × 2, (−1.5) × 1) = (−3, −1.5)');
+	assert.equal(vd.listsLine(runVec('trips-scale', { type: 'stage', stage: 'lists' }, { type: 'scalar', weight: 'c', value: -1.5 })), 'c a = ((−1.5) × 2, (−1.5) × 1) = (−3, −1.5)');
 
 	// ---- cart-push ----
 	const cartOpen = vst.initialState('cart-push');
@@ -4140,7 +4144,7 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	// Check is refused, with a visible reason, until a sign is picked.
 	const noSign = vst.reducer(alignOpen, { type: 'check' });
 	assert.equal(noSign.checked, false);
-	assert.equal(noSign.refusal?.kind, 'no-sign');
+	assert.equal(noSign.refusal?.kind, 'no-guess');
 	assert.equal(vd.announcementFor(noSign, { type: 'check' }), 'Pick positive, zero or negative first.');
 	assert.equal(vd.checkRefusal(alignOpen), 'Pick positive, zero or negative first.');
 	assert.equal(vd.checkRefusal(vst.reducer(alignOpen, { type: 'sign', sign: 'zero' })), null);

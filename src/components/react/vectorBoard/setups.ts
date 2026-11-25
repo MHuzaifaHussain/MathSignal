@@ -243,10 +243,25 @@ function checkAlign(setup: Setup): void {
 /** Throws, naming the setup, if any part of it can't work. */
 export function validateSetup(setup: Setup): Setup {
 	checkShape(setup);
-	if (setup.kind === 'add') checkAdd(setup);
-	if (setup.kind === 'scale') checkScale(setup);
-	if (setup.kind === 'cart') checkCart(setup);
-	if (setup.kind === 'align') checkAlign(setup);
+	// One case per kind, so a new kind can't skip its checks: the default fails the type check and the build.
+	switch (setup.kind) {
+		case 'add':
+			checkAdd(setup);
+			break;
+		case 'scale':
+			checkScale(setup);
+			break;
+		case 'cart':
+			checkCart(setup);
+			break;
+		case 'align':
+			checkAlign(setup);
+			break;
+		default: {
+			const unknownKind: never = setup.kind;
+			throw setupError(setup, `has kind "${String(unknownKind)}", which validateSetup doesn't check.`);
+		}
+	}
 	return setup;
 }
 

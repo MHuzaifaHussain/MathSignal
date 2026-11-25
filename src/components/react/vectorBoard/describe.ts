@@ -745,7 +745,7 @@ export function stepperGroupName(state: VectorState, id: VectorId, axis: Axis): 
 
 export function refusalText(state: VectorState, refusal: Refusal): string {
 	if (refusal.kind === 'locked') return LOCKED_TEXT;
-	if (refusal.kind === 'no-sign') return NO_SIGN_TEXT;
+	if (refusal.kind === 'no-guess') return NO_SIGN_TEXT;
 	const name = sentenceName(state, refusal.id);
 	const way = DIRECTION_WORDS[refusal.axis][refusal.direction];
 	if (refusal.kind === 'edge') return `${name} can't go further ${way}: the board ends at ${numberText(refusal.direction * VIEW_LIMIT)}.`;
@@ -757,7 +757,7 @@ export function refusalText(state: VectorState, refusal: Refusal): string {
 
 /** A stable key per distinct reason, so the board can give each visible note an id. */
 export function refusalKey(refusal: Refusal): string {
-	if (refusal.kind === 'locked' || refusal.kind === 'no-sign') return refusal.kind;
+	if (refusal.kind === 'locked' || refusal.kind === 'no-guess') return refusal.kind;
 	return `${refusal.kind}-${refusal.id}-${refusal.axis}-${refusal.direction}`;
 }
 
