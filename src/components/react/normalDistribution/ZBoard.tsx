@@ -107,11 +107,15 @@ export default function ZBoard({ setup: setupId }: { setup: ZSetupId }) {
     if (text) announce(text);
   }, [announce]);
 
+  // stateRef moves with the action, as in `send`, so a commit that arrives before this change renders compares
+  // against the value the slider just set, not a stale one, and never goes silent.
   const slide = useCallback(
     (value: number) => {
       dragged.current = false;
       sliderGuard.moved("value");
-      dispatch({ type: "value", index: indexFromSlider(presetOf(stateRef.current), value) });
+      const action: ZAction = { type: "value", index: indexFromSlider(presetOf(stateRef.current), value) };
+      stateRef.current = zReducer(stateRef.current, action);
+      dispatch(action);
     },
     [sliderGuard],
   );
