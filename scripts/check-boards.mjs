@@ -5278,4 +5278,196 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	for (const declaration of declarations) assert.ok(block[1].includes(`${declaration};`), `the .ms-normal-z forced-colors block sets ${declaration}`);
 }
 
+// ---- FunctionCurve: exact catalog, rulers and the hill model (decision 0020) ----
+{
+	const fcFunctions = await import('../src/components/react/functionCurve/functions.ts');
+	const fcModel = await import('../src/components/react/functionCurve/model.ts');
+	const fcHill = await import('../src/components/react/functionCurve/hill.ts');
+	const F = fraction;
+	const { CATALOG } = fcFunctions;
+	const fcText = fcModel.numberText;
+
+	// Every number is written in full: decimalText with 9 places, digits from integer long division, a real minus sign,
+	// whole numbers without a point, and a loud failure on a value that never terminates.
+	assert.equal(fcModel.CURVE_DECIMAL_PLACES, 9);
+	assert.equal(fcText(F(9, 16)), '0.5625');
+	assert.equal(fcText(F(2001, 1000)), '2.001');
+	assert.equal(fcText(F(2001, 1000000)), '0.002001');
+	assert.equal(fcText(F(-6754501, 1000000000)), '−0.006754501');
+	assert.equal(fcText(F(3, 1)), '3');
+	assert.equal(fcText(F(-1, 1)), '−1');
+	assert.equal(fcText(F(0, 1)), '0');
+	assert.equal(fcText(F(3381754501, 1000000000)), '3.381754501');
+	assert.throws(() => fcText(F(1, 3)), (error) => error.message === 'boardText.decimalText: 1/3 has no exact decimal within 9 places');
+	assert.deepEqual(fcModel.spokenNumber(F(-3, 4)), { visible: '−0.75', spoken: 'minus 0.75' });
+	assert.deepEqual(fcModel.spokenNumber(F(5, 2)), { visible: '2.5', spoken: '2.5' });
+
+	// The catalog: names, corners exactly at ReLU's and |x|'s 0, and loud failures for a broken curve.
+	assert.deepEqual(
+		Object.values(CATALOG).map((f) => [f.id, f.variable, f.name.visible, f.name.spoken]),
+		[
+			['square', 'x', 'y = x²', 'y equals x squared'],
+			['cube', 'x', 'y = x³', 'y equals x cubed'],
+			['loss', 'w', 'L(w) = (w − 3)²', 'L of w equals w minus 3, squared'],
+			['relu', 'x', 'ReLU', 'relu'],
+			['abs', 'x', '|x|', 'the absolute value of x'],
+		],
+	);
+	assert.deepEqual(fcFunctions.slopeAt(CATALOG.relu, F(0, 1)), { kind: 'corner', left: F(0, 1), right: F(1, 1) });
+	assert.deepEqual(fcFunctions.slopeAt(CATALOG.abs, F(0, 1)), { kind: 'corner', left: F(-1, 1), right: F(1, 1) });
+	assert.deepEqual(fcFunctions.evaluate(CATALOG.loss, F(0, 1)), F(9, 1));
+	{
+		const piece = (from, to, ...coefficients) => ({ from, to, coefficients: coefficients.map((value) => F(value, 1)) });
+		const broken = (pieces) => ({ id: 'relu', name: { visible: 'b', spoken: 'b' }, variable: 'x', pieces });
+		assert.throws(() => fcFunctions.validateFunction(broken([piece(null, F(0, 1), 0), piece(F(0, 1), null, 1, 1)]), [F(0, 1)]), /functions: relu jumps at 0/);
+		assert.throws(() => fcFunctions.validateFunction(broken([piece(null, F(0, 1), 0), piece(F(1, 1), null, 0, 1)]), [F(0, 1)]), /functions: relu has a gap after piece 0/);
+		assert.throws(() => fcFunctions.validateFunction(broken([piece(null, F(0, 1), 0), piece(F(0, 1), null, 0, 1)]), []), /relu has corners at \[0\], expected \[\]/);
+		assert.throws(() => fcFunctions.validateFunction(broken([piece(F(0, 1), null, 0, 1)]), []), /must have open ends on both sides/);
+		// Two pieces that meet smoothly are no corner: x² written as two halves.
+		fcFunctions.validateFunction(broken([piece(null, F(0, 1), 0, 0, 1), piece(F(0, 1), null, 0, 0, 1)]), []);
+	}
+
+	// The grids: x in half steps over each curve's range, h on the 12-value ladder (never 0).
+	const fcGrid = { square: [-4, 4], cube: [-3, 3], loss: [0, 12], relu: [-4, 4], abs: [-4, 4] };
+	const fcLadder = [[-1, 1], [-1, 2], [-1, 4], [-1, 10], [-1, 100], [-1, 1000], [1, 1000], [1, 100], [1, 10], [1, 4], [1, 2], [1, 1]].map(([n, d]) => F(n, d));
+	const fcPoints = (curve) => {
+		const [low, high] = fcGrid[curve];
+		return Array.from({ length: high - low + 1 }, (_, index) => low + index);
+	};
+	assert.throws(() => fcModel.ruler(CATALOG.square, F(1, 1), F(0, 1)), (error) => error.message === 'model.ruler: h = 0 on square at x = 1 has no slope');
+
+	// Every other grid point is exact: the only corners on the grids are ReLU's and |x|'s at 0.
+	for (const curve of Object.keys(fcGrid)) {
+		for (const xIndex of fcPoints(curve)) {
+			const kind = fcFunctions.slopeAt(CATALOG[curve], F(xIndex, 2)).kind;
+			assert.equal(kind, (curve === 'relu' || curve === 'abs') && xIndex === 0 ? 'corner' : 'exact', `${curve} at ${xIndex / 2}`);
+		}
+	}
+
+	// The sweep: every curve, every x on its grid, every h. Nothing throws (add, subtract, multiply, divide, compare), and
+	// the end, rise and slope print exactly as an independent BigInt reference in units of 10⁻⁹ writes them.
+	{
+		const SCALE = 10n ** 9n;
+		const referenceValue = (coefficients, thousandths) => coefficients.reduce((sum, coefficient, power) => sum + (BigInt(coefficient) * BigInt(thousandths) ** BigInt(power) * SCALE) / 1000n ** BigInt(power), 0n);
+		const integerCoefficients = { square: [0, 0, 1], cube: [0, 0, 0, 1], loss: [9, -6, 1], relu: null, abs: null };
+		const referenceAt = (curve, thousandths) => {
+			if (curve === 'relu') return thousandths <= 0 ? 0n : (BigInt(thousandths) * SCALE) / 1000n;
+			if (curve === 'abs') return (BigInt(Math.abs(thousandths)) * SCALE) / 1000n;
+			return referenceValue(integerCoefficients[curve], thousandths);
+		};
+		const scaledText = (scaled) => {
+			const sign = scaled < 0n ? '−' : '';
+			const magnitude = scaled < 0n ? -scaled : scaled;
+			const digits = (magnitude % SCALE).toString().padStart(9, '0').replace(/0+$/, '');
+			return `${sign}${magnitude / SCALE}${digits ? `.${digits}` : ''}`;
+		};
+		const hThousandths = [-1000, -500, -250, -100, -10, -1, 1, 10, 100, 250, 500, 1000];
+		let rulers = 0;
+		const matches = { square: 0, cube: 0, loss: 0, relu: 0, abs: 0 };
+		for (const curve of Object.keys(fcGrid)) {
+			const f = CATALOG[curve];
+			for (const xIndex of fcPoints(curve)) {
+				const a = F(xIndex, 2);
+				fcLadder.forEach((h, hIndex) => {
+					const r = fcModel.ruler(f, a, h);
+					const start = xIndex * 500;
+					const end = start + hThousandths[hIndex];
+					const rise = referenceAt(curve, end) - referenceAt(curve, start);
+					assert.equal((rise * 1000n) % BigInt(hThousandths[hIndex]), 0n, `${curve} slope at ${xIndex / 2}, h ${hThousandths[hIndex] / 1000} terminates within 9 places`);
+					const where = `${curve} at ${xIndex / 2}, h = ${fcText(h)}`;
+					assert.equal(fcText(r.end.x), scaledText(BigInt(end) * 10n ** 6n), where);
+					assert.equal(fcText(r.end.y), scaledText(referenceAt(curve, end)), where);
+					assert.equal(fcText(r.rise), scaledText(rise), where);
+					assert.equal(fcText(r.slope), scaledText((rise * 1000n) / BigInt(hThousandths[hIndex])), where);
+					const result = fcModel.miss(f, a, h);
+					if (result?.kind === 'matches') matches[curve] += 1;
+					rulers += 1;
+				});
+			}
+		}
+		assert.equal(rulers, 12 * (9 + 7 + 13 + 9 + 9));
+		// Every ruler that stays on one straight piece matches the tangent: 94 on ReLU and 94 on |x|, none on a smooth curve.
+		assert.deepEqual(matches, { square: 0, cube: 0, loss: 0, relu: 94, abs: 94 });
+	}
+	// The widest cells: S-curve at x = −1.5, h = −0.001.
+	{
+		const widest = fcModel.ruler(CATALOG.cube, F(-3, 2), F(-1, 1000));
+		assert.equal(fcText(widest.rise), '−0.006754501');
+		assert.equal(fcText(widest.slope), '6.754501');
+		assert.equal(fcText(widest.end.y), '−3.381754501');
+		assert.equal(fcText(fcModel.ruler(CATALOG.square, F(1, 1), F(1, 1000)).rise), '0.002001');
+	}
+
+	// Identities over the whole ladder: on x² the slope is 2a + h and the miss is |h|, above for h > 0; on Loss the slope
+	// is 2(a − 3) + h; on x³ it is 3a² + 3ah + h².
+	for (const h of fcLadder) {
+		for (const xIndex of fcPoints('square')) {
+			const a = F(xIndex, 2);
+			assert.deepEqual(fcModel.ruler(CATALOG.square, a, h).slope, addFractions(multiplyFractions(F(2, 1), a), h));
+			const result = fcModel.miss(CATALOG.square, a, h);
+			assert.deepEqual(result, { kind: h.numerator > 0 ? 'above' : 'below', size: fcModel.absolute(h) });
+		}
+		for (const xIndex of fcPoints('loss')) {
+			const a = F(xIndex, 2);
+			assert.deepEqual(fcModel.ruler(CATALOG.loss, a, h).slope, addFractions(multiplyFractions(F(2, 1), subtractFractions(a, F(3, 1))), h));
+		}
+		for (const xIndex of fcPoints('cube')) {
+			const a = F(xIndex, 2);
+			const expected = addFractions(addFractions(multiplyFractions(F(3, 1), multiplyFractions(a, a)), multiplyFractions(F(3, 1), multiplyFractions(a, h))), multiplyFractions(h, h));
+			assert.deepEqual(fcModel.ruler(CATALOG.cube, a, h).slope, expected);
+		}
+	}
+	// No tangent at a corner, so no miss there.
+	assert.equal(fcModel.miss(CATALOG.relu, F(0, 1), F(1, 2)), null);
+	assert.equal(fcModel.miss(CATALOG.abs, F(0, 1), F(-1, 4)), null);
+
+	// Lines through the corner: all 14 (preset, s) pairs.
+	{
+		const verdicts = (curve, slopes) => slopes.map(([n, d]) => fcModel.cornerLine(CATALOG[curve], F(n, d)));
+		assert.deepEqual(verdicts('relu', [[-1, 2], [0, 1], [1, 4], [1, 2], [3, 4], [1, 1], [3, 2]]), ['above-left', 'under', 'under', 'under', 'under', 'under', 'above-right']);
+		assert.deepEqual(verdicts('abs', [[-3, 2], [-1, 1], [-1, 2], [0, 1], [1, 2], [1, 1], [3, 2]]), ['above-left', 'under', 'under', 'under', 'under', 'under', 'above-right']);
+		assert.throws(() => fcModel.cornerLine(CATALOG.square, F(1, 2)), /square is not two straight pieces meeting at a corner/);
+	}
+
+	// offBoard is strict: a point on the edge is on the board.
+	{
+		const view = { x: [F(-5, 2), F(5, 2)], y: [F(-1, 2), F(9, 2)] };
+		assert.equal(fcModel.offBoard(view, { x: F(-5, 2), y: F(0, 1) }), false);
+		assert.equal(fcModel.offBoard(view, { x: F(5, 2), y: F(5, 2) }), false);
+		assert.equal(fcModel.offBoard(view, { x: F(-5, 2), y: F(25, 4) }), true);
+		assert.equal(fcModel.offBoard(view, { x: F(-3, 1), y: F(0, 1) }), true);
+	}
+
+	// Slice mode's model: the hill 8 − x² − 2y², its slices, partial slopes and contours.
+	{
+		const point = (x, y) => ({ x: F(x[0], x[1]), y: F(y[0], y[1]) });
+		const pinned = [
+			[point([1, 1], [1, 1]), F(5, 1), [F(-2, 1), F(-4, 1)]],
+			[point([0, 1], [0, 1]), F(8, 1), [F(0, 1), F(0, 1)]],
+			[point([2, 1], [0, 1]), F(4, 1), [F(-4, 1), F(0, 1)]],
+			[point([-1, 1], [1, 2]), F(13, 2), [F(2, 1), F(-2, 1)]],
+		];
+		for (const [where, height, [east, north]] of pinned) {
+			assert.deepEqual(fcHill.hillHeight(where), height);
+			assert.deepEqual(fcHill.partials(where), { east, north });
+			// A slice through the point has the same height there, and its slope is the partial.
+			assert.deepEqual(fcFunctions.evaluate(fcHill.sliceOf(where, 'east'), where.x), height);
+			assert.deepEqual(fcFunctions.evaluate(fcHill.sliceOf(where, 'north'), where.y), height);
+			assert.deepEqual(fcFunctions.slopeAt(fcHill.sliceOf(where, 'east'), where.x), { kind: 'exact', value: east });
+			assert.deepEqual(fcFunctions.slopeAt(fcHill.sliceOf(where, 'north'), where.y), { kind: 'exact', value: north });
+		}
+		const one = point([1, 1], [1, 1]);
+		assert.equal(fcText(fcModel.ruler(fcHill.sliceOf(one, 'east'), one.x, F(1, 10)).slope), '−2.1');
+		assert.equal(fcText(fcModel.ruler(fcHill.sliceOf(one, 'north'), one.y, F(1, 10)).slope), '−4.2');
+		const contours = fcHill.contourLevels([7, 5, 3, 1].map((c) => F(c, 1)));
+		contours.forEach((contour, index) => {
+			const room = [1, 3, 5, 7][index];
+			assert.ok(contour.semiAxisX > 0 && contour.semiAxisY > 0, `contour ${index} has positive semi-axes`);
+			assert.ok(Math.abs(contour.semiAxisX ** 2 - room) < 1e-12 && Math.abs(2 * contour.semiAxisY ** 2 - room) < 1e-12, `contour ${index} is x² + 2y² = ${room}`);
+		});
+		assert.equal(contours[0].semiAxisX, 1);
+		assert.throws(() => fcHill.contourLevels([F(8, 1)]), /height 8 is at or above the peak 8/);
+	}
+}
+
 console.log('Board check passed.');
