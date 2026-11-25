@@ -1289,6 +1289,12 @@ function positionSentence(state: VectorState, handle: HandleId): string {
 }
 
 /**
+ * A "the" that spoken() puts at the start of a sentence. Only that word is capitalized: vector names such
+ * as a, b and v keep their case, since a capital reads as a matrix.
+ */
+const SENTENCE_START_THE = /(^|\. )the (?=(?:L1 norm|L2 norm|L-infinity norm|length) of )/g;
+
+/**
  * The live region's wording of the board's symbols. Screen readers at their default punctuation level skip ‖ and ·,
  * which would turn "a · b ÷ ‖a‖" into "a b divided by a", so announcements say them as the notation registry does:
  * "a dot b", "the length of a", "u hat", "theta". The visible text keeps the symbols.
@@ -1301,7 +1307,8 @@ export function spoken(text: string): string {
 		.replace(/‖([^‖]+)‖/g, 'the length of $1')
 		.replace(/ · /g, ' dot ')
 		.replace(/û/g, 'u hat')
-		.replace(/θ/g, 'theta');
+		.replace(/θ/g, 'theta')
+		.replace(SENTENCE_START_THE, '$1The ');
 }
 
 /** What a handle's move says when it ends: where things are now, any edge it reached, and stacked handles. */

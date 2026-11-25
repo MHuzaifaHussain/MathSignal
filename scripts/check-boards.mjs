@@ -4951,7 +4951,7 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	]);
 	assert.deepEqual(vd.planeLabels(afterNumbers).map((label) => label.text), ['v', 'L1']);
 	assert.equal(vd.announcementFor(afterNumbers, numbers), 'Showing numbers.');
-	assert.equal(vd.announcementFor(checked(numbers, pinAt([2, 2])), pinAt([2, 2])), 'Your pin: (2, 2). the L1 norm of v = 4, the L2 norm of v = √8 ≈ 2.83, the L-infinity norm of v = 2. Your pin is on the diamond.');
+	assert.equal(vd.announcementFor(checked(numbers, pinAt([2, 2])), pinAt([2, 2])), 'Your pin: (2, 2). The L1 norm of v = 4, the L2 norm of v = √8 ≈ 2.83, the L-infinity norm of v = 2. Your pin is on the diamond.');
 	assert.equal(vd.announcementFor(checked(pinAt([2, 2])), pinAt([2, 2])), 'Your pin: 2 blocks east, 2 blocks north. Walking 4 blocks, flying about 2.83, king 2 moves. Your pin is on the diamond.');
 	// The length and the shape.
 	assert.equal(vd.announcementFor(checked({ type: 'radius', value: 3 }), { type: 'radius', value: 3 }), 'Length r = 3. Your pin is outside the diamond.');
@@ -5015,7 +5015,9 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	// The nesting preset's Numbers lesson.
 	assert.equal(vd.readoutLines(checked(numbers, { type: 'preset', id: 'nested-shapes' }))[4], 'At length 4 the diamond sits inside the circle, and the circle inside the square: ‖v‖∞ = 3 ≤ ‖v‖₂ = √18 ≈ 4.24 ≤ ‖v‖₁ = 6.');
 	// Spoken names for the norms, before the generic "the length of".
-	assert.equal(vd.spoken('‖v‖₁ = 4, ‖v‖₂ = √8, ‖v‖∞ = 2, ‖a‖'), 'the L1 norm of v = 4, the L2 norm of v = √8, the L-infinity norm of v = 2, the length of a');
+	assert.equal(vd.spoken('‖v‖₁ = 4, ‖v‖₂ = √8, ‖v‖∞ = 2, ‖a‖'), 'The L1 norm of v = 4, the L2 norm of v = √8, the L-infinity norm of v = 2, the length of a');
+	// A sentence that starts with a spoken name is capitalized; vector names keep their lowercase.
+	assert.equal(vd.spoken('a = (1, 2), b = (3, 4). a · b = 11. ‖a‖ = √5.'), 'a = (1, 2), b = (3, 4). a dot b = 11. The length of a = √5.');
 	// Reset folds the table and covers the answer again.
 	assert.deepEqual(vst.reducer(checked({ type: 'table', open: true }, { type: 'preset', id: 'diagonal' }), { type: 'reset' }), open);
 	// Every reachable sentence: no em dash, never the banned word, American spelling.
