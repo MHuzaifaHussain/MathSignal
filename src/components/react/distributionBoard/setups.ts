@@ -262,3 +262,9 @@ export function getSetup(id: string): Setup {
 	}
 	return VALIDATED_SETUPS[id as SetupId];
 }
+
+export const OUTCOME_SETUP_IDS = Object.keys(VALIDATED_SETUPS) as readonly SetupId[];
+
+export function isOutcomeSetupId(id: string): id is SetupId {
+	return Object.hasOwn(VALIDATED_SETUPS, id);
+}

@@ -1353,6 +1353,164 @@
 	text-align: start;
 }
 
+/* ── DistributionBoard family and density modes: plain columns on a fixed scale (decision 0018) ──
+ * Columns, the curve, axis and ticks are ink; gridlines and their labels are muted, dotted except a solid "1 per cm".
+ * One ochre element per board: the read column or the shaded stretch. μ is pink and σ blue through the shared marks.
+ * Labels sit in HTML, so nothing stretches with the plot. */
+.ms-cols {
+	--ms-cols-gutter: 28px;
+	--ms-cols-gap: 4px;
+	--ms-cols-stub: 2px;
+	position: relative;
+	container: ms-cols / inline-size;
+	color: var(--ms-board-ink);
+	font-family: var(--ms-font-ui);
+	print-color-adjust: exact;
+}
+
+.ms-cols.is-touching {
+	--ms-cols-gap: 1px;
+}
+
+.ms-cols-marks,
+.ms-cols-ticks,
+.ms-cols-area {
+	margin-inline-start: var(--ms-cols-gutter);
+}
+
+.ms-cols-plot {
+	position: relative;
+	block-size: 10rem;
+	border-block-end: 2px solid var(--ms-board-ink);
+}
+
+.ms-cols-area {
+	position: absolute;
+	inset-block: 0;
+	inset-inline: 0;
+}
+
+.ms-cols-grid {
+	position: absolute;
+	inset-inline: 0;
+	bottom: var(--y);
+	border-block-start: 1px dotted var(--ms-board-ink-muted);
+}
+
+.ms-cols-grid.is-solid {
+	border-block-start-style: solid;
+}
+
+.ms-cols-grid-label {
+	position: absolute;
+	inset-inline-start: 0;
+	bottom: 1px;
+	max-inline-size: var(--ms-cols-gutter);
+	font: 500 0.6875rem/1 var(--ms-font-mono);
+	color: var(--ms-board-ink-muted);
+}
+
+.ms-cols-column {
+	position: absolute;
+	bottom: 0;
+	left: calc(var(--left) + var(--ms-cols-gap) / 2);
+	inline-size: calc(var(--width) - var(--ms-cols-gap));
+	block-size: max(var(--ms-cols-stub), var(--h));
+	background-color: var(--ms-board-ink);
+}
+
+.ms-cols-column[hidden] {
+	display: none;
+}
+
+.ms-cols-column.is-look {
+	box-sizing: border-box;
+	border: 2px solid var(--ms-attention);
+	background-color: var(--ms-highlight);
+}
+
+.ms-cols-ticks {
+	position: relative;
+	block-size: 1.25rem;
+	margin-block-start: 2px;
+}
+
+.ms-cols-tick {
+	position: absolute;
+	left: var(--x);
+	transform: translateX(-50%);
+	font: 500 0.8125rem var(--ms-font-mono);
+	font-variant-numeric: tabular-nums;
+}
+
+.ms-cols-tick:empty {
+	inset-block-start: -2px;
+	block-size: 5px;
+	border-inline-start: 1px solid var(--ms-board-ink);
+}
+
+/* Every value is labeled while each column is at least 24px wide (11 columns plus the gutter); below that, every
+ * second one (columnAxis.tickEvery). */
+@container ms-cols (max-width: 292px) {
+	.ms-cols-tick.is-thin {
+		visibility: hidden;
+	}
+}
+
+.ms-cols-unit {
+	margin: 0.25rem 0 0;
+	font-size: 0.8125rem;
+	text-align: end;
+	color: var(--ms-board-ink-muted);
+}
+
+.ms-dist-guess {
+	margin: 0 0 0.25rem;
+	font-size: 0.9375rem;
+	color: var(--ms-board-ink);
+}
+
+.ms-dist-verdict {
+	margin: 0 0 0.75rem;
+}
+
+/* The n ≤ 3 coin sequences, two to a row. */
+.ms-dist-sequences {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0 1rem;
+	margin: 0.75rem 0 0;
+	padding: 0;
+	list-style: none;
+	font: 500 0.875rem/1.6 var(--ms-font-mono);
+	color: var(--ms-board-ink);
+}
+
+/* "Read the bar for": a − / + pair around its output. */
+.ms-read-pair {
+	display: grid;
+	gap: 0.25rem;
+}
+
+.ms-read-pair-label {
+	font: 600 0.875rem var(--ms-font-ui);
+	color: var(--ms-board-ink);
+}
+
+.ms-read-pair-row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.ms-read-pair-output {
+	flex: 1 1 auto;
+	min-inline-size: 0;
+	font-size: 0.9375rem;
+	text-align: center;
+	color: var(--ms-board-ink);
+}
+
 /* ── DescriptiveStats: a short list of numbers as dot plots, a box plot and tables (decision 0015) ──
  * Dots, axes, the median diamond, quartiles, box, whiskers, fences and distance arms are ink. Ochre marks one
  * "look here" dot (the pick, the child being moved, Ana's marks) and is never text. Pink is only the mean and the
@@ -1996,6 +2154,11 @@
 		transition: transform 300ms ease;
 	}
 
+	/* Family and density columns grow to their new height; the shaded stretch never animates. */
+	.ms-cols-column {
+		transition: block-size 150ms ease;
+	}
+
 	/* DescriptiveStats: bars slide into line; dots slide when a value changes. */
 	.ms-desc-bar {
 		transition: left 300ms ease;
@@ -2091,6 +2254,22 @@
 
 	.ms-dist-row.is-linked {
 		border-color: Highlight;
+	}
+
+	/* Family and density columns draw in CanvasText; the read column keeps a 3px Highlight ring; gridlines are GrayText. */
+	.ms-cols-column {
+		forced-color-adjust: none;
+		background-color: CanvasText;
+	}
+
+	.ms-cols-column.is-look {
+		background-color: Canvas;
+		outline: 3px solid Highlight;
+		border-color: CanvasText;
+	}
+
+	.ms-cols-grid {
+		border-block-start-color: GrayText;
 	}
 
 	/* DescriptiveStats: filled marks draw in CanvasText; the "look here" dot and bar keep a Highlight ring. */

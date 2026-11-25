@@ -1787,7 +1787,7 @@ const assertTableFoldSays = (where, announce) => {
 	assert.ok(printRule > screenRule, 'a later @media print block shows .ms-board-table-fold.is-folded, so print wins');
 	// Every component a board wraps in <TableFold>, as a path under src/components/react/. A file joins in the commit
 	// that wraps it, and must stay read-only: folding a control would hide a keyboard path.
-	const TABLE_FOLD_CHILDREN = ['bayesTheorem/CountTable.tsx', 'descriptiveStats/StatsTables.tsx', 'distributionBoard/DistributionTable.tsx', 'vectorBoard/CoordinateTable.tsx'];
+	const TABLE_FOLD_CHILDREN = ['bayesTheorem/CountTable.tsx', 'descriptiveStats/StatsTables.tsx', 'distributionBoard/DistributionTable.tsx', 'distributionBoard/ValueTable.tsx', 'vectorBoard/CoordinateTable.tsx'];
 	const CONTROL_TOKENS = ['<button', '<input', '<select', '<textarea', 'tabIndex', 'onFocus', 'onKeyDown', 'onClick'];
 	const wrapped = new Set();
 	for (const file of filesUnder('src/components/react').filter((name) => name.endsWith('.tsx'))) {
@@ -2378,6 +2378,37 @@ const bigChoose = (n, k) => {
 		for (const text of texts) for (const token of ['σ', 'Variance', '√']) assert.ok(!text.includes(token), `before the switch: "${text}"`);
 	}
 	for (const text of [...famSay.readoutLines(open).map((line) => line.visible), famSay.statusLine(open).visible]) assert.ok(!text.includes('2.5'), text);
+}
+// One island, one mode per setup: every id belongs to exactly one registry.
+{
+	const boardSetups = await import('../src/components/react/distributionBoard/boardSetups.ts');
+	assert.equal(boardSetups.boardModeOf('candy-spread'), 'outcomes');
+	assert.equal(boardSetups.boardModeOf('coins-binomial'), 'family');
+	assert.equal(boardSetups.boardModeOf('binomial-spread'), 'family');
+	assert.throws(() => boardSetups.boardModeOf('toString'), /unknown setup "toString". Known setups: candy-build, .*coins-binomial, binomial-spread/);
+	assert.equal(new Set(boardSetups.allBoardSetupIds()).size, boardSetups.allBoardSetupIds().length);
+}
+// The family chart: 11 value columns on 0..10, the read column the one ochre column, every second tick thin.
+{
+	const { familyChart } = await import('../src/components/react/distributionBoard/familyChart.ts');
+	const opening = familyChart(famState.initialFamilyState('coins-binomial'));
+	assert.equal(opening.columns.length, 11);
+	assert.deepEqual(opening.columns.filter((column) => column.look).map((column) => column.key), ['2']);
+	assert.deepEqual(opening.columns.filter((column) => column.nonzero).map((column) => column.key), ['0', '1', '2', '3'], 'values above n draw nothing');
+	assert.equal(opening.columns[1].height, 75, '3/8 on a 0..1/2 scale');
+	assert.equal(opening.columns[0].left, 0);
+	assert.equal(opening.columns[10].left + opening.columns[10].width, 100);
+	assert.deepEqual(opening.ticks.filter((tick) => !tick.thin).map((tick) => tick.label), ['0', '2', '4', '6', '8', '10']);
+	assert.deepEqual(opening.gridlines, [{ y: 50, label: '0.25', solid: false }, { y: 100, label: '0.5', solid: false }]);
+	assert.deepEqual(opening.marks, { mu: null, sigma: null, ghost: null }, 'no pink or blue on the coin board');
+	assert.equal(opening.unit, 'Number of heads');
+	const right = familyChart(famRun('binomial-spread', { type: 'spread', on: true }, { type: 'preset', name: 'Right 9 in 10' }));
+	assert.equal(right.marks.mu.x, columnAxis.across(9, 0, 10));
+	assert.equal(right.marks.mu.label, 'μ = 9');
+	assert.ok(right.marks.sigma.from > 0 && right.marks.sigma.to < 100 && right.marks.ghost.label === 'Before: σ ≈ 1.58');
+	// A tiny chance still draws: nonzero with a height the CSS lifts to the 2 px stub.
+	const tiny = right.columns.find((column) => column.key === '0');
+	assert.ok(tiny.nonzero && tiny.height > 0 && tiny.height < 0.01);
 }
 // Shared scans over every family string: no banned word, no British form, no old switch name, short table tokens.
 {
