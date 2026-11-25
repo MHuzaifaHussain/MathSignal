@@ -1800,7 +1800,7 @@ const assertTableFoldSays = (where, announce) => {
 	assert.ok(printRule > screenRule, 'a later @media print block shows .ms-board-table-fold.is-folded, so print wins');
 	// Every component a board wraps in <TableFold>, as a path under src/components/react/. A file joins in the commit
 	// that wraps it, and must stay read-only: folding a control would hide a keyboard path.
-	const TABLE_FOLD_CHILDREN = ['bayesTheorem/CountTable.tsx', 'descriptiveStats/StatsTables.tsx', 'distributionBoard/DistributionTable.tsx', 'distributionBoard/ValueTable.tsx', 'functionCurve/CurveTables.tsx', 'normalDistribution/ZTable.tsx', 'vectorBoard/CoordinateTable.tsx'];
+	const TABLE_FOLD_CHILDREN = ['bayesTheorem/CountTable.tsx', 'descriptiveStats/StatsTables.tsx', 'distributionBoard/DistributionTable.tsx', 'distributionBoard/ValueTable.tsx', 'functionCurve/CurveTables.tsx', 'normalDistribution/ZTable.tsx', 'vectorBoard/CoordinateTable.tsx', 'vectorBoard/NormTable.tsx'];
 	const CONTROL_TOKENS = ['<button', '<input', '<select', '<textarea', 'tabIndex', 'onFocus', 'onKeyDown', 'onClick'];
 	const wrapped = new Set();
 	for (const file of filesUnder('src/components/react').filter((name) => name.endsWith('.tsx'))) {
@@ -3853,7 +3853,7 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 
 	// Setups: a typo fails loudly, and validateSetup refuses what the board can't draw or answer.
 	assert.throws(() => vs.getSetup('trips-ad'), /unknown setup "trips-ad"/);
-	assert.deepEqual(Object.keys(vs.SETUPS), ['trips-add', 'trips-scale', 'cart-push', 'align', 'span-reach', 'span-shape']);
+	assert.deepEqual(Object.keys(vs.SETUPS), ['trips-add', 'trips-scale', 'cart-push', 'align', 'span-reach', 'span-shape', 'city-walk']);
 	const broken = (id, change) => ({ ...vs.getSetup(id), ...change });
 	assert.throws(() => vs.validateSetup(broken('trips-add', { presets: [...vs.getSetup('trips-add').presets, { id: 'x', label: 'X', a: [1, 1], b: [1, 1] }] })), /presets; the most is 4/);
 	assert.throws(() => vs.validateSetup(broken('trips-add', { presets: [{ id: 'far', label: 'Far', a: [4, 4], b: [3, 0] }, { id: 'ok', label: 'Ok', a: [1, 1], b: [1, 1] }] })), /a \+ b = \(7, 4\) leaves the board/);
@@ -4331,7 +4331,7 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 
 	// The tray: one slider on trips-scale, two on span-reach, none elsewhere; the c slider keeps "Scale c".
 	assert.deepEqual(Object.fromEntries(Object.keys(vs.SETUPS).map((id) => [id, vst.sliderWeights(vs.getSetup(id))])), {
-		'trips-add': [], 'trips-scale': ['c'], 'cart-push': [], align: [], 'span-reach': ['c', 'd'], 'span-shape': [],
+		'trips-add': [], 'trips-scale': ['c'], 'cart-push': [], align: [], 'span-reach': ['c', 'd'], 'span-shape': [], 'city-walk': [],
 	});
 	assert.deepEqual(vd.WEIGHT_LABELS, { c: 'Scale c', d: 'Scale d' });
 	assert.equal(vd.weightDescription('c')(1), 'scale c, 1');
@@ -4703,7 +4703,7 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 
 	// ---- Table view and the step strip (decision 0017) ----
 	// The − / + buttons live in an always-visible strip; only the read-only coordinate table folds.
-	const revealVec = (id) => runVec(id, { type: 'sign', sign: 'negative' }, { type: 'span-guess', guess: 'plane' }, { type: 'check' }, { type: 'check' }, { type: 'show-answer' });
+	const revealVec = (id) => runVec(id, { type: 'sign', sign: 'negative' }, { type: 'span-guess', guess: 'plane' }, { type: 'shape-guess', guess: 'circle' }, { type: 'check' }, { type: 'check' }, { type: 'show-answer' });
 	for (const id of Object.keys(vs.SETUPS)) {
 		const setup = vs.getSetup(id);
 		assert.equal(vst.initialState(id).tableOpen, false, id);
@@ -4775,12 +4775,12 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	for (const id of Object.keys(vs.SETUPS)) {
 		const open = vst.initialState(id);
 		// Exactly one ochre element at a time, and nothing pink or blue.
-		assert.ok([null, 'guess', 'sum', 'scaled', 'shadow', 'flag', 'span'].includes(vd.ochreElement(open)));
+		assert.ok([null, 'guess', 'sum', 'scaled', 'shadow', 'flag', 'span', 'route', 'ball'].includes(vd.ochreElement(open)));
 		// Handles and steppers agree: every handle's point is in the table, and every label ends without a period.
 		for (const handle of vd.handlesFor(open)) assert.ok(!handle.label.endsWith('.'), handle.label);
 		// No em dash, and never the word the site's style bans for a question put to the reader (spelled in parts
 		// so this file doesn't contain it).
-		const states = [open, runVec(id, { type: 'check' }), runVec(id, { type: 'sign', sign: 'negative' }, { type: 'span-guess', guess: 'plane' }, { type: 'check' }, { type: 'check' }, { type: 'show-answer' })];
+		const states = [open, runVec(id, { type: 'check' }), runVec(id, { type: 'sign', sign: 'negative' }, { type: 'span-guess', guess: 'plane' }, { type: 'shape-guess', guess: 'circle' }, { type: 'check' }, { type: 'check' }, { type: 'show-answer' })];
 		for (const state of states) {
 			for (const text of allText(state)) {
 				assert.ok(!text.includes('—'), `${id}: em dash in "${text}"`);
@@ -4807,6 +4807,229 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	// The tray draws one slider per weight from sliderWeights, so a combine setup never gets a third slider.
 	const boardSource = readFileSync('src/components/react/VectorBoard2D.tsx', 'utf8');
 	assert.ok(/sliderWeights\(setup\)\.map/.test(boardSource) && !/CONTROL_LABELS\.scale/.test(boardSource), 'VectorBoard2D renders its sliders outside sliderWeights');
+}
+
+// ---- VectorBoard2D: city-walk (decision 0021) ----
+// One pin measured three ways. Every sentence is pinned; before Check nothing names a shape, the bird or the king.
+{
+	const vs = await import('../src/components/react/vectorBoard/setups.ts');
+	const vst = await import('../src/components/react/vectorBoard/state.ts');
+	const vd = await import('../src/components/react/vectorBoard/describe.ts');
+	const nd = await import('../src/components/react/vectorBoard/normsDescribe.ts');
+	const walk = (...actions) => actions.reduce(vst.reducer, vst.initialState('city-walk'));
+	const checked = (...actions) => walk({ type: 'shape-guess', guess: 'diamond' }, { type: 'check' }, ...actions);
+	const numbers = { type: 'stage', stage: 'arrows' };
+	const pinAt = (to) => ({ type: 'move', id: 'a', to });
+
+	// Opening: the pin at (3, 4), Blocks, nothing picked, the walk only.
+	const open = walk();
+	assert.equal(vs.getSetup('city-walk').kind, 'norms');
+	assert.deepEqual([open.a, open.stage, open.measure, open.radius, open.shapeGuess, open.activePreset], [[3, 4], 'trips', 'l1', 4, null, null]);
+	assert.equal(vd.statusLine(open), 'Your pin: 3 blocks east, 4 blocks north. Walking the streets: 3 + 4 = 7 blocks. Which corners are 4 blocks from home by the shortest walk? Pick a shape, then press Check.');
+	assert.deepEqual(vd.readoutLines(open), []);
+	assert.equal(vd.boardLabel(open), 'A street grid with your pin. Move the pin, pick the shape the 4-block corners make, then press Check; or use the buttons under the plane.');
+	assert.deepEqual(vd.handlesFor(open).map((handle) => handle.label), ['Your pin. It also moves with the buttons under the plane']);
+	assert.deepEqual(nd.SHAPE_OPTIONS.map((option) => option.label), ['Circle', 'Diamond: tips on the streets', 'Square: sides along the streets']);
+	assert.equal(nd.NORMS_LABELS.shapeLegend, "Corners 4 blocks' walk from home make a");
+	assert.equal(vd.checkRefusal(open), 'Pick a shape first.');
+	assert.equal(vd.ochreElement(open), 'route');
+	assert.equal(vd.ochreElement(walk(pinAt([0, 0]))), null);
+	assert.deepEqual(vd.stepperRows(open).map((row) => [row.name, row.x, row.y, row.spoken]), [['Your pin', '3', '4', 'Your pin: 3 blocks east, 4 blocks north.']]);
+	assert.deepEqual(vd.stepperHeaders(open), { x: 'Blocks east', y: 'Blocks north' });
+	assert.equal(vd.stepperName(open, 'a', 'x', 1), 'Move your pin 1 east');
+	assert.equal(vd.stepperGroupName(open, 'a', 'y'), 'Move your pin north or south');
+	assert.deepEqual(nd.normRows(open), [{ measure: 'l1', name: 'Walk (L1)', how: '|3| + |4|', length: '7' }]);
+	assert.equal(vd.tableFoldSentence(open), 'It has one row, the walk, with how it is counted and its length.');
+	assert.equal(vd.announcementFor(walk({ type: 'table', open: true }), { type: 'table', open: true }), 'Table shown under the switch. It has one row, the walk, with how it is counted and its length.');
+	assert.deepEqual(nd.drawnMeasures(open), []);
+	assert.deepEqual(nd.cornerDots(open), []);
+	assert.equal(vd.chalkNote(open), null);
+	// The Numbers stage, the shape, its length and the presets all wait for Check.
+	assert.equal(vst.stageAllowed(open, 'arrows'), false);
+	assert.deepEqual(vd.stageOptions(vs.getSetup('city-walk')), [{ value: 'trips', label: 'Blocks' }, { value: 'arrows', label: 'Numbers' }]);
+	for (const action of [numbers, { type: 'measure', measure: 'l2' }, { type: 'radius', value: 2 }, { type: 'preset', id: 'diagonal' }]) assert.equal(vst.reducer(open, action), open, action.type);
+	assert.deepEqual(vd.presetsFor(open), []);
+	// Check needs a shape.
+	const refused = walk({ type: 'check' });
+	assert.deepEqual([refused.checked, refused.refusal], [false, { kind: 'no-guess' }]);
+	assert.equal(vd.announcementFor(refused, { type: 'check' }), 'Pick a shape first.');
+	assert.equal(vd.announcementFor(walk({ type: 'shape-guess', guess: 'square' }), { type: 'shape-guess', guess: 'square' }), 'Your guess: a square.');
+
+	// Pin announcements before Check: the walk only.
+	assert.equal(vd.announcementFor(walk(pinAt([2, 2])), pinAt([2, 2])), 'Your pin: 2 blocks east, 2 blocks north. Walking: 2 + 2 = 4 blocks.');
+	assert.equal(vd.announcementFor(walk(pinAt([-1, -3])), pinAt([-1, -3])), 'Your pin: 1 block west, 3 blocks south. Walking: 1 + 3 = 4 blocks.');
+	assert.equal(vd.announcementFor(walk(pinAt([0, 0])), pinAt([0, 0])), 'Your pin is at home. Walking: 0 blocks.');
+	assert.equal(vd.announcementFor(walk(pinAt([4, 0])), pinAt([4, 0])), 'Your pin: 4 blocks east. Walking: 4 + 0 = 4 blocks.');
+	assert.equal(vd.announcementFor(walk(pinAt([0, 1])), pinAt([0, 1])), 'Your pin: 1 block north. Walking: 0 + 1 = 1 block.');
+	const atEdge = walk(...Array.from({ length: 2 }, () => ({ type: 'step', id: 'a', axis: 'x', direction: 1 })));
+	assert.equal(vd.announcementFor(atEdge, { type: 'step', id: 'a', axis: 'x', direction: 1 }), 'Your pin: 5 blocks east, 4 blocks north. Walking: 5 + 4 = 9 blocks. Your pin is at the right edge of the board.');
+	const pastEdge = vst.reducer(atEdge, { type: 'step', id: 'a', axis: 'x', direction: 1 });
+	assert.equal(vd.announcementFor(pastEdge, { type: 'step', id: 'a', axis: 'x', direction: 1 }), "Your pin can't go further east: the board ends at 5.");
+
+	// Nothing names the answer before Check, at every pin, with any shape picked (case-insensitive). The three option
+	// labels and the reader's own guess echo are the only places the shapes are named.
+	const FORBIDDEN = ['diamond', 'circle', 'square', 'bird', 'flying', 'king', '√', '‖'];
+	// Whole words, any case ("walking" holds "king"); the two symbols anywhere.
+	const forbiddenPattern = (word) => (/^\w+$/.test(word) ? new RegExp(String.raw`\b${word}\b`, 'i') : new RegExp(word));
+	for (let x = -5; x <= 5; x += 1) {
+		for (let y = -5; y <= 5; y += 1) {
+			for (const guess of [null, 'diamond', 'circle', 'square']) {
+				const state = walk(pinAt([x, y]), ...(guess ? [{ type: 'shape-guess', guess }] : []));
+				const texts = [
+					vd.boardLabel(state),
+					vd.statusLine(state),
+					...vd.readoutLines(state),
+					...vd.tableRows(state).flatMap((row) => [row.name, row.x, row.y, row.length, row.spoken]),
+					...vd.handlesFor(state).map((handle) => handle.label),
+					...vd.planeLabels(state).map((label) => label.text),
+					...vd.refusalNotes(state).map((note) => note.text),
+					...nd.normRows(state).flatMap((row) => [row.name, row.how, row.length]),
+					vd.tableFoldSentence(state),
+					vd.checkRefusal(state) ?? '',
+					vd.announcementFor(state, pinAt([x, y])),
+					nd.NORMS_LABELS.shapeLegend,
+				];
+				for (const text of texts) for (const word of FORBIDDEN) assert.ok(!forbiddenPattern(word).test(text), `city-walk before Check at (${x}, ${y}): "${text}" says "${word}"`);
+			}
+		}
+	}
+
+	// Verdicts, one-shot: every pick reveals.
+	const verdicts = Object.fromEntries(['diamond', 'circle', 'square'].map((guess) => [guess, walk({ type: 'shape-guess', guess }, { type: 'check' })]));
+	assert.equal(vd.feedbackLine(verdicts.diamond), 'Yes. The 16 corners 4 blocks from home by the shortest walk make a diamond, with its tips on the four streets through home, 4 blocks out. The corner 2 east and 2 north is a 2 + 2 = 4 block walk, the same as 4 east.');
+	assert.equal(vd.feedbackLine(verdicts.circle), 'Not quite. A circle is what the bird gets. The corner 2 east and 2 north is a 2 + 2 = 4 block walk, the same as 4 east, yet it sits closer in. The walking corners make a diamond.');
+	assert.equal(
+		vd.feedbackLine(verdicts.square),
+		'Not quite. The corner 4 east and 4 north is a 4 + 4 = 8 block walk, not 4. A diamond is a square turned on its corner. The walking corners make that one, with its tips on the streets, not the one with its sides along them.',
+	);
+	for (const state of Object.values(verdicts)) assert.deepEqual([state.checked, vst.reducer(state, { type: 'show-answer' }) === state], [true, true]);
+
+	// After Check: Blocks.
+	const after = checked();
+	assert.equal(vd.statusLine(after), 'Move your pin, change the shape or the length r, or try a preset.');
+	assert.equal(vd.boardLabel(after), 'A street grid with your pin and the shape of every point one length from home. Move the pin, change the shape or the length r, or use the buttons under the plane.');
+	assert.deepEqual(vd.readoutLines(after), [
+		'Walking the streets: 3 + 4 = 7 blocks.',
+		'Flying straight: 5 blocks.',
+		'A chess king: 4 moves, the bigger of 3 and 4.',
+		'The ochre diamond: every corner 4 blocks from home by the shortest walk. Your pin is outside it.',
+	]);
+	assert.equal(vd.ochreElement(after), 'ball');
+	assert.deepEqual(vd.chalkNote(after), { long: 'same length, three shapes', short: 'three rulers' });
+	assert.equal(nd.cornerDots(after).length, 16);
+	assert.deepEqual(nd.drawnMeasures(after), ['l1']);
+	assert.deepEqual(vd.planeLabels(after).map((label) => label.text), ['east', 'north', 'home', 'v', 'walk']);
+	assert.deepEqual(nd.measureOptions(after).map((option) => option.label), ['Walk', 'Bird', 'King', 'All three']);
+	assert.deepEqual(nd.normRows(after), [
+		{ measure: 'l1', name: 'Walk (L1)', how: '|3| + |4|', length: '7' },
+		{ measure: 'l2', name: 'Bird (L2)', how: '√(3² + 4²)', length: '5' },
+		{ measure: 'linf', name: 'King (L∞)', how: 'max(|3|, |4|)', length: '4' },
+	]);
+	assert.equal(vd.tableFoldSentence(after), 'It has a row each for the walk, the bird and the king, with how each is counted and its length.');
+	assert.deepEqual(vd.readoutLines(checked({ type: 'measure', measure: 'l2' })).slice(-1), ['The ochre circle: every point exactly 4 blocks from home, flying straight. Your pin is outside it.']);
+	assert.deepEqual(vd.readoutLines(checked({ type: 'measure', measure: 'linf' })).slice(-1), ['The ochre square: every corner 4 king moves from home at the fewest. Your pin is on it.']);
+	assert.deepEqual(vd.readoutLines(checked(pinAt([1, 1]))).slice(-1), ['The ochre diamond: every corner 4 blocks from home by the shortest walk. Your pin is inside it.']);
+	assert.deepEqual(vd.readoutLines(checked(pinAt([2, 2]))).slice(1, 3), ['Flying straight: about 2.83 blocks.', 'A chess king: 2 moves, all diagonal.']);
+	assert.deepEqual(vd.readoutLines(checked(pinAt([0, 0]))).slice(0, 3), ['Walking the streets: 0 blocks.', 'Flying straight: 0 blocks.', 'A chess king: 0 moves.']);
+	assert.deepEqual(vd.readoutLines(checked(pinAt([0, 1]))).slice(0, 3), ['Walking the streets: 0 + 1 = 1 block.', 'Flying straight: 1 block.', 'A chess king: 1 move, the bigger of 0 and 1.']);
+	// After Check: Numbers.
+	const afterNumbers = checked(numbers);
+	assert.deepEqual(vd.readoutLines(afterNumbers), [
+		'‖v‖₁ = |3| + |4| = 7.',
+		'‖v‖₂ = √(3² + 4²) = √25 = 5.',
+		'‖v‖∞ = max(|3|, |4|) = 4.',
+		'The ochre diamond: every point with ‖v‖₁ = 4. Your pin has ‖v‖₁ = 7, so it is outside.',
+	]);
+	assert.deepEqual(nd.measureOptions(afterNumbers).map((option) => option.label), ['L1', 'L2', 'L∞', 'All three']);
+	assert.deepEqual(vd.readoutLines(checked(numbers, pinAt([-1, 3]))).slice(0, 2), ['‖v‖₁ = |−1| + |3| = 4.', '‖v‖₂ = √((−1)² + 3²) = √10 ≈ 3.16.']);
+	assert.deepEqual(vd.readoutLines(checked(numbers, pinAt([2, 2]), { type: 'measure', measure: 'l2' })).slice(1), [
+		'‖v‖₂ = √(2² + 2²) = √8 ≈ 2.83.',
+		'‖v‖∞ = max(|2|, |2|) = 2.',
+		'The ochre circle: every point with ‖v‖₂ = 4. Your pin has ‖v‖₂ = √8 ≈ 2.83, so it is inside.',
+	]);
+	assert.deepEqual(vd.planeLabels(afterNumbers).map((label) => label.text), ['v', 'L1']);
+	assert.equal(vd.announcementFor(afterNumbers, numbers), 'Showing numbers.');
+	assert.equal(vd.announcementFor(checked(numbers, pinAt([2, 2])), pinAt([2, 2])), 'Your pin: (2, 2). the L1 norm of v = 4, the L2 norm of v = √8 ≈ 2.83, the L-infinity norm of v = 2. Your pin is on the diamond.');
+	assert.equal(vd.announcementFor(checked(pinAt([2, 2])), pinAt([2, 2])), 'Your pin: 2 blocks east, 2 blocks north. Walking 4 blocks, flying about 2.83, king 2 moves. Your pin is on the diamond.');
+	// The length and the shape.
+	assert.equal(vd.announcementFor(checked({ type: 'radius', value: 3 }), { type: 'radius', value: 3 }), 'Length r = 3. Your pin is outside the diamond.');
+	assert.throws(() => checked({ type: 'radius', value: 2.5 }), /isn't on the slider/);
+	assert.throws(() => checked({ type: 'radius', value: 6 }), /isn't on the slider/);
+	assert.equal(nd.radiusDescription(4), 'length r, 4');
+	assert.equal(vd.announcementFor(checked({ type: 'measure', measure: 'l2' }), { type: 'measure', measure: 'l2' }), 'Showing the circle: every point exactly 4 blocks from home, flying straight.');
+	assert.equal(vd.announcementFor(checked(numbers, { type: 'measure', measure: 'l2' }), { type: 'measure', measure: 'l2' }), 'Showing the circle: every point with the L2 norm of v = 4.');
+	assert.equal(vd.announcementFor(checked({ type: 'measure', measure: 'all' }), { type: 'measure', measure: 'all' }), 'Showing all three shapes at length 4.');
+	// Changing the shape clears the verdict, as every value change does.
+	assert.equal(vd.feedbackLine(checked({ type: 'measure', measure: 'l2' })), null);
+	// All three: ink outlines, no ochre, no corner dots, the pin's side for each shape.
+	const all = checked({ type: 'measure', measure: 'all' });
+	assert.deepEqual([vd.ochreElement(all), nd.drawnMeasures(all), nd.cornerDots(all)], [null, ['l1', 'l2', 'linf'], []]);
+	assert.deepEqual(vd.planeLabels(all).map((label) => label.text), ['east', 'north', 'home', 'v', 'walk', 'bird', 'king']);
+	assert.equal(
+		vd.readoutLines(all)[3],
+		'The three shapes at length 4: the diamond for the walk (solid), the circle for the bird (dashed) and the square for the king (dotted). Your pin is outside the diamond and the circle but on the square.',
+	);
+	assert.equal(vd.readoutLines(checked({ type: 'measure', measure: 'all' }, { type: 'radius', value: 5 }))[3].split('. ').at(-1), 'Your pin is outside the diamond, on the circle and inside the square.');
+	assert.equal(vd.readoutLines(checked({ type: 'measure', measure: 'all' }, pinAt([1, 1])))[3].split('. ').at(-1), 'Your pin is inside all three.');
+
+	// Presets: each sets the pin, the shape and the length. The readouts add the preset's lesson; a press says the
+	// preset's whole sentence.
+	assert.deepEqual(vd.presetsFor(after).map((preset) => preset.label), ["Friend's house", 'Straight street', 'Diagonal', 'Nested shapes']);
+	const presetCases = [
+		['friends-house', 'Walking 7 blocks, flying 5, king 4 moves. Your pin is on the circle.', '‖v‖₁ = 7, ‖v‖₂ = 5, ‖v‖∞ = 4. Your pin is on the circle.', null],
+		['straight-street', 'On a straight street all three agree: 4. The three shapes touch here.', 'On a straight street all three norms agree: 4. The three shapes touch here.', 'On a straight street all three agree: 4. The three shapes touch here.'],
+		[
+			'diagonal',
+			'Walking 2 + 2 = 4 blocks, flying about 2.83 blocks, king 2 moves. On the diagonal the three measures differ most. Your pin is on the diamond.',
+			'‖v‖₁ = 4, ‖v‖₂ = √8 ≈ 2.83, ‖v‖∞ = 2. On the diagonal the three norms differ most. Your pin is on the diamond.',
+			'On the diagonal the three measures differ most.',
+		],
+		[
+			'nested-shapes',
+			"At length 4 the diamond sits inside the circle, and the circle inside the square. Your pin is outside the diamond and the circle but inside the square. King 3, bird about 4.24, walk 6: the king's count is never more than the bird's, and the bird's never more than the walk.",
+			'At length 4 the diamond sits inside the circle, and the circle inside the square. Your pin is outside the diamond and the circle but inside the square: ‖v‖∞ = 3 ≤ ‖v‖₂ = √18 ≈ 4.24 ≤ ‖v‖₁ = 6.',
+			"At length 4 the diamond sits inside the circle, and the circle inside the square: the king's count is never more than the bird's, and the bird's never more than the walk.",
+		],
+	];
+	for (const [id, blocksSentence, numbersSentence, lesson] of presetCases) {
+		const preset = { type: 'preset', id };
+		const blocksState = checked(preset);
+		assert.equal(blocksState.activePreset, id);
+		assert.equal(vd.announcementFor(blocksState, preset), blocksSentence);
+		assert.equal(vd.announcementFor(checked(numbers, preset), preset), vd.spoken(numbersSentence));
+		assert.equal(vd.readoutLines(blocksState).length, lesson ? 5 : 4, id);
+		if (lesson) assert.equal(vd.readoutLines(blocksState)[4], lesson);
+		// Moving the pin, or changing the shape or its length, leaves the preset and its lesson.
+		for (const action of [pinAt([0, 0]), { type: 'measure', measure: blocksState.measure === 'l1' ? 'l2' : 'l1' }, { type: 'radius', value: blocksState.radius === 1 ? 2 : 1 }]) {
+			const moved = vst.reducer(blocksState, action);
+			assert.equal(moved.activePreset, null, `${id} after ${action.type}`);
+			assert.equal(vd.readoutLines(moved).length, 4, `${id} after ${action.type}`);
+		}
+	}
+	assert.deepEqual(
+		[checked({ type: 'preset', id: 'friends-house' })].map((state) => [state.a, state.measure, state.radius]),
+		[[[3, 4], 'l2', 5]],
+	);
+	// The nesting preset's Numbers lesson.
+	assert.equal(vd.readoutLines(checked(numbers, { type: 'preset', id: 'nested-shapes' }))[4], 'At length 4 the diamond sits inside the circle, and the circle inside the square: ‖v‖∞ = 3 ≤ ‖v‖₂ = √18 ≈ 4.24 ≤ ‖v‖₁ = 6.');
+	// Spoken names for the norms, before the generic "the length of".
+	assert.equal(vd.spoken('‖v‖₁ = 4, ‖v‖₂ = √8, ‖v‖∞ = 2, ‖a‖'), 'the L1 norm of v = 4, the L2 norm of v = √8, the L-infinity norm of v = 2, the length of a');
+	// Reset folds the table and covers the answer again.
+	assert.deepEqual(vst.reducer(checked({ type: 'table', open: true }, { type: 'preset', id: 'diagonal' }), { type: 'reset' }), open);
+	// Every reachable sentence: no em dash, never the banned word, American spelling.
+	const banned = new RegExp(['pro', 'mpt'].join(''), 'i');
+	const british = /centre|colour|metre|neighbour|favour/i;
+	for (const stage of [[], [numbers]]) {
+		for (const measure of ['l1', 'l2', 'linf', 'all']) {
+			for (let radius = 1; radius <= 5; radius += 1) {
+				for (const pin of [[3, 4], [0, 0], [-2, 5], [5, -5], [1, 0]]) {
+					const state = checked(...stage, pinAt(pin), { type: 'measure', measure }, { type: 'radius', value: radius });
+					const texts = [...vd.readoutLines(state), vd.statusLine(state), vd.announcementFor(state, pinAt(pin)), vd.announcementFor(state, { type: 'measure', measure }), vd.announcementFor(state, { type: 'radius', value: radius })];
+					for (const text of texts) assert.ok(!text.includes('—') && !banned.test(text) && !british.test(text) && !text.includes('undefined'), text);
+				}
+			}
+		}
+	}
 }
 
 // ---- vectorBoard: norms (decision 0021) ----

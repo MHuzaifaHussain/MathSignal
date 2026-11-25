@@ -27,7 +27,7 @@ import {
 	type TripGuess,
 	type Vec2,
 } from './model.ts';
-import { cartSolution, getSetup, isOnScale, type Setup, type SetupId, type Stage } from './setups.ts';
+import { cartSolution, getSetup, isOnScale, type MeasureChoice, type Setup, type SetupId, type Stage } from './setups.ts';
 
 /** The vectors a reader can step with − / +. */
 export type VectorId = 'guess' | 'a' | 'b';
@@ -38,6 +38,8 @@ export type Direction = 1 | -1;
 export type Sign = 'positive' | 'zero' | 'negative';
 /** The two weights a slider sets: c scales a, and d scales b on the combine setup. */
 export type Weight = 'c' | 'd';
+/** The norms guess: the shape every corner one walking length from home makes. */
+export type ShapeGuess = 'diamond' | 'circle' | 'square';
 
 /** Check's verdict, or `shown` when the reader gave up and pressed "Show the answer" (no "Yes" for that). */
 export type Feedback =
@@ -47,12 +49,13 @@ export type Feedback =
 	| { kind: 'sign'; guess: Sign; correct: boolean }
 	| { kind: 'combine'; result: CombineGuess }
 	| { kind: 'span'; guess: SpanKind; correct: boolean }
+	| { kind: 'shape'; guess: ShapeGuess; correct: boolean }
 	| { kind: 'shown' };
 
 /**
  * Why a press did nothing. `edge`: the thing would leave the board. `limit`: the setup keeps its entries smaller
  * than the board. `sum-edge`: a + b would leave the board. `locked`: a and b are the question until Check.
- * `no-guess`: Check needs a guess picked first (the sign on align, the span on span-choice).
+ * `no-guess`: Check needs a guess picked first (the sign on align, the span on span-choice, the shape on norms).
  */
 export type Refusal =
 	| { kind: 'locked' }
@@ -78,6 +81,10 @@ export interface VectorState extends guided.CheckProgress {
 	guess: Vec2;
 	signGuess: Sign | null;
 	spanGuess: SpanKind | null;
+	shapeGuess: ShapeGuess | null;
+	/** The shape drawn after Check on norms setups, and its length r. Other kinds never read them. */
+	measure: MeasureChoice;
+	radius: number;
 	feedback: Feedback | null;
 	stage: Stage;
 	/** The preset the values came from, or null once the reader has moved away from it. */
@@ -95,6 +102,9 @@ export type Action =
 	| { type: 'step'; id: VectorId; axis: Axis; direction: Direction }
 	| { type: 'sign'; sign: Sign }
 	| { type: 'span-guess'; guess: SpanKind }
+	| { type: 'shape-guess'; guess: ShapeGuess }
+	| { type: 'measure'; measure: MeasureChoice }
+	| { type: 'radius'; value: number }
 	| { type: 'check' }
 	| { type: 'show-answer' }
 	| { type: 'preset'; id: string }
@@ -115,7 +125,12 @@ export function setupOf(state: VectorState): Setup {
 /** The opening's d: only combine setups have one (validateSetup requires it there). */
 const openingD = (setup: Setup) => setup.opening.scalarD ?? 0;
 
+/** The ball a norms setup opens on after Check: the one its guess asks about. Other kinds read l1 at 0 and never use it. */
+const openingBall = (setup: Setup) => setup.guessBall ?? { measure: 'l1' as const, radius: 0 };
+
 function openingPreset(setup: Setup): string | null {
+	// A norms preset also sets the shape and length, which the opening never shows before Check.
+	if (setup.kind === 'norms') return null;
 	const { a, b, scalar } = setup.opening;
 	const d = openingD(setup);
 	return setup.presets.find((preset) => equals(preset.a, a) && equals(preset.b, b) && (preset.scalar ?? scalar) === scalar && (preset.scalarD ?? d) === d)?.id ?? null;
@@ -132,6 +147,9 @@ export function initialState(setupId: SetupId): VectorState {
 		guess: setup.opening.guess,
 		signGuess: null,
 		spanGuess: null,
+		shapeGuess: null,
+		measure: openingBall(setup).measure,
+		radius: openingBall(setup).radius,
 		checked: false,
 		failedChecks: 0,
 		feedback: null,
@@ -165,6 +183,7 @@ export function steppableVectors(state: VectorState): readonly VectorId[] {
 			return ['a', 'b'];
 		case 'scale':
 		case 'cart':
+		case 'norms':
 			return ['a'];
 	}
 }
@@ -189,11 +208,12 @@ export function handleIds(state: VectorState): readonly HandleId[] {
 			return state.checked ? HANDLE_LISTS.both : HANDLE_LISTS.none;
 		case 'scale':
 		case 'cart':
+		case 'norms':
 			return HANDLE_LISTS.aOnly;
 	}
 }
 
-/** a and b are the question on every setup except scale and cart, so they wait for Check there. */
+/** a and b are the question on every setup except scale, cart and norms, so they wait for Check there. */
 export function isLocked(state: VectorState, id: VectorId): boolean {
 	const kind = setupOf(state).kind;
 	if (id === 'guess') return kind !== 'add' || state.checked;
@@ -205,6 +225,7 @@ export function isLocked(state: VectorState, id: VectorId): boolean {
 			return !state.checked;
 		case 'scale':
 		case 'cart':
+		case 'norms':
 			return false;
 	}
 }
@@ -266,11 +287,11 @@ export function handleRefusals(state: VectorState, handle: HandleId): readonly R
 
 /**
  * Every value change goes through here. Stale feedback misleads (a "Yes" must never stand next to values it didn't
- * judge), so it is cleared. A change to a, b or c also leaves the preset and the before-and-after comparison; moving
- * the guess doesn't.
+ * judge), so it is cleared. A change to a, b, c, d, the shape or its length also leaves the preset and the
+ * before-and-after comparison; moving the guess doesn't.
  */
-function withValues(state: VectorState, values: Partial<Pick<VectorState, 'a' | 'b' | 'scalar' | 'scalarD' | 'guess'>>): VectorState {
-	const leavesPreset = 'a' in values || 'b' in values || 'scalar' in values || 'scalarD' in values;
+function withValues(state: VectorState, values: Partial<Pick<VectorState, 'a' | 'b' | 'scalar' | 'scalarD' | 'guess' | 'measure' | 'radius'>>): VectorState {
+	const leavesPreset = 'a' in values || 'b' in values || 'scalar' in values || 'scalarD' in values || 'measure' in values || 'radius' in values;
 	const preset = leavesPreset ? { activePreset: null, before: null } : {};
 	return { ...state, ...values, feedback: null, refusal: null, ...preset };
 }
@@ -325,6 +346,12 @@ function check(setup: Setup, state: VectorState): VectorState {
 			const correct = state.spanGuess === spanKind(state.a, state.b);
 			return { ...state, ...guided.recordCheck(state, correct, 'once'), feedback: { kind: 'span', guess: state.spanGuess, correct }, refusal: null };
 		}
+		case 'norms': {
+			if (state.shapeGuess === null) return { ...state, refusal: { kind: 'no-guess' } };
+			// The question is always the walking ball (validateSetup), whose shape is the diamond.
+			const correct = state.shapeGuess === 'diamond';
+			return { ...state, ...guided.recordCheck(state, correct, 'once'), feedback: { kind: 'shape', guess: state.shapeGuess, correct }, refusal: null };
+		}
 	}
 }
 
@@ -364,6 +391,7 @@ function showAnswer(setup: Setup, state: VectorState): VectorState {
 		}
 		case 'align':
 		case 'span-choice':
+		case 'norms':
 			return state;
 	}
 }
@@ -373,7 +401,14 @@ function applyPreset(setup: Setup, state: VectorState, id: string): VectorState 
 	const preset = setup.presets.find((candidate) => candidate.id === id);
 	if (!preset) return state;
 	const before = setup.kind === 'align' && state.activePreset !== null && state.activePreset !== id ? { presetId: state.activePreset, a: state.a, b: state.b } : null;
-	const values = { a: preset.a, b: preset.b, scalar: preset.scalar ?? state.scalar, scalarD: preset.scalarD ?? state.scalarD };
+	const values = {
+		a: preset.a,
+		b: preset.b,
+		scalar: preset.scalar ?? state.scalar,
+		scalarD: preset.scalarD ?? state.scalarD,
+		measure: preset.measure ?? state.measure,
+		radius: preset.radius ?? state.radius,
+	};
 	return { ...withValues(state, values), activePreset: id, before };
 }
 
@@ -394,6 +429,7 @@ export function sliderWeights(setup: Setup): readonly Weight[] {
 		case 'cart':
 		case 'align':
 		case 'span-choice':
+		case 'norms':
 			return WEIGHT_LISTS.none;
 	}
 }
@@ -410,6 +446,19 @@ function setScalar(setup: Setup, state: VectorState, weight: Weight, value: numb
 	return withValues(state, weight === 'c' ? { scalar: value } : { scalarD: value });
 }
 
+/** The shape and its length wait for Check: before it they are the answer. */
+function setMeasure(setup: Setup, state: VectorState, measure: MeasureChoice): VectorState {
+	if (setup.kind !== 'norms' || !state.checked || measure === state.measure) return state;
+	return withValues(state, { measure });
+}
+
+function setRadius(setup: Setup, state: VectorState, value: number): VectorState {
+	const range = setup.radiusRange;
+	if (setup.kind !== 'norms' || !range || !state.checked) return state;
+	if (!isOnScale(range, value)) throw new Error(`VectorBoard2D: length r = ${value} isn't on the slider (${range.min} to ${range.max} in steps of ${range.step}).`);
+	return value === state.radius ? state : withValues(state, { radius: value });
+}
+
 export function reducer(state: VectorState, action: Action): VectorState {
 	const setup = setupOf(state);
 	switch (action.type) {
@@ -423,6 +472,13 @@ export function reducer(state: VectorState, action: Action): VectorState {
 		case 'span-guess':
 			if (setup.kind !== 'span-choice' || state.checked) return state;
 			return { ...state, spanGuess: action.guess, refusal: null };
+		case 'shape-guess':
+			if (setup.kind !== 'norms' || state.checked) return state;
+			return { ...state, shapeGuess: action.guess, refusal: null };
+		case 'measure':
+			return setMeasure(setup, state, action.measure);
+		case 'radius':
+			return setRadius(setup, state, action.value);
 		case 'check':
 			return check(setup, state);
 		case 'show-answer':

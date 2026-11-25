@@ -13,13 +13,14 @@ import useAnnouncer from "./guided/useAnnouncer.ts";
 import useCommittedSlider from "./guided/useCommittedSlider.ts";
 import ColumnVector from "./vectorBoard/ColumnVector.tsx";
 import CoordinateTable from "./vectorBoard/CoordinateTable.tsx";
+import NormTable from "./vectorBoard/NormTable.tsx";
+import { NORMS_LABELS, SHAPE_OPTIONS, measureOptions, radiusDescription } from "./vectorBoard/normsDescribe.ts";
 import VectorPlane from "./vectorBoard/VectorPlane.tsx";
 import VectorSteppers from "./vectorBoard/VectorSteppers.tsx";
 import {
   CONTROL_LABELS,
   SIGN_OPTIONS,
   SPAN_OPTIONS,
-  STAGE_LABELS,
   WEIGHT_LABELS,
   announcementFor,
   boardLabel,
@@ -33,17 +34,20 @@ import {
   presetsFor,
   readoutLines,
   scalarFormat,
+  stageOptions,
   statusLine,
   weightDescription,
   type TableRow,
 } from "./vectorBoard/describe.ts";
 import type { Vec2 } from "./vectorBoard/model.ts";
-import { getSetup, type SetupId, type Stage } from "./vectorBoard/setups.ts";
+import { getSetup, type SetupId } from "./vectorBoard/setups.ts";
 import { handleIds, initialState, reducer, sliderWeights, stageAllowed, weightValue, type Action, type HandleId, type Weight } from "./vectorBoard/state.ts";
 import useSquarePlane from "./vectorBoard/useSquarePlane.ts";
 
-const STAGE_OPTIONS: readonly { value: Stage; label: string }[] = (["trips", "arrows", "lists"] as const).map((value) => ({ value, label: STAGE_LABELS[value] }));
 const WEIGHT_DESCRIPTIONS: Readonly<Record<Weight, (value: number) => string>> = { c: weightDescription("c"), d: weightDescription("d") };
+
+/** The sliders whose late commits the guard keeps apart: the weights c and d, and city-walk's length r. */
+type SliderKey = Weight | "radius";
 
 /** The handle with keyboard focus, or null. Mafs renders the handles in the order of `ids`. */
 function focusedHandle(plane: HTMLElement | null, ids: readonly HandleId[]): HandleId | null {
@@ -59,10 +63,11 @@ interface VectorBoard2DProps {
 
 /**
  * Vectors on a whole-number grid: two trips and their sum, a vector and its multiples, a push and its part along a
- * track, the dot product of two arrows, and linear combinations c a + d b with their span. Every setup holds its
+ * track, the dot product of two arrows, linear combinations c a + d b with their span, and one pin measured three ways
+ * with the shape of every point one length from home. Every setup holds its
  * answer until the reader commits with Check.
  * Every handle also moves with the − / + buttons under the plane; the coordinate table folds behind Table view.
- * Design and reasoning: decisions 0014 and 0017.
+ * Design and reasoning: decisions 0014, 0017 and 0021.
  */
 export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
   const setup = getSetup(setupId);
@@ -74,7 +79,7 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
   /** The handle moved since the last interaction ended; a press elsewhere in the board leaves it null. */
   const movedHandle = useRef<HandleId | null>(null);
   /** A late commit from one weight slider never talks over the other slider, a button or a handle moved since. */
-  const sliderGuard = useCommittedSlider<Weight>();
+  const sliderGuard = useCommittedSlider<SliderKey>();
   const stateRef = useRef(state);
   // A layout effect, so a commit that ends a drag (pointerup) reads the state of the drag's last move, whose passive
   // effects may still be pending.
@@ -126,6 +131,26 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
     [announce, sliderGuard],
   );
 
+  const moveRadius = useCallback(
+    (value: number) => {
+      lastAction.current = null;
+      sliderGuard.moved("radius");
+      const action: Action = { type: "radius", value };
+      stateRef.current = reducer(stateRef.current, action);
+      dispatch(action);
+    },
+    [sliderGuard],
+  );
+
+  const commitRadius = useCallback(
+    (value: number) => {
+      const current = stateRef.current;
+      if (!sliderGuard.take("radius", current.radius === value)) return;
+      announce(announcementFor(current, { type: "radius", value }));
+    },
+    [announce, sliderGuard],
+  );
+
   // A handle that sits at an edge doesn't move on an arrow press, so Mafs calls no onMove; the focused handle
   // still gets its sentence ("a is at the right edge of the board."). A pointer speaks only for the handle it
   // moved, so a plain click on a handle stays quiet.
@@ -157,6 +182,9 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
   const lists = listsLine(state);
   const presets = presetsFor(state);
   const range = setup.scaleRange;
+  const toggleTable = (open: boolean) => send({ type: "table", open });
+  const radiusRange = setup.radiusRange;
+  const norms = setup.kind === "norms";
 
   const tray = (
     <>
@@ -167,6 +195,9 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
       {/* The one-shot span guess leaves once Check has answered it, as the sign guess does. */}
       {setup.kind === "span-choice" && !state.checked && (
         <TrayChoice legend={CONTROL_LABELS.spanLegend} options={SPAN_OPTIONS} value={state.spanGuess} onChange={(guess) => send({ type: "span-guess", guess })} />
+      )}
+      {norms && !state.checked && (
+        <TrayChoice legend={NORMS_LABELS.shapeLegend} options={SHAPE_OPTIONS} value={state.shapeGuess} onChange={(guess) => send({ type: "shape-guess", guess })} />
       )}
       {range &&
         sliderWeights(setup).map((weight) => (
@@ -194,11 +225,28 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
       {checkReason && <RefusalNote id={checkReasonId}>{checkReason}</RefusalNote>}
       <StageChoice
         legend={CONTROL_LABELS.showAs}
-        options={STAGE_OPTIONS}
+        options={stageOptions(setup)}
         isAllowed={(stage) => stageAllowed(state, stage)}
         value={state.stage}
         onChange={(stage) => send({ type: "stage", stage })}
       />
+      {/* The shape and its length are the answer, so they wait for Check. */}
+      {norms && state.checked && (
+        <TrayChoice legend={NORMS_LABELS.measureLegend} options={measureOptions(state)} value={state.measure} onChange={(measure) => send({ type: "measure", measure })} />
+      )}
+      {norms && state.checked && radiusRange && (
+        <TraySlider
+          label={NORMS_LABELS.radius}
+          value={state.radius}
+          min={radiusRange.min}
+          max={radiusRange.max}
+          step={radiusRange.step}
+          onValueChange={moveRadius}
+          onValueCommitted={commitRadius}
+          format={scalarFormat}
+          describe={radiusDescription}
+        />
+      )}
       {setup.kind === "add" && state.checked && (
         <button
           type="button"
@@ -219,9 +267,16 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
           onPick={(id) => send({ type: "preset", id })}
         />
       )}
-      <TableFold open={state.tableOpen} onToggle={(open) => send({ type: "table", open })}>
-        <CoordinateTable state={state} linkedId={linkedId} onLink={setLinkedId} />
-      </TableFold>
+      {/* city-walk folds its table of the three measures; every other setup folds the coordinate table. */}
+      {norms ? (
+        <TableFold open={state.tableOpen} onToggle={toggleTable}>
+          <NormTable state={state} />
+        </TableFold>
+      ) : (
+        <TableFold open={state.tableOpen} onToggle={toggleTable}>
+          <CoordinateTable state={state} linkedId={linkedId} onLink={setLinkedId} />
+        </TableFold>
+      )}
     </>
   );
 

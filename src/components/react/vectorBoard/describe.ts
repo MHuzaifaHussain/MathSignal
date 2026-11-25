@@ -40,6 +40,24 @@ import {
 	type SpanKind,
 	type Vec2,
 } from './model.ts';
+import {
+	NORMS_LABELS,
+	measureAnnouncement,
+	normTableSentence,
+	normsBoardLabel,
+	normsChalkNote,
+	normsOchre,
+	normsPosition,
+	normsPresetAnnouncement,
+	normsReadouts,
+	normsStageLabel,
+	normsStatusLine,
+	pinSentence,
+	radiusAnnouncement,
+	shapeGuessAnnouncement,
+	shapeLabels,
+	shapeVerdict,
+} from './normsDescribe.ts';
 import { isOnScale, type ScaleRange, type Setup, type SetupKind, type Stage } from './setups.ts';
 import {
 	AXES,
@@ -64,6 +82,16 @@ import {
 } from './state.ts';
 
 export const STAGE_LABELS: Readonly<Record<Stage, string>> = { trips: 'Trips', arrows: 'Arrows', lists: 'Lists' };
+
+/** A stage's name on this setup: city-walk calls Trips and Arrows "Blocks" and "Numbers" (decision 0021). */
+export function stageLabel(setup: Setup, stage: Stage): string {
+	return setup.kind === 'norms' ? normsStageLabel(stage) : STAGE_LABELS[stage];
+}
+
+/** The stage choice's options for this setup, in order. */
+export function stageOptions(setup: Setup): readonly { value: Stage; label: string }[] {
+	return setup.stages.map((value) => ({ value, label: stageLabel(setup, value) }));
+}
 
 export const CONTROL_LABELS = {
 	check: 'Check',
@@ -138,6 +166,7 @@ function shortName(state: VectorState, id: HandleId): string {
 	if (id === 'guess') return 'your guess';
 	if (id === 'sum') return 'a + b';
 	if (id === 'a' && setupOf(state).kind === 'cart') return 'your push';
+	if (id === 'a' && setupOf(state).kind === 'norms') return 'your pin';
 	return id;
 }
 
@@ -168,6 +197,8 @@ export function boardLabel(state: VectorState): string {
 			return 'Two vectors a and b, scaled by c and d and added tip to tail. Set c and d with the sliders so c a + d b lands on the flag, then press Check.';
 		case 'span-choice':
 			return 'Two vectors a and b. Pick whether their span is only the origin, a line or the whole plane, then press Check.';
+		case 'norms':
+			return normsBoardLabel(state);
 	}
 }
 
@@ -194,6 +225,8 @@ export function statusLine(state: VectorState): string {
 			return state.checked ? 'Change c or d, drag the tips of a and b, or try a preset.' : 'Goal: set c and d so that c a + d b lands on the flag. Then press Check.';
 		case 'span-choice':
 			return state.checked ? DRAG_OR_PRESET : 'What can c a + d b reach: only the origin, a line or the whole plane? Pick your guess, then press Check.';
+		case 'norms':
+			return normsStatusLine(state, setup);
 	}
 }
 
@@ -457,6 +490,8 @@ export function readoutLines(state: VectorState): string[] {
 			return combineReadouts(state);
 		case 'span-choice':
 			return spanChoiceReadouts(state);
+		case 'norms':
+			return normsReadouts(state);
 	}
 }
 
@@ -584,6 +619,7 @@ function shownAnswer(state: VectorState): string {
 			return `Here it is. ${combineMatch(state)}`;
 		case 'align':
 		case 'span-choice':
+		case 'norms':
 			throw new Error(`VectorBoard2D: the ${state.setupId} setup reveals on any answer, so it never shows one.`);
 	}
 }
@@ -612,12 +648,15 @@ export function feedbackLine(state: VectorState): string | null {
 			break;
 		case 'span':
 			return spanVerdict(state, feedback.guess, feedback.correct);
+		case 'shape':
+			return shapeVerdict(setupOf(state), feedback.guess);
 	}
 	return canShowAnswer(state) ? `${line} You can now show the answer.` : line;
 }
 
-/** Why Check needs a guess first, by kind: the sign on align, the span on span-choice. */
+/** Why Check needs a guess first, by kind: the sign on align, the span on span-choice, the shape on norms. */
 function noGuessText(kind: SetupKind): string {
+	if (kind === 'norms') return NORMS_LABELS.noShape;
 	return kind === 'span-choice' ? NO_SPAN_TEXT : NO_SIGN_TEXT;
 }
 
@@ -630,6 +669,8 @@ export function checkRefusal(state: VectorState): string | null {
 			return state.signGuess === null ? noGuessText(kind) : null;
 		case 'span-choice':
 			return state.spanGuess === null ? noGuessText(kind) : null;
+		case 'norms':
+			return state.shapeGuess === null ? noGuessText(kind) : null;
 		case 'add':
 		case 'scale':
 		case 'cart':
@@ -644,7 +685,7 @@ export function presetsFor(state: VectorState): readonly { id: string; label: st
 
 // ---- The plane ----
 
-export type OchreElement = 'guess' | 'sum' | 'scaled' | 'shadow' | 'flag' | 'span' | null;
+export type OchreElement = 'guess' | 'sum' | 'scaled' | 'shadow' | 'flag' | 'span' | 'route' | 'ball' | null;
 
 /**
  * The one element drawn in ochre ("look here"), or null when there is nothing to point at. On span-reach it is always
@@ -666,6 +707,8 @@ export function ochreElement(state: VectorState): OchreElement {
 			return 'flag';
 		case 'span-choice':
 			return state.checked && spanKind(state.a, state.b) !== 'plane' ? 'span' : null;
+		case 'norms':
+			return normsOchre(state);
 	}
 }
 
@@ -677,6 +720,8 @@ function aHandleName(kind: SetupKind): string {
 			return 'Tip of trip a';
 		case 'cart':
 			return 'Tip of your push';
+		case 'norms':
+			return 'Your pin';
 		case 'scale':
 		case 'align':
 		case 'combine':
@@ -917,6 +962,10 @@ export function planeLabels(state: VectorState): readonly PlaneLabel[] {
 		case 'span-choice':
 			labels.push(...spanChoiceLabels(state));
 			break;
+		case 'norms':
+			if (trips) labels.push({ id: 'home', text: 'home', at: [-0.8, -0.45], away: null });
+			labels.push(arrowLabel('a', 'v', ORIGIN, a, 1), ...shapeLabels(state).map((label) => ({ ...label, away: null })));
+			break;
 	}
 	return labels;
 }
@@ -970,6 +1019,8 @@ export function chalkNote(state: VectorState): ChalkText | null {
 		case 'align':
 			// A zero vector has no angle, so there is nothing to say about one.
 			return angleOf(state.a, state.b) ? ALIGN_NOTES[signOf(dot(state.a, state.b))] : null;
+		case 'norms':
+			return normsChalkNote;
 		case 'scale':
 			return null;
 	}
@@ -982,7 +1033,7 @@ export interface TableRow {
 	name: string;
 	x: string;
 	y: string;
-	/** Empty for the guess: its length says nothing about the trips. */
+	/** Empty for the guess (its length says nothing about the trips) and for city-walk's pin. */
 	length: string;
 	/** The row as one sentence, for screen readers. */
 	spoken: string;
@@ -991,14 +1042,20 @@ export interface TableRow {
 }
 
 export function tableHeaders(state: VectorState) {
+	const norms = setupOf(state).kind === 'norms';
+	if (norms && isTrips(state)) return { caption: 'Your pin', vector: 'Pin', x: 'Blocks east', y: 'Blocks north', length: 'Walk' };
 	if (isTrips(state)) return { caption: 'Where each trip goes', vector: 'Trip', x: 'Steps east', y: 'Steps north', length: 'Length' };
 	const caption = setupOf(state).kind === 'cart' ? `Your push a and the track ${trackName(state)}` : 'The vectors on the board';
 	return { caption, vector: 'Vector', x: 'x (east)', y: 'y (north)', length: 'Length' };
 }
 
 function row(state: VectorState, id: TableRow['id'], name: string, v: Vec2, stepId: VectorId | null): TableRow {
-	const spoken = isTrips(state) ? `${name}: ${stepsWords(v)}.` : id === 'guess' ? `${name}: ${pairText(v)}.` : `${name} = ${pairText(v)}.`;
-	return { id, name, x: numberText(v[0]), y: numberText(v[1]), length: id === 'guess' ? '' : lengthText(v), spoken, stepId };
+	const norms = setupOf(state).kind === 'norms';
+	let spoken = isTrips(state) ? `${name}: ${stepsWords(v)}.` : id === 'guess' ? `${name}: ${pairText(v)}.` : `${name} = ${pairText(v)}.`;
+	if (norms) spoken = isTrips(state) ? pinSentence(v) : `${name}: ${pairText(v)}.`;
+	// The guess's length says nothing about the trips, and the pin's straight length is city-walk's answer (its own
+	// NormTable gives it after Check), so both rows leave it empty.
+	return { id, name, x: numberText(v[0]), y: numberText(v[1]), length: id === 'guess' || norms ? '' : lengthText(v), spoken, stepId };
 }
 
 /** The rows of the coordinate table, in order. The a + b row exists only after Check. */
@@ -1020,6 +1077,8 @@ export function tableRows(state: VectorState): readonly TableRow[] {
 		case 'align':
 		case 'span-choice':
 			return [row(state, 'a', 'a', state.a, can('a')), row(state, 'b', 'b', state.b, can('b'))];
+		case 'norms':
+			return [row(state, 'a', 'Your pin', state.a, 'a')];
 		case 'combine': {
 			const scaled = scale(state.scalar, state.a);
 			const scaledB = scale(state.scalarD, state.b);
@@ -1052,6 +1111,8 @@ const headerWords = (header: string) => inSentence(header.replace(/ \(.*\)$/, ''
 
 /** The body said after "Table shown under the switch.": the table's rows and columns, in spoken form. */
 export function tableFoldSentence(state: VectorState): string {
+	// city-walk folds its own table of the three measures, not the coordinate table (NormTable).
+	if (setupOf(state).kind === 'norms') return normTableSentence(state);
 	const headers = tableHeaders(state);
 	const rows = joinWords(tableRows(state).map((tableRow) => inSentence(tableRow.name)));
 	const columns = joinWords([headers.x, headers.y, headers.length].map(headerWords));
@@ -1068,6 +1129,7 @@ function listsColumn(kind: SetupKind, id: TableRow['id']): boolean {
 		case 'cart':
 		case 'align':
 		case 'span-choice':
+		case 'norms':
 			return id !== 'guess';
 	}
 }
@@ -1101,6 +1163,7 @@ export function listsLine(state: VectorState): string | null {
 		case 'cart':
 		case 'align':
 		case 'span-choice':
+		case 'norms':
 			return null;
 	}
 }
@@ -1220,6 +1283,8 @@ function positionSentence(state: VectorState, handle: HandleId): string {
 			return combinePosition(state);
 		case 'span-choice':
 			return state.checked ? `${pairsLine(state)} ${spanSentence(a, b)}` : pairsLine(state);
+		case 'norms':
+			return normsPosition(state);
 	}
 }
 
@@ -1230,6 +1295,9 @@ function positionSentence(state: VectorState, handle: HandleId): string {
  */
 export function spoken(text: string): string {
 	return text
+		.replace(/‖v‖₁/g, 'the L1 norm of v')
+		.replace(/‖v‖₂/g, 'the L2 norm of v')
+		.replace(/‖v‖∞/g, 'the L-infinity norm of v')
 		.replace(/‖([^‖]+)‖/g, 'the length of $1')
 		.replace(/ · /g, ' dot ')
 		.replace(/û/g, 'u hat')
@@ -1261,13 +1329,19 @@ function announcementText(state: VectorState, action: Action): string {
 			return `Your guess: a · b is ${action.sign}.`;
 		case 'span-guess':
 			return `Your guess: the span is ${SPAN_GUESS_WORDS[action.guess]}.`;
+		case 'shape-guess':
+			return shapeGuessAnnouncement(action.guess);
+		case 'measure':
+			return measureAnnouncement(state);
+		case 'radius':
+			return radiusAnnouncement(state);
 		case 'check':
 		case 'show-answer':
 			return state.refusal ? refusalText(state, state.refusal) : (feedbackLine(state) ?? '');
 		case 'preset':
-			return readoutLines(state).join(' ');
+			return setupOf(state).kind === 'norms' ? normsPresetAnnouncement(state) : readoutLines(state).join(' ');
 		case 'stage':
-			return `Showing ${STAGE_LABELS[action.stage].toLowerCase()}.`;
+			return `Showing ${stageLabel(setupOf(state), action.stage).toLowerCase()}.`;
 		case 'scalar':
 			// On combine the span and flag sentences don't change with c or d, so a commit says only the reader's values.
 			return (setupOf(state).kind === 'combine' ? combineSliderLines(state) : readoutLines(state)).join(' ');

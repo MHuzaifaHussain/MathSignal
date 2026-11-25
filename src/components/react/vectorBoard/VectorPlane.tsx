@@ -1,8 +1,10 @@
 import { useMemo } from "react";
-import { Circle, Coordinates, Mafs, MovablePoint, Plot, Polyline, Text, Vector } from "mafs";
+import { Circle, Coordinates, Mafs, MovablePoint, Plot, Polygon, Polyline, Text, Vector } from "mafs";
 import type { vec } from "mafs";
 import { DOTTED, Segment } from "../planeLines";
 import { plotColors } from "../plotColors";
+import { cornerDots, drawnMeasures } from "./normsDescribe.ts";
+import { ballOutline, type Measure } from "./norms.ts";
 import { ARC_RADIUS, cartShadow, combinePieces, handlesFor, ochreElement, planeLabels, showsArc, showsRightAngle, spanLine, sumDot, type TableRow } from "./describe.ts";
 import {
   LABEL_SIZE,
@@ -256,7 +258,52 @@ function SpanScene({ state, ochre }: SceneProps) {
   );
 }
 
-const SCENES = { add: AddScene, scale: ScaleScene, cart: CartScene, align: AlignScene, combine: CombineScene, "span-choice": SpanScene } as const;
+/** The small muted dots on the whole-number corners of the drawn shape. */
+const CORNER_DOT_RADIUS = 0.1;
+const BALL_WEIGHT = 2;
+
+/** One ball outline. The dash pattern names the measure (diamond solid, circle dashed, square dotted) in every color. */
+function Ball({ measure, radius, color, weight }: { measure: Measure; radius: number; color: string; weight: number }) {
+  const outline = ballOutline(measure, radius);
+  if (outline.kind === "circle") return <Circle center={[0, 0]} radius={outline.radius} color={color} fillOpacity={0} weight={weight} strokeStyle="dashed" />;
+  return (
+    <Polygon
+      points={outline.points.map((point): vec.Vector2 => [point[0], point[1]])}
+      color={color}
+      fillOpacity={0}
+      weight={weight}
+      svgPolygonProps={measure === "linf" ? { style: DOTTED } : undefined}
+    />
+  );
+}
+
+/**
+ * city-walk: the pin's arrow v from home, the walking route as a dotted staircase (east leg, then north leg), ochre
+ * before Check. After Check the shapes for the chosen measure, ochre when there is one, ink for "All three", and the
+ * shape's whole-number corners as muted dots.
+ */
+function NormsScene({ state, ochre }: SceneProps) {
+  const pin = state.a;
+  const corner: Vec2 = [pin[0], 0];
+  const routeOchre = ochre === "route";
+  const route = { color: routeOchre ? plotColors.attention : plotColors.inkMuted, weight: routeOchre ? OCHRE_WEIGHT : BALL_WEIGHT };
+  const ballOchre = ochre === "ball";
+  return (
+    <>
+      {drawnMeasures(state).map((measure) => (
+        <Ball key={measure} measure={measure} radius={state.radius} color={ochreOr(ballOchre)} weight={ballOchre ? OCHRE_WEIGHT : BALL_WEIGHT} />
+      ))}
+      {cornerDots(state).map((dot) => (
+        <Circle key={`${dot[0]},${dot[1]}`} center={[dot[0], dot[1]]} radius={CORNER_DOT_RADIUS} color={plotColors.inkMuted} fillOpacity={1} weight={1} />
+      ))}
+      {pin[0] !== 0 && <Segment from={[0, 0]} to={corner} color={route.color} weight={route.weight} lineStyle="dotted" />}
+      {pin[1] !== 0 && <Segment from={corner} to={pin} color={route.color} weight={route.weight} lineStyle="dotted" />}
+      <Arrow tip={pin} />
+    </>
+  );
+}
+
+const SCENES = { add: AddScene, scale: ScaleScene, cart: CartScene, align: AlignScene, combine: CombineScene, "span-choice": SpanScene, norms: NormsScene } as const;
 
 /**
  * The Mafs plane: whole-number grid, ink arrows told apart by label and line style (a solid, b dashed), and one

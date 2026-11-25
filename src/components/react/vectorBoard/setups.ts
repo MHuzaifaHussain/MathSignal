@@ -3,6 +3,7 @@
 // answer fails the build. Design and reasoning: decision 0014.
 import { isPerfectSquare, toNumber } from '../boardMath.ts';
 import { fractionText } from '../boardText.ts';
+import { latticeOnBall, type Measure } from './norms.ts';
 import {
 	VIEW_LIMIT,
 	add,
@@ -23,14 +24,20 @@ import {
 	type Vec2,
 } from './model.ts';
 
-export type SetupId = 'trips-add' | 'trips-scale' | 'cart-push' | 'align' | 'span-reach' | 'span-shape';
+export type SetupId = 'trips-add' | 'trips-scale' | 'cart-push' | 'align' | 'span-reach' | 'span-shape' | 'city-walk';
 /**
  * add: two trips and their sum. scale: c a. cart: a push and its part along a track. align: a · b and the angle.
- * combine: c a + d b onto a flag. span-choice: a one-shot guess of what every c a + d b can reach.
+ * combine: c a + d b onto a flag. span-choice: a one-shot guess of what every c a + d b can reach. norms: one pin
+ * measured three ways (walk, bird, king), with the shape of every point one length from home (decision 0021).
  */
-export type SetupKind = 'add' | 'scale' | 'cart' | 'align' | 'combine' | 'span-choice';
-/** Trips: steps east and north, in words. Arrows: numbered axes and coordinates. Lists: column vectors. */
+export type SetupKind = 'add' | 'scale' | 'cart' | 'align' | 'combine' | 'span-choice' | 'norms';
+/**
+ * Trips: steps east and north, in words. Arrows: numbered axes and coordinates. Lists: column vectors. On norms setups
+ * the same two ids are labeled Blocks and Numbers (stageLabel in describe.ts), so the stage plumbing is unchanged.
+ */
 export type Stage = 'trips' | 'arrows' | 'lists';
+/** Which ball a norms setup draws: one measure's shape, or all three at once. */
+export type MeasureChoice = Measure | 'all';
 
 /** On cart setups `a` is the push and `b` the track direction. */
 export interface Preset {
@@ -42,6 +49,10 @@ export interface Preset {
 	scalar?: number;
 	/** The weight d of b, on combine setups. */
 	scalarD?: number;
+	/** The shape shown, on norms setups. */
+	measure?: MeasureChoice;
+	/** The length r of the shape, on norms setups. */
+	radius?: number;
 }
 
 export interface ScaleRange {
@@ -83,6 +94,10 @@ export interface Setup {
 	target?: Vec2;
 	/** The c and d that land on the flag with the opening a and b ("Show the answer" sets them). */
 	targetWeights?: readonly [number, number];
+	/** The "Length r" slider, on norms setups. */
+	radiusRange?: ScaleRange;
+	/** The ball the norms guess asks about. After Check the board opens on it. */
+	guessBall?: { measure: Measure; radius: number };
 }
 
 export const MAX_PRESETS = 4;
@@ -191,6 +206,25 @@ const SETUP_LIST: readonly Setup[] = [
 		stages: [],
 		openingStage: 'arrows',
 		waitsForCheck: [],
+	},
+	// PROVISIONAL: the vector norms page spec doesn't exist yet. Re-pin this copy and these presets when it does.
+	{
+		id: 'city-walk',
+		kind: 'norms',
+		limitA: VIEW_LIMIT,
+		limitB: 0,
+		opening: { a: [3, 4], b: ORIGIN, scalar: 1, guess: ORIGIN },
+		presets: [
+			{ id: 'friends-house', label: "Friend's house", a: [3, 4], b: ORIGIN, measure: 'l2', radius: 5 },
+			{ id: 'straight-street', label: 'Straight street', a: [4, 0], b: ORIGIN, measure: 'all', radius: 4 },
+			{ id: 'diagonal', label: 'Diagonal', a: [2, 2], b: ORIGIN, measure: 'l1', radius: 4 },
+			{ id: 'nested-shapes', label: 'Nested shapes', a: [3, 3], b: ORIGIN, measure: 'all', radius: 4 },
+		],
+		stages: ['trips', 'arrows'],
+		openingStage: 'trips',
+		waitsForCheck: ['arrows'],
+		radiusRange: { min: 1, max: VIEW_LIMIT, step: 1 },
+		guessBall: { measure: 'l1', radius: 4 },
 	},
 ];
 
@@ -333,6 +367,28 @@ function checkCombine(setup: Setup): void {
 	if (equals(combine(scalar, a, scalarD, b), target)) throw setupError(setup, 'opens on the flag, so there is nothing to find.');
 }
 
+/** The fewest whole-number corners the guessed ball must have, so the verdict's count is a real picture. */
+const MIN_GUESS_CORNERS = 4;
+
+function checkNorms(setup: Setup): void {
+	const { radiusRange: range, guessBall } = setup;
+	if (!range || !guessBall) throw setupError(setup, 'is a norms setup with no length slider or guessed ball.');
+	if (setup.scaleRange || setup.target || setup.limitB !== 0) throw setupError(setup, 'is a norms setup with a weight slider, a flag or a second vector, which it never shows.');
+	if (!Number.isInteger(range.min) || !Number.isInteger(range.max) || range.step !== 1 || range.min < 1 || range.max > VIEW_LIMIT) {
+		throw setupError(setup, `has a length slider from ${range.min} to ${range.max} in steps of ${range.step}; it must move in whole steps from 1 up to ${VIEW_LIMIT}.`);
+	}
+	// The verdicts are written for the walking diamond at an even length: its corner "r/2 east and r/2 north" is whole.
+	if (guessBall.measure !== 'l1' || guessBall.radius % 2 !== 0 || !isOnScale(range, guessBall.radius)) {
+		throw setupError(setup, `asks about the ${guessBall.measure} ball at length ${guessBall.radius}; the verdicts are written for the walking diamond at an even length on the slider.`);
+	}
+	const corners = latticeOnBall(guessBall.measure, guessBall.radius, VIEW_LIMIT).length;
+	if (corners < MIN_GUESS_CORNERS) throw setupError(setup, `asks about a ball with ${corners} whole-number corners; it needs at least ${MIN_GUESS_CORNERS}.`);
+	for (const preset of setup.presets) {
+		if (preset.measure === undefined || preset.radius === undefined) throw setupError(setup, `preset "${preset.id}" has no shape or length.`);
+		if (!isOnScale(range, preset.radius)) throw setupError(setup, `preset "${preset.id}" has length ${preset.radius}, which the slider can't set.`);
+	}
+}
+
 function checkSpanChoice(setup: Setup): void {
 	if (setup.scaleRange || setup.target || setup.stages.length > 0) throw setupError(setup, 'is a span choice with a slider, a flag or stages, which it never shows.');
 	const { a, b } = setup.opening;
@@ -365,6 +421,9 @@ export function validateSetup(setup: Setup): Setup {
 			break;
 		case 'span-choice':
 			checkSpanChoice(setup);
+			break;
+		case 'norms':
+			checkNorms(setup);
 			break;
 		default: {
 			const unknownKind: never = setup.kind;
