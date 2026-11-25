@@ -269,7 +269,7 @@ function intentProblems(pages) {
 	});
 }
 
-// ---- Reader-prose word count (owner decision 4, 2026-11-25) ----
+// ---- Reader-prose word count (owner ruling, 2026-11-25; rules in docs/design-system/writing-a-concept-page.md) ----
 // A page type's word limits count what a reader reads in the spine and folds, nothing else. Left out: frontmatter,
 // imports, code (fences, inline code and PyRunner), tables (markdown and HTML), the reference list, CheckYourself
 // answers, and JSX tags with their attributes. Every formula, display or inline, counts as one word. The prose
@@ -374,13 +374,20 @@ function readTag(source, start) {
 /** The index just past the tag that closes the element opened at `from`, counting nested elements of the same name. */
 function skipElement(source, from, name) {
 	let depth = 1;
-	for (let index = source.indexOf('<', from); index !== -1; index = source.indexOf('<', index + 1)) {
-		const tag = readTag(source, index);
-		if (!tag || tag.name !== name) continue;
-		if (tag.closing) depth -= 1;
-		else if (!tag.selfClosing) depth += 1;
-		if (depth === 0) return tag.end;
-		index = tag.end - 1;
+	let index = from;
+	while (index < source.length) {
+		const character = source[index];
+		const span = character === '$' || character === '`' ? spanEnd(source, index) : -1;
+		const tag = character === '<' ? readTag(source, index) : null;
+		if (character === '\\') index += 2;
+		else if (span !== -1) index = span;
+		else if (character === '{') index = skipExpression(source, index);
+		else if (tag) {
+			if (tag.name === name && tag.closing) depth -= 1;
+			else if (tag.name === name && !tag.selfClosing) depth += 1;
+			if (depth === 0) return tag.end;
+			index = tag.end;
+		} else index += 1;
 	}
 	throw new Error(`word count: <${name}> is never closed`);
 }
@@ -434,8 +441,8 @@ export function countReaderWords(source) {
 	const prose = withoutMarkup(markdown)
 		.replace(/^[ \t]*\|.*$/gm, '')
 		.replace(/\$\$[\s\S]*?\$\$/g, ONE_WORD)
-		.replace(/(?<!\\)\$[^$]+?(?<!\\)\$/g, ONE_WORD)
-		.replace(/(`+)[\s\S]+?\1/g, ONE_WORD)
+		.replace(/(?<!\\)\$(?:(?!\n\s*\n)[^$])+?(?<!\\)\$/g, ONE_WORD)
+		.replace(/(`+)(?:(?!\n\s*\n)[\s\S])+?\1/g, ONE_WORD)
 		.replace(/!\[[^\]]*\]\([^)]*\)/g, '')
 		.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
 		.replace(/https?:\/\/\S+/g, '')
@@ -458,6 +465,8 @@ function checkWordCounter() {
 	assert.equal(countReaderWords('See [the normal page](/statistics/normal-distribution/#tails) <Cite id="he2015" />.'), 4, 'link text counts, the address does not');
 	assert.equal(countReaderWords('<Mistake wrong="Equal counts mean no mode.">\n  One value repeated is the mode.\n</Mistake>\n\n<References />'), 11);
 	assert.equal(countReaderWords('{/* a note for writers */}\nTwo words.'), 2);
+	assert.equal(countReaderWords('<CheckYourself question="Q one?">\n$0<p<1$ and `a<b` and $x_{1}<y$.\n</CheckYourself>\n\nAfter.'), 3, 'a < inside a skipped answer is not a tag');
+	assert.equal(countReaderWords('Costs 5 $ today.\n\nThree more words $x$.'), 7, 'a stray $ never swallows the next paragraph');
 }
 
 /** A page's word count against its type's limits: a problem, or a warning when the page has a recorded exception. */
@@ -485,7 +494,7 @@ function wordCountProblems(pages) {
 		const range = limits.min > 0 ? `${limits.min}-${limits.max}` : `at most ${limits.max}`;
 		if (inRange && exception) warnings.push(`${name}: ${words} reader words now fits type ${type} (${range}); remove it from WORD_COUNT_EXCEPTIONS`);
 		else if (!inRange && exception) warnings.push(`${name}: ${words} reader words, outside type ${type}'s ${range} (recorded exception, measured ${exception.measured})`);
-		else if (!inRange) problems.push(`${name}: ${words} reader words; a complete type ${type} page has ${range} (owner decision 4)`);
+		else if (!inRange) problems.push(`${name}: ${words} reader words; a complete type ${type} page has ${range} (docs/design-system/writing-a-concept-page.md, Length)`);
 	}
 	return { problems, warnings, counts };
 }
