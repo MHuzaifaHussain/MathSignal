@@ -112,6 +112,20 @@ Small modules every guided board composes in its tray ([decision 0013](../decisi
 ### `NormalDistribution`, `LinearRegression`, `BayesTheorem`
 Concept boards. Each composes `Board`, Mafs, `plotColors`, and `TraySlider`s.
 
+`NormalDistribution` with no props is the bell (drag μ and σ). `mode="z"` with a `setup` is the z mode ([decision 0019](../decisions/0019-normal-distribution-z-mode.md)): the standard normal on a fixed z-unit view over a ruler in the group's units, with a z ruler under it once the reader commits. Any other prop, mode or setup fails the build.
+
+| Setup | Opens on | Before Check | After Check |
+|---|---|---|---|
+| `taller-for-age` | The nine-year-olds (mean 134 cm, σ 8 cm), 140 cm | The cm ruler, the marker, the Height slider and the question "Who is taller for their age: the 140 cm nine-year-old or the 150 cm eleven-year-old?"; no z anywhere | The z ruler and z text, presets for the eleven-year-old (150 cm, mean 144, σ 12) and the standard normal (z = 0.75), and "Shade the share below" with Φ |
+
+The table behind Table view lists the mean, the standard deviation, the value and its distance from the mean, then the z-score and the share below after Check. The z board loads as its own chunk, so the bell pages don't carry it.
+
+```mdx
+<div class="not-content">
+  <NormalDistribution client:visible mode="z" setup="taller-for-age" />
+</div>
+```
+
 `BayesTheorem` also has "Example" preset buttons, defined with their math in `src/components/react/bayesTheorem/scenarios.ts` and checked by `npm run check:boards`. A line under the presets says what A and B stand for. When A's column is thinner than 0.15, its labels sit beside it. Two optional props pick a page's presets ([decision 0016](../decisions/0016-bayes-board-presets-and-table.md)):
 
 | Prop | Type | Notes |

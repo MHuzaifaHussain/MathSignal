@@ -24,3 +24,4 @@ Format: context, decision, consequences, alternatives considered. Number them in
 | [0016](0016-bayes-board-presets-and-table.md) | Page presets and a count table on the BayesTheorem board | Accepted; amended by [0017](0017-table-view-fold.md) |
 | [0017](0017-table-view-fold.md) | A "Table view" fold for tall boards | Accepted |
 | [0018](0018-distribution-families-and-density.md) | DistributionBoard families and density mode | Accepted; amends [0012](0012-distribution-board.md) |
+| [0019](0019-normal-distribution-z-mode.md) | NormalDistribution z mode | Accepted |

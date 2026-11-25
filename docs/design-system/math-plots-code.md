@@ -78,6 +78,22 @@ Mafs 0.21's `vec.lerp` (and `vec.midpoint`) return `[NaN, NaN]` when both points
 - A live region announces the new values when a drag, an arrow-key move or a slider change ends, never on every frame.
 - Handwritten notes (`ChalkNote`) sit at the board's top-left (beside the grid, in normal flow, on an HTML board) and switch to their `short` text when the board is under 560px wide.
 
+### z-scores (NormalDistribution `mode="z"`)
+
+The curve is the standard normal on a fixed z-unit view, so presets relabel the rulers and never change its shape ([decision 0019](../decisions/0019-normal-distribution-z-mode.md)):
+
+| Marking | Meaning |
+|---|---|
+| Ink curve, 2.5px, no fill | The standard normal φ; it isn't driven by μ here |
+| Pink dashed guide to the peak, "μ" above it | The mean |
+| Blue solid span at the inflection height, "σ" beside its right end | One standard deviation |
+| Ochre 3px line and handle | The value: the board's one ochre element |
+| Ink fill at 0.2 | The share below the value, only while "Shade the share below" is on |
+| Ink row under the axis, captioned "cm" | The ruler in the group's units |
+| Muted ink row under it, captioned "z" | The z ruler, only after Check |
+
+The μ and σ labels sit where no marker can reach (checked over every state), and the drawing holds no z until the reader commits: on a fixed z view the marker's position is the answer.
+
 ### Vectors (VectorBoard2D)
 
 Several vectors share one plane ([decision 0014](../decisions/0014-vector-board.md)). They are told apart by label and line style, never by hue:
