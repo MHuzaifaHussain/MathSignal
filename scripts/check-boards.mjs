@@ -6319,4 +6319,70 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	}
 }
 
+// ---- Page components: the footer's citation and copy (decision 0023) ----
+{
+	const citation = await import('../src/seo/citation.mjs');
+	const footer = await import('../src/components/overrides/footerCopy.mjs');
+	const { AUTHOR_NAME, TEXT_LICENSE_URL } = await import('../src/seo/site.mjs');
+	assert.equal(TEXT_LICENSE_URL, 'https://creativecommons.org/licenses/by/4.0/');
+	assert.deepEqual(Object.keys(citation.AUTHORS), [AUTHOR_NAME], 'AUTHORS is keyed by the AUTHOR_NAME constant');
+	assert.equal(citation.citationKey('probability/independence'), 'mathsignal-probability-independence');
+	assert.equal(citation.citationKey('statistics/z-scores_Worked'), 'mathsignal-statistics-z-scores-worked');
+	assert.throws(() => citation.citationKey(''), /needs a route id/);
+	assert.equal(citation.escapeBibtex('50% & $x_1$ {a}'), '50\\% \\& \\$x\\_1\\$ \\{a\\}');
+	assert.equal(citation.escapeBibtex('a\\b{'), 'a\\textbackslash{}b\\{', 'a backslash is escaped once, and its braces are not escaped again');
+	assert.equal(citation.escapeBibtex('~#^'), '\\textasciitilde{}\\#\\textasciicircum{}');
+	assert.throws(() => citation.authorName('Ada Lovelace'), (error) => error.message === 'citation: unknown author "Ada Lovelace"; add it to AUTHORS in src/seo/citation.mjs');
+	assert.throws(() => citation.authorName('toString'), /unknown author "toString"/, 'only own entries count as authors');
+
+	const independence = {
+		routeId: 'probability/independence',
+		author: AUTHOR_NAME,
+		title: 'Independent events in probability',
+		reviewedAt: new Date('2026-11-25T00:00:00Z'),
+		url: 'https://mathsignal.dev/probability/independence/',
+	};
+	assert.equal(citation.plainCitation(independence), 'Hussain, M. H. (2026, November 25). Independent events in probability. MathSignal. https://mathsignal.dev/probability/independence/');
+	assert.equal(
+		citation.bibtexEntry(independence),
+		[
+			'@misc{mathsignal-probability-independence,',
+			'  author       = {Hussain, Muhammad Huzaifa},',
+			'  title        = {{Independent events in probability}},',
+			'  howpublished = {MathSignal},',
+			'  year         = {2026},',
+			'  month        = nov,',
+			'  url          = {https://mathsignal.dev/probability/independence/},',
+			'  note         = {Last reviewed 2026-11-25}',
+			'}',
+		].join('\n'),
+	);
+	// The date is read in UTC, so the first and last minute of a day give that day wherever the build runs.
+	for (const instant of ['2026-11-25T00:00:00Z', '2026-11-25T23:59:00Z']) {
+		assert.equal(citation.reviewedDateText(new Date(instant)), 'November 25, 2026');
+		assert.match(citation.plainCitation({ ...independence, reviewedAt: new Date(instant) }), /\(2026, November 25\)/);
+	}
+	assert.match(citation.bibtexEntry({ ...independence, reviewedAt: new Date('2027-01-05T00:00:00Z') }), /year {9}= \{2027\},\n {2}month {8}= jan,[\s\S]*note {9}= \{Last reviewed 2027-01-05\}/);
+	assert.match(citation.bibtexEntry({ ...independence, title: 'Bayes & 50% {odds}' }), /title {8}= \{\{Bayes \\& 50\\% \\\{odds\\\}\}\},/);
+	assert.throws(() => citation.plainCitation({ ...independence, author: 'Someone Else' }), /unknown author "Someone Else"/);
+	assert.throws(() => citation.plainCitation({ ...independence, reviewedAt: new Date('not a date') }), /reviewedAt must be a valid date/);
+	assert.throws(() => citation.plainCitation({ ...independence, reviewedAt: undefined }), /reviewedAt must be a valid date/);
+	assert.throws(() => citation.plainCitation({ ...independence, title: '  ' }), /needs a title/);
+	assert.throws(() => citation.bibtexEntry({ ...independence, url: 'https://mathsignal.dev/a_b%20/' }), /not a plain https site URL/);
+	assert.throws(() => citation.bibtexEntry({ ...independence, url: 'http://mathsignal.dev/' }), /not a plain https site URL/);
+
+	assert.equal(footer.HOW_MADE_LABEL, 'How this page was made');
+	assert.equal(footer.HOW_MADE_PATH, '/about/#how-ai-tools-are-used');
+	assert.equal(`${footer.HOW_MADE_LABEL}: ${footer.howMadeDetail(true)}`, 'How this page was made: drafted and reviewed with the help of AI tools, then checked by the author before publishing.');
+	assert.equal(`${footer.HOW_MADE_LABEL}: ${footer.howMadeDetail(false)}`, 'How this page was made: written and checked by the author.');
+	assert.throws(() => footer.howMadeDetail(undefined), /aiAssisted must be true or false/);
+	assert.equal(footer.CITE_SUMMARY, 'Cite this page');
+	assert.equal(footer.CITE_DATE_NOTE, 'The date is when the page was last reviewed, so the citation names the version you read.');
+	assert.equal(footer.BIBTEX_LABEL, 'BibTeX');
+	assert.equal(
+		footer.citePrintLine(citation.plainCitation(independence)),
+		'Cite as: Hussain, M. H. (2026, November 25). Independent events in probability. MathSignal. https://mathsignal.dev/probability/independence/',
+	);
+}
+
 console.log('Board check passed.');
