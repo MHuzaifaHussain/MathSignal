@@ -1,6 +1,6 @@
 # 0020: FunctionCurve, a Mafs board for slopes, rulers and corners
 
-Status: accepted, 2026-11-25.
+Status: accepted, 2026-11-25, except the drawing: the plane and the slope strip as drawn (Consequences) stay provisional until the browser pass is done.
 
 ## Context
 The derivatives page teaches the slope at a point by shortening a ruler (a secant) on both sides of x = 1 on y = x² until its slope settles, then shows the tangent and the slope curve, and uses ReLU's corner at 0 to show where no single slope exists. Later calculus and activation pages reuse the same picture. The page sets the reader's flow; the board-wide rules (one ochre element, controls that are the question not rendered before Check, tray sliders as the keyboard path, shared modules) win over the page where they disagree. The ladder of rulers (2.1, 2.01, 2.001) is the lesson, so floats, which print 0.1 + 0.2 artifacts, can't carry it.
@@ -20,7 +20,17 @@ The derivatives page teaches the slope at a point by shortening a ruler (a secan
 
 ## Consequences
 - Heights at 375 px with the table folded, measured on the hydrated lab page on 2026-11-25 (plane 326 px): `ruler-to-tangent` 886 px at the opening, 1,074 px after Check on Slide, 1,024 px on Ruler, 1,076 px on Tangent, 1,166 px on Slope curve (the strip adds about 90 px), 1,118 px on Loss in Slope curve, and 1,629 px with the table open there; `corner` 902 px at the opening, 1,032 px after Check, 1,109 px on Tangent and 1,266 px with Lines under the corner on. All are over the 480 px target, as on VectorBoard2D: the square plane and a tray that is the keyboard path take most of it. Levers not taken: a plane under square (the x² view needs five units of height at equal scales), folding the tray. Possible later trims: fewer presets, or the slope curve as a switch only on pages that teach it.
-- On that page the islands hydrated, Check, the stages, the presets, the corner switch, Table view and Reset worked through the DOM with no console errors, and the live region and focus behaved as above. The Mafs drawing itself (the plane, the strip and the label placement) hasn't been seen yet: the dev pane used for this build runs as a background page, where Mafs never measures its width. The browser pass at 320 px, 375 px and desktop, in both themes, forced colors and print, is owed before the derivatives page ships.
+- On that page the islands hydrated, Check, the stages, the presets, the corner switch, Table view and Reset worked through the DOM with no console errors, and the live region and focus behaved as above. The Mafs drawing itself hasn't been seen yet: the dev pane used for this build runs as a background page, where the islands don't hydrate and Mafs never measures its width (tried again after the review fixes on 2026-11-25, with the same result). Label placement is modeled instead: `labelBox` in `model.ts` places a label's box as Mafs' Text does (text anchor, baseline and the 6 px attach distance), `fitLabel` moves it until it clears every edge by 4 px, and `check-boards` fits every label of every reachable state on 270 px and 400 px planes.
+- Until the browser pass is done, the drawing is provisional. It is owed before the derivatives page ships, at 320 px, 375 px and desktop, in both themes, in forced colors and in print. It checks:
+  - the opening of both setups;
+  - sharp corners from one plot per piece;
+  - Tangent at h = 0.01;
+  - the S-curve at x = −1.5 with h = −0.001 and the table open;
+  - Hinge and V in Slope curve, where the open dots must show the board fill in both themes and in forced colors;
+  - Lines under the corner on, at s = 0 and s = ±1;
+  - the measured label boxes against the plane's edges, as a check of `labelBox`'s character-width estimate;
+  - the stretched x³ and Loss views under `preserveAspectRatio={false}`, and the 400 px cap;
+  - in forced colors, the ochre line as Highlight against the CanvasText curve, with the line styles distinct.
 - Page changes for `calculus/derivatives`, decided here under the board-wide rules:
   - P1: "The dot is where you sit; the dashed ochre line is the ruler." (the point is ink).
   - P2: no `handleLabels`; the Point slider is the keyboard path, and h is a slider over the ladder, not a radio group.
