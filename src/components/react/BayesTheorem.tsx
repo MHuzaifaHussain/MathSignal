@@ -50,8 +50,10 @@ export default function BayesTheorem() {
     [prior, likelihood, falsePositive],
   );
 
+  // Both readout numbers, so a page that asks for P(B) (the law of total probability) is heard as well as seen.
   const announce = useCallback((values: BayesValues, prefix = "") => {
-    setAnnouncement(`${prefix}Posterior P of A given B is ${posteriorText(computePosterior(values).posterior)}.`);
+    const result = computePosterior(values);
+    setAnnouncement(`${prefix}Posterior P of A given B is ${posteriorText(result.posterior)}; P of B is ${formatNumber(result.evidence, 3)}.`);
   }, []);
 
   const loadScenario = useCallback(
