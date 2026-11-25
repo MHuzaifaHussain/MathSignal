@@ -2,9 +2,9 @@
 // before every build. Node 24 runs the TypeScript modules directly, so no test framework is needed.
 // Each section names the behavior it pins; the exact values come from the board's design doc.
 // @ts-nocheck
-// Node runs this file and nothing type-checks it (checkJs is off). Without the pragma, `astro check` still infers types
-// through its board calls, and past a certain size that inference left unrelated .mjs imports typed as any across
-// src/ (629 false errors when the span checks landed).
+// Node runs this file and nothing type-checks it (checkJs is off). Without the pragma, adding the span checks made
+// `astro check` type unrelated .mjs imports across src/ as any (629 false errors). Size alone didn't cause it (padding
+// the file didn't), and the exact trigger is unknown.
 import assert from 'node:assert/strict';
 import { fraction, formatFraction, addFractions, subtractFractions, divideFractions, multiplyFractions, compareFractions, toNumber, isPerfectSquare, squareRoot } from '../src/components/react/boardMath.ts';
 import { joinWords, plural, equalsDecimal, fractionText, terminatesWithin, decimalText, amountText } from '../src/components/react/boardText.ts';
