@@ -85,6 +85,7 @@ assert.equal(WEIGHT_TOTAL, 12);
 
 // A typo in a page's setup fails loudly.
 assert.throws(() => getSetup('coins-bild'), /unknown setup "coins-bild"/);
+assert.throws(() => getSetup('toString'), /unknown setup "toString"/);
 assert.equal(getSetup('coins-build').goal, 'at-least-one-head');
 
 // ---- State transitions and copy (EventSpace state.ts and describe.ts) ----
