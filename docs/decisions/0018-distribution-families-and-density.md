@@ -37,6 +37,7 @@ The binomial page needs a distribution with up to 11 values whose chances come f
   | `sand-interval`, opening / spread on | 833 / 1,017px | |
 
   The levers, if wanted later: a two-column tray at 560px and up (nothing at 375px), a two-thumb interval slider, or the guess as a select.
+- The island grows from about 16.7 KB to 29.8 KB gzip (esbuild, minified, React and Base UI external), so every DistributionBoard page now ships about 13 KB of family and density code it may not use. That passes the 10 KB mark this design set for splitting the modes into lazy chunks; the split is owed before the binomial and density pages go live.
 - Every folded table fits the tray at 320px (255px wide) with the table open: `coins-binomial` at 3 and 10 coins, `binomial-spread`, `sand-pour` at 0.25 cm and `sand-interval` with its footer.
 - `mu` and `sigma` on `highlight` join `contrastRules` as graphics, because the μ guide and σ span cross the ochre read column and shaded stretch.
 - On the 0 to 2 per cm scale Even sand's bars are short (1/8 of the plot), and on the 0 to 1 scale Fair coin's tallest bar is a quarter of it. That is honest: the scale is the lesson.
