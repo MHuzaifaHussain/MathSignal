@@ -361,12 +361,14 @@
 
 /* ── Print: keep the plots and their values, drop the controls that can't work on paper ── */
 @media print {
+	/* Choices, cup buttons and presets set their display further down the file, so they need the extra .ms-board to
+	 * win here. */
 	.ms-board-button,
 	.ms-slider-control,
-	.ms-choice,
+	.ms-board .ms-choice,
 	.ms-runner-bar,
-	.ms-cup-buttons,
-	.ms-board-presets,
+	.ms-board .ms-cup-buttons,
+	.ms-board .ms-board-presets,
 	.ms-board-refusal,
 	.ms-event-compare-note,
 	.ms-dist-step,
