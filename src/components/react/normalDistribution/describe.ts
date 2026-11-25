@@ -16,7 +16,13 @@ const EXACT_PLACES = 3;
 const ROUNDED_Z_PLACES = 2;
 const PHI_PLACES = 4;
 const PERCENT_PLACES = 1;
-const UNIT_WORDS: Record<ZPreset['unit'], string> = { cm: 'centimeters', '': 'units' };
+const UNIT_WORDS: Record<Exclude<ZPreset['unit'], ''>, string> = { cm: 'centimeters' };
+
+/** The unit in words. Only a measured preset has one; validateSetup keeps the standard preset out of the verdicts. */
+function unitWords(preset: ZPreset): string {
+	if (preset.unit === '') throw new Error(`normalDistribution describe: preset ${preset.id} has no unit to name`);
+	return UNIT_WORDS[preset.unit];
+}
 
 export const BOARD_LABEL =
 	"A normal curve over a ruler in the group's units. Say who is taller for their age and press Check to add a z-score ruler under it. Move the value with the slider below or by dragging the ochre point.";
@@ -171,7 +177,7 @@ export function verdictLine(state: ZState): SpokenLine | null {
 			? `Yes. ${both}, but the ${lowerFirst(winner.preset.group)} are less spread out:`
 			: state.guess === 'same'
 				? `Not quite. ${both}, but the ${lowerFirst(second.preset.group)} are more spread out:`
-				: `Not quite. The ${second.preset.childNoun} is taller in ${UNIT_WORDS[second.preset.unit]}, but ${lowerFirst(both)}:`;
+				: `Not quite. The ${second.preset.childNoun} is taller in ${unitWords(second.preset)}, but ${lowerFirst(both)}:`;
 	return { visible: `${lead} ${numbersVisible} ${closing}`, spoken: `${lead} ${numbersSpoken} ${closing}` };
 }
 

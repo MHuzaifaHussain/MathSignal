@@ -1,6 +1,6 @@
 // The z mode's groups and its one setup (decision 0019), checked when this module loads so a bad setup fails the
 // build. The prop guard that picks the bell or the z mode is in props.ts.
-import { compareFractions, fraction, type Fraction } from '../boardMath.ts';
+import { compareFractions, divideFractions, fraction, type Fraction } from '../boardMath.ts';
 import { maxIndex, valueAt, distanceAt, zAt } from './model.ts';
 import { Z_SETUP_IDS, type ZSetupId } from './props.ts';
 
@@ -127,7 +127,7 @@ function validatePreset(preset: ZPreset): void {
 	if (preset.kind === 'measured' && preset.step.denominator !== 1) fail('is measured, so its step must be whole');
 	if ((preset.kind === 'standard') !== (preset.unit === '')) fail('has a unit only when it is measured');
 	if (preset.kind === 'standard' && (preset.mean !== 0 || preset.sd !== 1)) fail('is the standard normal, so its mean is 0 and its sd 1');
-	const sdSteps = fraction(preset.sd * preset.step.denominator, preset.step.numerator);
+	const sdSteps = divideFractions(fraction(preset.sd, 1), preset.step);
 	if (sdSteps.denominator !== 1) fail(`has a step that doesn't divide its sd ${preset.sd}`);
 	const limit = maxIndex(preset);
 	if (!Number.isInteger(preset.openingIndex) || Math.abs(preset.openingIndex) > limit) fail(`opens at index ${preset.openingIndex}, outside the whole numbers from −${limit} to ${limit}`);

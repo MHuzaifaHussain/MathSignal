@@ -4521,7 +4521,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	assert.equal(at(start, 999).index, 24, 'a value from outside is clamped');
 	assert.equal(at(start, 5.6).index, 6);
 	assert.equal(at(start, 6), start);
-	assert.throws(() => at(start, Number.NaN), /is not finite/);
+	assert.throws(() => at(start, Number.NaN), /normalDistribution.zReducer: NaN is not a finite position/);
 	assert.deepEqual(step(openShaded, { type: 'reset' }), start);
 	for (const state of [start, checked, moved, off]) assert.equal(zState.ochreElement(state), 'value-marker');
 	assert.equal(zState.revealed(start), false);

@@ -69,7 +69,8 @@ export function zAt(preset: ZPreset, index: number): Fraction {
 	return divideFractions(distanceAt(preset, index), whole(preset.sd));
 }
 
-function clampIndex(preset: ZPreset, index: number, caller: string, input: number): number {
+/** A whole index within ±maxIndex: rounded and clamped, never trusted. `caller` and `input` name a non-finite one. */
+export function gridIndex(preset: ZPreset, index: number, caller: string, input: number = index): number {
 	if (!Number.isFinite(index)) throw new Error(`normalDistribution.${caller}: ${input} is not a finite position`);
 	const limit = maxIndex(preset);
 	// `+ 0` turns −0 into 0, so a rounded −0.2 is the plain index 0.
@@ -78,12 +79,12 @@ function clampIndex(preset: ZPreset, index: number, caller: string, input: numbe
 
 /** The tray slider's float value as a grid index, so state never holds a float value. */
 export function indexFromSlider(preset: ZPreset, value: number): number {
-	return clampIndex(preset, (value - preset.mean) / toNumber(preset.step), 'indexFromSlider', value);
+	return gridIndex(preset, (value - preset.mean) / toNumber(preset.step), 'indexFromSlider', value);
 }
 
 /** The handle's x, in z units, as a grid index. */
 export function indexFromDragX(preset: ZPreset, x: number): number {
-	return clampIndex(preset, (x * preset.sd) / toNumber(preset.step), 'indexFromDragX', x);
+	return gridIndex(preset, (x * preset.sd) / toNumber(preset.step), 'indexFromDragX', x);
 }
 
 /** Beyond this |z| the board never asks for Φ; a call there is a bug. */

@@ -2,7 +2,7 @@
 // text, the share and the other presets appear; `revealed` is the only gate the components and describe.ts read.
 // Pure, so scripts/check-boards.mjs drives it.
 import { recordCheck } from '../guided/guided.ts';
-import { maxIndex } from './model.ts';
+import { gridIndex } from './model.ts';
 import { answerFor, getZPreset, getZSetup, type ZGuess, type ZPreset, type ZPresetId, type ZSetup, type ZSetupId } from './setups.ts';
 
 export interface ZState {
@@ -60,13 +60,6 @@ export function activePresetId(state: ZState): ZPresetId | null {
 /** The board's one ochre element: the value marker and its handle. The shading is ink. */
 export const ochreElement = (_state: ZState) => 'value-marker' as const;
 
-/** A whole index on the preset's grid; a value from outside is rounded and clamped, never trusted. */
-function onGrid(preset: ZPreset, index: number): number {
-	if (!Number.isFinite(index)) throw new Error(`normalDistribution state: the value index ${index} is not finite`);
-	const limit = maxIndex(preset);
-	return Math.min(limit, Math.max(-limit, Math.round(index))) + 0;
-}
-
 export function zReducer(state: ZState, action: ZAction): ZState {
 	switch (action.type) {
 		case 'preset': {
@@ -78,7 +71,7 @@ export function zReducer(state: ZState, action: ZAction): ZState {
 			return { ...state, presetId: action.id, index: preset.openingIndex };
 		}
 		case 'value': {
-			const index = onGrid(presetOf(state), action.index);
+			const index = gridIndex(presetOf(state), action.index, 'zReducer');
 			return index === state.index ? state : { ...state, index };
 		}
 		case 'guess':
