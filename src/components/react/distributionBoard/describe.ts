@@ -10,11 +10,11 @@
 //   "your pencil at 3.50", "1 − 1.50 = −0.50".
 // "≈" appears only when the decimal is rounded.
 import { addFractions, compareFractions, formatFraction, fraction, squareRoot, toNumber, type Fraction } from '../boardMath.ts';
-import { capitalize, equalsDecimal, joinWords, plural } from '../boardText.ts';
+import { capitalize, joinWords, plural } from '../boardText.ts';
 import type { OutcomeId } from '../eventSpace/model.ts';
 import { CHECKS_BEFORE_ANSWER } from '../guided/guided.ts';
 import { tableFoldAnnouncement } from '../guided/tableFold.ts';
-import { formatNumber } from '../plotColors.ts';
+import { amountChain, briefChance, fullChance, isRoundedValue, isWhole, plainDecimal, shortAmount, trimmedDecimal } from './numberFormat.ts';
 import { classifyGuess, mean, standardDeviation, torqueSign, variance, type Bar, type Distribution } from './model.ts';
 import { ALL_ZERO, presetValues, type Setup } from './setups.ts';
 import { outcomesOf, type SourceId } from './sources.ts';
@@ -37,9 +37,6 @@ export const CONTROL_LABELS = {
 
 const NEW_GAME_LINE = `New game. Slide the pencil and press ${CONTROL_LABELS.balance}.`;
 const NUMBER_WORDS = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'];
-const DECIMALS = 2;
-/** Below this, a decimal is taken as exact rather than rounded. */
-const ROUNDING_TOLERANCE = 1e-12;
 
 interface WordPair {
 	one: string;
@@ -125,44 +122,9 @@ const SOURCE_COPY: Readonly<Record<SourceId, SourceCopy>> = {
 };
 
 const copyOf = (setup: Setup) => SOURCE_COPY[setup.source];
-const plainDecimal = (value: number) => formatNumber(value, DECIMALS);
-const isRoundedValue = (value: number) => Math.abs(Number(plainDecimal(Math.abs(value))) - Math.abs(value)) > ROUNDING_TOLERANCE;
-/** Two decimals with trailing zeros dropped: 3.50 → "3.5", 2.00 → "2". */
-const trimmedDecimal = (value: number) => plainDecimal(value).replace(/\.?0+$/, '');
-const isWhole = (value: Fraction) => value.denominator === 1;
 const isOne = (value: Fraction) => compareFractions(value, fraction(1, 1)) === 0;
 
 // ---- Numbers ----
-
-/** "3/6 = 1/2" when the fraction reduces, else "1/6 ≈ 0.17": the short form for Check and goal sentences. */
-function briefChance(count: number, total: number): string {
-	const counted = `${count}/${total}`;
-	const reduced = formatFraction(fraction(count, total));
-	return reduced === counted ? `${counted} ${equalsDecimal(count, total)}` : `${counted} = ${reduced}`;
-}
-
-/** "3/6 = 1/2 = 0.50": the full readout chain, without decimals for a whole number ("6/6 = 1"). */
-function fullChance(count: number, total: number): string {
-	const counted = `${count}/${total}`;
-	const value = fraction(count, total);
-	const reduced = formatFraction(value);
-	const chain = reduced === counted ? counted : `${counted} = ${reduced}`;
-	return isWhole(value) ? chain : `${chain} ${equalsDecimal(count, total)}`;
-}
-
-/** "1", "7/2 = 3.5" or "7/6 ≈ 1.17": an amount computed from the bars. */
-function amountChain(value: Fraction): string {
-	if (isWhole(value)) return String(value.numerator);
-	const number = toNumber(value);
-	return `${formatFraction(value)} ${isRoundedValue(number) ? '≈' : '='} ${trimmedDecimal(number)}`;
-}
-
-/** "1", "3.5" or "7/6": an amount inside a longer calculation, exact without a chain. */
-function shortAmount(value: Fraction): string {
-	if (isWhole(value)) return String(value.numerator);
-	const number = toNumber(value);
-	return isRoundedValue(number) ? formatFraction(value) : trimmedDecimal(number);
-}
 
 function withUnit(setup: Setup, text: string, value: Fraction): string {
 	const { unit } = copyOf(setup);
