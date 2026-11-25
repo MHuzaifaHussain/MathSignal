@@ -1,0 +1,666 @@
+---
+title: "Derivatives as slope and rate of change"
+description: "Shrink a ruler along a curve until its slope settles on the derivative, then use that slope to decide which way gradient descent moves a weight."
+sidebar:
+  order: 1
+draft: true
+topic: calculus/derivatives
+type: A
+objectives:
+  - Compute the slope of a secant as rise over run, and explain the derivative as the number those slopes close in on as the run shrinks to 0.
+  - Differentiate powers, sums and constant multiples, and read a derivative as a rate with units, such as meters per second or loss per unit of weight.
+  - Use the sign and size of a derivative to decide which way gradient descent moves a weight, and explain why the step has to be small.
+  - Spot points with no derivative, such as the corner of ReLU, and check a derivative in code with a centered difference.
+takeaways:
+  - The derivative of f at x is the slope of the graph there, the limit of (f(x + h) − f(x))/h as h shrinks to 0. On y = x² at x = 1, rulers give 3, 2.5, 2.25 from the right and 1, 1.5, 1.75 from the left, and both sides close in on 2.
+  - A derivative is a rate, in output units per input unit. A bike that is 5t² meters along after t seconds moves at 10 meters per second at t = 1, though its average over the next second is 15.
+  - Powers, sums and constant multiples follow simple rules. The derivative of xⁿ is n xⁿ⁻¹, so 3x² − 4x + 1 has slope 6x − 4.
+  - Gradient descent moves a weight against the sign of the derivative. On L(w) = (w − 3)², from w = 0 with learning rate 0.1, the slope −6 sends w to 0.6. Too large a learning rate overshoots, because the slope only describes the curve nearby.
+  - At a corner there is no derivative. ReLU's rulers give 1 on the right and 0 on the left; libraries pick a value there (PyTorch's rule gives 0), and that choice can change what automatic differentiation returns.
+references:
+  - deisenroth2020
+  - goodfellow2016numerical
+  - goodfellow2016practical
+  - baydin2018
+  - pytorch-autograd-notes
+  - kakade2018
+  - bolte2020
+  - bertoin2021
+author: Muhammad Huzaifa Hussain
+reviewedAt: 2026-11-25
+aiAssisted: true
+primaryQuery: derivatives for machine learning
+searchIntent: learn
+depthStatus: complete
+---
+
+import Analogy from "../../../components/Analogy.astro";
+import CheckYourself from "../../../components/CheckYourself.astro";
+import Cite from "../../../components/Cite.astro";
+import CommonMistakes from "../../../components/CommonMistakes.astro";
+import ConceptHeader from "../../../components/ConceptHeader.astro";
+import ConceptMap from "../../../components/ConceptMap.astro";
+import FormalDefinition from "../../../components/FormalDefinition.astro";
+import GoDeeper from "../../../components/GoDeeper.astro";
+import Mistake from "../../../components/Mistake.astro";
+import NotationKey from "../../../components/NotationKey.astro";
+import PreciseStatement from "../../../components/PreciseStatement.astro";
+import PyRunner from "../../../components/PyRunner.astro";
+import References from "../../../components/References.astro";
+import ResearchFrontier from "../../../components/ResearchFrontier.astro";
+import SideNote from "../../../components/SideNote.astro";
+import Simpler from "../../../components/Simpler.astro";
+import StepThrough from "../../../components/StepThrough.astro";
+import Takeaways from "../../../components/Takeaways.astro";
+import WhyThisMatters from "../../../components/WhyThisMatters.astro";
+import WorkedExample from "../../../components/WorkedExample.astro";
+import FunctionCurve from "../../../components/react/FunctionCurve.tsx";
+
+<ConceptHeader
+  oneLiner="The derivative of a function at a point is the slope of its graph there: how fast the output changes for each unit of input, found by letting the run of rise over run shrink to 0."
+  difficulty="beginner"
+/>
+
+## In everyday terms
+
+<Analogy breaks="Some slides have a sharp bend where a flat top meets the slope, and pencils laid near a bend behave differently from pencils on a smooth curve; the second board below looks at one. And a steepness is not only something you draw on paper. It is any rate, such as meters per second, or how fast a model's error changes as one of its numbers moves.">
+
+Draw a slide on squared paper. It starts flat on the ground and climbs more and more steeply: 1 square across it has risen 1 square, and 2 squares across it has risen 4. You sit on it 1 square across. How steep is the slide exactly where you sit?
+
+Lay a pencil from your seat to the point of the slide 1 square further on. It climbs 3 squares, so it says "3 up for every 1 across". Now lay a pencil from your seat back to the point 1 square behind you, at the bottom. It drops 1 square in 1 square, so it says "1 up for every 1 across". The two pencils disagree, and neither of them sits only where you sit: each one also measures a stretch of slide you are not on. What would shorter pencils say? The board below lets you find out.
+
+A second picture covers what the slide leaves out: steepness is not only about shapes. On a bike ride, total distance divided by total time is an average, a long pencil. The speedometer shows how fast you are going right now: what a very short stretch of the ride, divided by its very short time, closes in on.
+
+</Analogy>
+
+<WhyThisMatters>
+Training a model means changing its weights so that its loss goes down, and the derivative is what says which way to change each one. If the loss rises as a weight grows, the derivative is positive and the weight should shrink; if the loss falls, the derivative is negative and the weight should grow. Gradient descent does exactly this, step after step, with one derivative per weight. Derivatives also explain why a learning rate can be too large, and what happens at ReLU's corner, where there is no derivative and every library has to pick a value.
+</WhyThisMatters>
+
+## Shrink the ruler on a curve
+
+Before you touch anything: on the curve y = x², a ruler from x = 1 to x = 2 has slope 3. As you shorten the ruler toward x = 1, does its slope go up, go down, or stay at 3? Going further: what number does the slope close in on, and by exactly how much does a ruler of length h miss it?
+
+The board opens on the slide, with Show as set to Slide; Ruler draws the same thing on plain axes. The dot labeled "you" is your seat at x = 1, and the dashed ochre line is the ruler. Pick its length with the Ruler length h slider, which also takes the arrow keys. Negative lengths put the ruler behind the point. Until you press Check, the point stays at x = 1 and only rulers of length 0.25 or more are offered.
+
+Your task: set Your slope at x = 1 to your guess for the slope exactly at x = 1, then press Check. Use rulers on both sides before you commit.
+
+<div class="not-content">
+  <FunctionCurve client:visible setup="ruler-to-tangent" />
+</div>
+
+**The prediction.** The slope goes down as the ruler shortens, toward 2. In Slide, the ruler of length 0.5 reads "A pencil to 1.5 across climbs 1.25 squares in 0.5: 2.5 up for every 1 across." and the one of length 0.25 says 2.25. Behind the seat, "A pencil back to 0.5 across drops 0.75 squares in 0.5: 1.5 up for every 1 across." and the ruler of length −0.25 says 1.75. A guess of 2 passes: "Yes, 2. Rulers to the right gave 3, 2.5 and 2.25; rulers to the left gave 1, 1.5 and 1.75. Both sides close in on 2." After two wrong tries, Show the answer appears.
+
+**The miss.** After Check the shorter rulers appear: h = 0.01 reads "Ruler to x = 1.01: rise 0.0201 over run 0.01, slope 2.01." and h = −0.01 gives 1.99. Switch Show as to Tangent, and the solid ochre line is the tangent, the line the curve hugs at that point: "Tangent at x = 1: slope 2. This ruler's slope, 2.01, is 0.01 above it." Every ruler at x = 1 misses 2 by exactly its length h, so its slope is 2 + h. Table view lists all twelve rulers with their misses.
+
+The Curves presets load other curves after Check. On the S-curve, y = x³ at x = 1, the rulers 0.1 and 0.01 give 3.31 and 3.0301, closing in on 3. The Loss preset comes back in the machine learning section below.
+
+## From average slope to slope at a point
+
+The slope at a point is the number that the slopes of shorter and shorter rulers through that point close in on, and that number is the derivative.
+
+### Rise over run between two points
+
+A straight line has one slope everywhere: rise ÷ run. A curve has no single slope, so a ruler through two of its points gives an average. From x = 1 to x = 1.5 on y = x², the rise is 2.25 − 1 = 1.25 over a run of 0.5, a slope of 1.25 ÷ 0.5 = 2.5. The straight line through two points of a graph is called a secant, and Deisenroth, Faisal and Ong call its slope the difference quotient (§5.1, Definition 5.1, p. 141) <Cite id="deisenroth2020" />.
+
+<Simpler label="the same idea as a table of rulers">
+
+Here are the six rulers you could use before Check, all starting at x = 1 on y = x². Read down each half: the slopes squeeze toward 2 from above and from below.
+
+| Ruler length h | Other end | Rise | Run | Slope |
+| --- | --- | --- | --- | --- |
+| 1 | 2 | 3 | 1 | 3 |
+| 0.5 | 1.5 | 1.25 | 0.5 | 2.5 |
+| 0.25 | 1.25 | 0.5625 | 0.25 | 2.25 |
+| −0.25 | 0.75 | −0.4375 | −0.25 | 1.75 |
+| −0.5 | 0.5 | −0.75 | −0.5 | 1.5 |
+| −1 | 0 | −1 | −1 | 1 |
+
+A ruler behind the point has a negative run and, here, a negative rise, so its slope is still positive: the curve goes up as x grows on that side too.
+
+</Simpler>
+
+### Let the run shrink to zero
+
+The run can't be 0, because a rise of 0 over a run of 0 has no value, which is why the board leaves h = 0 out. But the run can be as small as you like, on either side. The slopes of these short rulers close in on one number, 2 for y = x² at x = 1, and that number is the derivative at x = 1. The line through the point with that slope is the tangent. Deisenroth and coauthors describe the same picture: in the limit, the secant becomes the tangent (§5.1, Definition 5.2, p. 141) <Cite id="deisenroth2020" />.
+
+<GoDeeper label="why the ruler misses by exactly h" id="ruler-misses-by-h">
+
+For $y = x^2$, the rise from $x$ to $x + h$ is $(x + h)^2 - x^2 = 2xh + h^2$. Divide by the run $h$, which is not 0, and the ruler's slope is $2x + h$. At $x = 1$ that is $2 + h$ for every $h \ne 0$, so the miss is exactly $h$, and it shrinks to 0 with $h$. The slope at the point is $2x$.
+
+On $y = x^3$ the rise is $3x^2h + 3xh^2 + h^3$, so at $x = 1$ the ruler's slope is $3 + 3h + h^2$: 3.31 at $h = 0.1$ and 3.0301 at $h = 0.01$. It misses 3 by more than $h$, but the miss still shrinks to 0, so the slope at the point is 3.
+
+</GoDeeper>
+
+### A slope is a rate, with units
+
+A derivative is measured in output units per input unit. A cyclist pulling away from a standstill is 5t² meters along after t seconds. From t = 1 to t = 2 the bike covers 20 − 5 = 15 meters, an average of 15 meters per second. From t = 1 to t = 1.1 it covers 1.05 meters in 0.1 seconds, 10.5 meters per second, and from t = 1 to t = 1.01 the average is 10.05 meters per second. These averages close in on the speedometer's reading at t = 1: 10 meters per second. For a model, the derivative of the loss with respect to a weight is the change in loss per unit of weight.
+
+<SideNote>
+The number depends on the units of the input: 10 meters per second is 0.01 meters per millisecond, the same speed.
+</SideNote>
+
+### The slope at every point is a new function
+
+Find the slope at every x and you get a new function, the derivative function. For y = x² it is 2x: at x = −2, −1, 0, 1 and 2 the slopes are −4, −2, 0, 2 and 4. A negative slope means the curve goes down as x grows, a positive one that it goes up, and 0 that it is flat for an instant. After Check, Show as Slope curve draws the derivative function in a strip below the curve; with the Point x slider at −1.5 the board says "Slope curve: at x = −1.5 the slope of y = x² is −3." Goodfellow, Bengio and Courville put it the same way: the derivative gives the slope of f at x, and says how to scale a small change in the input to get the change in the output (§4.3) <Cite id="goodfellow2016numerical" />.
+
+<GoDeeper label="flat does not mean lowest" id="flat-is-not-lowest">
+
+On $y = x^3$ at $x = 0$, every ruler slope is $h^2$: positive on both sides, closing in on 0. On the board, pick the S-curve, move the point to $x = 0$ and use rulers of length 0.5 and −0.5: both give 0.25, and Tangent says "Tangent at x = 0: slope 0." The curve is flat there for an instant, yet it keeps climbing through the point: $x^3$ is negative on the left and positive on the right. Goodfellow and coauthors call points with zero slope critical or stationary points, and show the three kinds in one dimension, a minimum, a maximum and a saddle point, in Figure 4.2 (§4.3) <Cite id="goodfellow2016numerical" />.
+
+</GoDeeper>
+
+<CheckYourself level="intuition" question="A ruler on y = x² at x = 3 has length 0.5. What is its slope, and what is the slope at the point?">
+6.5 and 6. A ruler of length $h$ at $x$ has slope $2x + h$, so this one has slope $6 + 0.5$, and the slope at the point is $2 \times 3 = 6$. Check: the rise is $3.5^2 - 3^2 = 3.25$, and $3.25 \div 0.5 = 6.5$.
+</CheckYourself>
+
+### The tangent line as a short-range forecast
+
+Near the point, the tangent line is a good forecast of the curve. On y = x² at x = 1, it says the curve 0.1 further on is about 1 + 0.1 × 2 = 1.2; the true value is 1.21. The miss, 0.01 = 0.1², shrinks much faster than the step, but a step of 1 misses by 1. Goodfellow and coauthors write this forecast as f(x + ε) ≈ f(x) + ε f′(x) (§4.3) <Cite id="goodfellow2016numerical" />.
+
+## Corners where the slope splits
+
+Before you look: ReLU is the curve that is 0 for negative inputs and equals x for positive ones. At x = 0, does a ruler to the right give the same slope as a ruler to the left? Going further: if they differ, which slopes could you fairly call "the slope at the corner"?
+
+The board opens on ReLU with the point at x = 0. Your task: try rulers on both sides with the Ruler length h slider, then under Slope at x = 0 choose One slope or Two different slopes and press Check. You get one try.
+
+<div class="not-content">
+  <FunctionCurve client:visible setup="corner" />
+</div>
+
+Two different slopes: "Ruler to x = 0.25: rise 0.25 over run 0.25, slope 1." but "Ruler to x = −0.25: rise 0 over run −0.25, slope 0." Check says "Yes. Every ruler to the right gives 1 and every ruler to the left gives 0, however short. ReLU has no single slope at x = 0." In Tangent it draws no tangent line at the corner and reads "No tangent at x = 0: rulers to the right give 1, rulers to the left give 0." Move the Point x slider to 1 and ReLU has an ordinary tangent again: "Tangent at x = 1: slope 1."
+
+Among the Curves presets, V is |x|: rulers to the right give 1 and to the left −1, so again there is no tangent. On Smooth, x² at 0, the rulers close in on 0 from both sides, and the board says "Tangent at x = 0: slope 0."
+
+### Smooth enough to differentiate
+
+A function has a derivative at x when the ruler slopes on the right and on the left close in on the same number. A corner fails that test, and so does a jump. For the step that is 0 for negative inputs and 1 from 0 on, rulers to the right of 0 give 0, while a ruler to the left of length h has slope −1 ÷ h: 4 at h = −0.25 and 1,000 at h = −0.001, growing without limit. Having no gap is not enough, though: |x| has no gap at 0 and still no derivative there. Deisenroth and coauthors assume differentiable functions throughout their chapter on calculus, and note that many methods extend to sub-differentials for functions that are continuous but not differentiable at some points (chapter 5 introduction, p. 141) <Cite id="deisenroth2020" />.
+
+<SideNote>
+The slope that the right-hand rulers close in on is called the right derivative, and the left-hand one the left derivative. ReLU at 0 has a right derivative of 1 and a left derivative of 0.
+</SideNote>
+
+<GoDeeper label="every slope in between: subgradients" id="subgradients">
+
+On the corner board after Check, turn on Lines under the corner. It draws a line through the corner with the slope set by the Line slope s slider. On Hinge, "A line of slope 0.5 through the corner stays on or below the curve everywhere." At slope 1.5 the board says "Slope 1.5: the line rises above the curve to the right of 0." and at −0.5 "Slope −0.5: the line rises above the curve to the left of 0." A line of slope $s$ through $(0, 0)$ stays on or below ReLU exactly when $0 \le s \le 1$.
+
+Every such $s$ is called a subgradient of ReLU at 0, and the set of them, the interval $[0, 1]$, is its subdifferential. For $|x|$ it is $[-1, 1]$: on V the board says the line stays on or below the curve for every slope it offers from −1 to 1. Kakade and Lee describe the more general (Clarke) subdifferential as the convex hull of the limits of gradients at nearby points where the function is differentiable, a set that generalizes both the gradient of a smooth function and the subgradient of a convex one (§1, p. 2) <Cite id="kakade2018" />. For ReLU at 0 those nearby slopes are 0 and 1, and their convex hull is again $[0, 1]$.
+
+PyTorch's notes say that for a convex function at a point with no gradient, it uses the subgradient of minimum norm <Cite id="pytorch-autograd-notes" />. The element of $[0, 1]$ closest to 0 is 0, and the same holds for $[-1, 1]$, so that rule gives 0 for both ReLU and $|x|$ at 0. This page deduces that from the stated rule; the code below checks the intervals.
+
+</GoDeeper>
+
+## Notation
+
+<NotationKey symbols={["function", "run", "difference-quotient", "limit", "derivative", "leibniz", "absolute-value", "relu", "weight", "loss", "learning-rate", "data-value", "sample-size", "sum"]} />
+
+<PreciseStatement>
+
+Let $f$ be a real function defined on an open interval around $x$. Then $f$ is differentiable at $x$ if the limit
+
+$$
+f'(x) = \lim_{h \to 0} \frac{f(x+h) - f(x)}{h}
+$$
+
+exists and is finite, the limit taken over $h \ne 0$ from both sides. The number $f'(x)$, also written $\frac{df}{dx}$, is the derivative of $f$ at $x$, and the line $y = f(x) + f'(x)(t - x)$ is the tangent at $x$. The function $f$ is differentiable on an interval when this holds at every point of it, and $x \mapsto f'(x)$ is then the derivative function.
+
+Conventions: $h$ may be negative; $h = 0$ is never used. Boundary cases: if the one-sided limits ($h > 0$ only, $h < 0$ only) both exist but differ, as for $\operatorname{ReLU}$ and $|x|$ at 0, there is no derivative; if $f$ jumps at $x$ there is none; a function differentiable at $x$ is continuous at $x$, but not conversely; and $f'(x) = 0$ marks a critical point, which may be a minimum, a maximum or neither ($x^3$ at 0). Scope: one input and one output. Functions of several inputs need partial derivatives, which get their own page.
+
+</PreciseStatement>
+
+<FormalDefinition>
+
+<StepThrough title="The derivative of xⁿ is n xⁿ⁻¹" rigor="full">
+
+1. A constant $c$ has rise $c - c = 0$ over every run, so its derivative is 0. The function $x$ has rise $h$ over run $h$, so its derivative is 1.
+2. For $n = 2$: $(x + h)^2 - x^2 = 2xh + h^2$. Divide by $h \ne 0$: $2x + h$, which closes in on $2x$ as $h \to 0$.
+3. For $n = 3$: $(x + h)^3 - x^3 = 3x^2h + 3xh^2 + h^3$. Divide by $h$: $3x^2 + 3xh + h^2$, which closes in on $3x^2$.
+
+</StepThrough>
+
+<StepThrough title="Any whole power n" rigor="sketch">
+
+1. Expand $(x + h)^n$ with the binomial theorem: $x^n + n x^{n-1} h + (\text{terms with } h^2 \text{ or a higher power})$.
+2. Subtract $x^n$ and divide by $h$: $n x^{n-1} + (\text{terms with } h \text{ or a higher power})$.
+3. Every term but the first goes to 0 with $h$, so the derivative is $n x^{n-1}$. Deisenroth and coauthors work this out as their Example 5.2 (p. 142) <Cite id="deisenroth2020" />.
+
+</StepThrough>
+
+<StepThrough title="Sums and constant multiples" rigor="full">
+
+1. The difference quotient of $f + g$ is $\frac{f(x+h) - f(x)}{h} + \frac{g(x+h) - g(x)}{h}$, the sum of the two quotients. If both limits exist, the limit of the sum is the sum of the limits: $(f + g)' = f' + g'$.
+2. The difference quotient of $c f$ is $c$ times that of $f$, so $(c f)' = c f'$.
+3. So $3x^2 - 4x + 1$ has derivative $3 \times 2x - 4 \times 1 + 0 = 6x - 4$. Deisenroth and coauthors list the sum rule as equation (5.31) (§5.1.2, p. 145) <Cite id="deisenroth2020" />.
+
+</StepThrough>
+
+<StepThrough title="A derivative at x means no jump at x" rigor="full">
+
+1. For $h \ne 0$, write $f(x + h) - f(x) = h \times \frac{f(x+h) - f(x)}{h}$.
+2. As $h \to 0$ the first factor goes to 0 and the second to $f'(x)$, a finite number.
+3. So $f(x + h) - f(x) \to 0 \times f'(x) = 0$: $f(x + h)$ closes in on $f(x)$, and $f$ has no jump at $x$.
+4. The converse fails: $|x|$ has no jump at 0 and no derivative there.
+
+</StepThrough>
+
+| Rule | Statement | Example on this page |
+| --- | --- | --- |
+| Constant | $c' = 0$ | The ground under the slide |
+| Power | $(x^n)' = n x^{n-1}$ | $x^2 \to 2x$, $x^3 \to 3x^2$ |
+| Constant multiple | $(c f)' = c f'$ | $(5t^2)' = 10t$ |
+| Sum | $(f + g)' = f' + g'$ | $(3x^2 - 4x + 1)' = 6x - 4$ |
+| Product | $(f g)' = f'g + f g'$ | Stated only: Deisenroth et al. (5.29), p. 145 |
+| Chain | $(g(f(x)))' = g'(f(x))\,f'(x)$ | Stated only: Deisenroth et al. (5.32), p. 145; the chain rule gets its own page |
+| ReLU | $0$ for $x < 0$, $1$ for $x > 0$, none at 0 | Board 2, Hinge |
+| Absolute value | $-1$ for $x < 0$, $1$ for $x > 0$, none at 0 | Board 2, V |
+
+</FormalDefinition>
+
+## Worked examples
+
+<WorkedExample number={1} title="A bike pulling away">
+
+A bike is $s(t) = 5t^2$ meters along after $t$ seconds. Its average speed from 1 to 2 seconds is $(20 - 5)/1 = 15$ m/s, from 1 to 1.1 seconds 10.5 m/s, and from 1 to 1.01 seconds 10.05 m/s. The power rule and the constant-multiple rule give $s'(t) = 5 \times 2t = 10t$, so the bike moves at 10 m/s at $t = 1$ and 20 m/s at $t = 2$. The units are meters per second, because the output is in meters and the input in seconds.
+
+</WorkedExample>
+
+<WorkedExample number={2} title="A polynomial and its tangent line">
+
+Let $g(x) = 3x^2 - 4x + 1$. Then $g(2) = 12 - 8 + 1 = 5$ and $g'(x) = 6x - 4$, so $g'(2) = 8$. The tangent at $x = 2$ is $y = 5 + 8(x - 2) = 8x - 11$. Rulers from $x = 2$ of length 0.1, 0.01 and 0.001 have slopes 8.3, 8.03 and 8.003, which is $8 + 3h$, closing in on 8. The slope is 0 where $6x - 4 = 0$, at $x = 2/3$, and that is where $g$ is lowest: $g(2/3) = -1/3$.
+
+</WorkedExample>
+
+<WorkedExample number={3} title="Which single height fits the class best?" faded>
+
+The nine heights from the [variance page](/statistics/variance-and-standard-deviation/) are 122, 125, 128, 131, 133, 137, 140, 142 and 148 cm, adding up to 1,206. One guess $c$ stands in for every child, and the total squared miss is $L(c) = \sum_{i=1}^{n} (x_i - c)^2$ with $n = 9$. Its derivative is $L'(c) = -2\sum_{i=1}^{n} (x_i - c) = 18c - 2412$. Find the guess where the slope is 0, and check with the signs of $L'(133)$ and $L'(140)$ that it is the lowest point.
+
+<div slot="solution">
+
+Set $18c - 2412 = 0$: $c = 2412/18 = 134$, which is the mean, $1206/9$. To the left the slope is negative, $L'(133) = -18$, so raising $c$ lowers the loss; to the right it is positive, $L'(140) = 108$, so lowering $c$ lowers the loss. The totals agree with the variance page: $L(134) = 576$, $L(133) = 585$ and $L(140) = 900$. That page [proves the same fact without calculus](/statistics/variance-and-standard-deviation/#formal-definition), and the [mean, median and mode page](/statistics/mean-vs-median-vs-mode/) shows what changes when the misses are not squared.
+
+</div>
+
+</WorkedExample>
+
+## Derivatives in machine learning
+
+### Which way to move a weight
+
+Gradient descent moves a weight a small step against the sign of the derivative of the loss: new $w = w - \eta\,L'(w)$, where $\eta$ is the learning rate. Goodfellow and coauthors explain why: a small enough step against the sign of the derivative lowers the function, and repeating such steps is gradient descent, which they credit to Cauchy in 1847 (§4.3, Figure 4.1) <Cite id="goodfellow2016numerical" />.
+
+Take the board's Loss preset, $L(w) = (w - 3)^2$, with $L'(w) = 2(w - 3)$. On the first board after Check, press Loss, set Show as to Tangent and set Ruler length h to 0.5. The board says "Loss at w = 0: 9." and "Slope −6: a step to the right lowers the loss. This ruler's slope, −5.5, is 0.5 above it." With learning rate 0.1, the first step takes $w$ from 0 to $0 - 0.1 \times (-6) = 0.6$. The slope there is $-4.8$, so the next step lands on 1.08, then 1.464. The loss falls from 9 to 5.76, 3.6864 and 2.359296. With many weights, the steps together are vector arithmetic, as on the [vectors page](/linear-algebra/vectors/#a-gradient-step-is-a-scaled-sum), and equation (4.5) in Goodfellow and coauthors is that version <Cite id="goodfellow2016numerical" />.
+
+<GoDeeper label="why each step closes 1/5 of the gap" id="step-shrinks">
+
+One step sends $w - 3$ to $(w - 3) - 0.1 \times 2(w - 3) = 0.8\,(w - 3)$. So each step keeps four fifths of the gap to 3 and closes one fifth of it. From $w = 0$, after $k$ steps $w = 3 - 3 \times 0.8^k$: 0.6, 1.08, 1.464 and 1.7712. In general one step multiplies the gap by $1 - 2\eta$ on this loss.
+
+</GoDeeper>
+
+### How big a step the slope allows
+
+The derivative describes the curve only near the current weight, so a large step can overshoot the bottom. With the same loss and start, a learning rate of 0.5 lands on 3 in one step and stays there. A learning rate of 1 jumps from 0 to 6, then back to 0, forever. A learning rate of 1.1 goes to 6.6, then −1.32, then 8.184: the distance from 3 grows by a factor of 1.2 every step. A later page shows how the curvature of the loss sets a safe learning rate.
+
+### Checking a gradient with finite differences
+
+When you write a gradient by hand, compare it with a ruler slope. Goodfellow and coauthors recommend a one-sided ruler, or better a centered one that reaches equally far on both sides of the point, with a step large enough not to be lost to rounding (§11.5, p. 432) <Cite id="goodfellow2016practical" />. On $x^3$ at 1 with $h = 0.01$, the one-sided ruler says 3.0301, while the centered ruler from 0.99 to 1.01 says 3.0001. Baydin and coauthors explain why: the centered ruler's error is much smaller, and once $h$ gets too small, rounding error takes over (§2.1, Figure 3) <Cite id="baydin2018" />. In 64-bit floats, $h = 10^{-12}$ gives a worse estimate of the slope of $x^3$ at 1 than $h = 10^{-6}$.
+
+<GoDeeper label="why the centered ruler is more accurate" id="centered-difference">
+
+For $x^3$ at 1, the ruler of length $h$ has slope $3 + 3h + h^2$ and the ruler of length $-h$ has slope $3 - 3h + h^2$. The centered ruler from $1 - h$ to $1 + h$ has the average of the two slopes, $3 + h^2$: the $3h$ terms cancel. So halving $h$ cuts its miss by a factor of 4 instead of 2.
+
+</GoDeeper>
+
+### What libraries do at ReLU's corner
+
+ReLU has no derivative at 0, but automatic differentiation must still return a number there. PyTorch's notes list rules it applies in order: use the gradient where it exists, and for a convex function where it doesn't, use a subgradient of minimum norm <Cite id="pytorch-autograd-notes" />. For ReLU at 0 that rule gives 0. Bertoin and coauthors report that TensorFlow, PyTorch and JAX all use 0 there (§1, p. 1) <Cite id="bertoin2021" />. The choice is usually harmless, but not always, as the research frontier below shows.
+
+## Check every slope in code
+
+This program runs in your browser with exact fractions and stops with an error if any number on this page is off. It uses only the Python standard library.
+
+<PyRunner
+  title="derivatives.py"
+  code={`
+import math
+from fractions import Fraction as F
+
+
+def ruler(f, x, h):
+    """Rise over run from x to x + h: the slope of the secant. h = 0 has no slope."""
+    if h == 0:
+        raise ValueError("a ruler of length 0 has no slope: rise 0 over run 0")
+    return (f(x + h) - f(x)) / h
+
+
+def centered(f, x, h):
+    """The slope of the ruler from x - h to x + h, centered on x."""
+    if h == 0:
+        raise ValueError("a ruler of length 0 has no slope")
+    return (f(x + h) - f(x - h)) / (2 * h)
+
+
+def square(x):
+    return x * x
+
+
+def cube(x):
+    return x * x * x
+
+
+# Board 1: rulers on y = x^2 at x = 1.
+lengths = [F(1), F(1, 2), F(1, 4), F(-1, 4), F(-1, 2), F(-1)]
+assert [ruler(square, 1, h) for h in lengths] == [3, F(5, 2), F(9, 4), F(7, 4), F(3, 2), 1]
+assert [square(1 + h) - square(1) for h in lengths] == [3, F(5, 4), F(9, 16), F(-7, 16), F(-3, 4), -1]
+short = [F(1, 10), F(1, 100), F(1, 1000), F(-1, 100)]
+assert [ruler(square, 1, h) for h in short] == [F(21, 10), F(201, 100), F(2001, 1000), F(199, 100)]
+for h in lengths + short:
+    assert ruler(square, 1, h) == 2 + h  # a ruler of length h misses 2 by exactly h
+print("rulers at x = 1:", [str(ruler(square, 1, h)) for h in lengths])
+try:
+    ruler(square, 1, 0)
+    raise AssertionError("a ruler of length 0 should fail")
+except ValueError as error:
+    print("h = 0:", error)
+
+# A ruler at x = 3 of length 0.5, against the slope 2x = 6 there.
+assert ruler(square, 3, F(1, 2)) == F(13, 2) and 2 * 3 == 6
+
+# y = x^3: rulers miss by more than h but still close in on 3; at 0 every ruler slope is h^2.
+assert ruler(cube, 1, F(1, 10)) == F(331, 100) and ruler(cube, 1, F(1, 100)) == F(30301, 10000)
+for h in lengths + short:
+    assert ruler(cube, 1, h) == 3 + 3 * h + h * h
+    assert ruler(cube, 0, h) == h * h > 0
+    assert centered(cube, 1, h) == 3 + h * h
+assert centered(cube, 1, F(1, 100)) == F(30001, 10000)
+assert ruler(cube, 0, F(1, 2)) == ruler(cube, 0, F(-1, 2)) == F(1, 4)
+
+# The derivative function of x^2 is 2x.
+assert [2 * x for x in (-2, -1, 0, 1, 2)] == [-4, -2, 0, 2, 4] and 2 * F(-3, 2) == -3
+
+# The tangent at 1 as a forecast: it misses by h^2.
+assert 1 + F(1, 10) * 2 == F(6, 5) and square(F(11, 10)) == F(121, 100)
+assert square(F(11, 10)) - F(6, 5) == F(1, 100) == F(1, 10) ** 2
+assert 1 + 1 * 2 == 3 and square(2) == 4
+
+
+# The bike: 5 t^2 meters after t seconds.
+def bike(t):
+    return 5 * t * t
+
+
+assert [ruler(bike, 1, h) for h in (F(1), F(1, 10), F(1, 100))] == [15, F(21, 2), F(201, 20)]
+assert bike(2) - bike(1) == 15 and bike(F(11, 10)) - bike(1) == F(105, 100)
+assert [10 * t for t in (1, 2)] == [10, 20]
+assert F(10) / 1000 == F(1, 100)  # 10 m/s is 0.01 m/ms
+
+
+# Sums and constant multiples: g(x) = 3x^2 - 4x + 1, g'(x) = 6x - 4.
+def g(x):
+    return 3 * x * x - 4 * x + 1
+
+
+assert g(2) == 5 and 6 * 2 - 4 == 8
+for h in (F(1, 10), F(1, 100), F(1, 1000)):
+    assert ruler(g, 2, h) == 8 + 3 * h
+assert [ruler(g, 2, h) for h in (F(1, 10), F(1, 100), F(1, 1000))] == [F(83, 10), F(803, 100), F(8003, 1000)]
+assert 8 * 2 - 11 == 5
+assert 6 * F(2, 3) - 4 == 0 and g(F(2, 3)) == F(-1, 3)
+assert all(g(F(k, 30)) >= F(-1, 3) for k in range(-300, 301))
+
+# Worked example 3: the guess c that makes the total squared miss smallest.
+heights = [122, 125, 128, 131, 133, 137, 140, 142, 148]
+assert len(heights) == 9 and sum(heights) == 1206 and F(sum(heights), 9) == 134
+
+
+def total_miss(c):
+    return sum((x - c) ** 2 for x in heights)
+
+
+def total_miss_slope(c):
+    return -2 * sum(x - c for x in heights)
+
+
+for c in (133, 134, 140, F(1, 3), 0):
+    assert total_miss_slope(c) == 18 * c - 2412
+assert [total_miss_slope(c) for c in (133, 134, 140)] == [-18, 0, 108]
+assert F(2412, 18) == 134
+assert [total_miss(c) for c in (134, 133, 140)] == [576, 585, 900]
+for h in lengths + short:
+    assert ruler(total_miss, 134, h) == 9 * h
+
+
+# Gradient descent on L(w) = (w - 3)^2, with L'(w) = 2(w - 3).
+def loss(w):
+    return (w - 3) ** 2
+
+
+def loss_slope(w):
+    return 2 * (w - 3)
+
+
+def descend(w, rate, steps):
+    path = []
+    for _ in range(steps):
+        w = w - rate * loss_slope(w)
+        path.append(w)
+    return path
+
+
+assert loss_slope(0) == -6 and loss(0) == 9
+assert ruler(loss, 0, F(1, 2)) == F(-11, 2) and loss(F(1, 2)) - loss(0) == F(-11, 4)
+path = descend(F(0), F(1, 10), 4)
+assert path == [F(3, 5), F(27, 25), F(183, 125), F(1107, 625)]
+assert [float(w) for w in path] == [0.6, 1.08, 1.464, 1.7712]
+assert loss_slope(F(3, 5)) == F(-24, 5)
+for k, w in enumerate(path, start=1):
+    assert w == 3 - 3 * F(4, 5) ** k
+assert [loss(w) for w in [F(0)] + path[:3]] == [9, F(144, 25), F(2304, 625), F(36864, 15625)]
+assert [float(loss(w)) for w in [F(0)] + path[:3]] == [9, 5.76, 3.6864, 2.359296]
+assert descend(F(0), F(1, 2), 3) == [3, 3, 3]
+assert descend(F(0), F(1), 4) == [6, 0, 6, 0]
+big = descend(F(0), F(11, 10), 3)
+assert big == [F(33, 5), F(-33, 25), F(1023, 125)]
+assert [float(w) for w in big] == [6.6, -1.32, 8.184]
+for k, w in enumerate(big, start=1):
+    assert abs(w - 3) == 3 * F(6, 5) ** k
+print("learning rate 0.1:", [float(w) for w in path], " 1.1:", [float(w) for w in big])
+
+
+# Check yourself.
+def quartic(x):
+    return 4 * x * x * x - x
+
+
+assert 12 * (-1) ** 2 - 1 == 11
+assert abs(ruler(quartic, -1, F(1, 1000)) - 11) < F(1, 50)
+assert loss_slope(5) == 4 and 5 - F(1, 4) * 4 == 4 and descend(F(5), F(1, 4), 1) == [4]
+
+
+# Corners: ReLU, |x| and a jump.
+def relu(x):
+    return max(x, 0 * x)
+
+
+def step(x):
+    return 1 if x >= 0 else 0
+
+
+for h in (F(1, 4), F(1, 2), F(1, 1000)):
+    assert ruler(relu, 0, h) == 1 and ruler(relu, 0, -h) == 0
+    assert ruler(abs, 0, h) == 1 and ruler(abs, 0, -h) == -1
+    assert ruler(square, 0, h) == h and ruler(square, 0, -h) == -h
+    assert ruler(step, 0, h) == 0 and ruler(step, 0, -h) == 1 / h
+assert ruler(step, 0, F(-1, 4)) == 4 and ruler(step, 0, F(-1, 1000)) == 1000
+assert ruler(relu, 1, F(1, 4)) == 1 and ruler(relu, -1, F(1, 4)) == 0
+
+# Subgradients: a line s*x through the corner stays on or below ReLU exactly when 0 <= s <= 1.
+grid = [F(k, 4) for k in range(-20, 21)]
+for s in (0, F(1, 4), F(1, 2), F(3, 4), 1):
+    assert all(s * x <= relu(x) for x in grid)
+assert any(F(3, 2) * x > relu(x) for x in grid if x > 0) and all(F(3, 2) * x <= relu(x) for x in grid if x <= 0)
+assert any(F(-1, 2) * x > relu(x) for x in grid if x < 0) and all(F(-1, 2) * x <= relu(x) for x in grid if x >= 0)
+for s in (-1, F(-1, 2), 0, F(1, 2), 1):
+    assert all(s * x <= abs(x) for x in grid)
+# The smallest-size slope in [0, 1] (ReLU) and in [-1, 1] (|x|) is 0, on a fine grid of each interval.
+assert min([F(k, 100) for k in range(0, 101)], key=abs) == 0
+assert min([F(k, 100) for k in range(-100, 101)], key=abs) == 0
+
+
+# Kakade and Lee's identity three ways, with a tiny forward-mode differentiator.
+class Dual:
+    """A value and its slope, carried through every operation (forward mode)."""
+
+    def __init__(self, value, slope):
+        self.value, self.slope = value, slope
+
+    def __add__(self, other):
+        return Dual(self.value + other.value, self.slope + other.slope)
+
+    def __sub__(self, other):
+        return Dual(self.value - other.value, self.slope - other.slope)
+
+    def __neg__(self):
+        return Dual(-self.value, -self.slope)
+
+    def scaled(self, c):
+        return Dual(c * self.value, c * self.slope)
+
+
+def make_relu(slope_at_zero):
+    def relu_dual(u):
+        if u.value > 0:
+            return Dual(u.value, u.slope)
+        if u.value < 0:
+            return Dual(0 * u.value, 0 * u.slope)
+        return Dual(0 * u.value, slope_at_zero * u.slope)  # the library's choice at the corner
+    return relu_dual
+
+
+def slopes_at_zero(s):
+    r = make_relu(s)
+    x = Dual(0 * s, 1 + 0 * s)
+    f1 = x
+    f2 = r(x) - r(-x)
+    f3 = f1.scaled(10) - f2.scaled(9)
+    f4 = r(r(x)) - r(-x)
+    return f1.slope, f2.slope, f3.slope, f4.slope
+
+
+for s in (F(0), F(1, 4), F(1, 2), F(1)):
+    one, two, three, four = slopes_at_zero(s)
+    assert one == 1 and two == 2 * s and three == 10 - 18 * s and four == s * s + s
+assert slopes_at_zero(F(0))[:3] == (1, 0, 10)
+assert slopes_at_zero(F(1, 2)) == (1, 1, 1, F(3, 4))
+golden = (math.sqrt(5) - 1) / 2
+assert abs(slopes_at_zero(golden)[3] - 1) < 1e-12 and abs(golden - 0.618) < 5e-4
+print("slopes at 0 with ReLU'(0) = 0:", [str(v) for v in slopes_at_zero(F(0))[:3]], " with 1/2:", [str(v) for v in slopes_at_zero(F(1, 2))])
+
+
+# Floating point: the ruler error on x^3 at 1, in 64-bit floats.
+def float_cube(x):
+    return x * x * x
+
+
+def one_sided_error(h):
+    return abs((float_cube(1.0 + h) - float_cube(1.0)) / h - 3.0)
+
+
+def centered_error(h):
+    return abs((float_cube(1.0 + h) - float_cube(1.0 - h)) / (2 * h) - 3.0)
+
+
+assert abs(one_sided_error(0.01) - 0.0301) < 1e-9 and abs(centered_error(0.01) - 1e-4) < 1e-9
+assert one_sided_error(1e-6) < 1e-5 < one_sided_error(1e-12)
+print(f"one-sided error: h = 1e-6 gives {one_sided_error(1e-6):.1e}, h = 1e-12 gives {one_sided_error(1e-12):.1e}")
+`}
+/>
+
+With exact fractions every ruler slope on y = x² is exactly 2 + h. The last block uses ordinary floats, where a ruler of length $10^{-12}$ subtracts two nearly equal numbers and divides the rounding by a tiny run, so the code checks those errors only with inequalities.
+
+This display-only snippet needs PyTorch on your own machine.
+
+```python title="derivatives_pytorch.py"
+import torch
+
+x = torch.tensor(0.0, requires_grad=True)
+torch.relu(x).backward()
+print(x.grad)  # PyTorch's notes: a subgradient of minimum norm here, which is 0
+
+# Kakade and Lee's identity written two more ways. In 2018 they reported 0 and 10 at x = 0;
+# run it to see what your version returns. The true derivative of both is 1.
+x = torch.tensor(0.0, requires_grad=True)
+f2 = torch.relu(x) - torch.relu(-x)
+f2.backward()
+print(x.grad)
+
+x = torch.tensor(0.0, requires_grad=True)
+f3 = 10 * x - 9 * (torch.relu(x) - torch.relu(-x))
+f3.backward()
+print(x.grad)
+```
+
+## Research frontier
+
+<ResearchFrontier reviewed="2026-11-25">
+
+**Corners in automatic differentiation.** Kakade and Lee write the identity function three ways: $f_1(x) = x$, $f_2(x) = \operatorname{ReLU}(x) - \operatorname{ReLU}(-x)$ and $f_3(x) = 10 f_1(x) - 9 f_2(x)$. All three equal $x$, so all three have derivative 1 at 0. Yet they report that TensorFlow and PyTorch returned 1, 0 and 10, because both libraries used the subgradient 0 for ReLU at 0 (§1, p. 2; library behavior in 2018) <Cite id="kakade2018" />. Choosing $\operatorname{ReLU}'(0) = 1/2$ repairs $f_2$ and $f_3$, but $f_4(x) = \operatorname{ReLU}(\operatorname{ReLU}(x)) - \operatorname{ReLU}(-x)$, which is also the identity, would need $(\sqrt{5} - 1)/2 \approx 0.618$, so no single value works for every program (footnote 1) <Cite id="kakade2018" />. The code above reproduces 0, 10 and that value with a ten-line forward-mode differentiator. Their main result is positive: for a restricted class of programs, correct generalized derivatives can be computed at a cost within a factor of 6 of evaluating the function, whatever the dimension (abstract) <Cite id="kakade2018" />.
+
+**Does the choice matter in training?** Bolte and Pauwels give a mathematical model of automatic differentiation on programs with corners. In it, automatic differentiation can create artificial critical points, but the usual training methods avoid them with probability one (abstract) <Cite id="bolte2020" />. Bertoin and coauthors found that floating point breaks that guarantee in practice. Two PyTorch training runs with the same initialization and the same mini-batches, one with $\operatorname{ReLU}'(0) = 0$ and one with 1, drift apart (Figure 1). The set of weights where the two choices give different results, which theory says is negligible, occupied 20% to 80% of weight space at 32 bits in their experiments, became invisible at 64 bits and filled the whole space at 16 bits. For plain stochastic gradient descent, 0 was the most efficient choice, and batch normalization and Adam damped the effect (v1, abstract and §1) <Cite id="bertoin2021" />. This is a floating-point effect: in exact arithmetic the theory stands.
+
+**What is open.** Kakade and Lee call "how to obtain numerically stable and accurate solutions" the most important open question (§4, p. 15) <Cite id="kakade2018" />. For other activations with corners, Bertoin and coauthors write that "it is not clear a priori which choice would be the most robust" (§5, p. 10) <Cite id="bertoin2021" />.
+
+</ResearchFrontier>
+
+## Check yourself
+
+<CheckYourself level="intuition" question="On y = x³ at x = 0 every ruler, left or right, has a positive slope. Is x = 0 the lowest point nearby?">
+No. The ruler slopes are $h^2$, which close in on 0, so $x = 0$ is flat for an instant. But $x^3$ is negative to the left of 0 and positive to the right, so points on the left are lower. A flat point can be a minimum, a maximum or neither.
+</CheckYourself>
+
+<CheckYourself level="standard" question="Find f′(x) for f(x) = 4x³ − x, and the slope at x = −1.">
+$f'(x) = 12x^2 - 1$, by the power, constant-multiple and sum rules. At $x = -1$ the slope is $12 - 1 = 11$.
+</CheckYourself>
+
+<CheckYourself level="standard" question="L(w) = (w − 3)², w = 5, learning rate 0.25. Where does one step of gradient descent take w?">
+To 4. The slope is $L'(5) = 2(5 - 3) = 4$, positive, so the step goes left: $5 - 0.25 \times 4 = 4$.
+</CheckYourself>
+
+<CheckYourself level="standard" question="Same loss, start at w = 0, learning rate 1. What happens?">
+$w$ jumps from 0 to 6, then back to 0, then to 6, forever. The slope at 0 is $-6$, so the step is $+6$, which overshoots the bottom at 3 by exactly as much as $w$ was short of it. At 6 the slope is $+6$, and the step brings it straight back.
+</CheckYourself>
+
+<CheckYourself level="proof" question="Show that |x| has no derivative at 0.">
+For $h > 0$ the ruler's slope is $(|h| - 0)/h = h/h = 1$, and for $h < 0$ it is $|h|/h = -h/h = -1$. So the rulers on the right close in on 1 and those on the left on $-1$. The two one-sided limits differ, so the limit of the difference quotient does not exist.
+</CheckYourself>
+
+## Common mistakes
+
+<CommonMistakes>
+  <Mistake wrong="The slope between two points is the derivative.">
+    That is an average, the slope of a secant. The derivative is what those slopes close in on as the run shrinks. On y = x² at 1, a ruler of length 0.5 says 2.5, while the derivative is 2.
+  </Mistake>
+  <Mistake wrong="A derivative of 0 means a minimum.">
+    It means the curve is flat for an instant. $x^3$ at 0 is flat and keeps rising through it; see [flat does not mean lowest](#flat-is-not-lowest).
+  </Mistake>
+  <Mistake wrong="In code, use the tiniest step h you can.">
+    Rounding takes over. In 64-bit floats, $h = 10^{-12}$ gives a worse estimate of the slope of $x^3$ at 1 than $h = 10^{-6}$. Use a moderate $h$ and the centered ruler.
+  </Mistake>
+  <Mistake wrong="If a curve has no gaps, it has a derivative.">
+    |x| and ReLU have no gaps and no derivative at 0: the rulers on the two sides close in on different numbers. See [every slope in between](#subgradients).
+  </Mistake>
+  <Mistake wrong="A steep slope means a big step is safe.">
+    The slope only describes the curve nearby. On $(w - 3)^2$ with learning rate 1.1, every step overshoots further than the one before.
+  </Mistake>
+</CommonMistakes>
+
+## Key takeaways
+
+<Takeaways />
+
+## How this connects
+
+<ConceptMap />
+
+## References
+
+<References />
