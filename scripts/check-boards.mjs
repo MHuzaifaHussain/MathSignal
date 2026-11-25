@@ -2559,6 +2559,10 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	// The setups' validation.
 	const pour = densSetups.DENSITY_SETUPS['sand-pour'];
 	for (const id of ['sand-pour', 'sand-interval']) assert.equal(densSetups.getDensitySetup(id).id, id);
+	// The ids DistributionBoard picks a mode by match the lazy registries, in order.
+	const setupIds = await import('../src/components/react/distributionBoard/setupIds.ts');
+	assert.deepEqual(Object.keys(famSetups.FAMILY_SETUPS), [...setupIds.FAMILY_SETUP_IDS]);
+	assert.deepEqual(Object.keys(densSetups.DENSITY_SETUPS), [...setupIds.DENSITY_SETUP_IDS]);
 	assert.throws(() => densSetups.validateDensitySetup({ ...pour, shapes: ['even', 'lopsided'] }), /lists "lopsided", which a later board asks about/);
 	assert.throws(() => densSetups.validateDensitySetup({ ...pour, shapes: ['even', 'heap', 'narrow', 'lopsided', 'even'] }), /5 presets, more than 4/);
 	assert.throws(() => densSetups.validateDensitySetup({ ...pour, yMax: fraction(1, 1) }), /"Narrow sand" above its scale/);

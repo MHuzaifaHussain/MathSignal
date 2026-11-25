@@ -3,8 +3,9 @@
 import { compareFractions, fraction, multiplyFractions, subtractFractions, type Fraction } from '../boardMath.ts';
 import { fitsAt320 } from './columnAxis.ts';
 import { binomial, binomialMoments } from './families.ts';
+import { isFamilySetupId, type FamilySetupId } from './setupIds.ts';
 
-export type FamilySetupId = 'coins-binomial' | 'binomial-spread';
+export { isFamilySetupId, type FamilySetupId };
 /** `guess`: lock in a guess before the board shows 4 or more coins. `spread`: n and p sliders and the spread switch. */
 export type FamilyKind = 'guess' | 'spread';
 export type GuessId = 'one-in-two' | 'one-in-five' | 'one-in-fifty';
@@ -128,10 +129,6 @@ export function validateFamilySetup(setup: FamilySetup): FamilySetup {
 }
 
 const validated = new Map<FamilySetupId, FamilySetup>();
-
-export function isFamilySetupId(id: string): id is FamilySetupId {
-	return Object.hasOwn(FAMILY_SETUPS, id);
-}
 
 export function getFamilySetup(id: FamilySetupId): FamilySetup {
 	const known = validated.get(id);

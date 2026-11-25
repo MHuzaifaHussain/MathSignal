@@ -4,9 +4,11 @@ import { compareFractions, divideFractions, fraction, toNumber, type Fraction } 
 import { fitsAt320 } from './columnAxis.ts';
 import { bins, QUARTERS_PER_CM, RULER_CM, supportOf, validateShape, type PiecewiseLinear } from './density.ts';
 import type { Gridline } from './familySetups.ts';
+import { isDensitySetupId, type DensitySetupId } from './setupIds.ts';
+
+export { isDensitySetupId, type DensitySetupId };
 
 export type ShapeId = 'even' | 'heap' | 'narrow' | 'lopsided';
-export type DensitySetupId = 'sand-pour' | 'sand-interval';
 export type DensityStage = 'bars' | 'curve';
 /** Bars per centimeter: 1 cm, 0.5 cm or 0.25 cm wide. */
 export type BinsPerCm = 1 | 2 | 4;
@@ -109,10 +111,6 @@ export function validateDensitySetup(setup: DensitySetup): DensitySetup {
 }
 
 const validated = new Map<DensitySetupId, DensitySetup>();
-
-export function isDensitySetupId(id: string): id is DensitySetupId {
-	return Object.hasOwn(DENSITY_SETUPS, id);
-}
 
 export function getDensitySetup(id: DensitySetupId): DensitySetup {
 	const known = validated.get(id);
