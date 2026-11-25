@@ -1,14 +1,16 @@
 // Which of DistributionBoard's modes a setup belongs to (decision 0018). Each mode keeps its own registry; this is
 // the one place that looks across them, so an id can't be claimed twice or go unrecognized.
+import { DENSITY_SETUPS, isDensitySetupId, type DensitySetupId } from './densitySetups.ts';
 import { FAMILY_SETUPS, isFamilySetupId, type FamilySetupId } from './familySetups.ts';
 import { isOutcomeSetupId, OUTCOME_SETUP_IDS, type SetupId } from './setups.ts';
 
-export type BoardMode = 'outcomes' | 'family';
-export type BoardSetupId = SetupId | FamilySetupId;
+export type BoardMode = 'outcomes' | 'family' | 'density';
+export type BoardSetupId = SetupId | FamilySetupId | DensitySetupId;
 
 const REGISTRIES: readonly { mode: BoardMode; has: (id: string) => boolean; ids: () => readonly string[] }[] = [
 	{ mode: 'outcomes', has: isOutcomeSetupId, ids: () => OUTCOME_SETUP_IDS },
 	{ mode: 'family', has: isFamilySetupId, ids: () => Object.keys(FAMILY_SETUPS) },
+	{ mode: 'density', has: isDensitySetupId, ids: () => Object.keys(DENSITY_SETUPS) },
 ];
 
 /** The mode whose registry holds `id`. Throws, listing every known id, on an unknown id or one held twice. */

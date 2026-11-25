@@ -14,6 +14,7 @@ import { activePreset, familyDistribution, familyMoments, familySetupOf, isCover
 import type { Bar } from './model.ts';
 import { chanceChain, powerText, rootText, SENTENCE_PLACES, sigmaValue, TABLE_PLACES, underText, underThreshold } from './numberFormat.ts';
 import { coinSequences, MAX_LISTED_COINS, type CoinSequence } from './sources.ts';
+import type { SpokenLine } from './SpokenText.tsx';
 
 interface WordPair {
 	one: string;
@@ -94,11 +95,6 @@ function tableChance(bar: Bar, total: number): string {
 const sigmaIsOne = (variance: Fraction) => variance.numerator === variance.denominator;
 
 // ---- Status and the n ≤ 3 sequence list ----
-
-export interface SpokenLine {
-	visible: string;
-	spoken: string;
-}
 
 export function statusLine(state: FamilyState): SpokenLine {
 	if (!isFair(state)) {

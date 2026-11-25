@@ -1464,6 +1464,46 @@
 	color: var(--ms-board-ink-muted);
 }
 
+/* Clear of the top gridline's label, which sits just above the plot's top edge. */
+.ms-cols-height-unit {
+	margin: 0 0 1rem;
+	font-size: 0.8125rem;
+	color: var(--ms-board-ink-muted);
+}
+
+/* The density curve and the shaded stretch, an SVG stretched over the column area; its labels are HTML. */
+.ms-curve {
+	position: absolute;
+	inset: 0;
+	inline-size: 100%;
+	block-size: 100%;
+	overflow: visible;
+}
+
+.ms-curve-line {
+	fill: none;
+	stroke: var(--ms-board-ink);
+	stroke-width: 2;
+	stroke-linejoin: round;
+	vector-effect: non-scaling-stroke;
+}
+
+.ms-curve-shade {
+	fill: var(--ms-highlight);
+	stroke: none;
+}
+
+.ms-curve-edge {
+	stroke: var(--ms-attention);
+	stroke-width: 2;
+	vector-effect: non-scaling-stroke;
+}
+
+.ms-curve-hatch-line {
+	stroke: var(--ms-board-ink);
+	stroke-width: 1;
+}
+
 .ms-dist-guess {
 	margin: 0 0 0.25rem;
 	font-size: 0.9375rem;
@@ -2270,6 +2310,27 @@
 
 	.ms-cols-grid {
 		border-block-start-color: GrayText;
+	}
+
+	/* The curve draws in CanvasText and the shaded stretch fills with the hatch pattern, its edges in Highlight. */
+	.ms-curve {
+		forced-color-adjust: none;
+	}
+
+	.ms-curve-line {
+		stroke: CanvasText;
+	}
+
+	.ms-curve-shade {
+		fill: var(--ms-curve-hatch);
+	}
+
+	.ms-curve-hatch-line {
+		stroke: CanvasText;
+	}
+
+	.ms-curve-edge {
+		stroke: Highlight;
 	}
 
 	/* DescriptiveStats: filled marks draw in CanvasText; the "look here" dot and bar keep a Highlight ring. */

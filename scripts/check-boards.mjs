@@ -2385,6 +2385,8 @@ const bigChoose = (n, k) => {
 	assert.equal(boardSetups.boardModeOf('candy-spread'), 'outcomes');
 	assert.equal(boardSetups.boardModeOf('coins-binomial'), 'family');
 	assert.equal(boardSetups.boardModeOf('binomial-spread'), 'family');
+	assert.equal(boardSetups.boardModeOf('sand-pour'), 'density');
+	assert.equal(boardSetups.boardModeOf('sand-interval'), 'density');
 	assert.throws(() => boardSetups.boardModeOf('toString'), /unknown setup "toString". Known setups: candy-build, .*coins-binomial, binomial-spread/);
 	assert.equal(new Set(boardSetups.allBoardSetupIds()).size, boardSetups.allBoardSetupIds().length);
 }

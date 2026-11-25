@@ -1,11 +1,13 @@
+import DensityBoard from "./distributionBoard/DensityBoard.tsx";
 import FamilyBoard from "./distributionBoard/FamilyBoard.tsx";
 import OutcomeBoard from "./distributionBoard/OutcomeBoard.tsx";
 import { boardModeOf, type BoardSetupId } from "./distributionBoard/boardSetups.ts";
+import type { DensitySetupId } from "./distributionBoard/densitySetups.ts";
 import type { FamilySetupId } from "./distributionBoard/familySetups.ts";
 import type { SetupId } from "./distributionBoard/setups.ts";
 
 interface DistributionBoardProps {
-  /** Which configuration to show; each mode lists its own in distributionBoard/ (setups.ts, familySetups.ts). */
+  /** Which configuration to show; each mode lists its own in distributionBoard/ (setups.ts, familySetups.ts, densitySetups.ts). */
   setup: BoardSetupId;
 }
 
@@ -19,5 +21,7 @@ export default function DistributionBoard({ setup }: DistributionBoardProps) {
       return <OutcomeBoard setup={setup as SetupId} />;
     case "family":
       return <FamilyBoard setup={setup as FamilySetupId} />;
+    case "density":
+      return <DensityBoard setup={setup as DensitySetupId} />;
   }
 }

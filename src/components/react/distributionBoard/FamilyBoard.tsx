@@ -11,6 +11,7 @@ import useAnnouncer from "../guided/useAnnouncer.ts";
 import useCommittedSlider from "../guided/useCommittedSlider.ts";
 import ColumnChart from "./ColumnChart.tsx";
 import ReadPair from "./ReadPair.tsx";
+import SpokenText from "./SpokenText.tsx";
 import ValueTable from "./ValueTable.tsx";
 import { familyChart } from "./familyChart.ts";
 import {
@@ -32,23 +33,11 @@ import {
   statusLine,
   tableOf,
   verdictLine,
-  type SpokenLine,
 } from "./familyDescribe.ts";
 import type { FamilySetupId } from "./familySetups.ts";
 import { activePreset, familyReducer, familySetupOf, initialFamilyState, isCovered, presetsLocked, readBlocked, type FamilyAction, type FamilyState } from "./familyState.ts";
 
 type SliderKey = "n" | "p";
-
-/** Text whose spoken form differs ("2¹⁰", "HHT"): the screen shows one, screen readers read the other. */
-function SpokenText({ line }: { line: SpokenLine }) {
-  if (line.visible === line.spoken) return <>{line.visible}</>;
-  return (
-    <>
-      <span aria-hidden="true">{line.visible}</span>
-      <span className="sr-only">{line.spoken}</span>
-    </>
-  );
-}
 
 /**
  * DistributionBoard's family mode (decision 0018): a binomial distribution set by n and p, drawn as plain columns

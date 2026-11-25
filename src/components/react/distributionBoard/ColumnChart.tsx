@@ -47,6 +47,8 @@ interface ColumnChartProps {
   /** Drawn over the columns in the same coordinates, such as the density curve. */
   overlay?: ReactNode;
   unit: string;
+  /** The vertical unit, shown above the plot when the gridline labels are bare numbers ("Height (per cm)"). */
+  heightUnit?: string;
 }
 
 const percent = (value: number) => `${value}%`;
@@ -56,7 +58,7 @@ const percent = (value: number) => `${value}%`;
  * scale, labeled gridlines in a gutter on the left, at most one ochre column, and the shared μ and σ marks. It is
  * aria-hidden: the readouts and the table behind Table view carry every number. Styles: .ms-cols.
  */
-export default function ColumnChart({ columns, ticks, gridlines, marks, touching = false, overlay, unit }: ColumnChartProps) {
+export default function ColumnChart({ columns, ticks, gridlines, marks, touching = false, overlay, unit, heightUnit }: ColumnChartProps) {
   const hasMarks = Boolean(marks?.mu || marks?.sigma || marks?.ghost);
   return (
     <div className={touching ? "ms-cols is-touching" : "ms-cols"} aria-hidden="true">
@@ -79,6 +81,7 @@ export default function ColumnChart({ columns, ticks, gridlines, marks, touching
           )}
         </div>
       )}
+      {heightUnit && <p className="ms-cols-height-unit">{heightUnit}</p>}
       <div className="ms-cols-plot">
         {gridlines.map((line) => (
           <span key={line.label} className={line.solid ? "ms-cols-grid is-solid" : "ms-cols-grid"} style={{ "--y": percent(line.y) } as Position}>
