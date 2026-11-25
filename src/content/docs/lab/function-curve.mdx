@@ -1,0 +1,27 @@
+---
+title: FunctionCurve lab
+description: A draft page for trying both FunctionCurve setups, ruler-to-tangent and corner, during development. Drafts are never built for the live site.
+draft: true
+---
+
+import FunctionCurve from "../../../components/react/FunctionCurve.tsx";
+
+Development only. Each board below is one `setup`.
+
+Before Check the point stays where the setup puts it, and only rulers of length 0.25 or more are offered: no Point slider, no presets, no Tangent or Slope curve stage. Answer and press Check to bring them in. The table is behind the Table view switch, the last control before Reset. Open it at 320px on the S-curve at x = −1.5 with h = −0.001 (the widest row) to check that it fits without scrolling sideways, and print the page to check that it prints while folded.
+
+## ruler-to-tangent
+
+Opens on Slide with y = x² at x = 1. After Check, try Tangent with h = 0.01, then the S-curve at x = 0 and Loss at w = 0.
+
+<div class="not-content">
+  <FunctionCurve client:visible setup="ruler-to-tangent" />
+</div>
+
+## corner
+
+ReLU at x = 0. After Check, turn on Lines under the corner and try every slope s on Hinge and V; the tangent is not drawn while the switch is on.
+
+<div class="not-content">
+  <FunctionCurve client:visible setup="corner" />
+</div>
