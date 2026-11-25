@@ -135,6 +135,9 @@ export const contrastRules = [
 	// EventSpace marks event A with the highlighter fill, an ochre border and an ink tag (decision 0011)
 	['boardInk', 'highlight', 'text'],
 	['attention', 'highlight', 'graphic'],
+	// DistributionBoard: the μ guide and σ span cross the ochre read column and shaded stretch (decision 0018)
+	['mu', 'highlight', 'graphic'],
+	['sigma', 'highlight', 'graphic'],
 	['codeInk', 'codeBg', 'code'],
 	['codeKeyword', 'codeBg', 'code'],
 	['codeString', 'codeBg', 'code'],
