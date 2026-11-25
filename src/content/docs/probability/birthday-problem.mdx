@@ -1,0 +1,509 @@
+---
+title: "The birthday problem and hash collisions"
+description: "In a room of 23 people, the chance that at least two share a birthday is just over 1/2. Count the no-match cases, take the complement, then size a hash table."
+sidebar:
+  order: 16
+draft: true
+topic: probability/birthday-problem
+type: C
+objectives:
+  - Compute the chance that n people share no birthday by counting ordered lists, and turn it into the chance of a match with the complement rule.
+  - Explain why a match is likely in small groups by counting pairs, not people.
+  - Tell the group question (any two share) apart from the personal one (someone shares mine), and find each.
+  - Use the same count to judge how likely a hash collision is for a given number of items and buckets.
+takeaways:
+  - With n people and d equally likely days, the chance that all birthdays differ is d(d − 1)⋯(d − n + 1)/dⁿ, and the chance of a match is 1 minus that.
+  - With 365 days, 23 people give a match just over half the time (about 0.507), and 57 people give one more than 99 times in 100.
+  - A match can happen between any of the n(n − 1)/2 pairs, which is 253 pairs for 23 people. That is why so few people are needed.
+  - The chance that someone shares your own birthday is much smaller. You need 253 other people before it passes 1/2.
+  - A hash table with d buckets is the same problem. Collisions become likely after roughly the square root of d items, long before the table is full.
+references:
+  - grinstead2003
+  - weinberger2009
+  - lee2021
+  - sklearn-feature-hashing
+author: Muhammad Huzaifa Hussain
+reviewedAt: 2026-11-25
+aiAssisted: true
+primaryQuery: birthday problem
+searchIntent: solve
+depthStatus: complete
+---
+
+import Analogy from "../../../components/Analogy.astro";
+import CheckYourself from "../../../components/CheckYourself.astro";
+import Cite from "../../../components/Cite.astro";
+import CommonMistakes from "../../../components/CommonMistakes.astro";
+import ConceptHeader from "../../../components/ConceptHeader.astro";
+import ConceptMap from "../../../components/ConceptMap.astro";
+import FormalDefinition from "../../../components/FormalDefinition.astro";
+import GoDeeper from "../../../components/GoDeeper.astro";
+import Mistake from "../../../components/Mistake.astro";
+import NotationKey from "../../../components/NotationKey.astro";
+import PreciseStatement from "../../../components/PreciseStatement.astro";
+import PyRunner from "../../../components/PyRunner.astro";
+import References from "../../../components/References.astro";
+import Simpler from "../../../components/Simpler.astro";
+import StepThrough from "../../../components/StepThrough.astro";
+import Takeaways from "../../../components/Takeaways.astro";
+import WhyThisMatters from "../../../components/WhyThisMatters.astro";
+import WorkedExample from "../../../components/WorkedExample.astro";
+
+<ConceptHeader
+  oneLiner="The birthday problem asks how likely it is that at least two people in a group share a birthday. With 365 equally likely days, the chance passes one half at just 23 people, because every pair of people is a chance to match."
+  difficulty="beginner"
+/>
+
+## In everyday terms
+
+<Analogy breaks="The calendar assumes every day is equally likely and that the children are not twins or chosen for their birthdays. Real birthdays cluster in some months, which should make a match a little more likely, not less. And the handshakes are not separate chances: two handshakes that share a child are linked.">
+
+A class of 23 children pins their birthdays to a big wall calendar, one card each, with a square for every day of the year. A shared birthday is two cards in one square. The first card can go anywhere. The second must miss one taken square, the third must miss two, and the 23rd must miss 22. Every card has to miss all the cards before it.
+
+Now let every child shake hands with every other child, once. That is 253 handshakes, and each one is a chance that two birthdays match.
+
+</Analogy>
+
+<WhyThisMatters>
+Programs often store items by hashing them into a fixed number of buckets, and two items in one bucket is a collision. The birthday count says when collisions start: after about the square root of the number of buckets, long before the table is half full. Feature hashing in text models and duplicate checks on training data both have to live with that count.
+</WhyThisMatters>
+
+## Guess before you count
+
+The opening line gave away one number: 23 people give an even chance of a shared birthday. Before you see why, write down two more guesses.
+
+- You are in a class of 23. How likely is it that one of the other 22 shares *your* birthday: about 1/2, about 1/4, or less than 1/10?
+- Deeper: how many people does it take before a shared birthday is 99% sure: about 57, about 100, about 183, or about 365?
+
+<CheckYourself level="intuition" question="Check your two guesses.">
+Less than 1/10: about 0.0586, because each of the other 22 has to land on your one day, and the next sections show the count. For 99%, 57 people are enough. Grinstead and Snell note that for the even chance it is tempting to guess about half of 365, or 183 (p. 77) <Cite id="grinstead2003" />. The group question is far easier to win than the personal one, because it doesn't care which two people match.
+</CheckYourself>
+
+## Count the ways nobody matches
+
+It is easier to count the groups where every birthday is different, then take that share away from 1. Each person gets one of $d = 365$ equally likely days, and 29 February is ignored, as Grinstead and Snell do (p. 78) <Cite id="grinstead2003" />.
+
+<StepThrough title="Four people, 365 days" rigor="full">
+
+1. An outcome is an ordered list of 4 birthdays, one per person. There are $365^4$ lists, all equally likely, so a probability is a count of lists divided by $365^4$, as on the page about [why counting needs equally likely outcomes](/probability/sample-spaces-and-events/#counting-works-only-when-outcomes-are-equally-likely).
+2. Count the lists where all four differ. The first person has 365 days, the second 364 that the first didn't use, the third 363 and the fourth 362. Multiplying the choices at each step gives $365 \times 364 \times 363 \times 362$ lists. {/* link at integration: /probability/counting-for-probability/#multiply-the-choices-at-each-step */}
+3. Divide: $q_4 = \dfrac{365 \times 364 \times 363 \times 362}{365^4} \approx 0.9836$.
+4. Take the [complement](/probability/probability-axioms/#not-a-is-one-minus-a): the chance that at least two of the four match is $1 - q_4 \approx 0.0164$.
+
+</StepThrough>
+
+The same four steps work for any group. For 23 people the first three are done for you.
+
+<StepThrough title="Twenty-three people: your turn" rigor="full">
+
+1. There are $365^{23}$ equally likely lists.
+2. All 23 days differ in $365 \times 364 \times \cdots \times 343$ lists: 23 factors, the last one $365 - 22$.
+3. $q_{23} = \dfrac{365 \times 364 \times \cdots \times 343}{365^{23}} \approx 0.4927$.
+4. Your turn: the chance of a match. Then do the same for 22 people, where $q_{22} \approx 0.5243$.
+
+</StepThrough>
+
+<CheckYourself level="standard" question="Finish step 4 for 23 people and for 22. What is the smallest group where a match is more likely than not?">
+$1 - q_{23} \approx 0.5073$ and $1 - q_{22} \approx 0.4757$. So 22 people fall just short of an even chance and 23 pass it: 23 is the smallest such group. Grinstead and Snell's Table 3.1 lists the same all-different chances, .5243047 for 22 people and .4927028 for 23 (p. 78) <Cite id="grinstead2003" />.
+</CheckYourself>
+
+Each factor is a chance to miss. Divide each count by 365 and
+
+$$
+q_n = \left(1 - \frac{0}{365}\right)\left(1 - \frac{1}{365}\right)\cdots\left(1 - \frac{n-1}{365}\right).
+$$
+
+Each new person must miss everyone before them, and the misses get harder as the calendar fills. The chance of a match climbs quickly:
+
+| People | 10 | 20 | 23 | 30 | 40 | 50 | 57 | 70 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Chance of a match | 0.1169 | 0.4114 | 0.5073 | 0.7063 | 0.8912 | 0.9704 | 0.9901 | 0.9992 |
+
+The values for 10, 20, 30, 40, 50 and 70 people are 1 minus the entries of Grinstead and Snell's Table 3.2 (p. 79) <Cite id="grinstead2003" />. By 57 people a match is more than 99% sure.
+
+<Simpler label="three dice instead of 365 days" id="three-dice">
+
+Roll three dice, so $d = 6$. All three show different faces in $6 \times 5 \times 4 = 120$ of the $6^3 = 216$ ordered results, so they all differ with chance $120/216 = 5/9$, and some two dice match with chance $4/9$. Seven dice always have a match, because there are only six faces to go around.
+
+</Simpler>
+
+## Count pairs, not people
+
+23 people make 253 pairs, and any one of those pairs can match. Choosing 2 people from 23 when order doesn't matter gives $\binom{23}{2} = 23 \times 22/2 = 253$ pairs, and each pair shares a birthday with chance 1/365.
+
+Adding up the pair chances gives $253/365 \approx 0.693$, but that is an upper limit, not the answer. The [addition rule](/probability/probability-axioms/#a-or-b-add-then-take-the-overlap-off-once) gives $P(A \cup B) \le P(A) + P(B)$, because the sum counts the overlap twice. Pair matches do overlap: in one group Ana can match Ben and Ana can match Cy at the same time. This sum is called the union bound, and for 30 people it is $435/365$, more than 1. Still, 253 chances of 1 in 365 explain why a small group is enough.
+
+Your own birthday is a different question. In your class of 23, each of the other 22 misses your day with chance 364/365. Their birthdays are independent, so the misses [multiply](/probability/independence/#multiplying-is-a-rule-you-earn), and the chance that someone shares yours is $1 - (364/365)^{22} \approx 0.0586$. It passes 1/2 only once there are 253 others. Both questions need roughly 253 chances of 1 in 365: a group of 23 gets them as pairs, while your own birthday gets them one person at a time.
+
+<GoDeeper label="how many matching pairs to expect" id="expected-pairs">
+
+Give each of the 253 pairs an indicator, 1 when the pair matches and 0 otherwise, like the Coins match preset on the [random variables page](/probability/random-variables-and-distributions/#equally-likely-outcomes-unequal-values). The number of matching pairs is the sum of the 253 indicators. An expected value of a sum is the sum of the expected values, even when the parts depend on each other, so the expected number of matching pairs is $253 \times 1/365 = 253/365 \approx 0.69$. {/* link at integration: /probability/expectation-and-variance/ */}The mean, about 0.69, is larger than the chance of at least one match, about 0.51, because some groups have two or more matching pairs.
+
+</GoDeeper>
+
+<GoDeeper label="why the answer grows like the square root of d" id="square-root-rule">
+
+Since $1 - x \le e^{-x}$ for every $x$, each factor $1 - k/d$ is at most $e^{-k/d}$. Multiplying the factors adds the exponents:
+
+$$
+q_n \le e^{-(0 + 1 + \cdots + (n-1))/d} = e^{-n(n-1)/(2d)}.
+$$
+
+For $n = 23$ and $d = 365$ the exponent is $-253/365$, and $253/365 \approx 0.693151$ is just above $\log 2 \approx 0.693147$. So $q_{23} < e^{-\log 2} = 1/2$, which proves that 23 people are enough without multiplying 23 fractions. Setting $n^2/(2d) = \log 2$ gives the approximate rule $n \approx \sqrt{2 \log 2 \cdot d} \approx 1.18\sqrt{d}$: about 22.49 for 365 days and about 1,206 for $2^{20}$ buckets. This is Grinstead and Snell's Exercise 19(d), with the letters swapped (p. 91) <Cite id="grinstead2003" />.
+
+</GoDeeper>
+
+<GoDeeper label="real birthdays are not evenly spread" id="uneven-birthdays">
+
+Real birthdays are not equally likely, and Grinstead and Snell call it "intuitively clear (but not easy to prove)" that this makes a match among 23 people even more likely (p. 78) <Cite id="grinstead2003" />. One case shows the direction: in a two-day year, two people match with chance 1/2, but with one day at 3/4 they match with chance $(3/4)^2 + (1/4)^2 = 5/8$. That checks one case, not the general claim.
+
+</GoDeeper>
+
+## Notation
+
+<NotationKey symbols={["sample-space", "event", "complement", "probability", "union", "cardinality", "group-size", "slot-count", "falling-factorial", "binomial-coefficient", "product", "no-match-probability", "log"]} />
+
+<PreciseStatement>
+
+Let $n \ge 0$ people each get one of $d \ge 1$ days. Assume (i) each day has chance $1/d$ for each person, and (ii) people's days are independent. Equivalently, all $|\Omega| = d^n$ ordered lists of days are equally likely. Let $A$ be the event that at least two of the $n$ share a day, so $A^\complement$ is the event that all $n$ days differ. Then
+
+$$
+q_n = P(A^\complement) = \frac{(d)_n}{d^n} = \prod_{k=0}^{n-1} \left(1 - \frac{k}{d}\right), \qquad P(A) = 1 - q_n.
+$$
+
+Boundary cases: $n = 0$ or $n = 1$ gives the empty product, $q_n = 1$; $n > d$ gives $q_n = 0$, because the factor for $k = d$ is 0; and $d = 365$, $n = 23$ gives $P(A) \approx 0.5073$. Grinstead and Snell's Example 3.3 uses $r$ people and $n$ days instead, writing $p_r = (n)_r/n^r$.
+
+</PreciseStatement>
+
+<FormalDefinition>
+
+<StepThrough title="Why qₙ = (d)ₙ / dⁿ, and why it never rises" rigor="full">
+
+1. $|\Omega| = d^n$: each of the $n$ people has $d$ choices, and the choices multiply.
+2. $|A^\complement| = d(d - 1)\cdots(d - n + 1) = (d)_n$: person $k + 1$ has $d - k$ days left that no one before them used.
+3. The lists are equally likely, so $q_n = |A^\complement|/|\Omega| = (d)_n/d^n$.
+4. Writing each factor as $(d - k)/d = 1 - k/d$ gives the product.
+5. $q_{n+1} = q_n (1 - n/d) \le q_n$, so adding a person never makes a match less likely. From $n = d + 1$ on, a factor is 0 and the chance of a match is 1.
+6. The union bound over the $\binom{n}{2}$ pairs, each matching with chance $1/d$, gives $1 - q_n \le n(n-1)/(2d)$. The bound says something only while it is below 1.
+
+</StepThrough>
+
+| Group size, with $d = 365$ | Chance of a match | Why |
+| --- | --- | --- |
+| $n = 2$ | $1/365$ | The second person must hit the first one's day |
+| $n = 3$ | $1{,}093/133{,}225$ | $1 - (364 \times 363)/365^2$ |
+| $n = 23$ | $\approx 0.5073$ | The smallest group above 1/2 |
+| $n = 57$ | $\approx 0.9901$ | The smallest group above 0.99 |
+| $n = 366$ | $1$ | More people than days |
+
+</FormalDefinition>
+
+## Worked examples
+
+<WorkedExample number={1} title="How many dice for an even chance?">
+
+Two dice match with chance $1/6$: whatever the first shows, the second must hit it. Three dice match with chance $4/9$, as counted in the three-dice fold above. Four dice all differ in $6 \times 5 \times 4 \times 3 = 360$ of the $6^4 = 1{,}296$ results, so $q_4 = 5/18$ and a match has chance $13/18$. Since $4/9 < 1/2 < 13/18$, four dice is the smallest number for which a match is more likely than not.
+
+</WorkedExample>
+
+<WorkedExample number={2} title="Birth months">
+
+With 12 equally likely months, as in Grinstead and Snell's Exercise 17 (p. 90) <Cite id="grinstead2003" />, four children all differ with chance $\frac{12 \times 11 \times 10 \times 9}{12^4} = \frac{11{,}880}{20{,}736} = \frac{55}{96}$, so two share a month with chance $41/96 \approx 0.427$. Five children all differ with chance $\frac{95{,}040}{248{,}832} = \frac{55}{144}$, so a shared month has chance $89/144 \approx 0.618$. Five children is the smallest group where a shared birth month is more likely than not.
+
+</WorkedExample>
+
+<WorkedExample number={3} title="The class of 23">
+
+For the class from the opening, $q_{22} \approx 0.5243$ and $q_{23} \approx 0.4927$, so the chance of a shared birthday rises from about 0.4757 with 22 children to about 0.5073 with 23. The 23rd child has 22 taken days to miss, a factor of $343/365$, and that tips the balance. The answer is 23, not the tempting 183.
+
+</WorkedExample>
+
+<WorkedExample number={4} title="Find the slip: someone shares my birthday">
+
+A student writes: "In a class of 23, the chance that someone shares my birthday is $1 - q_{23} \approx 0.507$." The slip: $1 - q_{23}$ is the chance that *any* two of the 23 share a day. Your own birthday needs one of the other 22 to land on your day, and each misses it with chance $364/365$, so the chance is $1 - (364/365)^{22} \approx 0.0586$. To pass 1/2 you need 253 others.
+
+</WorkedExample>
+
+<WorkedExample number={5} title="Find the slip: adding up the pairs">
+
+A student writes: "Each pair matches with chance 1/365. For 30 people there are 435 pairs, so the chance of a match is 435/365." That is more than 1, so it can't be a probability. The sum is the union bound, an upper limit that counts groups with overlapping matches more than once. The exact value is $1 - q_{30} \approx 0.7063$.
+
+</WorkedExample>
+
+<WorkedExample number={6} title="How many items before a hash table collides?" faded>
+
+A hash function spreads items evenly and independently over $d = 2^{20} = 1{,}048{,}576$ buckets, the default number of columns in scikit-learn's HashingVectorizer (§8.2.3.9) <Cite id="sklearn-feature-hashing" />. Using $q_{n+1} = q_n (1 - n/d)$, find the smallest number of items for which a collision is more likely than not, and compare it with the square-root rule. Then find the chance of a collision for 1,000 items and compare it with the union bound.
+
+<div slot="solution">
+
+Multiplying factor by factor, as the code below does, gives $q_{1205} > 1/2 > q_{1206}$, so 1,206 items. The square-root rule gives $\sqrt{2 \log 2 \cdot 2^{20}} \approx 1{,}205.7$, which agrees. For 1,000 items, $1 - q_{1000} \approx 0.379$, while the union bound gives $\binom{1000}{2}/2^{20} = 499{,}500/1{,}048{,}576 \approx 0.476$, an upper limit that is already loose. When a collision becomes more likely than not, the table is only about one tenth of one percent full: 1,206 of 1,048,576 buckets.
+
+</div>
+
+</WorkedExample>
+
+## Hash collisions in machine learning
+
+A hash function sends each item to one of $d$ buckets, and the birthday count says how soon two items share one.
+
+### Feature hashing: collisions you put up with
+
+The hashing trick sends each word straight to one of $d$ columns, so no vocabulary is stored. Weinberger and coauthors test it on spam filtering with 3.2 million emails from 433,167 users, which hold 40 million unique words after tokenization (§5) <Cite id="weinberger2009" />. With hashing, a personal classifier for each user cut the spam that got through by 30% once the table was indexed by 22 bits (§5) <Cite id="weinberger2009" />. Their shared classifier levels off at $2^{22}$ buckets, which, they write, suggests that collisions have no impact on classification error at that size (§5, Figure 2) <Cite id="weinberger2009" />.
+
+Forty million words in $2^{22} = 4{,}194{,}304$ buckets must collide: 4,194,304 buckets of 9 words hold fewer than 40 million, so some bucket holds at least 10. The question is whether collisions hurt, not whether they happen. Weinberger and coauthors warn that when some feature values are very large, even a single collision can distort the hashed representation (§3.2) <Cite id="weinberger2009" />.
+
+scikit-learn's FeatureHasher uses a signed hash, so that colliding features tend to cancel out instead of piling up error (§8.2.2) <Cite id="sklearn-feature-hashing" />. Its HashingVectorizer defaults to $2^{20}$ columns, and the guide suggests $2^{18}$ may work without too many extra collisions on typical text classification tasks (§8.2.3.9) <Cite id="sklearn-feature-hashing" />.
+
+### Deduplicating training data: collisions you want
+
+Lee and coauthors remove repeated and near-duplicate text from language-model training sets <Cite id="lee2021" />. They recount how the C4 data set was cleaned: each paragraph was hashed, and paragraphs whose hashes collided were removed (§3) <Cite id="lee2021" />. Exact hashing is a birthday problem, and an accidental collision deletes a paragraph that was not a copy.
+
+Suppose there are a billion paragraphs. With a 64-bit hash, the union bound caps the chance of any accidental collision at $\binom{10^9}{2}/2^{64} \approx 0.0271$. With a 32-bit hash, roughly 77,000 paragraphs already make a collision more likely than not.
+
+For near-duplicates, a collision is the goal. With MinHash, Lee and coauthors use 450 groups of 20 hashes and flag two documents whose Jaccard similarity is $s$ (the share of their word sequences they have in common) as a candidate match with probability $1 - (1 - s^{20})^{450}$ (§4.2 and Appendix A) <Cite id="lee2021" />. That is the complement move again: at least one shared group is 1 minus none. A pair with $s = 4/5$ is flagged with probability about 0.9946, and a pair with $s = 1/2$ with probability about 0.00043. In feature hashing a collision is an accident to keep harmless; in deduplication it is the signal that two documents match.
+
+## Check every count in code
+
+This runs in your browser, checks every number on this page, with exact fractions wherever it can, including Grinstead and Snell's tables to seven places, and ends with a seeded simulation of 20,000 classes.
+
+<PyRunner
+  title="birthday_problem.py"
+  code={`
+import math
+import random
+from fractions import Fraction
+from math import comb
+
+
+def no_match(n, d):
+    """q_n: the exact chance that n items on d equally likely slots all differ."""
+    if n < 0 or d < 1:
+        raise ValueError(f"need n >= 0 and d >= 1, got n = {n}, d = {d}")
+    q = Fraction(1)
+    for k in range(n):
+        q *= Fraction(d - k, d)
+    return q
+
+
+def no_match_table(n_max, d):
+    """[q_0, q_1, ..., q_n_max], one multiplication per row: q_(k+1) = q_k (d - k)/d."""
+    table = [Fraction(1)]
+    for k in range(n_max):
+        table.append(table[-1] * Fraction(d - k, d))
+    return table
+
+
+def smallest_group(d, threshold):
+    """The smallest n whose chance of a match, 1 - q_n, is above the threshold."""
+    q, n = Fraction(1), 0
+    while 1 - q <= threshold:
+        if n > d:
+            raise ValueError(f"no group size passes {threshold}")
+        q *= Fraction(d - n, d)
+        n += 1
+    return n
+
+
+def pairs(n):
+    return comb(n, 2)
+
+
+def union_bound(n, d):
+    """The sum of the pair chances: an upper limit on the chance of a match."""
+    return Fraction(pairs(n), d)
+
+
+def between(value, low, high):
+    """Check a decimal printed on the page: low < value < high, exactly."""
+    return Fraction(low) < value < Fraction(high)
+
+
+def log_no_match(n, d):
+    """log q_n in floats, for tables far too big for exact fractions."""
+    return math.fsum(math.log1p(-k / d) for k in range(n))
+
+
+# Small cases and the edges.
+assert no_match(0, 365) == no_match(1, 365) == 1
+assert no_match(2, 365) == Fraction(364, 365) and 1 - no_match(2, 365) == Fraction(1, 365)
+assert no_match(3, 365) == Fraction(132132, 133225) and 1 - no_match(3, 365) == Fraction(1093, 133225)
+assert no_match(366, 365) == 0
+days = no_match_table(366, 365)
+assert all(days[n] <= days[n - 1] for n in range(1, 367))
+assert all(days[n] == no_match(n, 365) for n in (4, 22, 23, 57))
+for bad in ((-1, 365), (3, 0)):
+    try:
+        no_match(*bad)
+        raise AssertionError("bad sizes should fail")
+    except ValueError:
+        pass
+
+# Four people, then 22 and 23.
+q4 = days[4]
+assert q4 == Fraction(365 * 364 * 363 * 362, 365**4)
+assert between(q4, "0.9836", "0.9837") and between(1 - q4, "0.0163", "0.0164")
+assert between(days[22], "0.5243", "0.5244") and between(1 - days[22], "0.4756", "0.4757")
+assert between(days[23], "0.4927", "0.4928") and between(1 - days[23], "0.5072", "0.5073")
+assert days[23] == days[22] * Fraction(343, 365) and 365 - 22 == 343
+assert smallest_group(365, Fraction(1, 2)) == 23
+assert smallest_group(365, Fraction(99, 100)) == 57
+print("23 people: all different", round(float(days[23]), 4), " some match", round(float(1 - days[23]), 4))
+
+# The table of P(match), to 4 decimals.
+table = {10: "0.1169", 20: "0.4114", 23: "0.5073", 30: "0.7063", 40: "0.8912", 50: "0.9704", 57: "0.9901", 70: "0.9992"}
+for n, shown in table.items():
+    printed = Fraction(shown)
+    assert abs((1 - days[n]) - printed) < Fraction(5, 100000), n
+
+# Grinstead and Snell, Tables 3.1 and 3.2: all birthdays different, 7 places.
+book = {20: .5885616, 21: .5563117, 22: .5243047, 23: .4927028, 24: .4616557, 25: .4313003,
+        10: .8830518, 30: .2936838, 40: .1087682, 50: .0296264, 60: .0058773,
+        70: .0008404, 80: .0000857, 90: .0000062, 100: .0000003}
+for n, value in book.items():
+    assert round(float(days[n]), 7) == value, n
+
+# Three dice instead of 365 days.
+dice = no_match_table(7, 6)
+assert 1 - dice[2] == Fraction(1, 6)
+assert 6 * 5 * 4 == 120 and 6**3 == 216 and dice[3] == Fraction(120, 216) == Fraction(5, 9) and 1 - dice[3] == Fraction(4, 9)
+assert 6 * 5 * 4 * 3 == 360 and 6**4 == 1296 and dice[4] == Fraction(5, 18) and 1 - dice[4] == Fraction(13, 18)
+assert 6 * 5 * 4 * 3 * 2 == 720 and 6**5 == 7776 and dice[5] == Fraction(5, 54) and 1 - dice[5] == Fraction(49, 54)
+assert dice[7] == 0 and smallest_group(6, Fraction(1, 2)) == 4
+
+# Birth months (Grinstead and Snell, Exercise 17).
+months = no_match_table(5, 12)
+assert 12 * 11 * 10 * 9 == 11880 and 12**4 == 20736 and months[4] == Fraction(55, 96)
+assert 1 - months[4] == Fraction(41, 96) and between(Fraction(41, 96), "0.427", "0.428")
+assert 12 * 11 * 10 * 9 * 8 == 95040 and 12**5 == 248832 and months[5] == Fraction(55, 144)
+assert 1 - months[5] == Fraction(89, 144) and between(Fraction(89, 144), "0.618", "0.619")
+assert smallest_group(12, Fraction(1, 2)) == 5
+
+# Count pairs, not people.
+assert pairs(23) == 253 and pairs(30) == 435 and pairs(4) == 6
+assert union_bound(23, 365) == Fraction(253, 365) and between(Fraction(253, 365), "0.6931", "0.6932")
+assert union_bound(30, 365) == Fraction(435, 365) > 1
+assert all(1 - days[n] <= union_bound(n, 365) for n in range(2, 41))
+assert between(1 - days[30], "0.7063", "0.7064")
+# Expected matching pairs: 253 chances of 1/365, no independence needed.
+assert 253 * Fraction(1, 365) == Fraction(253, 365) > 1 - days[23]
+
+# Your own birthday: each of the others must miss it.
+assert between(1 - Fraction(364, 365) ** 22, "0.0585", "0.0586")
+mine = 1
+while 1 - Fraction(364, 365) ** mine <= Fraction(1, 2):
+    mine += 1
+assert mine == 253 and 1 - Fraction(364, 365) ** 252 < Fraction(1, 2)
+
+# The square-root rule. 253/365 = 0.693151... is just above log 2 = 0.693147...,
+# so q_23 <= exp(-253/365) < 1/2. The float margin is about 3.5e-6, far above rounding error.
+assert Fraction(253, 365) > Fraction(693147, 1000000) and math.log(2) < 0.6931472
+assert between(Fraction(253, 365), "0.6931505", "0.6931515") and 0.693147 < math.log(2) < 0.693148
+assert math.exp(-253 / 365) < 0.5 and float(days[23]) <= math.exp(-253 / 365)
+assert round(math.log(2) * 365) == 253
+assert math.isclose(math.sqrt(2 * math.log(2)), 1.18, abs_tol=0.005)
+assert round(math.sqrt(2 * math.log(2) * 365), 2) == 22.49
+assert round(math.sqrt(2 * math.log(2) * 2**20), 1) == 1205.7
+# 23 people are about 6% of 365 days.
+assert between(Fraction(23, 365), "0.06", "0.065")
+
+# A two-day year with one day at 3/4: a match is more likely than with even days.
+assert Fraction(3, 4) ** 2 + Fraction(1, 4) ** 2 == Fraction(5, 8) > Fraction(1, 2)
+assert 1 - no_match(2, 2) == Fraction(1, 2)
+
+# A hash table with 2**20 buckets (HashingVectorizer's default n_features).
+buckets = 2**20
+assert buckets == 1048576
+hashed = no_match_table(1206, buckets)
+assert hashed[1205] > Fraction(1, 2) > hashed[1206]
+assert between(1 - hashed[1000], "0.379", "0.380")
+assert union_bound(1000, buckets) == Fraction(499500, 1048576) and between(Fraction(499500, 1048576), "0.476", "0.477")
+assert between(Fraction(1206, buckets), "0.001", "0.0012")
+print("2**20 buckets: a collision is more likely than not from", 1206, "items")
+
+# Feature hashing at Weinberger et al.'s scale: 40 million words into 2**22 buckets.
+assert 2**22 == 4194304 and 40_000_000 > 2**22
+assert math.ceil(40_000_000 / 2**22) == 10 and 9 * 2**22 < 40_000_000
+
+# Exact-hash deduplication: a billion paragraphs. Never run a product this long.
+paragraphs = 10**9
+assert between(Fraction(pairs(paragraphs), 2**64), "0.0271", "0.0272")
+log_half = math.log(0.5)
+total, n = 0.0, 0
+while total >= log_half:
+    total += math.log1p(-n / 2**32)
+    n += 1
+assert 77_000 < n < 78_000
+assert math.isclose(log_no_match(n, 2**32), total, rel_tol=1e-9)
+print("32-bit hash: a collision is more likely than not from about", n, "items")
+
+# MinHash candidates (Lee et al.): 1 - (1 - s**20)**450.
+def candidate(s, b=20, r=450):
+    return 1 - (1 - s**b) ** r
+
+
+assert between(candidate(Fraction(4, 5)), "0.9945", "0.9946")
+assert between(candidate(Fraction(1, 2)), "0.00042", "0.00043")
+
+# Check yourself: 50 users with 4-digit PINs.
+assert between(1 - no_match(50, 10_000), "0.1154", "0.1155")
+assert between(1 - Fraction(9999, 10000) ** 49, "0.0048", "0.0049")
+assert pairs(50) == 1225 and (1 - no_match(50, 10_000)) > 20 * (1 - Fraction(9999, 10000) ** 49)
+
+# A simulation, as a check: 20,000 classes of 23.
+rng = random.Random(2026)
+classes = 20_000
+matched = sum(len({rng.randrange(365) for _ in range(23)}) < 23 for _ in range(classes))
+share = matched / classes
+print(f"simulated share of classes with a match: {share:.3f}")
+assert abs(share - float(1 - days[23])) < 0.015
+`}
+/>
+
+The simulation lands close to the exact answer, not on it.
+
+## Check yourself
+
+<CheckYourself level="intuition" question="Why do 23 people give a better-than-even chance of a shared birthday, when 23 is only about 6% of 365 days?">
+Because a match can come from any pair, and 23 people make 253 pairs. Each pair is a chance of 1 in 365, and 253 of those chances are plenty for an even chance of at least one match. The pairs overlap, so the exact answer, about 0.507, is below their sum, about 0.693.
+</CheckYourself>
+
+<CheckYourself level="standard" question="A game rolls five dice. What is the chance that at least two of them match?">
+$49/54$. All five differ in $6 \times 5 \times 4 \times 3 \times 2 = 720$ of the $6^5 = 7{,}776$ results, so $q_5 = 720/7{,}776 = 5/54$, and a match has chance $1 - 5/54 = 49/54$.
+</CheckYourself>
+
+<CheckYourself level="standard" question="A system gives each of 50 users a random 4-digit PIN, one of 10,000. Find the chance that two users get the same PIN, and the chance that one given user's PIN is shared.">
+Any two: $1 - q_{50}$ with $d = 10{,}000$, about 0.1155. One given user: each of the other 49 must miss that PIN, so the chance it is shared is $1 - (9{,}999/10{,}000)^{49} \approx 0.0049$. The group question is more than 20 times as likely, for the same reason as with birthdays: 1,225 pairs against 49 other users.
+</CheckYourself>
+
+<CheckYourself level="proof" question="Show that qₙ₊₁ ≤ qₙ, and that qₙ = 0 once n > d.">
+Going from $n$ to $n + 1$ people multiplies $q_n$ by the chance that the new person misses the $n$ days already taken, $(d - n)/d$, which is at most 1 while $n \le d$. So $q_{n+1} = q_n (d - n)/d \le q_n$. When $n = d$, that factor is 0, so $q_{d+1} = 0$, and every later $q_n$ is a multiple of it, so it stays 0. With more people than days, two must share one.
+</CheckYourself>
+
+## Common mistakes
+
+<CommonMistakes>
+  <Mistake wrong="You need about 183 people for an even chance, half of 365.">
+    You need 23. The pairs grow like $n^2/2$, so 23 people already make 253 chances to match.
+  </Mistake>
+  <Mistake wrong="In a group of 23, someone shares my birthday about half the time.">
+    The 0.507 is for any two people. For your own birthday one of the other 22 must land on your day: about 0.0586. It reaches 1/2 only with 253 others.
+  </Mistake>
+  <Mistake wrong="Add the pair chances: for 30 people the chance of a match is 435/365.">
+    That sum is the union bound, an upper limit, and here it is more than 1. Pair matches overlap, so use $1 - q_{30} \approx 0.7063$ instead.
+  </Mistake>
+  <Mistake wrong="A hash table only gets collisions once it is nearly full.">
+    With $2^{20}$ buckets, 1,206 items already make a collision more likely than not, while the table is about one tenth of one percent full.
+  </Mistake>
+</CommonMistakes>
+
+## Key takeaways
+
+<Takeaways />
+
+## How this connects
+
+<ConceptMap />
+
+## References
+
+<References />
