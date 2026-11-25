@@ -1908,6 +1908,502 @@ const assertTableFoldSays = (where, announce) => {
 	for (const bad of [0, 4, 1.5]) assert.throws(() => distSources.coinSequences(bad), /n must be a whole number from 1 to 3/);
 }
 
+// Family math: exact binomial weights, checked against weights this test builds itself in BigInt.
+const fam = await import('../src/components/react/distributionBoard/families.ts');
+const famSetups = await import('../src/components/react/distributionBoard/familySetups.ts');
+const famState = await import('../src/components/react/distributionBoard/familyState.ts');
+const famSay = await import('../src/components/react/distributionBoard/familyDescribe.ts');
+const numberFormat = await import('../src/components/react/distributionBoard/numberFormat.ts');
+const columnAxis = await import('../src/components/react/distributionBoard/columnAxis.ts');
+const famRun = (setupId, ...actions) => actions.reduce(famState.familyReducer, famState.initialFamilyState(setupId));
+const bigChoose = (n, k) => {
+	let result = 1n;
+	for (let step = 1n; step <= BigInt(k); step += 1n) result = (result * (BigInt(n - k) + step)) / step;
+	return result;
+};
+{
+	assert.equal(fam.chooseCount(10, 6), 210);
+	assert.equal(fam.chooseCount(16, 8), 12870);
+	assert.equal(fam.chooseCount(4, 0), 1);
+	for (const [n, k] of [[3, 4], [3, -1], [17, 2], [2.5, 1]]) assert.throws(() => fam.chooseCount(n, k), /chooseCount: need whole numbers/);
+	assert.throws(() => fam.binomial(0, 10), /n must be a whole number from 1 to 16/);
+	assert.throws(() => fam.binomial(3, 20), /j must be a whole number from 1 to 19/);
+	let states = 0;
+	let roundedVariances = 0;
+	let exactSigmas = 0;
+	let lowest = Infinity;
+	let highest = -Infinity;
+	for (let n = 1; n <= 10; n += 1) {
+		for (let j = 1; j <= 19; j += 1) {
+			states += 1;
+			const N = BigInt(n);
+			const J = BigInt(j);
+			const total = 20n ** N;
+			const weights = Array.from({ length: n + 1 }, (_, k) => bigChoose(n, k) * J ** BigInt(k) * (20n - J) ** BigInt(n - k));
+			const where = `n = ${n}, j = ${j}`;
+			assert.equal(weights.reduce((a, b) => a + b), total, where);
+			assert.equal(weights.reduce((sum, w, k) => sum + BigInt(k) * w, 0n), N * J * 20n ** (N - 1n), where);
+			assert.equal(weights.reduce((sum, w, k) => sum + (20n * BigInt(k) - N * J) ** 2n * w, 0n), total * N * J * (20n - J), where);
+			const d = fam.binomial(n, j);
+			assert.equal(d.bars.length, n + 1, where);
+			for (const bar of d.bars) {
+				// p = w/20ⁿ, compared by cross-multiplying in BigInt.
+				assert.equal(BigInt(bar.probability.numerator) * total, weights[bar.value] * BigInt(bar.probability.denominator), `${where}, k = ${bar.value}`);
+				assert.ok(bar.probability.numerator <= bar.probability.denominator, `${where}: a column above 1`);
+			}
+			const largest = weights.reduce((a, b) => (b > a ? b : a));
+			assert.deepEqual([...fam.tallestValues(n, j)], weights.flatMap((w, k) => (w === largest ? [k] : [])), `tallest at ${where}`);
+			const { mean: mu, variance: v } = fam.binomialMoments(n, j);
+			assert.deepEqual(mu, fraction(n * j, 20), where);
+			assert.deepEqual(v, fraction(n * j * (20 - j), 400), where);
+			const sigma = Math.sqrt(toNumber(v));
+			lowest = Math.min(lowest, toNumber(mu) - sigma);
+			highest = Math.max(highest, toNumber(mu) + sigma);
+			assert.ok(famSetups.spreadFits(n, j, [0, 10]), `μ ± σ leaves the chart at ${where}`);
+			if (!terminatesWithin(v, 3)) roundedVariances += 1;
+			if (squareRoot(v).exact) exactSigmas += 1;
+			// The generic summaries agree wherever they are safe: every n at p = 1/2, every p for n ≤ 3.
+			if (j === 10 || n <= 3) {
+				assert.deepEqual(mean(d), mu, where);
+				assert.deepEqual(variance(d), v, where);
+			}
+			if (j === 10) {
+				assert.deepEqual(d.bars.map((bar) => bar.weight), Array.from({ length: n + 1 }, (_, k) => fam.chooseCount(n, k)), where);
+				assert.equal(d.totalWeight, 2 ** n, where);
+				assert.ok(d.bars.every((bar) => compareFractions(bar.probability, fraction(1, 2)) <= 0), `${where}: a fair column above 1/2`);
+			}
+		}
+	}
+	assert.equal(states, 190);
+	assert.equal(roundedVariances, 50, 'variances that take the "≈" form');
+	assert.equal(exactSigmas, 19, 'states with an exact σ');
+	assert.equal(lowest.toFixed(4), '-0.2373');
+	assert.equal(highest.toFixed(4), '10.1892');
+	assert.throws(() => variance(fam.binomial(10, 6)), /overflowed safe integers/, 'the generic variance overflows at n = 10, p = 0.3');
+	assert.deepEqual(fam.binomial(10, 10).bars.slice(0, 6).map((bar) => formatFraction(bar.probability)), ['1/1024', '5/512', '45/1024', '15/128', '105/512', '63/256']);
+	assert.deepEqual([...fam.tallestValues(9, 10)], [4, 5]);
+	assert.deepEqual(
+		[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => formatFraction(fam.binomial(n, 10).bars[fam.tallestValues(n, 10)[0]].probability)),
+		['1/2', '1/2', '3/8', '3/8', '5/16', '5/16', '35/128', '35/128', '63/256', '63/256'],
+	);
+	assert.deepEqual(fam.binomial(1, 19).bars.map((bar) => formatFraction(bar.probability)), ['1/20', '19/20'], 'the tallest reachable column is 19/20');
+	// Amounts through the shared amountText.
+	const amounts = [[fraction(5, 1), '5'], [fraction(1, 2), '0.5'], [fraction(91, 40), '2.275'], [fraction(19, 400), '19/400 ≈ 0.05'], [fraction(9, 16), '9/16 ≈ 0.56'], [fraction(5, 3), '5/3 ≈ 1.67'], [fraction(13, 18), '13/18 ≈ 0.72'], [fraction(4, 3), '4/3 ≈ 1.33']];
+	for (const [value, text] of amounts) assert.equal(amountText(value), text);
+	// The verdicts' two claims: less than half of 1 in 2, and about 10 times 1 in 50.
+	assert.equal(compareFractions(fraction(105, 512), fraction(1, 4)), -1);
+	assert.deepEqual(divideFractions(fraction(105, 512), fraction(1, 50)), fraction(2625, 256));
+}
+// "under 0.01" and "under 0.0001": every nonzero chance below 1/200 (or 1/20,000), never "0.00".
+{
+	assert.equal(numberFormat.underThreshold(1, 200, 2), false);
+	assert.equal(numberFormat.underThreshold(1, 201, 2), true);
+	assert.equal(numberFormat.underThreshold(0, 201, 2), false);
+	assert.equal(numberFormat.underThreshold(1, 20000, 4), false);
+	assert.equal(numberFormat.underThreshold(1, 20001, 4), true);
+	// 20¹⁰ × 20,000 passes 2⁵³; BigInt keeps the comparison exact.
+	assert.equal(numberFormat.underThreshold(1, 20 ** 10, 4), true);
+	assert.equal(numberFormat.underThreshold(512 * 10 ** 6, 20 ** 10, 4), false, 'exactly 1/20,000 is not under');
+	assert.equal(numberFormat.underThreshold(512 * 10 ** 6 - 1, 20 ** 10, 4), true);
+	assert.throws(() => numberFormat.underThreshold(-1, 4, 2), /underThreshold: need whole numbers/);
+	assert.equal(numberFormat.chanceChain(1, 1024), '1/1024, under 0.01');
+	assert.equal(numberFormat.chanceChain(210, 1024), '210/1024 = 105/512 ≈ 0.21');
+	assert.equal(numberFormat.chanceChain(2, 4), '2/4 = 1/2 = 0.50');
+	assert.equal(numberFormat.chanceChain(2, 1024), '2/1024 = 1/512, under 0.01');
+	const chances = [[fraction(3, 4), '3/4 = 0.75'], [fraction(3, 8), '3/8 ≈ 0.38'], [fraction(1, 1), '1'], [fraction(1, 192), '1/192 ≈ 0.01'], [fraction(1, 1000), '1/1000, under 0.01']];
+	for (const [value, text] of chances) assert.equal(numberFormat.fractionChance(value), text);
+	assert.deepEqual(numberFormat.powerText('0.9', 9), { visible: '0.9⁹', spoken: '0.9 to the power 9' });
+	assert.deepEqual(numberFormat.powerText('2', 10), { visible: '2¹⁰', spoken: '2 to the power 10' });
+	assert.throws(() => numberFormat.powerText('2', 11), /exponent must be a whole number from 0 to 10/);
+	// The outcome mode's chances are all at least 1/6, so the new rule can't change a shipped string.
+	for (const id of ['candy-build', 'coins-heads', 'candy-balance', 'candy-spread']) {
+		const state = distSetups.getSetup(id).card ? distRun(id, { type: 'check' }, { type: 'check' }, { type: 'show-answer' }) : dist.initialState(id);
+		const d = dist.distributionNow(state);
+		for (const bar of d.bars) assert.equal(numberFormat.chanceChain(bar.weight, d.totalWeight), numberFormat.fullChance(bar.weight, d.totalWeight), id);
+	}
+	// Every chance of every reachable spread state, in the table and in the read bar: never "0.00" or "0.0000".
+	for (const { n, j } of famSetups.reachableStates(famSetups.getFamilySetup('binomial-spread'))) {
+		const state = { ...famState.initialFamilyState('binomial-spread'), n, j, read: 0 };
+		for (const row of famSay.tableOf(state).rows) assert.ok(row[1] !== '0.0000', `n = ${n}, j = ${j}`);
+		for (let k = 0; k <= n; k += 1) assert.ok(!famSay.readLine({ ...state, read: k }).visible.endsWith(' 0.00.'), `n = ${n}, j = ${j}, k = ${k}`);
+	}
+}
+// The spacing rule and the setups' validation.
+{
+	assert.equal(columnAxis.across(0, 0, 10), 100 / 22);
+	assert.equal(columnAxis.across(10, 0, 10), 100 - 100 / 22);
+	assert.equal(columnAxis.columnHeight(0.25, 0.5), 50);
+	assert.throws(() => columnAxis.columnHeight(0.75, 0.5), /outside the scale/);
+	columnAxis.fitsAt320(16, 'sixteen');
+	// 16 columns (0.25 cm bins on a 4 cm ruler) is the most this week's setups need; one past the measured width throws.
+	const tooMany = Math.floor(columnAxis.NARROWEST_CHART_PX / columnAxis.MIN_COLUMN_PX) + 1;
+	assert.ok(tooMany > 16);
+	assert.throws(() => columnAxis.fitsAt320(tooMany, 'too-many'), new RegExp(`setup "too-many" has ${tooMany} columns, more than fit at 320 px`));
+	assert.equal(columnAxis.tickEvery(11), 2);
+	assert.equal(columnAxis.tickEvery(4), 1);
+	const base = famSetups.FAMILY_SETUPS['binomial-spread'];
+	for (const id of ['coins-binomial', 'binomial-spread']) assert.equal(famSetups.getFamilySetup(id).id, id);
+	const bad = [
+		[{ ...base, nOpening: 11 }, /opens at n = 11/],
+		[{ ...base, yMax: fraction(1, 2) }, /draws a column above its scale at n = 1, j = 1/],
+		[{ ...base, axis: [1, 10] }, /draws μ ± σ off the chart at n = 1, j = 1/],
+		[{ ...base, axis: [0, 17] }, /has 18 columns, more than fit at 320 px/],
+		[{ ...base, presets: [...base.presets, { name: 'Five', n: 5, j: 10 }] }, /5 presets, more than 4/],
+		[{ ...base, presets: [base.presets[0], { ...base.presets[0], name: 'Again' }] }, /two presets with the same n and p/],
+		[{ ...base, presets: [{ name: 'Off', n: 11, j: 10 }] }, /preset "Off" outside its ranges/],
+	];
+	for (const [setup, message] of bad) assert.throws(() => famSetups.validateFamilySetup(setup), message);
+	assert.equal(famSetups.spreadFits(5, 1, [0, 10]), true);
+	assert.equal(famSetups.spreadFits(5, 1, [1, 10]), false);
+}
+// coins-binomial: every pinned sentence, word for word.
+{
+	const open = famState.initialFamilyState('coins-binomial');
+	const at = (n, read, extra = {}) => ({ ...open, n, read, checked: true, guess: 'one-in-five', ...extra });
+	const visible = (state) => famSay.readLine(state).visible;
+	assert.deepEqual(famSay.statusLine(at(1, 0)), { visible: '1 fair coin. 2 equally likely sequences; X counts the heads.', spoken: '1 fair coin. 2 equally likely sequences; X counts the heads.' });
+	assert.equal(famSay.statusLine(at(2, 0)).visible, '2 fair coins. 2² = 4 equally likely sequences; X counts the heads.');
+	assert.equal(famSay.statusLine(open).visible, '3 fair coins. 2³ = 8 equally likely sequences; X counts the heads.');
+	assert.deepEqual(famSay.statusLine(at(10, 6)), {
+		visible: '10 fair coins. 2¹⁰ = 1,024 equally likely sequences; X counts the heads.',
+		spoken: '10 fair coins. 2 to the power 10 = 1,024 equally likely sequences; X counts the heads.',
+	});
+	const items = famSay.sequenceItems(open);
+	assert.equal(items.length, 8);
+	assert.deepEqual(items[1], { visible: 'HHT: 2 heads', spoken: 'first coin heads, second coin heads, third coin tails: 2 heads' });
+	assert.equal(items[3].visible, 'HTT: 1 head');
+	assert.equal(items[7].visible, 'TTT: 0 heads');
+	assert.deepEqual(famSay.sequenceItems(at(4, 2)), []);
+	assert.deepEqual(famSay.readLine(open), {
+		visible: '2 heads: HHT, HTH and THH. 3 of 8 sequences, so P(X = 2) = 3/8 ≈ 0.38.',
+		spoken:
+			'2 heads: first coin heads, second coin heads, third coin tails; first coin heads, second coin tails, third coin heads; and first coin tails, second coin heads, third coin heads. 3 of 8 sequences, so P(X = 2) = 3/8 ≈ 0.38.',
+	});
+	assert.equal(visible(at(3, 0)), '0 heads: TTT. 1 of 8 sequences, so P(X = 0) = 1/8 ≈ 0.13.');
+	assert.equal(visible(at(2, 1)), '1 head: HT and TH. 2 of 4 sequences, so P(X = 1) = 2/4 = 1/2 = 0.50.');
+	assert.equal(visible(at(1, 1)), '1 head: H. 1 of 2 sequences, so P(X = 1) = 1/2 = 0.50.');
+	assert.equal(visible(at(4, 2)), '2 heads: C(4, 2) = 6 of 16 sequences, so P(X = 2) = 6/16 = 3/8 ≈ 0.38.');
+	assert.equal(visible(at(10, 6)), '6 heads: C(10, 6) = 210 of 1,024 sequences, so P(X = 6) = 210/1024 = 105/512 ≈ 0.21.');
+	assert.equal(visible(at(10, 5)), '5 heads: C(10, 5) = 252 of 1,024 sequences, so P(X = 5) = 252/1024 = 63/256 ≈ 0.25.');
+	assert.equal(visible(at(10, 1)), '1 head: C(10, 1) = 10 of 1,024 sequences, so P(X = 1) = 10/1024 = 5/512 ≈ 0.01.');
+	assert.equal(visible(at(10, 0)), '0 heads: C(10, 0) = 1 of 1,024 sequences, so P(X = 0) = 1/1024, under 0.01.');
+	assert.equal(famSay.tallestLine(at(10, 6)), 'Tallest bar: 5 heads, P(X = 5) = 252/1024 = 63/256 ≈ 0.25.');
+	assert.equal(famSay.tallestLine(at(9, 6)), 'Tallest bars: 4 and 5 heads, each P = 126/512 = 63/256 ≈ 0.25.');
+	assert.equal(famSay.tallestLine(open), 'Tallest bars: 1 and 2 heads, each P = 3/8 ≈ 0.38.');
+	assert.equal(famSay.tallestLine(at(2, 1)), 'Tallest bar: 1 head, P(X = 1) = 2/4 = 1/2 = 0.50.');
+	assert.equal(famSay.tallestLine(at(1, 1)), 'Tallest bars: 0 and 1 heads, each P = 1/2 = 0.50.');
+	assert.equal(famSay.totalLine(open), 'The bars add up to 8/8 = 1.');
+	assert.equal(famSay.totalLine(at(10, 6)), 'The bars add up to 1024/1024 = 1.');
+	assert.equal(famSay.totalLine(at(1, 1)), 'The bars add up to 2/2 = 1.');
+	assert.equal(famSay.readOutput(open), 'Reading the bar for 2 heads.');
+	assert.equal(famSay.readOutput(at(1, 1)), 'Reading the bar for 1 head.');
+	assert.equal(famSay.FAMILY_LABELS.covered, 'The chart for 4 or more coins appears once you lock in your guess.');
+	assert.equal(famSay.FAMILY_BOARD_LABELS.guess, 'Fair coins and the number of heads. Set how many coins and read the bar for any number of heads. From 4 coins on, lock in your guess first.');
+	assert.deepEqual(Object.values(famSay.GUESS_LABELS), ['About 1 time in 2', 'About 1 time in 5', 'About 1 time in 50']);
+	assert.equal(famSay.FAMILY_LABELS.guess, 'Your guess for 6 heads in 10 flips');
+	assert.equal(famSay.formatCoins(3), '3 coins');
+	assert.equal(famSay.formatCoins(1), '1 coin');
+	assert.equal(famSay.readButtonName(open, -1), 'Fewer heads to read');
+	assert.equal(famSay.readButtonName(open, 1), 'More heads to read');
+	// Refusals.
+	assert.equal(famSay.refusalText(open, 'no-guess'), 'Pick a guess first.');
+	assert.equal(famSay.refusalText(open, 'locked'), 'Lock in your guess first.');
+	assert.equal(famSay.refusalText(open, 'read-below'), "Can't read fewer than 0 heads.");
+	assert.equal(famSay.refusalText(at(10, 10), 'read-above'), "10 coins can't show more than 10 heads.");
+	assert.equal(famSay.refusalText(at(1, 1), 'read-above'), "1 coin can't show more than 1 head.");
+	// Check: the three verdicts, each setting n = 10 and read = 6, with "Yes" only for the right pick.
+	const tail = 'C(10, 6) = 210 of the 1,024 equally likely sequences have exactly 6 heads, so P(X = 6) = 210/1024 = 105/512 ≈ 0.21.';
+	const verdicts = {
+		'one-in-five': `Yes, about 1 time in 5. ${tail}`,
+		'one-in-two': `Not quite: it is less than half as often as that. ${tail}`,
+		'one-in-fifty': `Not quite: it is about 10 times as often as that. ${tail}`,
+	};
+	for (const [guess, verdict] of Object.entries(verdicts)) {
+		const before = famRun('coins-binomial', { type: 'guess', guess });
+		const after = famState.familyReducer(before, { type: 'check' });
+		assert.equal(famSay.verdictLine(after), verdict);
+		assert.equal(famSay.familyAnnouncement(before, after, { type: 'check' }), verdict);
+		assert.ok(after.checked && after.n === 10 && after.read === 6 && !famState.isCovered(after), guess);
+		assert.equal(verdict.startsWith('Yes'), guess === 'one-in-five');
+		assert.equal(after.failedChecks, guess === 'one-in-five' ? 0 : 1);
+	}
+	assert.equal(famSay.guessLine(famRun('coins-binomial', { type: 'guess', guess: 'one-in-five' }, { type: 'check' })), 'Your guess: about 1 time in 5.');
+	assert.equal(famSay.guessLine(famRun('coins-binomial', { type: 'guess', guess: 'one-in-five' })), null);
+	// Announcements.
+	const checked = famRun('coins-binomial', { type: 'guess', guess: 'one-in-five' }, { type: 'check' });
+	const say = (previous, action) => famSay.familyAnnouncement(previous, famState.familyReducer(previous, action), action);
+	assert.equal(say({ ...checked, read: 5 }, { type: 'n', n: 10 }), '10 coins. Reading the bar for 5 heads: P(X = 5) = 63/256, about 0.25.');
+	assert.equal(say(checked, { type: 'n', n: 10 }), '10 coins. Reading the bar for 6 heads: P(X = 6) = 105/512, about 0.21.');
+	assert.equal(say(checked, { type: 'n', n: 2 }), '2 coins. Reading the bar for 2 heads, the most 2 coins can show: P(X = 2) = 1/4 = 0.25.');
+	assert.equal(say({ ...checked, read: 1 }, { type: 'n', n: 1 }), '1 coin. Reading the bar for 1 head: P(X = 1) = 1/2 = 0.50.');
+	assert.equal(say({ ...checked, read: 0 }, { type: 'n', n: 10 }), '10 coins. Reading the bar for 0 heads: P(X = 0) = 1/1024, under 0.01.');
+	assert.equal(say(open, { type: 'n', n: 4 }), '4 coins. The chart is covered until you lock in your guess.');
+	assert.equal(say(checked, { type: 'preset', name: '1 coin' }), '1 coin. Reading the bar for 1 head, the most 1 coin can show: P(X = 1) = 1/2 = 0.50.');
+	assert.equal(say(checked, { type: 'preset', name: '10 coins' }), '10 coins is already showing.');
+	assert.equal(say(open, { type: 'preset', name: '3 coins' }), 'Lock in your guess first.', 'refused before Check, even the preset showing');
+	assert.equal(say(open, { type: 'preset', name: '10 coins' }), 'Lock in your guess first.');
+	assert.equal(say(open, { type: 'check' }), 'Pick a guess first.');
+	assert.equal(say(open, { type: 'guess', guess: 'one-in-two' }), '', 'a radio pick says nothing beyond the native radio');
+	assert.equal(say(open, { type: 'read', direction: 1 }), famSay.readLine({ ...open, read: 3 }).spoken);
+	assert.equal(say({ ...open, read: 0 }, { type: 'read', direction: -1 }), "Can't read fewer than 0 heads.");
+	assert.equal(say({ ...checked, read: 10 }, { type: 'read', direction: 1 }), "10 coins can't show more than 10 heads.");
+	assert.equal(say(famRun('coins-binomial', { type: 'n', n: 5 }), { type: 'read', direction: 1 }), 'Lock in your guess first.');
+	assert.equal(say(checked, { type: 'table', open: true }), 'Table shown under the switch. It lists the 11 numbers of heads 10 coins can show, each with its sequences and its chance.');
+	assert.equal(say({ ...checked, n: 1, read: 1 }, { type: 'table', open: true }), 'Table shown under the switch. It lists the 2 numbers of heads 1 coin can show, each with its sequences and its chance.');
+	assert.equal(say(checked, { type: 'table', open: false }), 'Table hidden.');
+	assert.equal(say(checked, { type: 'reset' }), 'Board reset.');
+	// The table.
+	const openTable = famSay.tableOf(open);
+	assert.equal(openTable.caption, 'Every bar as a table.');
+	assert.deepEqual(openTable.headers, ['Heads', 'Sequences', 'P(X = k)']);
+	assert.deepEqual(openTable.rows[2], ['2', 'HHT, HTH, THH', '3/8 ≈ 0.38']);
+	const tenTable = famSay.tableOf(checked);
+	assert.equal(tenTable.rows.length, 11);
+	assert.deepEqual(tenTable.rows[6], ['6', '210 of 1,024', '210/1024 = 105/512 ≈ 0.21']);
+	assert.deepEqual(tenTable.rows[0], ['0', '1 of 1,024', '1/1024, under 0.01']);
+	assert.deepEqual(famSay.tableOf(famRun('coins-binomial', { type: 'n', n: 4 })).rows, [], 'no table while covered');
+	assert.deepEqual(famSay.chartLabels(open), { axis: 'Number of heads', gridlines: [{ value: 0.25, label: '0.25', solid: false }, { value: 0.5, label: '0.5', solid: false }], mu: null, sigma: null, ghost: null });
+}
+// coins-binomial reducer rules.
+{
+	const open = famState.initialFamilyState('coins-binomial');
+	assert.deepEqual(
+		{ n: open.n, j: open.j, read: open.read, guess: open.guess, checked: open.checked, tableOpen: open.tableOpen },
+		{ n: 3, j: 10, read: 2, guess: null, checked: false, tableOpen: false },
+	);
+	assert.equal(famState.activePreset(open).name, '3 coins', 'the opening shows "3 coins" as pressed');
+	assert.equal(famRun('coins-binomial', { type: 'n', n: 1 }).read, 1, 'read clamps when n drops');
+	const tabled = famRun('coins-binomial', { type: 'table', open: true });
+	assert.equal(tabled.tableOpen, true);
+	const covered = famState.familyReducer(tabled, { type: 'n', n: 6 });
+	assert.ok(famState.isCovered(covered) && covered.tableOpen === false, 'n into the cover closes the table');
+	assert.equal(famState.familyReducer(covered, { type: 'table', open: true }), covered, 'a covered board ignores the switch');
+	assert.equal(famState.familyReducer(covered, { type: 'preset', name: '1 coin' }).refusal, 'locked');
+	assert.equal(famState.familyReducer(covered, { type: 'read', direction: -1 }).refusal, 'locked');
+	assert.equal(famState.familyReducer(covered, { type: 'read', direction: -1 }).read, 2);
+	assert.equal(famState.familyReducer(open, { type: 'check' }).refusal, 'no-guess');
+	assert.equal(famState.familyReducer(open, { type: 'check' }).checked, false);
+	const checked = famRun('coins-binomial', { type: 'guess', guess: 'one-in-two' }, { type: 'table', open: true }, { type: 'check' });
+	assert.ok(checked.checked && checked.tableOpen, 'Check keeps the table');
+	assert.equal(famState.familyReducer(checked, { type: 'check' }), checked, 'Check runs once');
+	assert.equal(famState.familyReducer(checked, { type: 'guess', guess: 'one-in-five' }), checked, 'the guess is locked in');
+	const reset = famState.familyReducer(famState.familyReducer(checked, { type: 'preset', name: '1 coin' }), { type: 'reset' });
+	assert.deepEqual(reset, open, 'Reset restores the opening, checked: false and the table folded');
+	assert.throws(() => famState.familyReducer(open, { type: 'p', j: 5 }), /"p" belongs to spread setups/);
+	assert.throws(() => famState.familyReducer(open, { type: 'spread', on: true }), /"spread" belongs to spread setups/);
+	const spread = famState.initialFamilyState('binomial-spread');
+	assert.throws(() => famState.familyReducer(spread, { type: 'guess', guess: 'one-in-two' }), /"guess" belongs to guess setups/);
+	assert.throws(() => famState.familyReducer(spread, { type: 'check' }), /"check" belongs to guess setups/);
+}
+// coins-binomial no-spoiler walks. Control and preset labels are exempt: pressing them is the reader's choice.
+{
+	const keyOf = (state) => JSON.stringify(state);
+	const outputs = (state) => {
+		const table = famSay.tableOf(state);
+		const chart = famSay.chartLabels(state);
+		return [
+			famSay.statusLine(state).visible,
+			famSay.statusLine(state).spoken,
+			...famSay.sequenceItems(state).flatMap((line) => [line.visible, line.spoken]),
+			...famSay.readoutLines(state).flatMap((line) => [line.visible, line.spoken]),
+			...table.rows.flat(),
+			...(table.rows.length > 0 ? [table.caption, famSay.tableFoldSentence(state)] : []),
+			chart.axis,
+			...chart.gridlines.map((line) => line.label),
+			famSay.guessLine(state) ?? '',
+			famSay.verdictLine(state) ?? '',
+		];
+	};
+	const setup = famSetups.getFamilySetup('coins-binomial');
+	const actionsFor = (state, counts) => [
+		...counts.map((n) => ({ type: 'n', n })),
+		{ type: 'read', direction: 1 },
+		{ type: 'read', direction: -1 },
+		...setup.guess.options.map((guess) => ({ type: 'guess', guess })),
+		{ type: 'table', open: true },
+		{ type: 'table', open: false },
+		...setup.presets.map(({ name }) => ({ type: 'preset', name })),
+		...(state.guess === null ? [{ type: 'check' }] : []),
+		{ type: 'reset' },
+	];
+	const walk = (starts, counts, keep) => {
+		const seen = new Map(starts.map((state) => [keyOf(state), state]));
+		const queue = [...seen.values()];
+		const texts = [];
+		while (queue.length > 0) {
+			const state = queue.shift();
+			texts.push(...outputs(state));
+			for (const action of actionsFor(state, counts)) {
+				const next = famState.familyReducer(state, action);
+				assert.ok(!next.checked, 'no walk passes Check');
+				if (!keep(next)) continue;
+				texts.push(famSay.familyAnnouncement(state, next, action));
+				if (!seen.has(keyOf(next))) {
+					seen.set(keyOf(next), next);
+					queue.push(next);
+				}
+			}
+		}
+		return { states: [...seen.values()], texts };
+	};
+	const opening = walk([famState.initialFamilyState('coins-binomial')], [1, 2, 3], () => true);
+	for (const text of opening.texts) {
+		for (const token of ['1,024', '1024', '210', '105/512', '63/256', '10 fair coins']) assert.ok(!text.includes(token), `opening: "${text}" holds ${token}`);
+	}
+	const coveredStarts = opening.states.flatMap((state) => [4, 5, 6, 7, 8, 9, 10].map((n) => famState.familyReducer(state, { type: 'n', n })));
+	const covered = walk(coveredStarts, [4, 5, 6, 7, 8, 9, 10], famState.isCovered);
+	assert.ok(covered.states.every(famState.isCovered));
+	for (const text of covered.texts) {
+		for (const token of ['210', '105/512', '0.21', '252', '63/256', 'C(10, 6)']) assert.ok(!text.includes(token), `covered: "${text}" holds ${token}`);
+	}
+	// A walk that stops early fails here. Opening: n 1..3 with read 0..n, guess null or one of 3, the table open or
+	// not, and whichever refusal the last press could leave.
+	assert.equal(opening.states.length, 210, 'the opening walk');
+	// Covered: 7 values of n × read 0..3 (the pair is refused there) × 9 guess-and-refusal pairs (no guess: none,
+	// locked or no-guess; a guess: none or locked), the table closed.
+	assert.equal(covered.states.length, 7 * 4 * 9, 'the covered walk');
+}
+// binomial-spread: every pinned sentence.
+{
+	const open = famState.initialFamilyState('binomial-spread');
+	const at = (n, j, extra = {}) => ({ ...open, n, j, read: Math.min(open.read, n), spreadShown: true, ...extra });
+	const preset = (name) => famSetups.getFamilySetup('binomial-spread').presets.find((candidate) => candidate.name === name);
+	const named = (name, extra = {}) => at(preset(name).n, preset(name).j, extra);
+	assert.equal(famSay.FAMILY_BOARD_LABELS.spread, 'Trials with a chance of success you set, with the mean marked. Turn on the spread and switch presets to compare how far the number of successes spreads.');
+	assert.deepEqual(
+		{ n: open.n, j: open.j, read: open.read, spreadShown: open.spreadShown, tableOpen: open.tableOpen },
+		{ n: 10, j: 10, read: 5, spreadShown: false, tableOpen: false },
+	);
+	assert.equal(famSay.statusLine(open).visible, '10 trials, each a success with chance 0.5.');
+	assert.equal(famSay.statusLine(named('One flip')).visible, '1 trial, a success with chance 0.5.');
+	assert.equal(famSay.meanLine(open), 'Mean: μ = np = 10 × 0.5 = 5 successes.');
+	assert.equal(famSay.meanLine(named('Rare: 1 in 10')), 'Mean: μ = np = 10 × 0.1 = 1 success.');
+	assert.equal(famSay.meanLine(named('One flip')), 'Mean: μ = np = 1 × 0.5 = 0.5 successes.');
+	assert.equal(famSay.meanLine(at(10, 7)), 'Mean: μ = np = 10 × 0.35 = 3.5 successes.');
+	assert.equal(famSay.spreadLine(open), null, 'σ waits for the switch');
+	const spread = {
+		'Fair coin': 'Variance: np(1 − p) = 10 × 0.5 × 0.5 = 2.5. Standard deviation: σ = √2.5 ≈ 1.58 successes.',
+		'Right 9 in 10': 'Variance: np(1 − p) = 10 × 0.9 × 0.1 = 0.9. Standard deviation: σ = √0.9 ≈ 0.95 successes.',
+		'Rare: 1 in 10': 'Variance: np(1 − p) = 10 × 0.1 × 0.9 = 0.9. Standard deviation: σ = √0.9 ≈ 0.95 successes.',
+		'One flip': 'Variance: np(1 − p) = 1 × 0.5 × 0.5 = 0.25. Standard deviation: σ = √0.25 = 0.5 successes.',
+	};
+	for (const [name, line] of Object.entries(spread)) assert.equal(famSay.spreadLine(named(name)), line);
+	assert.equal(famSay.spreadLine(at(4, 10)), 'Variance: np(1 − p) = 4 × 0.5 × 0.5 = 1. Standard deviation: σ = √1 = 1 success.');
+	assert.equal(famSay.spreadLine(at(10, 7)), 'Variance: np(1 − p) = 10 × 0.35 × 0.65 = 2.275. Standard deviation: σ = √2.275 ≈ 1.51 successes.');
+	assert.equal(famSay.spreadLine(at(1, 1)), 'Variance: np(1 − p) = 1 × 0.05 × 0.95 = 19/400 ≈ 0.05. Standard deviation: σ = √(19/400) ≈ 0.22 successes.');
+	assert.equal(famSay.spreadLine(at(3, 5)), 'Variance: np(1 − p) = 3 × 0.25 × 0.75 = 9/16 ≈ 0.56. Standard deviation: σ = √(9/16) = 0.75 successes.');
+	// Every spread sentence over the 190 states: "=" exactly when σ is exact.
+	for (const { n, j } of famSetups.reachableStates(famSetups.getFamilySetup('binomial-spread'))) {
+		const line = famSay.spreadLine(at(n, j));
+		assert.equal(/σ = √\S+ = /.test(line), squareRoot(fam.binomialMoments(n, j).variance).exact, line);
+	}
+	// The ghost: Fair coin, then Right 9 in 10, then p slid to 0.85, then One flip.
+	const fair = famRun('binomial-spread', { type: 'spread', on: true });
+	const right = famState.familyReducer(fair, { type: 'preset', name: 'Right 9 in 10' });
+	assert.equal(famSay.ghostLine(right), 'Before: σ ≈ 1.58 (Fair coin). Now: σ ≈ 0.95 (Right 9 in 10).');
+	const slid = famState.familyReducer(right, { type: 'p', j: 17 });
+	assert.equal(famSay.ghostLine(slid), 'Before: σ ≈ 1.58 (Fair coin). Now: σ ≈ 1.13 (n = 10, p = 0.85).');
+	assert.equal(famSay.ghostLine(famState.familyReducer(slid, { type: 'preset', name: 'One flip' })), 'Before: σ ≈ 1.58 (Fair coin). Now: σ = 0.5 (One flip).', 'a preset from an unnamed state keeps the old ghost');
+	assert.equal(famSay.ghostLine(famState.familyReducer(right, { type: 'p', j: 10 })), null, 'no ghost while it matches the preset showing');
+	assert.equal(famState.familyReducer(famState.familyReducer(fair, { type: 'p', j: 12 }), { type: 'preset', name: 'Right 9 in 10' }).ghost, null, 'a slider move never makes a ghost');
+	assert.equal(famState.familyReducer(famRun('binomial-spread'), { type: 'preset', name: 'Right 9 in 10' }).ghost, null, 'no ghost while the spread is hidden');
+	assert.equal(famState.familyReducer(right, { type: 'spread', on: false }).ghost, null, 'turning the spread off clears it');
+	assert.deepEqual(famSay.chartLabels(right), {
+		axis: 'Number of successes',
+		gridlines: [{ value: 0.25, label: '0.25', solid: false }, { value: 0.5, label: '0.5', solid: false }, { value: 0.75, label: '0.75', solid: false }],
+		mu: 'μ = 9',
+		sigma: 'σ ≈ 0.95',
+		ghost: 'Before: σ ≈ 1.58',
+	});
+	assert.equal(famSay.chartLabels(open).mu, 'μ = 5');
+	assert.equal(famSay.chartLabels(open).sigma, null);
+	assert.equal(famSay.chartLabels(named('One flip')).sigma, 'σ = 0.5');
+	// Tallest and read bar.
+	assert.equal(famSay.tallestLine(open), 'Tallest bar: 5 successes, P(X = 5) ≈ 0.25.');
+	assert.equal(famSay.tallestLine(named('Right 9 in 10')), 'Tallest bar: 9 successes, P(X = 9) ≈ 0.39.');
+	assert.equal(famSay.tallestLine(named('Rare: 1 in 10')), 'Tallest bar: 1 success, P(X = 1) ≈ 0.39.');
+	assert.equal(famSay.tallestLine(named('One flip')), 'Tallest bars: 0 and 1 successes, each P = 0.50.');
+	assert.equal(famSay.tallestLine(at(9, 10)), 'Tallest bars: 4 and 5 successes, each P ≈ 0.25.');
+	const read = (state, k) => famSay.readLine({ ...state, read: k });
+	assert.equal(read(open, 5).visible, '5 successes: C(10, 5) × 0.5⁵ × 0.5⁵ ≈ 0.25.');
+	assert.equal(read(open, 6).visible, '6 successes: C(10, 6) × 0.5⁶ × 0.5⁴ ≈ 0.21.');
+	assert.deepEqual(read(named('Right 9 in 10'), 9), {
+		visible: '9 successes: C(10, 9) × 0.9⁹ × 0.1¹ ≈ 0.39.',
+		spoken: '9 successes: C(10, 9) × 0.9 to the power 9 × 0.1 to the power 1 ≈ 0.39.',
+	});
+	assert.equal(read(named('Right 9 in 10'), 0).visible, '0 successes: C(10, 0) × 0.9⁰ × 0.1¹⁰, under 0.01.');
+	assert.equal(read(named('Right 9 in 10'), 5).visible, '5 successes: C(10, 5) × 0.9⁵ × 0.1⁵, under 0.01.');
+	assert.equal(read(named('One flip'), 1).visible, '1 success: C(1, 1) × 0.5¹ × 0.5⁰ = 0.50.');
+	assert.equal(famSay.readOutput(open), 'Reading the bar for 5 successes.');
+	assert.equal(famSay.readButtonName(open, -1), 'Fewer successes to read');
+	assert.equal(famSay.refusalText(open, 'read-below'), "Can't read fewer than 0 successes.");
+	assert.equal(famSay.refusalText(open, 'read-above'), "10 trials can't show more than 10 successes.");
+	assert.equal(famSay.refusalText(named('One flip'), 'read-above'), "1 trial can't show more than 1 success.");
+	assert.equal(famSay.formatTrials(10), '10');
+	assert.equal(famSay.describeTrials(1), '1 trial');
+	assert.equal(famSay.formatChance(10), '0.50');
+	assert.equal(famSay.describeChance(10), 'chance of success 0.50');
+	// Announcements.
+	const say = (previous, action) => famSay.familyAnnouncement(previous, famState.familyReducer(previous, action), action);
+	assert.equal(say(open, { type: 'p', j: 7 }), '10 trials, each a success with chance 0.35. Mean: μ = np = 10 × 0.35 = 3.5 successes.');
+	assert.equal(
+		say(fair, { type: 'n', n: 1 }),
+		'1 trial, a success with chance 0.5. Mean: μ = np = 1 × 0.5 = 0.5 successes. Variance: np(1 − p) = 1 × 0.5 × 0.5 = 0.25. Standard deviation: σ = √0.25 = 0.5 successes. Now reading the bar for 1 success, the most 1 trial can show.',
+	);
+	assert.equal(say(fair, { type: 'preset', name: 'Right 9 in 10' }), 'Right 9 in 10. Mean: μ = np = 10 × 0.9 = 9 successes. Before: σ ≈ 1.58 (Fair coin). Now: σ ≈ 0.95 (Right 9 in 10).');
+	assert.equal(say(open, { type: 'preset', name: 'Right 9 in 10' }), 'Right 9 in 10. Mean: μ = np = 10 × 0.9 = 9 successes.');
+	assert.equal(
+		say(famState.familyReducer(fair, { type: 'p', j: 12 }), { type: 'preset', name: 'Fair coin' }),
+		'Fair coin. Mean: μ = np = 10 × 0.5 = 5 successes. Variance: np(1 − p) = 10 × 0.5 × 0.5 = 2.5. Standard deviation: σ = √2.5 ≈ 1.58 successes.',
+	);
+	assert.equal(say(open, { type: 'preset', name: 'Fair coin' }), 'Fair coin is already showing.');
+	assert.equal(say(open, { type: 'spread', on: true }), spread['Fair coin']);
+	assert.equal(say(fair, { type: 'spread', on: false }), 'Spread hidden.');
+	assert.equal(say(open, { type: 'read', direction: 1 }), read(open, 6).spoken);
+	assert.equal(say(open, { type: 'table', open: true }), 'Table shown under the switch. It lists the 11 numbers of successes 10 trials can show, each with its chance.');
+	assert.equal(say(named('One flip', { read: 1 }), { type: 'table', open: true }), 'Table shown under the switch. It lists the 2 numbers of successes 1 trial can show, each with its chance.');
+	assert.equal(say(open, { type: 'reset' }), 'Board reset.');
+	// The table, four places.
+	const table = famSay.tableOf(open);
+	assert.equal(table.caption, 'Every bar for n = 10 and p = 0.5, chances to 4 decimal places.');
+	assert.deepEqual(table.headers, ['Successes', 'P(X = k)']);
+	assert.deepEqual(famSay.tableOf(at(10, 6)).rows.map((row) => row[1]), ['0.0282', '0.1211', '0.2335', '0.2668', '0.2001', '0.1029', '0.0368', '0.0090', '0.0014', '0.0001', 'under 0.0001']);
+	assert.deepEqual(famSay.tableOf(named('Right 9 in 10')).rows.map((row) => row[1]), ['under 0.0001', 'under 0.0001', 'under 0.0001', 'under 0.0001', '0.0001', '0.0015', '0.0112', '0.0574', '0.1937', '0.3874', '0.3487']);
+	assert.deepEqual(famSay.tableOf(named('One flip')).rows, [['0', '0.5000'], ['1', '0.5000']]);
+	// No spread before the switch: the opening and states reached without it say nothing of σ.
+	const quiet = [open, famState.familyReducer(open, { type: 'p', j: 3 }), famState.familyReducer(open, { type: 'n', n: 4 }), famState.familyReducer(open, { type: 'preset', name: 'One flip' }), famState.familyReducer(open, { type: 'table', open: true })];
+	for (const state of quiet) {
+		const chart = famSay.chartLabels(state);
+		const texts = [famSay.statusLine(state).visible, ...famSay.readoutLines(state).flatMap((line) => [line.visible, line.spoken]), chart.sigma ?? '', chart.ghost ?? ''];
+		for (const text of texts) for (const token of ['σ', 'Variance', '√']) assert.ok(!text.includes(token), `before the switch: "${text}"`);
+	}
+	for (const text of [...famSay.readoutLines(open).map((line) => line.visible), famSay.statusLine(open).visible]) assert.ok(!text.includes('2.5'), text);
+}
+// Shared scans over every family string: no banned word, no British form, no old switch name, short table tokens.
+{
+	const british = /centre|colour|metre|normalis/i;
+	const oldName = ['Show as', 'table'].join(' ');
+	const states = [
+		...[1, 2, 3, 4, 10].map((n) => ({ ...famState.initialFamilyState('coins-binomial'), n, read: Math.min(2, n), checked: true, guess: 'one-in-two' })),
+		...famSetups.reachableStates(famSetups.getFamilySetup('binomial-spread')).map(({ n, j }) => ({ ...famState.initialFamilyState('binomial-spread'), n, j, read: Math.min(5, n), spreadShown: true })),
+	];
+	const labels = [...Object.values(famSay.FAMILY_LABELS), ...Object.values(famSay.GUESS_LABELS), ...Object.values(famSay.FAMILY_BOARD_LABELS)];
+	for (const state of states) {
+		const table = famSay.tableOf(state);
+		const texts = [
+			famSay.statusLine(state).visible,
+			...famSay.readoutLines(state).flatMap((line) => [line.visible, line.spoken]),
+			...famSay.sequenceItems(state).map((line) => line.spoken),
+			table.caption,
+			famSay.tableFoldSentence(state),
+			famSay.verdictLine(state) ?? '',
+			...labels,
+		];
+		for (const text of texts) assert.ok(!bannedWords.test(text) && !british.test(text) && !text.includes(oldName) && !text.includes('—'), text);
+		for (const cell of table.rows.flat()) for (const token of cell.split(' ')) assert.ok(token.length <= 14, `table token "${token}"`);
+	}
+}
+
 // ---- DescriptiveStats model and datasets (decision 0015) ----
 // Exact statistics on short whole-number lists. Quantiles are NumPy's default "linear" method, variance divides by n
 // (σ) or by n − 1 (s), Tukey fences sit 1.5 × IQR past the quartiles with a strict test.

@@ -47,3 +47,51 @@ export function shortAmount(value: Fraction): string {
 	const number = toNumber(value);
 	return isRoundedValue(number) ? formatFraction(value) : trimmedDecimal(number);
 }
+
+// ---- Family and density modes (decision 0018) ----
+// The outcome mode keeps amountChain ("7/2 = 3.5") because its shipped strings must not change; the new modes write
+// amounts with the shared boardText.amountText ("3.5", "19/400 ≈ 0.05"), as every new board does.
+
+/** Digits for "under 0.01" in sentences and "under 0.0001" in four-place tables. */
+export const SENTENCE_PLACES = 2;
+export const TABLE_PLACES = 4;
+
+/**
+ * True when 0 < weight/total < 1/(2·10^places): a nonzero chance whose rounded decimal would read 0. Compared in
+ * BigInt, because 20¹⁰ × 20,000 passes 2⁵³.
+ */
+export function underThreshold(weight: number, total: number, places: number): boolean {
+	if (!Number.isSafeInteger(weight) || !Number.isSafeInteger(total) || weight < 0 || total < 1) {
+		throw new Error(`underThreshold: need whole numbers with weight ≥ 0 and total ≥ 1, got ${weight}/${total}`);
+	}
+	return weight > 0 && 2n * 10n ** BigInt(places) * BigInt(weight) < BigInt(total);
+}
+
+/** "under 0.01" or "under 0.0001". */
+export const underText = (places: number) => `under ${(0).toFixed(places - 1)}1`;
+
+/** fullChance, except that a chance too small for two decimals reads "1/1024, under 0.01", never "≈ 0.00". */
+export function chanceChain(count: number, total: number): string {
+	if (!underThreshold(count, total, SENTENCE_PLACES)) return fullChance(count, total);
+	const counted = `${count}/${total}`;
+	const reduced = formatFraction(fraction(count, total));
+	return `${reduced === counted ? counted : `${counted} = ${reduced}`}, ${underText(SENTENCE_PLACES)}`;
+}
+
+/** An exact chance: "3/4 = 0.75", "3/8 ≈ 0.38", "1", "0", or "1/1000, under 0.01". */
+export function fractionChance(value: Fraction): string {
+	if (isWhole(value)) return String(value.numerator);
+	const text = formatFraction(value);
+	if (underThreshold(value.numerator, value.denominator, SENTENCE_PLACES)) return `${text}, ${underText(SENTENCE_PLACES)}`;
+	return `${text} ${equalsDecimal(value.numerator, value.denominator)}`;
+}
+
+const SUPERSCRIPT_DIGITS = ['⁰', '¹', '²', '³', '⁴', '⁵', '⁶', '⁷', '⁸', '⁹'];
+const MAX_POWER = 10;
+
+/** "0.9⁹", spoken "0.9 to the power 9". Exponents run 0 to 10. */
+export function powerText(base: string, exponent: number): { visible: string; spoken: string } {
+	if (!Number.isInteger(exponent) || exponent < 0 || exponent > MAX_POWER) throw new Error(`powerText: the exponent must be a whole number from 0 to ${MAX_POWER}, got ${exponent}`);
+	const superscript = [...String(exponent)].map((digit) => SUPERSCRIPT_DIGITS[Number(digit)]).join('');
+	return { visible: `${base}${superscript}`, spoken: `${base} to the power ${exponent}` };
+}
