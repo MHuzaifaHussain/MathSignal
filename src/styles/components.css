@@ -461,6 +461,54 @@
 	cursor: not-allowed;
 }
 
+/* ── BayesTheorem: "Show as table" (decision 0016) ──
+ * The square's four areas as whole counts under the readout. The two counts P(A | B) divides are bold, never
+ * colored, so the table reads the same in forced colors. Hidden on screen until the switch is on; always printed. */
+.ms-bayes-table {
+	flex-basis: 100%;
+	overflow-x: auto;
+}
+
+.ms-bayes-table.is-print-only {
+	display: none;
+}
+
+.ms-bayes-table table {
+	margin: 0;
+	border-collapse: collapse;
+	font-size: 0.875rem;
+	font-variant-numeric: tabular-nums;
+	color: var(--ms-board-ink);
+}
+
+.ms-bayes-table caption {
+	padding-block-end: 0.25rem;
+	font-weight: 600;
+	text-align: start;
+}
+
+.ms-bayes-table th,
+.ms-bayes-table td {
+	padding: 0.25rem 1rem 0.25rem 0;
+	border-block-end: 1px solid var(--ms-board-axis);
+	text-align: start;
+}
+
+.ms-bayes-table td.is-divided {
+	font-weight: 700;
+}
+
+.ms-bayes-table .ms-board-readout {
+	margin: 0.15rem 0;
+	overflow-wrap: anywhere;
+}
+
+@media print {
+	.ms-bayes-table.is-print-only {
+		display: block;
+	}
+}
+
 /* ── EventSpace: a sample space as a table of outcomes (decision 0011) ──
  * A: highlighter fill + solid ochre border + "A" tag. B: dashed ink outline + "B" tag.
  * Every cue is doubled by shape or text, and the focus ring stays outside the cell. */

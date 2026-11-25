@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useId, useMemo, useState } from "react";
 import { Mafs, Polygon, Text } from "mafs";
 import type { vec } from "mafs";
 import Board from "./Board";
@@ -7,6 +7,8 @@ import PresetButtons from "./guided/PresetButtons.tsx";
 import useAnnouncer from "./guided/useAnnouncer.ts";
 import { formatNumber, plotColors } from "./plotColors";
 import { BAYES_SCENARIOS, computePosterior, resolveScenarios, type BayesScenarioId, type BayesValues } from "./bayesTheorem/scenarios.ts";
+import { TABLE_LABELS, tableSummary } from "./bayesTheorem/table.ts";
+import CountTable from "./bayesTheorem/CountTable.tsx";
 
 const PROBABILITY_RANGE: vec.Vector2 = [0.01, 0.99];
 const PROBABILITY_STEP = 0.01;
@@ -46,7 +48,10 @@ export default function BayesTheorem({ scenarios, initialScenario }: BayesTheore
   const [prior, setPrior] = useState(initial.values.prior);
   const [likelihood, setLikelihood] = useState(initial.values.likelihood);
   const [falsePositive, setFalsePositive] = useState(initial.values.falsePositive);
+  const [tableShown, setTableShown] = useState(false);
   const [announcement, announce] = useAnnouncer();
+  const tableId = useId();
+  const scenario = BAYES_SCENARIOS[scenarioId];
 
   const { evidence, posterior } = useMemo(
     () => computePosterior({ prior, likelihood, falsePositive }),
@@ -55,33 +60,47 @@ export default function BayesTheorem({ scenarios, initialScenario }: BayesTheore
 
   // Both readout numbers, so a page that asks for P(B) (the law of total probability) is heard as well as seen.
   // The shared announcer empties and refills the region, so pressing the same preset twice is spoken twice.
+  // While the table shows, each change also says what it counts now.
   const announceValues = useCallback(
-    (values: BayesValues, prefix = "") => {
+    (values: BayesValues, prefix = "", tableScenario: BayesScenarioId | null = null) => {
       const result = computePosterior(values);
-      announce(`${prefix}Posterior P of A given B is ${posteriorText(result.posterior)}; P of B is ${formatNumber(result.evidence, 3)}.`);
+      const table = tableScenario === null ? "" : ` ${tableSummary(values, BAYES_SCENARIOS[tableScenario])}`;
+      announce(`${prefix}Posterior P of A given B is ${posteriorText(result.posterior)}; P of B is ${formatNumber(result.evidence, 3)}.${table}`);
     },
     [announce],
   );
+  const tableScenario = tableShown ? scenarioId : null;
 
   const loadScenario = useCallback(
-    (id: BayesScenarioId) => {
-      const scenario = BAYES_SCENARIOS[id];
+    (id: BayesScenarioId, withTable: boolean) => {
+      const picked = BAYES_SCENARIOS[id];
       setScenarioId(id);
-      setPrior(scenario.values.prior);
-      setLikelihood(scenario.values.likelihood);
-      setFalsePositive(scenario.values.falsePositive);
-      announceValues(scenario.values, `${scenario.label}. ${scenario.meaning} `);
+      setPrior(picked.values.prior);
+      setLikelihood(picked.values.likelihood);
+      setFalsePositive(picked.values.falsePositive);
+      announceValues(picked.values, `${picked.label}. ${picked.meaning} `, withTable ? id : null);
     },
     [announceValues],
   );
 
-  const handleReset = useCallback(() => loadScenario(choice.initial), [loadScenario, choice.initial]);
+  // Reset returns to the opening view, which has the table hidden.
+  const handleReset = useCallback(() => {
+    setTableShown(false);
+    loadScenario(choice.initial, false);
+  }, [loadScenario, choice.initial]);
+
+  const toggleTable = () => {
+    const next = !tableShown;
+    setTableShown(next);
+    const values = { prior, likelihood, falsePositive };
+    announce(next ? `${TABLE_LABELS.shown} ${tableSummary(values, scenario)}` : TABLE_LABELS.hidden);
+  };
 
   // Only the page's own presets can be picked, so a stray id from the buttons fails loudly.
   const pickPreset = (id: string) => {
     const picked = choice.scenarios.find((scenario) => scenario === id);
     if (!picked) throw new Error(`BayesTheorem: "${id}" is not one of this board's presets (${choice.scenarios.join(", ")}).`);
-    loadScenario(picked);
+    loadScenario(picked, tableShown);
   };
 
   // Labels for A's column: centered inside it, or anchored just right of it when the column is too thin.
@@ -114,13 +133,24 @@ export default function BayesTheorem({ scenarios, initialScenario }: BayesTheore
         activeId={scenarioId}
         onPick={pickPreset}
       />
-      <p className="ms-event-note-line">{BAYES_SCENARIOS[scenarioId].meaning}</p>
-      {probabilitySlider("P(A)", prior, setPrior, (value) => announceValues({ prior: value, likelihood, falsePositive }))}
-      {probabilitySlider("P(B | A)", likelihood, setLikelihood, (value) => announceValues({ prior, likelihood: value, falsePositive }))}
-      {probabilitySlider("P(B | not A)", falsePositive, setFalsePositive, (value) => announceValues({ prior, likelihood, falsePositive: value }))}
+      <p className="ms-event-note-line">{scenario.meaning}</p>
+      {probabilitySlider("P(A)", prior, setPrior, (value) => announceValues({ prior: value, likelihood, falsePositive }, "", tableScenario))}
+      {probabilitySlider("P(B | A)", likelihood, setLikelihood, (value) => announceValues({ prior, likelihood: value, falsePositive }, "", tableScenario))}
+      {probabilitySlider("P(B | not A)", falsePositive, setFalsePositive, (value) => announceValues({ prior, likelihood, falsePositive: value }, "", tableScenario))}
       <p className="ms-board-readout">
         P(A | B) = {posteriorText(posterior)} &nbsp; P(B) = {formatNumber(evidence, 3)}
       </p>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={tableShown}
+        aria-controls={tableId}
+        className="ms-board-button ms-board-switch"
+        onClick={toggleTable}
+      >
+        {TABLE_LABELS.toggle}
+      </button>
+      <CountTable id={tableId} values={{ prior, likelihood, falsePositive }} scenario={scenario} shown={tableShown} />
     </>
   );
 

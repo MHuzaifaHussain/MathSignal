@@ -700,6 +700,53 @@ assert.throws(() => bayes.resolveScenarios(['any-events', 'medical-test', 'wet-l
 assert.throws(() => bayes.resolveScenarios(['wet-lawn', 'any-events', 'wet-lawn']), /lists "wet-lawn" twice/);
 // Every scenario names what its table counts.
 for (const scenario of Object.values(bayes.BAYES_SCENARIOS)) assert.ok(scenario.countNoun.length > 0, `${scenario.id}: no countNoun`);
+// "Show as table": the four areas as whole counts, out of the smallest of 100, 1,000 or 10,000 that keeps them whole.
+// The medical test and screening tables match the ones the pages print; fraud flag is the page's "608 of 10,000".
+const bayesTable = await import('../src/components/react/bayesTheorem/table.ts');
+const countsOf = (id) => bayesTable.countTable(bayes.BAYES_SCENARIOS[id].values);
+assert.deepEqual(countsOf('medical-test'), { population: 1000, bAndA: 9, notBAndA: 1, bAndNotA: 99, notBAndNotA: 891 });
+assert.deepEqual(countsOf('screening-test'), { population: 1000, bAndA: 19, notBAndA: 1, bAndNotA: 98, notBAndNotA: 882 });
+assert.deepEqual(countsOf('screening-clinic'), { population: 1000, bAndA: 285, notBAndA: 15, bAndNotA: 70, notBAndNotA: 630 });
+assert.deepEqual(countsOf('late-bus'), { population: 1000, bAndA: 75, notBAndA: 175, bAndNotA: 75, notBAndNotA: 675 });
+assert.deepEqual(countsOf('same-chance'), { population: 100, bAndA: 10, notBAndA: 15, bAndNotA: 30, notBAndNotA: 45 });
+assert.deepEqual(countsOf('fraud-flag'), { population: 10000, bAndA: 320, notBAndA: 80, bAndNotA: 288, notBAndNotA: 9312 });
+assert.deepEqual(countsOf('wet-lawn'), { population: 100, bAndA: 18, notBAndA: 2, bAndNotA: 24, notBAndNotA: 56 });
+assert.deepEqual(countsOf('any-events'), { population: 100, bAndA: 24, notBAndA: 6, bAndNotA: 7, notBAndNotA: 63 });
+// Every slider position gives whole counts that add up to the population, from the smallest population that can.
+for (let a = 1; a <= 99; a += 1) {
+	for (let b = 1; b <= 99; b += 1) {
+		for (let c = 1; c <= 99; c += 1) {
+			const counts = bayesTable.countTable({ prior: a / 100, likelihood: b / 100, falsePositive: c / 100 });
+			const cells = [counts.bAndA, counts.notBAndA, counts.bAndNotA, counts.notBAndNotA];
+			assert.ok(cells.every(Number.isInteger), `${a}, ${b}, ${c}: a count is not whole`);
+			assert.equal(cells.reduce((total, count) => total + count, 0), counts.population);
+			if (counts.population > 100) {
+				const smaller = counts.population / 10;
+				assert.ok(!cells.every((count) => Number.isInteger((count * smaller) / counts.population)), `${a}, ${b}, ${c}: ${smaller} would do`);
+			}
+		}
+	}
+}
+// The slider's float steps (0.29000000000000004) still count; a value off the grid fails loudly.
+assert.deepEqual(bayesTable.countTable({ prior: 0.1 + 0.19, likelihood: 0.5, falsePositive: 0.5 }), { population: 1000, bAndA: 145, notBAndA: 145, bAndNotA: 355, notBAndNotA: 355 });
+assert.throws(() => bayesTable.countTable({ prior: 3 / 7, likelihood: 0.9, falsePositive: 0.3 }), /prior must be a probability on the 0.01 grid/);
+assert.throws(() => bayesTable.countTable({ prior: 1.2, likelihood: 0.9, falsePositive: 0.3 }), /prior must be a probability/);
+// The table's text, with commas from 1,000, and its two lines read exactly as the readout rounds them.
+const medicalCopy = bayesTable.tableCopy(bayes.BAYES_SCENARIOS['medical-test'].values, bayes.BAYES_SCENARIOS['medical-test']);
+assert.equal(medicalCopy.caption, 'The square as counts, out of 1,000 people');
+assert.deepEqual(medicalCopy.columns, ['B', 'not B', 'Total']);
+assert.deepEqual(medicalCopy.rows.map((row) => [row.header, ...row.cells.map((cell) => cell.text)]), [
+	['A', '9', '1', '10'],
+	['not A', '99', '891', '990'],
+	['Total', '108', '892', '1,000'],
+]);
+assert.deepEqual(medicalCopy.rows.flatMap((row) => row.cells.filter((cell) => cell.divides).map((cell) => cell.text)), ['9', '108']);
+assert.deepEqual(medicalCopy.lines.map((line) => line.text), ['P(A | B): 9 of the 108 people in B, 0.083', 'P(B): 108 of 1,000 people, 0.108']);
+assert.deepEqual(medicalCopy.lines.map((line) => line.spoken), ['P of A given B: 9 of the 108 people in B, 0.083', 'P of B: 108 of 1,000 people, 0.108']);
+const fraudCopy = bayesTable.tableCopy(bayes.BAYES_SCENARIOS['fraud-flag'].values, bayes.BAYES_SCENARIOS['fraud-flag']);
+assert.deepEqual(fraudCopy.rows[2].cells.map((cell) => cell.text), ['608', '9,392', '10,000']);
+assert.deepEqual(fraudCopy.lines.map((line) => line.text), ['P(A | B): 320 of the 608 transactions in B, 0.526', 'P(B): 608 of 10,000 transactions, 0.061']);
+assert.equal(bayesTable.tableSummary(bayes.BAYES_SCENARIOS['late-bus'].values, bayes.BAYES_SCENARIOS['late-bus']), 'Out of 1,000 days, 150 are in B and 75 of those are in A.');
 // P(B) = 0 has no posterior, and impossible inputs fail loudly.
 assert.equal(bayes.computePosterior({ prior: 0.5, likelihood: 0, falsePositive: 0 }).posterior, null);
 assert.throws(() => bayes.computePosterior({ prior: 1.2, likelihood: 0.5, falsePositive: 0.5 }), /prior must be a probability/);
