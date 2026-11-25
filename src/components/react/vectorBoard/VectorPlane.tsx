@@ -208,6 +208,9 @@ function AlignScene({ state, ochre }: SceneProps) {
   );
 }
 
+/** a and b are muted references on span-reach, but a zero one is the ink "zero vector" ring every setup draws. */
+const referenceColor = (vector: Vec2) => (isZero(vector) ? plotColors.ink : plotColors.inkMuted);
+
 /**
  * span-reach: muted a and b, then c a and d b in ink, each cut at the board's edge (a cut arrow loses its head, since a
  * head at the edge would claim the vector ends there), the sum dot, and the ochre flag. After Check, a muted dotted
@@ -220,8 +223,8 @@ function CombineScene({ state, ochre }: SceneProps) {
   return (
     <>
       {line && <Segment from={line[0]} to={line[1]} color={plotColors.inkMuted} weight={2} lineStyle="dotted" />}
-      <Arrow tip={state.a} color={plotColors.inkMuted} weight={MUTED_WEIGHT} />
-      <Arrow tip={state.b} color={plotColors.inkMuted} weight={MUTED_WEIGHT} dashed />
+      <Arrow tip={state.a} color={referenceColor(state.a)} weight={MUTED_WEIGHT} />
+      <Arrow tip={state.b} color={referenceColor(state.b)} weight={MUTED_WEIGHT} dashed />
       {combinePieces(state).map((piece) =>
         piece.head ? (
           <Arrow key={piece.id} tail={piece.from} tip={piece.to} dashed={piece.id === "scaledB"} />
