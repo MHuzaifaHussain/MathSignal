@@ -186,9 +186,11 @@ export default function FunctionCurve({ setup: setupId }: FunctionCurveProps) {
   }, [state, announce]);
 
   const pressCheck = () => {
-    // A refused press changes nothing the second time, so the reason is spoken from here as well.
-    const reason = checkRefusal(stateRef.current);
-    if (reason) announce(reason);
+    // The first refused press sets `refused`, and the effect speaks the reason. A repeat changes no state, so no effect
+    // runs: the reason is spoken from here, and only then, so each press says it exactly once.
+    const current = stateRef.current;
+    const reason = checkRefusal(current);
+    if (reason && current.refused) announce(reason);
     send({ type: "check" });
   };
 

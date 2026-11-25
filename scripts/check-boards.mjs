@@ -5755,6 +5755,8 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		assert.equal(refused.refused, true);
 		assert.equal(refused.checked, false);
 		assert.equal(fcSay.announcementFor(refused, { type: 'check' }), 'Pick One slope or Two different slopes first.');
+		// A repeat press changes nothing, so no effect speaks: FunctionCurve says the reason from the press itself, and only then.
+		assert.equal(fcReduce(refused, { type: 'check' }), refused, 'a second refused Check returns the same state');
 		const chosen = fcReduce(refused, { type: 'choice', choice: 'one' });
 		assert.equal(chosen.refused, false);
 		assert.equal(fcSay.checkRefusal(chosen), null);
@@ -6230,6 +6232,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	assert.ok(/const send = useCallback\(\s*\(action: Action\) => \{\s*sliderGuard\.interrupt\(\);/.test(board), 'every non-slider action interrupts the shared slider guard first');
 	assert.ok(board.includes('dispatch({ type: "point", xIndex, continues });'), 'a drag marks its later moves as continuing, so its notice lasts until the drag ends');
 	assert.ok(board.includes('return { type: "point", xIndex: value, continues };'), 'a Point slider burst marks its later moves as continuing');
+	assert.ok(board.includes('if (reason && current.refused) announce(reason);'), 'a refused Check speaks from the press only when the state will not change, so the reason is said once per press');
 	const css = readFileSync('src/styles/components.css', 'utf8');
 	const forced = css.slice(css.lastIndexOf('@media (forced-colors: active)'));
 	const block = forced.match(/\.ms-fncurve,\s*\.ms-fncurve-table-wrap\s*\{([^}]*)\}/);
