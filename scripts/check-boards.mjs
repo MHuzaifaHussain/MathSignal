@@ -743,6 +743,32 @@ near(posteriorOf('medical-test').posterior, 1 / 12);
 near(posteriorOf('wet-lawn').evidence, 0.42);
 near(posteriorOf('wet-lawn').posterior, 3 / 7);
 near(posteriorOf('any-events').posterior, 0.24 / 0.31);
+// Labels: a thin column's labels sit beside it, and its "B and …" label never lands on the other event's fill.
+const bayesLabels = await import('../src/components/react/bayesTheorem/labels.ts');
+// The published Bayes page's opening on Medical test keeps its labels where they were: beside A, level with its block.
+assert.deepEqual(bayesLabels.labelPositions(bayes.BAYES_SCENARIOS['medical-test'].values).aName, { x: 0.02, y: bayesLabels.NAME_Y, attach: 'e' });
+assert.deepEqual(bayesLabels.labelPositions(bayes.BAYES_SCENARIOS['medical-test'].values).bAndA, { x: 0.02, y: 0.45, attach: 'e' });
+// The Bayes page drags Wet lawn's P(A) to 0.99: the not-A column is a sliver and B and A fills 0.9 of A's column,
+// so "B and not A" goes under the square instead of onto the B-and-A block.
+assert.deepEqual(bayesLabels.labelPositions({ ...bayes.BAYES_SCENARIOS['wet-lawn'].values, prior: 0.99 }).bAndNotA, { x: 0.98, y: bayesLabels.BELOW_SQUARE_Y, attach: 'w' });
+const labelGrid = [0.01, 0.05, 0.1, 0.14, 0.15, 0.3, 0.5, 0.85, 0.86, 0.9, 0.92, 0.95, 0.99];
+const labelCases = [
+	...Object.values(bayes.BAYES_SCENARIOS).map((scenario) => scenario.values),
+	...labelGrid.flatMap((prior) => labelGrid.flatMap((likelihood) => labelGrid.map((falsePositive) => ({ prior, likelihood, falsePositive })))),
+];
+for (const values of labelCases) {
+	const { bAndA, bAndNotA } = bayesLabels.labelPositions(values);
+	const cases = [
+		{ label: bAndA, otherFill: values.falsePositive, name: 'B and A' },
+		{ label: bAndNotA, otherFill: values.likelihood, name: 'B and not A' },
+	];
+	for (const { label, otherFill, name } of cases) {
+		if (label.attach === undefined) continue;
+		const clearOfFill = label.y < 0 || label.y - bayesLabels.LABEL_MARGIN >= otherFill - 1e-9;
+		assert.ok(clearOfFill, `"${name}" sits on the other event's fill at ${JSON.stringify(values)}: y = ${label.y}`);
+		assert.ok(label.y <= bayesLabels.NAME_Y - 2 * bayesLabels.LABEL_MARGIN + 1e-9, `"${name}" crowds the column name at ${JSON.stringify(values)}`);
+	}
+}
 assert.equal(bayes.BAYES_SCENARIOS[bayes.DEFAULT_SCENARIO].id, 'any-events');
 // Every scenario sits on the sliders' 0.01 grid inside their range, so loading one never clamps a value.
 for (const scenario of Object.values(bayes.BAYES_SCENARIOS)) {

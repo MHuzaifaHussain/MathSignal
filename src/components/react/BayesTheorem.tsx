@@ -9,13 +9,11 @@ import { formatNumber, plotColors } from "./plotColors";
 import { BAYES_SCENARIOS, computePosterior, resolveScenarios, type BayesScenarioId, type BayesValues } from "./bayesTheorem/scenarios.ts";
 import { TABLE_LABELS, tableSummary } from "./bayesTheorem/table.ts";
 import CountTable from "./bayesTheorem/CountTable.tsx";
+import { labelPositions } from "./bayesTheorem/labels.ts";
 
 const PROBABILITY_RANGE: vec.Vector2 = [0.01, 0.99];
 const PROBABILITY_STEP = 0.01;
 const BOARD_HEIGHT = 340;
-/** A column narrower than this is too thin to hold its labels (the medical test's A is 0.01), so they sit beside it. */
-const NARROW_COLUMN = 0.15;
-const LABEL_GAP = 0.01;
 
 const rectangle = (x0: number, x1: number, y0: number, y1: number): vec.Vector2[] => [
   [x0, y0],
@@ -103,12 +101,8 @@ export default function BayesTheorem({ scenarios, initialScenario }: BayesTheore
     loadScenario(picked, tableShown);
   };
 
-  // Labels for A's column: centered inside it, or anchored just right of it when the column is too thin.
-  const columnLabelPosition =
-    prior < NARROW_COLUMN ? { x: prior + LABEL_GAP, attach: "e" as const } : { x: prior / 2 };
-  // Labels for not A's column, the mirror image: anchored just left of it when the column is too thin.
-  const otherColumnLabelPosition =
-    1 - prior < NARROW_COLUMN ? { x: prior - LABEL_GAP, attach: "w" as const } : { x: (prior + 1) / 2 };
+  // Inside each column, or beside a column too thin to hold them, never on the other event's fill.
+  const labels = labelPositions({ prior, likelihood, falsePositive });
 
   const probabilitySlider = (label: string, value: number, onChange: (value: number) => void, commit: (value: number) => void) => (
     <TraySlider
@@ -171,16 +165,16 @@ export default function BayesTheorem({ scenarios, initialScenario }: BayesTheore
         {/* B and not A: false positives */}
         <Polygon points={rectangle(prior, 1, 0, falsePositive)} color={plotColors.ink} fillOpacity={0.28} />
 
-        <Text {...columnLabelPosition} y={1.0 - 0.04} size={14} color={plotColors.ink}>
+        <Text {...labels.aName} size={14} color={plotColors.ink}>
           A
         </Text>
-        <Text {...otherColumnLabelPosition} y={1.0 - 0.04} size={14} color={plotColors.inkMuted}>
+        <Text {...labels.notAName} size={14} color={plotColors.inkMuted}>
           not A
         </Text>
-        <Text {...columnLabelPosition} y={likelihood / 2} size={13} color={plotColors.ink}>
+        <Text {...labels.bAndA} size={13} color={plotColors.ink}>
           B and A
         </Text>
-        <Text {...otherColumnLabelPosition} y={Math.max(falsePositive / 2, 0.04)} size={13} color={plotColors.ink}>
+        <Text {...labels.bAndNotA} size={13} color={plotColors.ink}>
           B and not A
         </Text>
       </Mafs>
