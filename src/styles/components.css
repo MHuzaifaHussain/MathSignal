@@ -1953,8 +1953,8 @@
 		inline-size: 40px;
 	}
 
-	/* VectorBoard2D: the table never scrolls sideways. Steppers keep 44px at a 375px viewport and narrow toward
-	   36px at 320px (13cqi of the board), and the Length column moves into sentences under the table. */
+	/* VectorBoard2D: nothing scrolls sideways. The steppers under the plane keep 44px at a 375px viewport and narrow
+	   toward 36px at 320px (13cqi of the board); the folded read-only table, Length column included, fits as it is. */
 	.ms-vec-stepper {
 		grid-template-columns: clamp(36px, 13cqi, 44px) 1.5rem clamp(36px, 13cqi, 44px);
 	}
