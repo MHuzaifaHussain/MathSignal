@@ -59,19 +59,19 @@ import WorkedExample from "../../../components/WorkedExample.astro";
 
 <Analogy breaks="The three friends are all different. If two of them were twins in matching clothes, some photos would look the same and the count would drop. And a count only becomes a chance if every photo is equally likely, as when the order is drawn from a hat.">
 
-Ana, Ben and Cai want a photo of the three of them standing in a row. Swap any two of them and you get a different photo. How many different photos can they take? Then the coach needs two of them for a team. A team of Ana and Ben is the same team as Ben and Ana. How many different teams are there? Hold both answers in your head; the next section checks them.
+Ana, Ben and Cai want a photo of the three of them standing in a row. Swap any two of them and you get a different photo. How many different photos can they take? Then the coach needs two of them for a team. A team of Ana and Ben is the same team as Ben and Ana. How many different teams are there? Hold both answers in your head.
 
 </Analogy>
 
 <WhyThisMatters>
-Many probabilities in machine learning are counts in disguise: how many ways a test set can be split off, or how many rules a learner can choose from, a count that sets how much data its simplest guarantee needs. But a count is only half a probability; the other half is checking that the outcomes are equally likely.
+Many probabilities in machine learning are counts in disguise: how many ways a test set can be split off, or how many candidate rules a learner picks among, which sets how many examples it needs before you can trust its pick. But a count is only half a probability; the other half is checking that the outcomes are equally likely.
 </WhyThisMatters>
 
 ## Line up three friends, then pick two
 
-Before you open anything: how many different photos can Ana, Ben and Cai take, and how many teams of two can the coach pick? Going further: if the order in the photo is drawn from a hat, what is the chance that Ana stands in the middle? If the team is drawn from a hat, what is the chance that Ana is on it? Are the two chances the same?
+Keep your two answers from above. One more question before you check: if the order in the photo is drawn from a hat, what is the chance that Ana stands in the middle? If the team is drawn from a hat, what is the chance that Ana is on it? Are the two chances the same?
 
-Your task: write down your two counts, then open the list and check that every photo and every team appears exactly once.
+Your task: write down your two counts and whether Ana is more likely to be in the middle of the photo or on the team, then open the list and check that every photo and every team appears exactly once.
 
 <Fold kind="answer" label="every photo and every team, listed">
 
@@ -84,13 +84,13 @@ Your task: write down your two counts, then open the list and check that every p
 | B C A | B then C | \{B, C\} |
 | C B A | C then B | \{B, C\} |
 
-The first two in line give 6 ordered pairs, and every team appears twice.
+Any of the 3 can stand on the left, then 2 are left for the middle, then 1 for the right: 3 × 2 × 1 = 6 photos. The first two in line give 3 × 2 = 6 ordered pairs, but each team appears twice, so there are 3 teams.
+
+The two chances differ. Ana is in the middle of 2 of the 6 photos, a chance of 1/3, and on 2 of the 3 teams, a chance of 2/3. Each is fair only because the hat makes every photo, and every team, equally likely.
 
 </Fold>
 
-Three friends can line up in 6 different orders, but only 3 different teams of two can be picked from them. Any of the 3 can stand on the left, then 2 are left for the middle, then 1 for the right: 3 × 2 × 1 = 6. Picking a first and a second player gives 3 × 2 = 6 ordered pairs, but each team is counted twice (A then B, B then A), so there are 3 teams.
-
-The two chances differ. Ana is in the middle of 2 of the 6 photos, B A C and C A B, a chance of 1/3, and on 2 of the 3 teams, a chance of 2/3. Each is a fair chance only because the hat makes every photo, and every team, equally likely.
+The list shows the pattern the rest of this page builds on: putting things in order and choosing them give different counts.
 
 ## Notation
 
@@ -98,7 +98,7 @@ The two chances differ. Ana is in the middle of 2 of the 6 photos, B A C and C A
 
 <PreciseStatement>
 
-Let $0 \le k \le n$ be whole numbers and a set hold $n$ different items. Line-ups of all $n$: $n!$. Ordered picks of $k$ without repeats: $(n)_k = n!/(n-k)!$. Unordered picks of $k$, the subsets of size $k$: $\binom{n}{k} = \dfrac{n!}{k!\,(n-k)!}$. Ordered picks of $k$ with repeats allowed: $n^k$.
+Let $n$ and $k$ be whole numbers and a set hold $n$ different items; the first three counts take $k \le n$. Line-ups of all $n$: $n!$. Ordered picks of $k$ without repeats: $(n)_k = n!/(n-k)!$. Unordered picks of $k$, the subsets of size $k$: $\binom{n}{k} = \dfrac{n!}{k!\,(n-k)!}$. Ordered picks of $k$ with repeats allowed: $n^k$.
 
 Conventions: $0! = 1$, $(n)_0 = \binom{n}{0} = \binom{n}{n} = 1$, and $\binom{n}{k} = (n)_k = 0$ for $k > n$. On a finite sample space $\Omega$ of equally likely outcomes, $P(A) = |A|/|\Omega|$, with $A$ and $\Omega$ both counted ordered or both unordered.
 
@@ -113,16 +113,16 @@ Before counting, ask two questions: does the order of the picks matter, and can 
 | yes | yes | $n^k$ | a 3-dial lock: $10^3 = 1{,}000$ codes; two coins: $2^2 = 4$ |
 | yes | no | $(n)_k = n!/(n-k)!$ | first and second player from 3 friends: $3 \times 2 = 6$ |
 | no | no | $\binom{n}{k}$ | a team of 2 from 3 friends: 3 |
-| no | yes | see "the fourth box" below | two dice read without order: 21 results, not equally likely |
+| no | yes | $\binom{n+k-1}{k}$ (fold below) | two dice read without order: 21 results, but a double comes from 1 of the 36 ordered rolls and a mixed pair from 2 |
 
 ### Multiply the choices at each step
 
 When a task happens in steps, and each step has the same number of choices whatever was chosen before, the number of ways is the product of the choices; this is the counting principle. A lock with 3 dials of 10 digits has 10 × 10 × 10 = 1,000 codes, and 10 × 9 × 8 = 720 of them repeat no digit. Grinstead and Snell state the principle for a task done in stages, the total being the product of the stage counts (§3.1) <Cite id="grinstead2003" />.
 
-Only the number of choices must stay fixed: after Ana on the left, the middle is Ben or Cai; after Ben, Ana or Cai.
+The choices themselves can change; only how many there are must stay the same. After Ana takes the left, the middle is Ben or Cai; after Ben takes it, Ana or Cai. Either way there are 2.
 
 <SideNote>
-The counting principle multiplies numbers of choices; [the multiplication rule](/probability/conditional-probability/#the-multiplication-rule) multiplies probabilities. They meet on equally likely outcomes: 3/5 × 2/4 is 3 × 2 over 5 × 4.
+The counting principle multiplies numbers of choices; [the multiplication rule](/probability/conditional-probability/#the-multiplication-rule) multiplies probabilities. They meet on equally likely outcomes: for two red marbles from 3 red and 2 blue, 3/5 × 2/4 is 3 × 2 over 5 × 4.
 </SideNote>
 
 <Simpler label="the same count as a tree" id="counting-tree">
@@ -137,11 +137,11 @@ A permutation is an arrangement in order: $n$ different items line up in $n!$ wa
 
 ### When order doesn't matter: combinations
 
-A combination is a choice where order doesn't matter: the number of ways to choose $k$ items from $n$ is $\binom{n}{k}$, the ordered count divided by the $k!$ orders of each group. Teams of 2 from 5 children: 20 ordered picks over 2! = 2 gives 10. Teams of 3: 60 ordered picks over 3! = 6 gives 10 again, because choosing 3 to play is choosing 2 to sit out: $\binom{n}{k} = \binom{n}{n-k}$. Grinstead and Snell prove the formula by noting that each subset of size k can be put in order in k! ways (§3.2) <Cite id="grinstead2003" />.
+A combination is a choice where order doesn't matter: the number of ways to choose $k$ items from $n$ is $\binom{n}{k}$, the ordered count divided by the $k!$ orders of each group. Teams of 2 from 5 children: 20 ordered picks over 2! = 2 gives 10. Teams of 3: 5 × 4 × 3 = 60 ordered picks over 3! = 6 gives 10 again, because choosing 3 to play is choosing 2 to sit out: $\binom{n}{k} = \binom{n}{n-k}$. Grinstead and Snell prove the formula by noting that each subset of size k can be put in order in k! ways (§3.2) <Cite id="grinstead2003" />.
 
-<GoDeeper label="the fourth box: unordered picks with repeats" id="unordered-with-repeats">
+<GoDeeper label="the fourth row: unordered picks with repeats" id="unordered-with-repeats">
 
-Unordered picks of $k$ from $n$ with repeats number $\binom{n+k-1}{k}$. Two dice ($n = 6$, $k = 2$) give $\binom{7}{2} = 21$: 6 doubles and 15 pairs of different faces. They are not equally likely: a double is 1 of the 36 ordered rolls, the rest 2 each. The [sample spaces page](/probability/sample-spaces-and-events/#what-is-a-sample-space) tells of the same slip with coins.
+Unordered picks of $k$ from $n$ with repeats number $\binom{n+k-1}{k}$. Two dice ($n = 6$, $k = 2$) give $\binom{7}{2} = 21$: 6 doubles and 15 pairs of different faces.
 
 </GoDeeper>
 
@@ -153,13 +153,13 @@ Draw two marbles from a bag of 3 red and 2 blue, without putting the first back.
 
 The slip is to mix the two: 6 ordered pairs over 10 unordered pairs gives 3/5, twice too big.
 
-Both counts are fair because a random draw makes every ordered pair equally likely, and so every unordered pair, each being 2 ordered ones. That step fails for dice read without order, where a double is only 1 ordered roll.
+Both counts are fair because a random draw makes every ordered pair equally likely, and so every unordered pair, each being 2 ordered ones. That step fails for two dice read without order: of the 36 ordered rolls, a double such as two 6s is only 1, while a 1 and a 2 is 2.
 
 ### Every subset, and Pascal's triangle
 
 Adding $\binom{n}{k}$ over every $k$ from 0 to $n$ gives $2^n$, the number of subsets of $n$ items, because each item is either in or out. Three friends form 1 + 3 + 3 + 1 = 8 = 2³ groups, from nobody to everyone. Grinstead and Snell note that each row of Pascal's triangle adds up to $2^n$ (§3.2) <Cite id="grinstead2003" />.
 
-Without the empty group and the $n$ groups of one, $2^n - n - 1$ groups of two or more remain: the equations [mutual independence](/probability/independence/#three-or-more-events) needs, 4 for three events and 11 for four. The same $2^n$ counts the thinned networks [dropout](/probability/independence/#dropout-drops-each-unit-on-its-own) can make from $n$ units.
+Without the empty group and the $n$ groups of one, $2^n - n - 1$ groups of two or more remain. [Mutual independence](/probability/independence/#three-or-more-events) needs one product equation for each such group, so 4 equations for three events and 11 for four. The same $2^n$ counts the networks [dropout](/probability/independence/#dropout-drops-each-unit-on-its-own) can make from $n$ units, since each unit is either kept or dropped.
 
 <GoDeeper label="why each number is the sum of the two above it" id="pascals-rule">
 
@@ -203,9 +203,9 @@ Dividing works only because every group has the same size, $k!$. With repeated i
 | Ends of a row | $\binom{n}{0} = \binom{n}{n} = 1$ | $\binom{3}{0} = \binom{3}{3} = 1$ |
 | Symmetry | $\binom{n}{k} = \binom{n}{n-k}$ | $\binom{10}{3} = \binom{10}{7} = 120$ |
 | Pascal's rule | $\binom{n}{k} = \binom{n-1}{k} + \binom{n-1}{k-1}$, for $0 < k < n$ | $10 = 6 + 4$ |
-| Row sum | $\sum_{k=0}^{n} \binom{n}{k} = 2^n$ | $1 + 3 + 3 + 1 = 8$ |
+| Row sum | adding the whole row, $\binom{n}{0} + \cdots + \binom{n}{n} = 2^n$ | $1 + 3 + 3 + 1 = 8$ |
 | Too many | $\binom{n}{k} = (n)_k = 0$ for $k > n$ | $\binom{3}{4} = 0$ |
-| Captain identity | $k \binom{n}{k} = n \binom{n-1}{k-1}$ | $2 \times 10 = 5 \times 4 = 20$ |
+| Pick a captain | $k \binom{n}{k} = n \binom{n-1}{k-1}$, for $1 \le k \le n$ (team then captain, or captain then team) | $2 \times 10 = 5 \times 4 = 20$ |
 
 </FormalDefinition>
 
@@ -213,7 +213,7 @@ Dividing works only because every group has the same size, $k!$. With repeated i
 
 <WorkedExample number={1} title="Line-ups and teams of five">
 
-Five children. Line-ups (ordered, all placed): 5! = 120. Gold and silver (ordered, no repeats): $(5)_2 = 20$. Teams of 2 (unordered): $\binom{5}{2} = 10$. A given child is first in 1/5 of random line-ups but on 2/5 of random teams.
+Five children. Line-ups (ordered, all placed): 5! = 120. Gold and silver (ordered, no repeats): $(5)_2 = 20$. Teams of 2 (unordered): $\binom{5}{2} = 10$.
 
 </WorkedExample>
 
@@ -279,7 +279,7 @@ There are $\binom{12}{3} = 220$ groups. Exactly 2 hats: 2 of the 5 and 1 of the 
 | 3 | $\binom{5}{3} = 10$ |
 | Total | 220 |
 
-At least one hat is 1 − 35/220 = 37/44. The 10 all-hat groups give the conditional page's 5/12 × 4/11 × 3/10 = 1/22. The table's chances form a hypergeometric distribution.
+At least one hat is 1 − 35/220 = 37/44. The 10 all-hat groups give 10/220 = 1/22, the same as the conditional page's 5/12 × 4/11 × 3/10.
 
 </div>
 
@@ -291,7 +291,7 @@ Leave-p-out cross-validation tests on every possible set of $p$ examples and tra
 
 <div slot="solution">
 
-A split is an unordered choice of $p$ test examples: $\binom{n}{p}$ splits. scikit-learn's example, 4 samples with $p = 2$, has $\binom{4}{2} = 6$ <Cite id="sklearn-leavepout" />. Then $\binom{10}{2} = 45$, $\binom{100}{2} = 4{,}950$ and $\binom{100}{3} = 161{,}700$. A given example is tested with each of the other 9, in 9 of the 45 splits, a share of 1/5 = p/n. Five-fold splitting makes 5 splits and tests each example once.
+A split is an unordered choice of $p$ test examples: $\binom{n}{p}$ splits. scikit-learn's example, 4 samples with $p = 2$, has $\binom{4}{2} = 6$ <Cite id="sklearn-leavepout" />. Then $\binom{10}{2} = 45$, $\binom{100}{2} = 4{,}950$ and $\binom{100}{3} = 161{,}700$. A given example is tested with each of the other 9, in 9 of the 45 splits, a share of 1/5 = p/n. Five-fold splitting cuts the 10 examples into 5 groups of 2 and tests each group once: only 5 splits.
 
 </div>
 
@@ -301,7 +301,7 @@ A split is an unordered choice of $p$ test examples: $\binom{n}{p}$ splits. scik
 
 ### Counting splits for cross-validation
 
-Exhaustive cross-validation schemes are counting problems: leave-p-out uses every subset of $p$ examples as a test set, $\binom{n}{p}$ splits in all. scikit-learn's `LeavePOut` documentation warns that the number of iterations "grows combinatorically with the number of samples", suggests `KFold` or `ShuffleSplit` for large data sets, and notes that `LeavePOut(p)` is not `KFold(n_splits=n_samples // p)`, whose test sets never overlap <Cite id="sklearn-leavepout" />. Worked example 6 goes from 45 splits to 161,700.
+Exhaustive cross-validation schemes are counting problems: leave-p-out uses every subset of $p$ examples as a test set, $\binom{n}{p}$ splits in all. scikit-learn's `LeavePOut` documentation warns that the number of iterations "grows combinatorically with the number of samples", suggests `KFold` or `ShuffleSplit` for large data sets, and notes that `LeavePOut(p)` is not `KFold(n_splits=n_samples // p)`, whose test sets never overlap <Cite id="sklearn-leavepout" />.
 
 ### Counting the rules a learner can choose from
 
@@ -309,19 +309,19 @@ The simplest guarantee that a learned rule works on new data depends on how many
 
 <NotationKey symbols={["hypothesis-class", "training-size", "error-tolerance", "failure-chance"]} />
 
-Take a finite set $\mathcal{H}$ of rules. The learner sees $m$ examples, drawn independently, and returns any rule with no mistakes on them. A rule is bad if its error rate on new data is above $\epsilon$. A fixed bad rule gets all $m$ examples right with probability below $(1 - \epsilon)^m$. The [union bound](/probability/probability-axioms/#formal-definition), P(A₁ or A₂ or …) ≤ P(A₁) + P(A₂) + ⋯, caps the chance that some bad rule fits them all at $|\mathcal{H}|(1-\epsilon)^m \le |\mathcal{H}|e^{-\epsilon m}$. Schapire's lecture notes (§1 and §5.1) turn this into enough examples to keep that chance at most $\delta$ <Cite id="schapire2003-cos511" />:
+Take a finite set $\mathcal{H}$ of rules. The learner sees $m$ examples, drawn independently, and returns any rule with no mistakes on them. A rule is bad if its error rate on new data is above $\epsilon$. A fixed bad rule gets all $m$ examples right with probability below $(1 - \epsilon)^m$. The [union bound](/probability/probability-axioms/#formal-definition), P(A₁ or A₂ or …) ≤ P(A₁) + P(A₂) + ⋯, caps the chance that some bad rule fits them all at $|\mathcal{H}|(1-\epsilon)^m \le |\mathcal{H}|e^{-\epsilon m}$. The second step uses $1 - \epsilon \le e^{-\epsilon}$, which makes the bound easy to solve for $m$. Schapire's lecture notes (§1 and §5.1) turn this into enough examples to keep that chance at most $\delta$ <Cite id="schapire2003-cos511" />:
 
 $$
 m \ge \frac{1}{\epsilon}\left(\ln|\mathcal{H}| + \ln\frac{1}{\delta}\right).
 $$
 
-Finding $|\mathcal{H}|$ is counting. A rule like "feature 2 and feature 5 and feature 7", over $n$ yes-or-no features, is fixed by the subset of features it uses: $2^n$ rules. A yes-or-no function of $n$ features answers each of the $2^n$ inputs its own way: $2^{2^n}$ functions. The notes give these as $\ln|\mathcal{H}| = n \ln 2$ and $|\mathcal{H}| = 2^{2^n}$, and read the bound as Occam's razor (§5.2) <Cite id="schapire2003-cos511" />.
+Finding $|\mathcal{H}|$ is counting. A rule like "feature 2 and feature 5 and feature 7", over $n$ yes-or-no features, is fixed by the subset of features it uses: $2^n$ rules. A yes-or-no function of $n$ features answers each of the $2^n$ inputs its own way: $2^{2^n}$ functions. The notes give these, the second for DNF formulas, as $\ln|\mathcal{H}| = n \ln 2$ and $|\mathcal{H}| = 2^{2^n}$, and read the bound as Occam's razor (§5.2) <Cite id="schapire2003-cos511" />.
 
-With $n = 10$, $\epsilon = 1/10$ and $\delta = 1/20$, the bound for the first class is met once $m \ge 10(\ln 1024 + \ln 20) \approx 99.27$, so 100 examples are enough. All functions of 10 features have $\ln|\mathcal{H}| = 1024 \ln 2 \approx 709.78$, and about 7,128 are enough: only 71 times as many, because the bound grows with the logarithm. It assumes some rule fits the data perfectly, and it says nothing about infinite classes (§5.3) <Cite id="schapire2003-cos511" />.
+With $n = 10$, $\epsilon = 1/10$ and $\delta = 1/20$, the bound for the first class is met once $m \ge 10(\ln 1024 + \ln 20) \approx 99.27$, so 100 examples are enough. All functions of 10 features have $\ln|\mathcal{H}| = 1024 \ln 2 \approx 709.78$, and about 7,128 are enough: only 71 times as many, because the bound grows with the logarithm. It assumes some rule fits the data perfectly, and it says nothing about infinite classes (§5.1, §5.3) <Cite id="schapire2003-cos511" />.
 
 ## Check every count in code
 
-This runs in your browser, lists the outcomes and checks every formula with exact fractions.
+This runs in your browser, lists the outcomes and checks every count and probability with exact fractions.
 
 <PyRunner
   title="counting.py"
@@ -419,10 +419,6 @@ lineups = list(permutations(children))
 assert len(lineups) == 120 and count(permutations(children, 2)) == 20
 assert count(combinations(children, 2)) == 10
 assert count(permutations(children, 3)) == 60 and 60 // math.factorial(3) == 10 == count(combinations(children, 3))
-first = [line for line in lineups if line[0] == 0]
-assert len(first) == 24 and prob(first, lineups) == Fraction(1, 5)
-teams_of_5 = list(combinations(children, 2))
-assert prob([t for t in teams_of_5 if 0 in t], teams_of_5) == Fraction(4, 10) == Fraction(2, 5)
 
 # Worked example 2 and the slip in 4(b): 3 red and 2 blue marbles.
 bag = ["R1", "R2", "R3", "B1", "B2"]
@@ -549,7 +545,7 @@ except ValueError as error:
 `}
 />
 
-Listing small cases is the proof; the formulas are the shortcut. The scikit-learn count, display-only:
+Listing small cases is the proof; the formulas are the shortcut. The same count with scikit-learn, shown here but not run in the browser:
 
 ```python title="leave_p_out.py"
 import numpy as np
@@ -593,7 +589,7 @@ Pick the team first, then its captain: $\binom{n}{k}$ teams times $k$ captains. 
     Steps multiply. A 3-dial lock has 10 × 10 × 10 = 1,000 codes, not 30.
   </Mistake>
   <Mistake wrong="The counting principle is the multiplication rule for probabilities.">
-    One multiplies numbers of choices, the other probabilities, P(A and B) = P(A | B) P(B). They agree only on equally likely outcomes.
+    One multiplies numbers of choices, the other multiplies probabilities. The probability rule always holds; a ratio of counts gives the same chance only on equally likely outcomes.
   </Mistake>
 </CommonMistakes>
 
