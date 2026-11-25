@@ -6388,7 +6388,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 // ---- Page components: the distributions registry and PropertiesTable's rows (decision 0023) ----
 {
 	const { DISTRIBUTIONS, getDistribution } = await import('../src/data/distributions.mjs');
-	const { splitMath, proseHtml, resolveRows } = await import('../src/components/properties/resolveRows.mjs');
+	const { splitMath, checkedProse, proseHtml, resolveRows } = await import('../src/components/properties/resolveRows.mjs');
 	const { TOPICS } = await import('../src/data/topics.mjs');
 	const topicIds = new Set(TOPICS.map((topic) => topic.id));
 
@@ -6402,9 +6402,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		for (const text of [family.name, family.statementHeading, ...family.rows.flatMap((row) => [row.label, row.statement])]) {
 			assert.ok(text.trim() !== '', `${family.id}: no empty text`);
 			assert.doesNotThrow(() => proseHtml(text, family.id), `${family.id}: "${text}" renders`);
-			for (const segment of splitMath(text, family.id)) {
-				if (segment.kind === 'text') assert.ok(!/\\[a-zA-Z]/.test(segment.value), `${family.id}: TeX "${segment.value}" sits outside $…$`);
-			}
+			assert.doesNotThrow(() => checkedProse(text, family.id), `${family.id}: "${text}" has no TeX outside $…$`);
 		}
 	}
 	assert.equal(new Set(DISTRIBUTIONS.map((family) => family.id)).size, DISTRIBUTIONS.length);
@@ -6485,6 +6483,8 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	fails({ rows: ['mean'], examples: { variance: '2.5' }, examplesHeading: 'On the boards' }, 'PropertiesTable (binomial): an example for row "variance", which the table doesn\'t show');
 	fails({ rows: ['mean', 'variance'], examples: { mean: '5' }, examplesHeading: 'On the boards' }, 'PropertiesTable (binomial): examples are all or none, but rows "variance" have none');
 	fails({ rows: ['mean'], examples: { mean: '' }, examplesHeading: 'On the boards' }, 'PropertiesTable (binomial), example for row "mean": the text is empty');
+	fails({ rows: ['mean'], examples: { mean: 'Fair coin \\vmu = 5' }, examplesHeading: 'On the boards' }, 'PropertiesTable (binomial), example for row "mean": TeX outside $…$ in "Fair coin \\vmu = 5"');
+	assert.deepEqual(checkedProse('Costs \\$5, mean $\\vmu$', 'test'), splitMath('Costs \\$5, mean $\\vmu$', 'test'), 'an escaped dollar and TeX inside $…$ pass');
 	fails({ rows: ['mean'], examples: { mean: '5' } }, 'PropertiesTable (binomial): examples need an examplesHeading');
 	fails({ examples: {} }, 'PropertiesTable (binomial): examples is empty; leave it out for a two-column table');
 	fails({ examplesHeading: 'On the boards' }, 'PropertiesTable (binomial): examplesHeading is set but there are no examples');

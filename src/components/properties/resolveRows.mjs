@@ -12,6 +12,9 @@ const INTERNAL_PATH = /^\/[^\s]*$/;
 /** The first column's heading, the same on every table. */
 export const PROPERTY_HEADING = 'Property';
 
+/** A TeX command such as `\vmu`; outside `$…$` it would reach the reader as a literal backslash. */
+const TEX_COMMAND = /\\[a-zA-Z]/;
+
 const escapeHtml = (text) => text.replace(/[&<>"']/g, (character) => HTML_ESCAPES[character]);
 
 /**
@@ -42,6 +45,18 @@ export function splitMath(source, where) {
 	}
 	if (inMath) throw new Error(`${where}: an odd number of "$" in "${source}"`);
 	if (current !== '') segments.push({ kind: 'text', value: current });
+	return segments;
+}
+
+/**
+ * Splits prose like `splitMath` and also throws when a text segment holds a TeX command, the likely slip of a page
+ * that forgets the dollars around `\vmu`.
+ * @param {string} source @param {string} where @returns {Segment[]}
+ */
+export function checkedProse(source, where) {
+	const segments = splitMath(source, where);
+	const stray = segments.find((segment) => segment.kind === 'text' && TEX_COMMAND.test(segment.value));
+	if (stray) throw new Error(`${where}: TeX outside $…$ in "${source}"`);
 	return segments;
 }
 
@@ -98,9 +113,9 @@ export function resolveRows(familyId, { rows, examples, examplesHeading, rowLink
 		rows: order.map((id) => {
 			const { label, statement } = /** @type {import('../../data/distributions.mjs').PropertyRow} */ (byId.get(id));
 			const example = examples?.[id];
-			splitMath(label, `${where}, row "${id}" label`);
-			splitMath(statement, `${where}, row "${id}"`);
-			if (hasExampleColumn) splitMath(/** @type {string} */ (example), `${where}, example for row "${id}"`);
+			checkedProse(label, `${where}, row "${id}" label`);
+			checkedProse(statement, `${where}, row "${id}"`);
+			if (hasExampleColumn) checkedProse(/** @type {string} */ (example), `${where}, example for row "${id}"`);
 			return { id, label, statement, example, link: rowLinks?.[id] };
 		}),
 	};
