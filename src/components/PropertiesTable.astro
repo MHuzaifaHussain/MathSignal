@@ -56,8 +56,13 @@ const html = (text: string, part: string) => proseHtml(text, `${where}, ${part}`
 	/* The same look as the page's markdown tables (Starlight's table rules), but a real table: `not-content` keeps
 	 * Starlight's `display: block` off it, and the region scrolls instead when a formula is wider than the column. */
 	.ms-properties {
+		/* A scroll box clips at its padding edge, so this room keeps a focused row link's halo (2px outline, 2px
+		 * offset, 5px yellow) whole; the negative margin keeps the first column flush with the prose. */
+		--ms-properties-focus-room: 0.375rem;
 		overflow-x: auto;
 		container-type: inline-size;
+		padding-inline: var(--ms-properties-focus-room);
+		margin-inline: calc(-1 * var(--ms-properties-focus-room));
 	}
 
 	table {
