@@ -4,8 +4,8 @@
 // - Chances read count, reduced fraction, decimal: "3/6 = 1/2 = 0.50", always two decimals.
 // - Amounts computed from the bars drop trailing zeros: "7/2 = 3.5", "2".
 // "≈" appears only when the decimal is rounded.
-import { formatFraction, fraction, toNumber, type Fraction } from '../boardMath.ts';
-import { equalsDecimal } from '../boardText.ts';
+import { formatFraction, fraction, squareRoot, toNumber, type Fraction } from '../boardMath.ts';
+import { amountText, decimalText, equalsDecimal, fractionText, terminatesWithin } from '../boardText.ts';
 import { formatNumber } from '../plotColors.ts';
 
 const DECIMALS = 2;
@@ -94,4 +94,18 @@ export function powerText(base: string, exponent: number): { visible: string; sp
 	if (!Number.isInteger(exponent) || exponent < 0 || exponent > MAX_POWER) throw new Error(`powerText: the exponent must be a whole number from 0 to ${MAX_POWER}, got ${exponent}`);
 	const superscript = [...String(exponent)].map((digit) => SUPERSCRIPT_DIGITS[Number(digit)]).join('');
 	return { visible: `${base}${superscript}`, spoken: `${base} to the power ${exponent}` };
+}
+
+/** Places an amount under a root keeps before it is written as a fraction, as amountText does. */
+const ROOT_PLACES = 3;
+
+/** "√2.5", "√1", but "√(19/400)": the variance as amountText writes it, with parentheses around a fraction. */
+export function rootText(variance: Fraction): string {
+	return terminatesWithin(variance, ROOT_PLACES) ? `√${decimalText(variance, ROOT_PLACES)}` : `√(${fractionText(variance)})`;
+}
+
+/** "= 0.5" or "≈ 1.58": σ's value after its root, "=" only when the root is exact. */
+export function sigmaValue(variance: Fraction): string {
+	const sigma = squareRoot(variance);
+	return sigma.exact ? `= ${amountText(sigma.value)}` : `≈ ${formatNumber(sigma.value, SENTENCE_PLACES)}`;
 }

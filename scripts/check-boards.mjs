@@ -2435,6 +2435,257 @@ const bigChoose = (n, k) => {
 	}
 }
 
+// ---- DistributionBoard density mode (decision 0018) ----
+// Numbers land with the module: areas, bins, means and variances are exact Fractions, asserted here. The sentences
+// stay provisional until the PDF page has had its review, so they are checked for their numbers and their
+// no-spoiler words, not yet word for word.
+const dens = await import('../src/components/react/distributionBoard/density.ts');
+const densSetups = await import('../src/components/react/distributionBoard/densitySetups.ts');
+const densState = await import('../src/components/react/distributionBoard/densityState.ts');
+const densSay = await import('../src/components/react/distributionBoard/densityDescribe.ts');
+const { densityChart } = await import('../src/components/react/distributionBoard/densityChart.ts');
+const densRun = (setupId, ...actions) => actions.reduce(densState.densityReducer, densState.initialDensityState(setupId));
+const fractions = (values) => values.map((value) => formatFraction(value));
+{
+	const shapes = densSetups.SHAPES;
+	const q = (quarters) => fraction(quarters, 4);
+	const shares = (id, width) => fractions(dens.bins(shapes[id].shape, width).map((bin) => bin.share));
+	// Every shape: area 1, its bins at 1, 0.5 and 0.25 cm, μ and σ².
+	const expected = {
+		even: { mean: '2', variance: '4/3', 1: Array(4).fill('1/4'), 2: Array(8).fill('1/8'), 4: Array(16).fill('1/16') },
+		heap: {
+			mean: '2',
+			variance: '2/3',
+			1: ['1/8', '3/8', '3/8', '1/8'],
+			2: ['1/32', '3/32', '5/32', '7/32', '7/32', '5/32', '3/32', '1/32'],
+			4: [1, 3, 5, 7, 9, 11, 13, 15, 15, 13, 11, 9, 7, 5, 3, 1].map((k) => `${k}/128`),
+		},
+		narrow: { mean: '1/4', variance: '1/48', 1: ['1', '0', '0', '0'], 2: ['1', ...Array(7).fill('0')], 4: ['1/2', '1/2', ...Array(14).fill('0')] },
+		lopsided: {
+			mean: '5/3',
+			variance: '13/18',
+			1: ['1/4', '5/12', '1/4', '1/12'],
+			2: ['1/16', '3/16', '11/48', '3/16', '7/48', '5/48', '1/16', '1/48'],
+			4: ['1/64', '3/64', '5/64', '7/64', '23/192', '7/64', '19/192', '17/192', '5/64', '13/192', '11/192', '3/64', '7/192', '5/192', '1/64', '1/192'],
+		},
+	};
+	for (const [id, want] of Object.entries(expected)) {
+		const { shape } = shapes[id];
+		assert.deepEqual(dens.cdf(shape, fraction(4, 1)), fraction(1, 1), `${id}: area 1`);
+		assert.equal(formatFraction(dens.meanOf(shape)), want.mean, `${id}: μ`);
+		assert.equal(formatFraction(dens.varianceOf(shape)), want.variance, `${id}: σ²`);
+		for (const perCm of [1, 2, 4]) {
+			assert.deepEqual(shares(id, fraction(1, perCm)), want[perCm], `${id} at ${perCm} bars per cm`);
+			for (const bin of dens.bins(shape, fraction(1, perCm))) assert.deepEqual(bin.height, divideFractions(bin.share, fraction(1, perCm)), 'height = share ÷ width');
+		}
+		const continuous = dens.asContinuousShape(shape);
+		assert.deepEqual(continuous.mean(), { exact: true, value: dens.meanOf(shape) });
+		assert.deepEqual(continuous.variance(), { exact: true, value: dens.varianceOf(shape) });
+	}
+	// The heap's tallest bar, 1/2 − width/8, closing in on the curve's 1/2 per cm at 2 cm; its running total.
+	assert.deepEqual([2, 1, fraction(1, 2), fraction(1, 4)].map((width) => {
+		const w = typeof width === 'number' ? fraction(width, 1) : width;
+		return formatFraction(dens.bins(shapes.heap.shape, w).reduce((top, bin) => (compareFractions(bin.height, top.height) > 0 ? bin : top)).height);
+	}), ['1/4', '3/8', '7/16', '15/32']);
+	assert.deepEqual(fractions([1, 2, 3, 4].map((x) => dens.cdf(shapes.heap.shape, fraction(x, 1)))), ['1/8', '1/2', '7/8', '1']);
+	// Every pinned stretch.
+	const stretch = (id, a, b) => formatFraction(dens.areaBetween(shapes[id].shape, q(a), q(b)));
+	assert.equal(stretch('even', 4, 8), '1/4');
+	assert.equal(stretch('lopsided', 0, 4), '1/4');
+	assert.equal(stretch('lopsided', 4, 16), '3/4');
+	assert.equal(stretch('lopsided', 4, 8), '5/12');
+	assert.equal(stretch('heap', 4, 12), '3/4');
+	assert.equal(stretch('heap', 8, 12), '3/8');
+	assert.equal(stretch('heap', 7, 8), '15/128');
+	assert.equal(stretch('heap', 0, 16), '1');
+	assert.throws(() => dens.areaBetween(shapes.heap.shape, q(8), q(4)), /runs backward/);
+	// The smallest nonzero quarter-centimeter stretch is 1/192, so "under 0.01" can't arise on these shapes.
+	let smallest = fraction(1, 1);
+	for (const id of ['even', 'heap', 'lopsided']) {
+		for (let a = 0; a < 16; a += 1) {
+			const share = dens.areaBetween(shapes[id].shape, q(a), q(a + 1));
+			if (share.numerator > 0 && compareFractions(share, smallest) < 0) smallest = share;
+		}
+	}
+	assert.equal(formatFraction(smallest), '1/192');
+	assert.equal(numberFormat.underThreshold(1, 192, 2), false);
+	// Heights at the jumps and the points the page reads, always exact.
+	const height = (id, x) => formatFraction(dens.heightAt(shapes[id].shape, x));
+	assert.equal(height('even', fraction(0, 1)), '1/4');
+	assert.equal(height('even', fraction(4, 1)), '1/4', "Even sand's closed end at 4 cm");
+	assert.equal(height('narrow', fraction(0, 1)), '2');
+	assert.equal(height('narrow', fraction(1, 2)), '2');
+	assert.equal(height('narrow', fraction(3, 4)), '0');
+	assert.equal(height('heap', fraction(0, 1)), '0');
+	for (const [id, x, want] of [['lopsided', 1, '1/2'], ['heap', 2, '1/2'], ['even', 3, '1/4'], ['even', 4, '1/4']]) {
+		assert.deepEqual(dens.asContinuousShape(shapes[id].shape).heightAt(fraction(x, 1)), { exact: true, value: dens.heightAt(shapes[id].shape, fraction(x, 1)) });
+		assert.equal(height(id, fraction(x, 1)), want);
+	}
+	// validateShape refuses a shape that holds 3/4, dips below 0 or leaves the grid.
+	const knot = (x, h) => ({ x, height: h });
+	assert.throws(() => dens.validateShape('short', { ends: 'closed-block', knots: [knot(fraction(0, 1), fraction(1, 4)), knot(fraction(3, 1), fraction(1, 4))] }), /holds area 3\/4, not 1/);
+	assert.throws(() => dens.validateShape('dip', { ends: 'zero', knots: [knot(fraction(0, 1), fraction(0, 1)), knot(fraction(1, 1), fraction(-1, 2)), knot(fraction(4, 1), fraction(0, 1))] }), /negative height/);
+	assert.throws(() => dens.validateShape('off', { ends: 'zero', knots: [knot(fraction(0, 1), fraction(0, 1)), knot(fraction(1, 3), fraction(1, 2)), knot(fraction(4, 1), fraction(0, 1))] }), /off the quarter-centimeter grid/);
+	for (const { name, shape } of Object.values(shapes)) assert.equal(dens.validateShape(name, shape), shape);
+	// The drawn outline: a block drops to 0 at its ends and the baseline runs out to 4 cm; a heap keeps its knots.
+	const outline = (id) => dens.curvePoints(shapes[id].shape).map((point) => [formatFraction(point.x), formatFraction(point.height)]);
+	assert.deepEqual(outline('narrow'), [['0', '0'], ['0', '2'], ['1/2', '2'], ['1/2', '0'], ['4', '0']]);
+	assert.deepEqual(outline('heap'), [['0', '0'], ['2', '1/2'], ['4', '0']]);
+	assert.deepEqual(outline('even'), [['0', '0'], ['0', '1/4'], ['4', '1/4'], ['4', '0']]);
+	// One x mapping for the whole mode.
+	assert.equal(dens.rulerPercent(q(7)), 43.75);
+	assert.equal(dens.rulerPercent(q(8)), 50);
+	const bars = densityChart(densRun('sand-pour', { type: 'preset', name: 'Sand heap' }, { type: 'bin-width', binsPerCm: 4 }));
+	const bin = bars.columns.find((column) => column.key === '1.75');
+	assert.deepEqual([bin.left, bin.left + bin.width], [43.75, 50]);
+	assert.equal(bars.columns.length, 16);
+	assert.equal(bars.curve, null);
+	const lop = densRun('sand-interval', { type: 'preset', name: 'Lopsided heap' }, { type: 'spread', on: true });
+	const lopChart = densityChart(lop);
+	assert.equal(lopChart.marks.mu.x, dens.rulerPercent(fraction(5, 3)), 'μ = 5/3 sits at the same percent as the bins use');
+	assert.ok(lopChart.marks.sigma.from > 0 && lopChart.marks.sigma.to < 100, 'μ ± σ stays on the ruler');
+	assert.deepEqual([lopChart.shaded.from, lopChart.shaded.to], [25, 50]);
+	assert.deepEqual(lopChart.shaded.outline.map((point) => point.x), [25, 25, 50, 50]);
+	assert.equal(lopChart.curve.length, 3);
+	assert.deepEqual(densityChart(densRun('sand-pour')).ticks.filter((tick) => tick.label).map((tick) => tick.label), ['0', '1', '2', '3', '4']);
+	assert.equal(densityChart(densRun('sand-pour')).ticks.length, 17, 'quarter ticks, unlabeled');
+	// The setups' validation.
+	const pour = densSetups.DENSITY_SETUPS['sand-pour'];
+	for (const id of ['sand-pour', 'sand-interval']) assert.equal(densSetups.getDensitySetup(id).id, id);
+	assert.throws(() => densSetups.validateDensitySetup({ ...pour, shapes: ['even', 'lopsided'] }), /lists "lopsided", which a later board asks about/);
+	assert.throws(() => densSetups.validateDensitySetup({ ...pour, shapes: ['even', 'heap', 'narrow', 'lopsided', 'even'] }), /5 presets, more than 4/);
+	assert.throws(() => densSetups.validateDensitySetup({ ...pour, yMax: fraction(1, 1) }), /"Narrow sand" above its scale/);
+	assert.throws(() => densSetups.validateDensitySetup({ ...pour, openingInterval: [2.5, 8] }), /interval off the quarter grid/);
+	assert.throws(() => densSetups.validateDensitySetup({ ...pour, binWidths: [8] }), /32 columns, more than fit at 320 px/);
+}
+// The push rule: From and To keep their 0..4 cm range, and one pushes the other along.
+{
+	const open = densState.initialDensityState('sand-interval');
+	assert.deepEqual([open.from, open.to, open.shape, open.stage, open.spreadShown, open.tableOpen], [4, 8, 'even', 'curve', false, false]);
+	const pushed = densState.densityReducer(open, { type: 'from', quarters: 12 });
+	assert.deepEqual([pushed.from, pushed.to], [12, 12]);
+	assert.equal(densSay.densityAnnouncement(open, pushed, { type: 'from', quarters: 12 }).startsWith('To moved along to 3 cm. '), true);
+	const back = densState.densityReducer(open, { type: 'to', quarters: 2 });
+	assert.deepEqual([back.from, back.to], [2, 2]);
+	assert.equal(densSay.densityAnnouncement(open, back, { type: 'to', quarters: 2 }).startsWith('From moved back to 0.5 cm. '), true);
+	const plain = densState.densityReducer(open, { type: 'to', quarters: 16 });
+	assert.deepEqual([plain.from, plain.to], [4, 16]);
+	assert.ok(!densSay.densityAnnouncement(open, plain, { type: 'to', quarters: 16 }).includes('moved'));
+	assert.deepEqual([densState.densityReducer(open, { type: 'to', quarters: 20 }).to, densState.densityReducer(open, { type: 'from', quarters: -3 }).from], [16, 0]);
+	// A preset keeps the stretch, view, bar width and table.
+	const kept = densRun('sand-interval', { type: 'table', open: true }, { type: 'to', quarters: 12 }, { type: 'preset', name: 'Sand heap' });
+	assert.deepEqual([kept.shape, kept.from, kept.to, kept.tableOpen], ['heap', 4, 12, true]);
+	const pourKept = densRun('sand-pour', { type: 'stage', stage: 'curve' }, { type: 'bin-width', binsPerCm: 4 }, { type: 'preset', name: 'Narrow sand' });
+	assert.deepEqual([pourKept.stage, pourKept.binsPerCm], ['curve', 4]);
+	assert.deepEqual(densRun('sand-interval', { type: 'spread', on: true }, { type: 'table', open: true }, { type: 'reset' }), open);
+	assert.throws(() => densState.densityReducer(densState.initialDensityState('sand-pour'), { type: 'from', quarters: 1 }), /needs a setup with an interval/);
+	assert.throws(() => densState.densityReducer(densState.initialDensityState('sand-pour'), { type: 'spread', on: true }), /needs a setup with the switch/);
+}
+// The sentences carry the right numbers (word-for-word pins wait for the PDF page's review).
+{
+	const pour = (name, perCm) => densRun('sand-pour', { type: 'preset', name }, { type: 'bin-width', binsPerCm: perCm });
+	const tallest = (name, perCm) => densSay.tallestLine(pour(name, perCm));
+	assert.ok(tallest('Even sand', 1).includes('1/4 ÷ 1 = 1/4 per cm'));
+	assert.ok(tallest('Sand heap', 4).includes('15/128') && tallest('Sand heap', 4).includes('15/32 per cm'));
+	assert.ok(tallest('Narrow sand', 2).includes('1 ÷ 0.5 = 2 per cm, taller than 1'));
+	assert.ok(!tallest('Narrow sand', 1).includes('taller'));
+	const interval = (...actions) => densSay.intervalLine(densRun('sand-interval', ...actions));
+	assert.ok(interval().visible.includes('P(1 ≤ X ≤ 2) = 1/4 = 0.25'));
+	assert.ok(interval({ type: 'preset', name: 'Lopsided heap' }).visible.includes('= 5/12 ≈ 0.42') && interval({ type: 'preset', name: 'Lopsided heap' }).spoken.includes('5/12, or about 0.42'));
+	assert.ok(interval({ type: 'preset', name: 'Lopsided heap' }, { type: 'to', quarters: 16 }).visible.includes('3/4 = 0.75'));
+	assert.ok(interval({ type: 'preset', name: 'Lopsided heap' }, { type: 'to', quarters: 4 }).visible.includes('P(X = 1) = 0, although the curve is 1/2 per cm tall there'));
+	assert.ok(interval({ type: 'preset', name: 'Sand heap' }, { type: 'from', quarters: 0 }, { type: 'to', quarters: 0 }).visible.includes('the curve is 0 there too'));
+	assert.ok(interval({ type: 'to', quarters: 16 }, { type: 'from', quarters: 0 }).visible.includes('all the sand') && interval({ type: 'to', quarters: 16 }, { type: 'from', quarters: 0 }).visible.endsWith('= 1.'));
+	const spread = (name) => densSay.spreadLines(densRun('sand-interval', { type: 'preset', name }, { type: 'spread', on: true })).join(' ');
+	assert.ok(spread('Lopsided heap').includes('μ = 5/3 ≈ 1.67 cm') && spread('Lopsided heap').includes('13/18 ≈ 0.72 cm²') && spread('Lopsided heap').includes('√(13/18) ≈ 0.85 cm'));
+	assert.ok(spread('Sand heap').includes('μ = 2 cm') && spread('Sand heap').includes('√(2/3) ≈ 0.82 cm'));
+	assert.ok(spread('Even sand').includes('4/3 ≈ 1.33 cm²') && spread('Even sand').includes('√(4/3) ≈ 1.15 cm'));
+	const table = densSay.tableOf(densRun('sand-interval', { type: 'preset', name: 'Sand heap' }, { type: 'to', quarters: 12 }));
+	assert.deepEqual(table.footer, { label: 'Shaded, from 1 to 3 cm', value: '3/4 of the sand' });
+	assert.deepEqual(table.rows[7], ['1.75 (shaded)', '2', '15/128', '15/32']);
+	assert.deepEqual(densSay.tableOf(pour('Sand heap', 1)).rows[0], ['0', '1', '1/8', '1/8']);
+	assert.deepEqual(densSay.tableOf(pour('Narrow sand', 2)).rows[1], ['0.5', '1', '0', '0']);
+	assert.equal(densSay.tableOf(densRun('sand-interval', { type: 'to', quarters: 4 })).footer.value, 'none of the sand');
+	assert.equal(densSay.tableOf(densRun('sand-interval', { type: 'from', quarters: 0 }, { type: 'to', quarters: 16 })).footer.value, 'all the sand');
+	for (const state of [densRun('sand-interval'), pour('Sand heap', 4), densRun('sand-pour', { type: 'stage', stage: 'curve' })]) {
+		const said = densSay.densityAnnouncement(state, state, { type: 'table', open: true });
+		assert.ok(said.startsWith('Table shown under the switch. It lists '), said);
+		assert.equal(densSay.densityAnnouncement(state, state, { type: 'table', open: false }), 'Table hidden.');
+		for (const cell of densSay.tableOf(state).rows.flat()) for (const token of cell.split(' ')) assert.ok(token.length <= 14, token);
+	}
+}
+// No-spoiler scans. Preset and control labels are exempt: pressing them is the reader's choice.
+{
+	const texts = (state) => {
+		const table = densSay.tableOf(state);
+		const chart = densityChart(state);
+		return [
+			densSay.statusLine(state),
+			...densSay.readoutLines(state).flatMap((line) => [line.visible, line.spoken]),
+			table.caption,
+			...table.rows.flat(),
+			...(table.footer ? [table.footer.label, table.footer.value] : []),
+			densSay.tableFoldSentence(state),
+			chart.unit,
+			chart.heightUnit,
+			...chart.gridlines.map((line) => line.label),
+			...chart.ticks.map((tick) => tick.label),
+			chart.marks.mu?.label ?? '',
+			chart.marks.sigma?.label ?? '',
+		];
+	};
+	const walk = (setupId, actions, limit) => {
+		const keyOf = (state) => JSON.stringify(state);
+		const start = densState.initialDensityState(setupId);
+		const seen = new Map([[keyOf(start), start]]);
+		const queue = [start];
+		const said = [...texts(start)];
+		while (queue.length > 0 && seen.size < limit) {
+			const state = queue.shift();
+			for (const action of actions) {
+				const next = densState.densityReducer(state, action);
+				said.push(densSay.densityAnnouncement(state, next, action), ...texts(next));
+				if (!seen.has(keyOf(next))) {
+					seen.set(keyOf(next), next);
+					queue.push(next);
+				}
+			}
+		}
+		return { size: seen.size, said };
+	};
+	const viewActions = [
+		...['bars', 'curve'].map((stage) => ({ type: 'stage', stage })),
+		...[1, 2, 4].map((binsPerCm) => ({ type: 'bin-width', binsPerCm })),
+		{ type: 'table', open: true },
+		{ type: 'table', open: false },
+		{ type: 'reset' },
+	];
+	// sand-pour without a preset: 2 views × 3 widths × table open or not.
+	const pourOpening = walk('sand-pour', viewActions, Infinity);
+	assert.equal(pourOpening.size, 12);
+	for (const text of pourOpening.said) for (const word of ['taller than 1', '2 per cm', 'Narrow']) assert.ok(!text.includes(word), `sand-pour opening: "${text}"`);
+	// Every sand-pour state, presets included: the Lopsided heap is board 2's question and never appears here.
+	const pourAll = walk('sand-pour', [...viewActions, ...['Even sand', 'Sand heap', 'Narrow sand'].map((name) => ({ type: 'preset', name }))], Infinity);
+	assert.equal(pourAll.size, 36);
+	for (const text of pourAll.said) assert.ok(!text.includes('Lopsided'), text);
+	// sand-interval: the opening says nothing of the answer.
+	for (const text of texts(densState.initialDensityState('sand-interval'))) {
+		for (const word of ['3/4', 'Lopsided', 'P(X =', 'μ', 'Variance']) assert.ok(!text.includes(word), `sand-interval opening: "${text}"`);
+	}
+	// Without a preset, no From, To, switch or table move reaches the Lopsided heap.
+	const quarterMoves = [0, 4, 8, 12, 16].flatMap((quarters) => [{ type: 'from', quarters }, { type: 'to', quarters }]);
+	const intervalOpening = walk('sand-interval', [...quarterMoves, { type: 'spread', on: true }, { type: 'spread', on: false }, { type: 'table', open: true }, { type: 'reset' }], Infinity);
+	assert.equal(intervalOpening.size, 15 * 2 * 2, 'every stretch on the whole-cm stops, the switch and the table');
+	for (const text of intervalOpening.said) assert.ok(!text.includes('Lopsided'), text);
+	// Shared scans.
+	const british = /centre|colour|metre|normalis/i;
+	const oldName = ['Show as', 'table'].join(' ');
+	const labels = [...Object.values(densSay.DENSITY_LABELS), ...Object.values(densSay.STAGE_LABELS), ...Object.values(densSay.DENSITY_BOARD_LABELS)];
+	for (const text of [...pourAll.said, ...intervalOpening.said, ...labels]) {
+		assert.ok(!bannedWords.test(text) && !british.test(text) && !text.includes(oldName) && !text.includes('—'), text);
+	}
+}
+
 // ---- DescriptiveStats model and datasets (decision 0015) ----
 // Exact statistics on short whole-number lists. Quantiles are NumPy's default "linear" method, variance divides by n
 // (σ) or by n − 1 (s), Tukey fences sit 1.5 × IQR past the quartiles with a strict test.

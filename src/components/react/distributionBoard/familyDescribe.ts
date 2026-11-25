@@ -4,7 +4,7 @@
 // Number rules: fair-coin chances read count, reduced fraction and two decimals ("210/1024 = 105/512 ≈ 0.21");
 // other chances read decimals only, two places in sentences and four in the table; a nonzero chance too small to
 // show reads "under 0.01" (or "under 0.0001"), never "≈ 0.00". Amounts go through amountText ("2.5", "19/400 ≈ 0.05").
-import { fraction, squareRoot, toNumber, type Fraction } from '../boardMath.ts';
+import { fraction, toNumber, type Fraction } from '../boardMath.ts';
 import { amountText, decimalText, fractionText, groupThousands, joinWords, plural, terminatesWithin } from '../boardText.ts';
 import { tableFoldAnnouncement } from '../guided/tableFold.ts';
 import { formatNumber } from '../plotColors.ts';
@@ -12,7 +12,7 @@ import { chanceOf, chooseCount, tallestValues } from './families.ts';
 import type { FamilySetup, GuessId } from './familySetups.ts';
 import { activePreset, familyDistribution, familyMoments, familySetupOf, isCovered, visibleGhost, type FamilyAction, type FamilyRefusal, type FamilyState } from './familyState.ts';
 import type { Bar } from './model.ts';
-import { chanceChain, powerText, SENTENCE_PLACES, TABLE_PLACES, underText, underThreshold } from './numberFormat.ts';
+import { chanceChain, powerText, rootText, SENTENCE_PLACES, sigmaValue, TABLE_PLACES, underText, underThreshold } from './numberFormat.ts';
 import { coinSequences, MAX_LISTED_COINS, type CoinSequence } from './sources.ts';
 
 interface WordPair {
@@ -89,17 +89,6 @@ function decimalChance(bar: Bar, total: number): string {
 /** A chance in the four-place table: "0.3874", "0.5000", "under 0.0001". */
 function tableChance(bar: Bar, total: number): string {
 	return underThreshold(bar.weight, total, TABLE_PLACES) ? underText(TABLE_PLACES) : formatNumber(toNumber(bar.probability), TABLE_PLACES);
-}
-
-/** "√2.5", "√1", but "√(19/400)": parentheses around a fraction. */
-function rootText(variance: Fraction): string {
-	return terminatesWithin(variance, 3) ? `√${decimalText(variance, 3)}` : `√(${fractionText(variance)})`;
-}
-
-/** "= 0.5" or "≈ 1.58": σ's value after its root. */
-function sigmaValue(variance: Fraction): string {
-	const sigma = squareRoot(variance);
-	return sigma.exact ? `= ${amountText(sigma.value)}` : `≈ ${formatNumber(sigma.value, 2)}`;
 }
 
 const sigmaIsOne = (variance: Fraction) => variance.numerator === variance.denominator;
