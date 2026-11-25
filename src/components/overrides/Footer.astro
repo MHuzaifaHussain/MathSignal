@@ -1,31 +1,62 @@
 ---
 // Starlight Footer override: Starlight's own footer (previous/next, last updated) plus who wrote the
-// page, the licenses, and a prefilled "Report an error" link. Recheck on every Starlight upgrade.
+// page, the licenses, and a prefilled "Report an error" link. Concept pages (frontmatter `topic`) also get
+// "How this page was made" and "Cite this page" (decision 0023). Recheck on every Starlight upgrade.
 import DefaultFooter from '@astrojs/starlight/components/Footer.astro';
-import { AUTHOR_NAME, REPOSITORY_URL, SITE_URL } from '../../seo/site.mjs';
+import { Code } from '@astrojs/starlight/components';
+import { AUTHOR_NAME, REPOSITORY_URL, SITE_URL, TEXT_LICENSE_URL } from '../../seo/site.mjs';
+import { bibtexEntry, plainCitation, reviewedDateText } from '../../seo/citation.mjs';
+import { BIBTEX_LABEL, CITE_DATE_NOTE, CITE_SUMMARY, HOW_MADE_LABEL, HOW_MADE_PATH, citePrintLine, howMadeDetail } from './footerCopy.mjs';
 
 const { entry, id } = Astro.locals.starlightRoute;
 const pageUrl = `${SITE_URL}/${id ? `${id}/` : ''}`;
 const issueTitle = `Error on "${entry.data.title}"`;
 const issueBody = `Page: ${pageUrl}\n\nWhat is wrong, and what should it say?\n`;
 const reviewedAt = entry.data.reviewedAt;
-const reviewedLabel = reviewedAt?.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+const reviewedLabel = reviewedAt && reviewedDateText(reviewedAt);
 const reportUrl = `${REPOSITORY_URL}/issues/new?title=${encodeURIComponent(issueTitle)}&body=${encodeURIComponent(issueBody)}`;
+
+// Concept pages name their author in frontmatter, as the JSON-LD does; other pages fall back to the site author.
+const isConceptPage = entry.data.topic !== undefined;
+const author = isConceptPage ? entry.data.author : AUTHOR_NAME;
+const citedPage = { routeId: id, author, title: entry.data.title, reviewedAt, url: pageUrl };
+const citation = isConceptPage ? plainCitation(citedPage) : undefined;
+const bibtex = isConceptPage ? bibtexEntry(citedPage) : undefined;
+const howMade = isConceptPage ? howMadeDetail(entry.data.aiAssisted) : undefined;
 ---
 
 <DefaultFooter />
 
 <div class="page-credits print:hidden">
-	<p>
-		Written by {AUTHOR_NAME}{reviewedLabel && <>, last reviewed on {reviewedLabel}</>}. The text is licensed under{' '}
-		<a href="https://creativecommons.org/licenses/by/4.0/" rel="license">CC BY 4.0</a> and the code under MIT.
+	<p class="page-credits-prose">
+		Written by {author}{reviewedLabel && <>, last reviewed on {reviewedLabel}</>}. The text is licensed under{' '}
+		<a href={TEXT_LICENSE_URL} rel="license">CC BY 4.0</a> and the code under MIT.
 	</p>
-	<p>
+	{
+		howMade && (
+			<p class="page-credits-prose">
+				<a href={HOW_MADE_PATH}>{HOW_MADE_LABEL}</a>: {howMade}
+			</p>
+		)
+	}
+	{
+		citation && bibtex && (
+			<details class="page-cite">
+				<summary>{CITE_SUMMARY}</summary>
+				<p>{CITE_DATE_NOTE}</p>
+				<p class="page-cite-plain">{citation}</p>
+				<p class="page-cite-label">{BIBTEX_LABEL}</p>
+				<Code code={bibtex} lang="bibtex" showLineNumbers={false} />
+			</details>
+		)
+	}
+	<p class="page-credits-actions">
 		<a href={reportUrl}>Report an error on this page</a>
 		<span class="gap" aria-hidden="true"></span>
 		<a href="/about/">About MathSignal</a>
 	</p>
 </div>
+{citation && <p class="page-cite-print">{citePrintLine(citation)}</p>}
 
 <style>
 	.page-credits {
@@ -41,21 +72,64 @@ const reportUrl = `${REPOSITORY_URL}/issues/new?title=${encodeURIComponent(issue
 	}
 
 	.page-credits a {
-		display: inline-flex;
-		align-items: center;
-		min-block-size: 44px;
 		color: var(--ms-ink);
 		text-decoration: underline;
 		text-decoration-color: var(--ms-ink-muted);
 		text-underline-offset: 0.18em;
 	}
 
-	.page-credits p:first-child a {
-		min-block-size: auto;
+	/* Links inside a sentence stay inline (the inline exception of WCAG 2.5.8); only the action row gets 44px targets. */
+	.page-credits-actions a {
+		display: inline-flex;
+		align-items: center;
+		min-block-size: 44px;
 	}
 
 	.gap {
 		display: inline-block;
 		inline-size: 1.5rem;
+	}
+
+	.page-cite {
+		margin-block: 0.35rem;
+	}
+
+	/* A list item, not flex, so the native disclosure triangle stays; the padding makes the 44px target. */
+	.page-cite summary {
+		display: list-item;
+		box-sizing: border-box;
+		min-block-size: 44px;
+		padding-block: 0.65rem;
+		color: var(--ms-ink);
+		cursor: pointer;
+	}
+
+	.page-cite-plain {
+		color: var(--ms-ink);
+		overflow-wrap: anywhere;
+	}
+
+	.page-cite-label {
+		font-weight: 600;
+		color: var(--ms-ink);
+	}
+
+	.page-cite :global(.expressive-code) {
+		margin-block: 0.25rem 0.75rem;
+	}
+
+	.page-cite-print {
+		display: none;
+	}
+
+	@media print {
+		.page-cite-print {
+			display: block;
+			margin-block-start: 1.5rem;
+			font-family: var(--ms-font-ui);
+			font-size: 0.875rem;
+			color: var(--ms-ink);
+			overflow-wrap: anywhere;
+		}
 	}
 </style>
