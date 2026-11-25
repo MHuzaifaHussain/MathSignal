@@ -27,4 +27,5 @@ Format: context, decision, consequences, alternatives considered. Number them in
 | [0019](0019-normal-distribution-z-mode.md) | NormalDistribution z mode | Accepted |
 | [0020](0020-function-curve-board.md) | FunctionCurve, a Mafs board for slopes, rulers and corners | Accepted; the drawing is provisional until its browser pass |
 | [0021](0021-norm-balls-and-normball-model.md) | Norm balls on VectorBoard2D, and the NormBall model | Accepted; amends [0014](0014-vector-board.md); copy provisional, NormBall's UI follows its page specs |
+| [0022](0022-regression-board-model.md) | The regression board, rebuilt on an exact model | Accepted for the model and data sets; the UI follows its page specs |
 | [0023](0023-page-footer-and-properties-table.md) | The full page footer and PropertiesTable | Accepted; extends [0009](0009-single-sources-of-truth.md) |

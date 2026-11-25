@@ -126,6 +126,8 @@ Small modules every guided board composes in its tray ([decision 0013](../decisi
 ### `NormalDistribution`, `LinearRegression`, `BayesTheorem`
 Concept boards. Each composes `Board`, Mafs, `plotColors`, and `TraySlider`s.
 
+`LinearRegression` is being rebuilt on setups ([decision 0022](../decisions/0022-regression-board-model.md)). Its exact model and data sets exist (`linearRegression/model.ts`, `datasets.ts`: sums, least squares, residuals, r, R², ρ on average ranks, the least-absolute line, per-group fits; Our class, the runners, the grouped sets and Anscombe's quartet), checked by `npm run check:boards`. The current nine-point board is unchanged and unused, and still reports R² = 1 when every y is equal; don't put it on a page.
+
 `NormalDistribution` with no props is the bell (drag μ and σ). `mode="z"` with a `setup` is the z mode ([decision 0019](../decisions/0019-normal-distribution-z-mode.md)): the standard normal on a fixed z-unit view over a ruler in the group's units, with a z ruler under it once the reader commits. Any other prop, mode or setup fails the build.
 
 | Setup | Opens on | Before Check | After Check |
