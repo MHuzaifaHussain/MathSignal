@@ -77,7 +77,7 @@ To find the chance of an event, split the world into cases, find the chance of t
 
 It rains on 1 day in 4. On a rainy day the bus is late 30% of the time; on a dry day, 10%. Before you touch anything: is the chance of a late bus closer to 0.10, 0.15 or 0.20? Going further: the rainy-day piece is rain's weight times its late chance, and the dry-day piece is the same for dry days. Which is bigger, or are they the same?
 
-The board's square stands for all days, and its area is 1, so any region's area is that region's probability. A is a rainy day and B is a late bus. P(A) is the weight of rain; P(B | A) and P(B | not A) are the chances within each case. The block labeled "B and A" is the rainy-day piece, the strip labeled "B and not A" the dry-day piece, and P(B) their total area. Your task: press Late bus, which loads these numbers, and read P(B). The sliders also move with the arrow keys.
+The board's square stands for all days, and its area is 1, so any region's area is that region's probability. A is a rainy day and B is a late bus. P(A) is the weight of rain; P(B | A) and P(B | not A) are the chances within each case. The block labeled "B and A" is the rainy-day piece, the strip labeled "B and not A" the dry-day piece, and P(B) their total area. Your task: press Late bus, which loads these numbers, and read P(B). The sliders also move with the arrow keys. Save Fraud flag for worked example 5.
 
 <div class="not-content">
   <BayesTheorem client:visible scenarios={["any-events", "late-bus", "same-chance", "fraud-flag"]} />

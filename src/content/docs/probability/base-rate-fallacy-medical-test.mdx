@@ -81,7 +81,7 @@ On the board, A is "has the condition" and B is "tests positive". The A column's
   <BayesTheorem client:visible scenarios={["any-events", "screening-test", "screening-clinic"]} />
 </div>
 
-About 16%, which rounds to 20%: far below the 95% the test's accuracy suggests. The readout says "P(A | B) = 0.162   P(B) = 0.117"; P(B) is the share who test positive, 117 in 1,000. Raising P(A), the readout reaches 0.484 at 0.09 and 0.514 at 0.10, so the even-chance point, your second guess, lies between them: exactly 2/21 ≈ 0.095, as [how common the condition has to be](#how-common-does-the-condition-have-to-be) shows. Now press Clinic, where 30 in 100 patients with symptoms have the condition: "P(A | B) = 0.803   P(B) = 0.355". The test never changed; only who was tested did.
+About 16%, which rounds to 20%: far below the 95% the test's accuracy suggests. The readout says "P(A | B) = 0.162   P(B) = 0.117"; P(B) is the share who test positive, 117 in 1,000. Raising P(A), the readout reaches 0.484 at 0.09 and 0.514 at 0.10, so the even-chance point, your second guess, lies between them: exactly 2/21 ≈ 0.095, as [how common the condition has to be](#how-common-does-the-condition-have-to-be) shows. Now press Clinic, where 30 in 100 patients with symptoms have the condition: "P(A | B) = 0.803   P(B) = 0.355". The test never changed; only who was tested did. Leave "Show as table" off for now: you will count these groups yourself below.
 
 ## Count four groups, then read one column
 
@@ -100,7 +100,7 @@ To find what a positive means, split a round number of people by the condition, 
 
 The negative column reads the same way: of the 883 negatives only 1 has the condition, so a negative means no condition with probability 882/883 ≈ 0.9989. These two shares are the positive and negative predictive values, PPV and NPV.
 
-Now the clinic, where 30 in 100 patients have the condition. Fill in steps 2 to 4 for 1,000 patients with the same test: how many have it, how many true positives, how many false positives?
+Now the clinic, where 30 in 100 patients have the condition. Fill in steps 2 to 4 for 1,000 patients with the same test: how many have it, how many true positives, how many false positives? Then press Clinic and turn on "Show as table" to check.
 
 <Simpler label="the clinic's four counts">
 
