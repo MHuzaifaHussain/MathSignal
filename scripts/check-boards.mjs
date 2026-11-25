@@ -1891,6 +1891,23 @@ const assertTableFoldSays = (where, announce) => {
 	assert.ok(skipped > 0 && said > skipped, `swept ${said} states, skipped ${skipped} covered ones`);
 }
 
+// ---- DistributionBoard family mode (decision 0018) ----
+// Coin sequences for n ≤ 3 come from EventSpace's coin faces, in its order, and speak like its two-coin outcomes.
+{
+	const distSources = await import('../src/components/react/distributionBoard/sources.ts');
+	assert.deepEqual(distSources.coinSequences(1).map((o) => [o.label, o.spoken, o.heads]), [['H', 'heads', 1], ['T', 'tails', 0]]);
+	assert.deepEqual(
+		distSources.coinSequences(2).map(({ id, label, spoken }) => ({ id, label, spoken })),
+		SCENARIOS['two-coins'].outcomes.map(({ id, label, spoken }) => ({ id, label, spoken })),
+	);
+	const three = distSources.coinSequences(3);
+	assert.deepEqual(three.map((o) => o.label), ['HHH', 'HHT', 'HTH', 'HTT', 'THH', 'THT', 'TTH', 'TTT']);
+	assert.deepEqual(three.map((o) => o.heads), [3, 2, 2, 1, 2, 1, 1, 0]);
+	assert.equal(three[1].spoken, 'first coin heads, second coin heads, third coin tails');
+	assert.ok(three.every((o) => o.weight === 1));
+	for (const bad of [0, 4, 1.5]) assert.throws(() => distSources.coinSequences(bad), /n must be a whole number from 1 to 3/);
+}
+
 // ---- DescriptiveStats model and datasets (decision 0015) ----
 // Exact statistics on short whole-number lists. Quantiles are NumPy's default "linear" method, variance divides by n
 // (σ) or by n − 1 (s), Tukey fences sit 1.5 × IQR past the quartiles with a strict test.

@@ -36,7 +36,8 @@ export interface Scenario {
 }
 
 const MAX_OUTCOMES = 36;
-const COIN_FACES = [
+/** Heads first, so every coin list (here and DistributionBoard's sequences) runs in the same order. */
+export const COIN_FACES = [
 	{ value: 'H', word: 'heads' },
 	{ value: 'T', word: 'tails' },
 ];
