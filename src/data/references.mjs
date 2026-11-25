@@ -267,7 +267,7 @@ export const REFERENCES = [
 		title: 'Towards out-of-distribution generalization: a survey',
 		url: 'https://arxiv.org/abs/2108.13624',
 		note: 'Version 2 (2023). Abstract and Section 2.1: classic learning assumes training and test data are i.i.d. from one distribution, which often fails in deployment. Section 9, "Theoretical characterization": what makes an out-of-distribution problem learnable is still open.',
-		checked: '2026-11-24',
+		checked: '2026-11-25',
 	},
 	{
 		id: 'kelly1986',
@@ -457,7 +457,7 @@ export const REFERENCES = [
 		venue: 'NAACL-HLT 2013, pp. 746–751',
 		url: 'https://aclanthology.org/N13-1090/',
 		note: 'Abstract: each relationship is a relation-specific vector offset, and "King − Man + Woman" lands close to "Queen". Section 4.1: a syntactic test set of 8,000 questions. Section 5: the vector offset method with cosine similarity. Table 2: RNN-1600 answers 39.6% correctly.',
-		checked: '2026-11-24',
+		checked: '2026-11-25',
 	},
 	{
 		id: 'nissim2019',
@@ -501,8 +501,8 @@ export const REFERENCES = [
 		year: 2025,
 		title: 'Open problems in mechanistic interpretability',
 		url: 'https://arxiv.org/abs/2501.16496',
-		note: 'Section 2.1.2: the linear representation hypothesis in a weak form (some concepts are directions) and a strong form (all are), and the strong form is false for some models; the unclear nature of features is named as one of the most significant open questions.',
-		checked: '2026-11-24',
+		note: 'Section 2.1.2c (sparse dictionary learning): the linear representation hypothesis in a weak form (some concepts are directions) and a strong form (all are), and the strong form is false for some models. Section 2.1.2d: the unclear nature of features is named as one of the most significant open questions.',
+		checked: '2026-11-25',
 	},
 	{
 		id: 'margalit-ila',
