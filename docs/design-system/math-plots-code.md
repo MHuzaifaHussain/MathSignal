@@ -157,7 +157,7 @@ DescriptiveStats draws a short list of numbers as dots on a value-positioned axi
 | Pink "mean" stub at 0, blue "σ" stubs at ±1 | The z-score row's reference marks |
 | An arrow with its number at the right edge ("1,000 →") | A value past the axis, in the off-chart lane |
 
-Definitions are the same on every statistics page: NumPy's linear quantiles, σ dividing by n (np.std) and s by n − 1 (pandas' .std()), "no mode" when every value appears equally often, and a strict test against the fences. Pages say where readers' tools differ.
+Definitions are the same on every statistics page: NumPy's linear quantiles, σ dividing by n (np.std) and s by n − 1 (pandas' .std()), "no mode" when two or more different values all appear equally often (a list whose values are all the same has that value as its mode), and a strict test against the fences. Pages say where readers' tools differ.
 
 Number format (all in `describe.ts`, plain Unicode, never KaTeX):
 

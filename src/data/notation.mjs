@@ -87,7 +87,7 @@ export const NOTATION = [
 		key: 'mode',
 		tex: '\\operatorname{mode}(x_1, \\ldots, x_n)',
 		say: '"the mode of x 1 to x n"',
-		meaning: 'The most common value. A list can have several modes; this site says there is no mode when every value appears equally often',
+		meaning: 'The most common value. A list can have several modes; this site says there is no mode when two or more different values all appear equally often, and a list whose values are all the same has that value as its mode',
 		note: 'Tools differ on ties: Python\'s multimode and pandas list every tied value, statistics.mode returns the first one met, and scikit-learn\'s imputer the smallest.',
 	},
 	{
