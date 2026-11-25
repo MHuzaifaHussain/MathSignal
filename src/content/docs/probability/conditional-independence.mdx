@@ -168,7 +168,7 @@ Line up the 100 days as a strip and sort them by weather: 40 hot days on the lef
 
 Learning about a common effect can make two independent events dependent. Toss two fair coins, and wire a light that turns on when at least one lands heads. Without the light, the coins are [independent](/probability/independence/): $P(\text{first heads} \mid \text{second tails}) = P(\text{first heads}) = 1/2$.
 
-Now you see the light is on. Three of the four outcomes, HH, HT and TH, turn it on, so $P(\text{first heads} \mid \text{light}) = 2/3$. If you then learn the second coin is heads, the light is already explained, and $P(\text{first heads} \mid \text{light}, \text{second heads}) = 1/2$. If you learn the second is tails, only HT is left, and the first is certainly heads: probability 1. Given the light, the second coin tells you about the first. This is called explaining away. Kuleshov and Ermon use rain, a sprinkler and a wet lawn: given a wet lawn, learning the sprinkler was off makes rain the explanation <Cite id="kuleshov-ermon-cs228" />.
+Now you see the light is on. Three of the four outcomes, HH, HT and TH, turn it on, so $P(\text{first heads} \mid \text{light}) = 2/3$. If you then learn the second coin is heads, the light is already explained, and $P(\text{first heads} \mid \text{light} \cap \text{second heads}) = 1/2$. If you learn the second is tails, only HT is left, and the first is certainly heads: probability 1. Given the light, the second coin tells you about the first. This is called explaining away. Kuleshov and Ermon use rain, a sprinkler and a wet lawn: given a wet lawn, learning the sprinkler was off makes rain the explanation <Cite id="kuleshov-ermon-cs228" />.
 
 <GoDeeper label="forks, chains and colliders in a graph" id="forks-chains-colliders">
 
@@ -247,7 +247,7 @@ The tests are not independent overall. $P(D_2) = 0.031425$, but $P(D_2 \mid D_1)
 
 <WorkedExample number={4} title="The coins and the light">
 
-The four outcomes HH, HT, TH and TT each have probability $1/4$. The light is on for HH, HT and TH, so $P(\text{light}) = 3/4$ and $P(\text{first heads} \mid \text{light}) = (2/4)/(3/4) = 2/3$. Add "the second is tails": only HT is left, so $P(\text{first heads} \mid \text{light}, \text{second tails}) = 1$. Without the light, "the second is tails" leaves the first at $1/2$.
+The four outcomes HH, HT, TH and TT each have probability $1/4$. The light is on for HH, HT and TH, so $P(\text{light}) = 3/4$ and $P(\text{first heads} \mid \text{light}) = (2/4)/(3/4) = 2/3$. Add "the second is tails": only HT is left, so $P(\text{first heads} \mid \text{light} \cap \text{second tails}) = 1$. Without the light, "the second is tails" leaves the first at $1/2$.
 
 </WorkedExample>
 
