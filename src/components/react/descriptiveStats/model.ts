@@ -3,7 +3,8 @@
 // Definitions pinned for every statistics page (decision 0015):
 // - quantiles use NumPy's default "linear" method (Hyndman and Fan type 7), as pandas' describe() does;
 // - σ divides by n (NumPy's default) and s by n − 1 (pandas' default);
-// - "no mode" when every value appears equally often;
+// - "no mode" when two or more different values all appear equally often; a list whose values are all the same has
+//   that value as its mode (NIST, Python's statistics.multimode);
 // - Tukey fences sit 1.5 × IQR past the quartiles, and a value is flagged only when strictly past one.
 import { addFractions, compareFractions, fraction, multiplyFractions, squareRoot, toNumber, type Fraction } from '../boardMath.ts';
 
@@ -109,9 +110,13 @@ export function topCount(values: readonly number[]): number {
 	return Math.max(...counts(values).values());
 }
 
-/** Every value with the top count, smallest first; [] when every value appears equally often (no mode). */
+/**
+ * Every value with the top count, smallest first. [] (no mode) when two or more different values all appear equally
+ * often. A list whose values are all the same has that value as its mode.
+ */
 export function modes(values: readonly number[]): number[] {
 	const tally = counts(values);
+	if (tally.size === 1) return [...tally.keys()];
 	const top = topCount(values);
 	if ([...tally.values()].every((count) => count === top)) return [];
 	return [...tally.entries()].filter(([, count]) => count === top).map(([value]) => value);

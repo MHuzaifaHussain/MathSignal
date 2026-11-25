@@ -15,6 +15,7 @@ The descriptive statistics pages (descriptive statistics; mean, median and mode;
   - quantiles use NumPy's default linear method (Hyndman and Fan type 7, also pandas' `describe()`);
   - σ divides by n, as `np.std` does; s divides by n − 1, as pandas' `.std()` does;
   - "no mode" when every value appears equally often (pandas' `mode()` lists every value instead);
+  - amended 2026-11-25: a list whose values are all the same has that value as its mode, as in NIST's handbook and Python's `statistics.multimode`, so "no mode" now needs two or more different values that all appear equally often;
   - Tukey fences at 1.5 × IQR, with a strict test: a value on a fence is not flagged;
   - the z cutoff is 2 or 3;
   - with σ dividing by n, no |z| among n values reaches √(n − 1), so with 9 pumpkins |z| > 3 can never flag anything. `check-boards` asserts the bound for every giant from 8 to 60 kg rather than citing it.

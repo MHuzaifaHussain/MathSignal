@@ -1728,7 +1728,12 @@ const announcerRun = () => {
 	assert.deepEqual(dm.sampleVariance(tight), f(18, 1));
 	assert.equal(rootText(dm.sampleSD(tight)), '≈ 4.24');
 	assert.deepEqual(dm.populationSD(dd.EVERYONE_134), { exact: true, value: f(0, 1) });
-	assert.deepEqual(dm.modes(dd.EVERYONE_134), [], 'every value appears equally often, so there is no mode');
+	// A list whose values are all the same has that value as its mode (decision 0015, amended 2026-11-25).
+	assert.deepEqual(dm.modes(dd.EVERYONE_134), [134]);
+	assert.deepEqual(dm.modes([7]), [7]);
+	assert.deepEqual(dm.modes([5, 5, 7, 7]), [], 'two different values, equally often: no mode');
+	assert.deepEqual(dm.modes([3, 1, 2]), []);
+	assert.throws(() => dm.modes([]), /empty/);
 
 	// One very tall child: 148 becomes 162, and the quartiles and fences stay put.
 	assert.deepEqual(dd.CLASS_TALL, [133, 122, 140, 128, 162, 125, 137, 131, 142]);
@@ -2132,8 +2137,7 @@ const announcerRun = () => {
 	]);
 	const modeRowOf = (state) => dsay.summaryTable(state).rows.find((entry) => entry.header === 'Mode');
 	assert.deepEqual(modeRowOf(sharedFound), { header: 'Mode', cells: ['127 cm and 141 cm', 'The most common values, tied'] });
-	assert.deepEqual(modeRowOf(found), { header: 'Mode', cells: ['None', 'Every value appears equally often'] });
-	assert.deepEqual(modeRowOf(dst.initialState('cafe-millionaire')), { header: 'Mode', cells: ['5', 'The most common value'] }, 'no unit on the cafe, as in its readout');
+	assert.deepEqual(modeRowOf(found), { header: 'Mode', cells: ['None', 'Every value appears equally often'] });	assert.deepEqual(modeRowOf(dst.initialState('cafe-millionaire')), { header: 'Mode', cells: ['5', 'The most common value'] }, 'no unit on the cafe, as in its readout');
 	assert.deepEqual(modeRowOf(run('cafe-millionaire', { type: 'newcomer', on: true }, { type: 'set-value', value: 4 })), { header: 'Mode', cells: ['4 and 5', 'The most common values, tied'] });
 	// Equal heights share the first place they take.
 	assert.deepEqual(dsay.dataTable(sharedFound).rows.map((entry) => entry.cells[1]), ['7th', '2nd', '6th', '9th', '1st', '4th', '5th', '2nd', '7th']);
