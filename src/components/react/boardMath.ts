@@ -30,11 +30,31 @@ function assertSafe(operation: string, inputs: readonly Fraction[], ...integers:
 	throw new Error(`boardMath: ${operation} overflowed safe integers (${inputs.map(formatFraction).join(', ')})`);
 }
 
+/**
+ * Adds over the least common denominator, so two fractions whose denominators share factors (1/60,500,000 and
+ * 1/30,250,000) stay exact long after cross-multiplying would have overflowed.
+ */
 export function addFractions(a: Fraction, b: Fraction): Fraction {
-	const numerator = a.numerator * b.denominator + b.numerator * a.denominator;
-	const denominator = a.denominator * b.denominator;
-	assertSafe('add', [a, b], a.numerator * b.denominator, b.numerator * a.denominator, numerator, denominator);
+	const shared = greatestCommonDivisor(a.denominator, b.denominator);
+	const aScale = b.denominator / shared;
+	const bScale = a.denominator / shared;
+	const scaledA = a.numerator * aScale;
+	const scaledB = b.numerator * bScale;
+	const numerator = scaledA + scaledB;
+	const denominator = a.denominator * aScale;
+	assertSafe('add', [a, b], scaledA, scaledB, numerator, denominator);
 	return fraction(numerator, denominator);
+}
+
+export function subtractFractions(a: Fraction, b: Fraction): Fraction {
+	return addFractions(a, fraction(-b.numerator, b.denominator));
+}
+
+/** Divides a by b. A negative divisor's sign moves to the numerator, because a denominator is always positive. */
+export function divideFractions(a: Fraction, b: Fraction): Fraction {
+	if (b.numerator === 0) throw new Error(`boardMath: divide by zero (${formatFraction(a)} ÷ ${formatFraction(b)})`);
+	const sign = b.numerator < 0 ? -1 : 1;
+	return multiplyFractions(a, fraction(sign * b.denominator, sign * b.numerator));
 }
 
 export function multiplyFractions(a: Fraction, b: Fraction): Fraction {

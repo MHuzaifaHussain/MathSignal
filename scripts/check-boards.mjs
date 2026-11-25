@@ -2,7 +2,7 @@
 // before every build. Node 24 runs the TypeScript modules directly, so no test framework is needed.
 // Each section names the behavior it pins; the exact values come from the board's design doc.
 import assert from 'node:assert/strict';
-import { fraction, formatFraction, addFractions, multiplyFractions, compareFractions, toNumber, isPerfectSquare, squareRoot } from '../src/components/react/boardMath.ts';
+import { fraction, formatFraction, addFractions, subtractFractions, divideFractions, multiplyFractions, compareFractions, toNumber, isPerfectSquare, squareRoot } from '../src/components/react/boardMath.ts';
 import { joinWords, plural, equalsDecimal } from '../src/components/react/boardText.ts';
 import { probability, checkGoal, pour, intersect, union, complement, WEIGHT_TOTAL } from '../src/components/react/eventSpace/model.ts';
 import { SCENARIOS, hasWordedRowHeaders } from '../src/components/react/eventSpace/scenarios.ts';
@@ -20,6 +20,57 @@ assert.throws(() => compareFractions(fraction(2 ** 30, 2 ** 30 - 1), fraction(2 
 assert.equal(toNumber(fraction(1, 4)), 0.25);
 assert.deepEqual(addFractions(fraction(0, 1), fraction(1, 3)), fraction(1, 3));
 assert.throws(() => addFractions(fraction(1, 2 ** 30), fraction(1, 2 ** 30 - 1)), /overflowed safe integers/);
+// Adding goes through the least common denominator: cross-multiplying 2^26·3 by 2^26·5 would pass 2^53.
+assert.deepEqual(addFractions(fraction(1, 2 ** 26 * 3), fraction(1, 2 ** 26 * 5)), fraction(8, 2 ** 26 * 15));
+assert.deepEqual(addFractions(fraction(1, 60500000), fraction(1, 30250000)), fraction(3, 60500000));
+assert.deepEqual(subtractFractions(fraction(1, 4), fraction(3, 4)), fraction(-1, 2));
+assert.deepEqual(subtractFractions(fraction(2, 3), fraction(2, 3)), fraction(0, 1));
+// A negative divisor's sign moves to the numerator, since fraction() refuses a negative denominator.
+assert.deepEqual(divideFractions(fraction(3, 2), fraction(-1, 4)), fraction(-6, 1));
+assert.deepEqual(divideFractions(fraction(-1, 1000), fraction(-1, 1000)), fraction(1, 1));
+assert.deepEqual(divideFractions(fraction(3, 1000), fraction(-1, 1000)), fraction(-3, 1));
+assert.deepEqual(divideFractions(fraction(0, 1), fraction(-5, 7)), fraction(0, 1));
+assert.deepEqual(divideFractions(fraction(5, 6), fraction(5, 3)), fraction(1, 2));
+assert.throws(() => divideFractions(fraction(3, 4), fraction(0, 1)), (error) => error.message === 'boardMath: divide by zero (3/4 ÷ 0)');
+
+// Sweep: 3,000 seeded pairs with numerators up to ±10,000 and denominators up to 120. No call may throw, and every
+// result matches a reference computed from scratch with BigInt.
+{
+	const nextRandom = (() => {
+		let seed = 20261125;
+		return () => {
+			seed = (seed + 0x6d2b79f5) | 0;
+			let t = Math.imul(seed ^ (seed >>> 15), seed | 1);
+			t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+			return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+		};
+	})();
+	const randomInteger = (low, high) => low + Math.floor(nextRandom() * (high - low + 1));
+	const bigGcd = (a, b) => (b === 0n ? (a < 0n ? -a : a) : bigGcd(b, a % b));
+	const reference = (numerator, denominator) => {
+		if (denominator === 0n) throw new Error('reference: zero denominator');
+		const sign = denominator < 0n ? -1n : 1n;
+		const divisor = bigGcd(numerator, denominator);
+		return numerator === 0n ? '0/1' : `${(sign * numerator) / divisor}/${(sign * denominator) / divisor}`;
+	};
+	const asText = (value) => `${value.numerator}/${value.denominator}`;
+	const randomFraction = () => {
+		const numerator = randomInteger(0, 9) === 0 ? 0 : randomInteger(-10000, 10000);
+		return [numerator, randomInteger(1, 120)];
+	};
+	for (let pair = 0; pair < 3000; pair += 1) {
+		const [an, ad] = randomFraction();
+		const [bn, bd] = randomFraction();
+		const a = fraction(an, ad);
+		const b = fraction(bn, bd);
+		const [A, AD, B, BD] = [an, ad, bn, bd].map(BigInt);
+		const context = `${an}/${ad} and ${bn}/${bd}`;
+		assert.equal(asText(addFractions(a, b)), reference(A * BD + B * AD, AD * BD), `add ${context}`);
+		assert.equal(asText(subtractFractions(a, b)), reference(A * BD - B * AD, AD * BD), `subtract ${context}`);
+		assert.equal(asText(multiplyFractions(a, b)), reference(A * B, AD * BD), `multiply ${context}`);
+		if (bn !== 0) assert.equal(asText(divideFractions(a, b)), reference(A * BD, AD * B), `divide ${context}`);
+	}
+}
 // A square root is exact only when the fraction is a square of a fraction; otherwise it is a float to round.
 assert.equal(isPerfectSquare(64), true);
 assert.equal(isPerfectSquare(0), true);
