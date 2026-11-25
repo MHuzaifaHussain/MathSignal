@@ -1,0 +1,610 @@
+---
+title: "Permutations and combinations for probability"
+description: "Count line-ups and choices with factorials, permutations and combinations, then turn the counts into exact probabilities for coins, marbles and teams."
+sidebar:
+  order: 15
+draft: true
+topic: probability/counting-for-probability
+type: C
+objectives:
+  - Count line-ups, ordered picks and unordered choices with n!, (n)ₖ and n choose k, after deciding whether order matters and whether an item can repeat.
+  - Turn counts into probabilities by dividing favorable outcomes by all outcomes, counted the same way on top and bottom, and only when the outcomes are equally likely.
+  - Check a count by listing small cases, by a tree, or by counting the same thing two ways.
+  - Spot common counting slips in someone else's working, namely mixing ordered and unordered counts, treating unordered dice results as equally likely, and adding where the choices multiply.
+takeaways:
+  - Multiply the choices at each step. 3 friends line up for a photo in 3 × 2 × 1 = 3! = 6 ways.
+  - An ordered pick of k from n has (n)ₖ = n!/(n − k)! ways. An unordered one divides by the k! orders of each group, which gives n choose k. From 3 friends there are 6 ordered pairs but only 3 teams of 2.
+  - A probability by counting is favorable over total, with both counted the same way. Two red marbles from a bag of 3 red and 2 blue is 6/20 counted in order and 3/10 counted without order, the same answer.
+  - Counting gives a probability only when every outcome is equally likely. Two dice have 21 unordered results but 36 equally likely ordered ones, so "a 1 and a 2" has probability 2/36 = 1/18, not 1/21.
+  - Counts grow fast. Leave-2-out cross-validation on 100 examples needs 100 choose 2 = 4,950 splits, and the number of rules a learner chooses from enters its simplest guarantee through ln |𝓗|.
+references:
+  - grinstead2003
+  - schapire2003-cos511
+  - sklearn-leavepout
+author: Muhammad Huzaifa Hussain
+reviewedAt: 2026-11-25
+aiAssisted: true
+primaryQuery: permutations and combinations probability
+searchIntent: solve
+depthStatus: complete
+---
+
+import Analogy from "../../../components/Analogy.astro";
+import CheckYourself from "../../../components/CheckYourself.astro";
+import Cite from "../../../components/Cite.astro";
+import CommonMistakes from "../../../components/CommonMistakes.astro";
+import ConceptHeader from "../../../components/ConceptHeader.astro";
+import ConceptMap from "../../../components/ConceptMap.astro";
+import Fold from "../../../components/Fold.astro";
+import FormalDefinition from "../../../components/FormalDefinition.astro";
+import GoDeeper from "../../../components/GoDeeper.astro";
+import Mistake from "../../../components/Mistake.astro";
+import NotationKey from "../../../components/NotationKey.astro";
+import PreciseStatement from "../../../components/PreciseStatement.astro";
+import PyRunner from "../../../components/PyRunner.astro";
+import References from "../../../components/References.astro";
+import SideNote from "../../../components/SideNote.astro";
+import Simpler from "../../../components/Simpler.astro";
+import StepThrough from "../../../components/StepThrough.astro";
+import Takeaways from "../../../components/Takeaways.astro";
+import WhyThisMatters from "../../../components/WhyThisMatters.astro";
+import WorkedExample from "../../../components/WorkedExample.astro";
+
+<ConceptHeader
+  oneLiner="Permutations count the ways to put items in order, and combinations count the ways to choose items when order doesn't matter; dividing such counts gives a probability whenever every outcome is equally likely."
+  difficulty="beginner"
+/>
+
+## In everyday terms
+
+<Analogy breaks="The three friends are all different. If two of them were twins in matching clothes, some photos would look the same and the count would drop. And a count only becomes a chance if every photo is equally likely, as when the order is drawn from a hat.">
+
+Ana, Ben and Cai want a photo of the three of them standing in a row. Swap any two of them and you get a different photo. How many different photos can they take? Then the coach needs two of them for a team. A team of Ana and Ben is the same team as Ben and Ana. How many different teams are there? Hold both answers in your head; the next section checks them.
+
+</Analogy>
+
+<WhyThisMatters>
+Many probabilities in machine learning are counts in disguise: how many ways a test set can be split off, or how many rules a learner can choose from, a count that sets how much data its simplest guarantee needs. But a count is only half a probability; the other half is checking that the outcomes are equally likely.
+</WhyThisMatters>
+
+## Line up three friends, then pick two
+
+Before you open anything: how many different photos can Ana, Ben and Cai take, and how many teams of two can the coach pick? Going further: if the order in the photo is drawn from a hat, what is the chance that Ana stands in the middle? If the team is drawn from a hat, what is the chance that Ana is on it? Are the two chances the same?
+
+Your task: write down your two counts, then open the list and check that every photo and every team appears exactly once.
+
+<Fold kind="answer" label="every photo and every team, listed">
+
+| Photo (left, middle, right) | First two in line | The team they make |
+| --- | --- | --- |
+| A B C | A then B | \{A, B\} |
+| B A C | B then A | \{A, B\} |
+| A C B | A then C | \{A, C\} |
+| C A B | C then A | \{A, C\} |
+| B C A | B then C | \{B, C\} |
+| C B A | C then B | \{B, C\} |
+
+The first two in line give 6 ordered pairs, and every team appears twice.
+
+</Fold>
+
+Three friends can line up in 6 different orders, but only 3 different teams of two can be picked from them. Any of the 3 can stand on the left, then 2 are left for the middle, then 1 for the right: 3 × 2 × 1 = 6. Picking a first and a second player gives 3 × 2 = 6 ordered pairs, but each team is counted twice (A then B, B then A), so there are 3 teams.
+
+The two chances differ. Ana is in the middle of 2 of the 6 photos, B A C and C A B, a chance of 1/3, and on 2 of the 3 teams, a chance of 2/3. Each is a fair chance only because the hat makes every photo, and every team, equally likely.
+
+## Notation
+
+<NotationKey symbols={["sample-space", "event", "cardinality", "probability", "item-count", "pick-count", "factorial", "falling-factorial", "binomial-coefficient"]} />
+
+<PreciseStatement>
+
+Let $0 \le k \le n$ be whole numbers and a set hold $n$ different items. Line-ups of all $n$: $n!$. Ordered picks of $k$ without repeats: $(n)_k = n!/(n-k)!$. Unordered picks of $k$, the subsets of size $k$: $\binom{n}{k} = \dfrac{n!}{k!\,(n-k)!}$. Ordered picks of $k$ with repeats allowed: $n^k$.
+
+Conventions: $0! = 1$, $(n)_0 = \binom{n}{0} = \binom{n}{n} = 1$, and $\binom{n}{k} = (n)_k = 0$ for $k > n$. On a finite sample space $\Omega$ of equally likely outcomes, $P(A) = |A|/|\Omega|$, with $A$ and $\Omega$ both counted ordered or both unordered.
+
+</PreciseStatement>
+
+## Two questions decide the count
+
+Before counting, ask two questions: does the order of the picks matter, and can the same item be picked twice? The answers choose the formula.
+
+| Order matters? | Repeats allowed? | Count | Example on this page |
+| --- | --- | --- | --- |
+| yes | yes | $n^k$ | a 3-dial lock: $10^3 = 1{,}000$ codes; two coins: $2^2 = 4$ |
+| yes | no | $(n)_k = n!/(n-k)!$ | first and second player from 3 friends: $3 \times 2 = 6$ |
+| no | no | $\binom{n}{k}$ | a team of 2 from 3 friends: 3 |
+| no | yes | see "the fourth box" below | two dice read without order: 21 results, not equally likely |
+
+### Multiply the choices at each step
+
+When a task happens in steps, and each step has the same number of choices whatever was chosen before, the number of ways is the product of the choices; this is the counting principle. A lock with 3 dials of 10 digits has 10 × 10 × 10 = 1,000 codes, and 10 × 9 × 8 = 720 of them repeat no digit. Grinstead and Snell state the principle for a task done in stages, the total being the product of the stage counts (§3.1) <Cite id="grinstead2003" />.
+
+Only the number of choices must stay fixed: after Ana on the left, the middle is Ben or Cai; after Ben, Ana or Cai.
+
+<SideNote>
+The counting principle multiplies numbers of choices; [the multiplication rule](/probability/conditional-probability/#the-multiplication-rule) multiplies probabilities. They meet on equally likely outcomes: 3/5 × 2/4 is 3 × 2 over 5 × 4.
+</SideNote>
+
+<Simpler label="the same count as a tree" id="counting-tree">
+
+Draw 3 branches, one per friend on the left; from each, 2 for the middle; then 1 for the right. The 3 × 2 × 1 leaves are the photos.
+
+</Simpler>
+
+### When order matters: permutations
+
+A permutation is an arrangement in order: $n$ different items line up in $n!$ ways, and an ordered pick of $k$ of them can be made in $(n)_k = n!/(n-k)!$ ways. Five children line up in 5! = 120 ways, and first and second place can go 5 × 4 = 20 = 5!/3! ways. Grinstead and Snell prove both counts in §3.1 and write $(n)_k$, read "n down k" <Cite id="grinstead2003" />. And 0! = 1: there is one way to line up nobody.
+
+### When order doesn't matter: combinations
+
+A combination is a choice where order doesn't matter: the number of ways to choose $k$ items from $n$ is $\binom{n}{k}$, the ordered count divided by the $k!$ orders of each group. Teams of 2 from 5 children: 20 ordered picks over 2! = 2 gives 10. Teams of 3: 60 ordered picks over 3! = 6 gives 10 again, because choosing 3 to play is choosing 2 to sit out: $\binom{n}{k} = \binom{n}{n-k}$. Grinstead and Snell prove the formula by noting that each subset of size k can be put in order in k! ways (§3.2) <Cite id="grinstead2003" />.
+
+<GoDeeper label="the fourth box: unordered picks with repeats" id="unordered-with-repeats">
+
+Unordered picks of $k$ from $n$ with repeats number $\binom{n+k-1}{k}$. Two dice ($n = 6$, $k = 2$) give $\binom{7}{2} = 21$: 6 doubles and 15 pairs of different faces. They are not equally likely: a double is 1 of the 36 ordered rolls, the rest 2 each. The [sample spaces page](/probability/sample-spaces-and-events/#what-is-a-sample-space) tells of the same slip with coins.
+
+</GoDeeper>
+
+### Same counting on top and bottom
+
+A probability by counting is the number of favorable outcomes divided by the number of all outcomes, and both must be counted the same way. The rule P(A) = |A|/|Ω| holds only when [every outcome is equally likely](/probability/sample-spaces-and-events/#counting-works-only-when-outcomes-are-equally-likely).
+
+Draw two marbles from a bag of 3 red and 2 blue, without putting the first back. Counted in order, 3 × 2 = 6 of the 5 × 4 = 20 ordered pairs are red-red: 6/20 = 3/10. Counted without order, $\binom{3}{2} = 3$ of the $\binom{5}{2} = 10$ pairs are red-red: 3/10 again. They agree because every unordered pair is exactly 2 ordered pairs, on top and on bottom alike.
+
+The slip is to mix the two: 6 ordered pairs over 10 unordered pairs gives 3/5, twice too big.
+
+Both counts are fair because a random draw makes every ordered pair equally likely, and so every unordered pair, each being 2 ordered ones. That step fails for dice read without order, where a double is only 1 ordered roll.
+
+### Every subset, and Pascal's triangle
+
+Adding $\binom{n}{k}$ over every $k$ from 0 to $n$ gives $2^n$, the number of subsets of $n$ items, because each item is either in or out. Three friends form 1 + 3 + 3 + 1 = 8 = 2³ groups, from nobody to everyone. Grinstead and Snell note that each row of Pascal's triangle adds up to $2^n$ (§3.2) <Cite id="grinstead2003" />.
+
+Without the empty group and the $n$ groups of one, $2^n - n - 1$ groups of two or more remain: the equations [mutual independence](/probability/independence/#three-or-more-events) needs, 4 for three events and 11 for four. The same $2^n$ counts the thinned networks [dropout](/probability/independence/#dropout-drops-each-unit-on-its-own) can make from $n$ units.
+
+<GoDeeper label="why each number is the sum of the two above it" id="pascals-rule">
+
+For $0 < k < n$, Pascal's rule says $\binom{n}{k} = \binom{n-1}{k} + \binom{n-1}{k-1}$. Fix Ana. A team of $k$ either leaves her out, with all $k$ from the other $n - 1$, or includes her, with the other $k - 1$ from the $n - 1$. So $\binom{5}{2} = 6 + 4 = 10$. Grinstead and Snell prove it the same way, splitting on one element (§3.2) <Cite id="grinstead2003" />.
+
+| $n$ | $\binom{n}{0}, \binom{n}{1}, \ldots, \binom{n}{n}$ | Sum |
+| --- | --- | --- |
+| 0 | 1 | 1 |
+| 1 | 1, 1 | 2 |
+| 2 | 1, 2, 1 | 4 |
+| 3 | 1, 3, 3, 1 | 8 |
+| 4 | 1, 4, 6, 4, 1 | 16 |
+| 5 | 1, 5, 10, 10, 5, 1 | 32 |
+
+</GoDeeper>
+
+<FormalDefinition>
+
+<StepThrough title="Ordered picks: (n)ₖ = n!/(n − k)!" rigor="full">
+
+1. Fill $k$ places in turn. The first has $n$ choices, the second $n - 1$ whatever was chosen, down to $n - k + 1$ for the $k$-th.
+2. By the counting principle there are $n(n-1)\cdots(n-k+1) = (n)_k$ ordered picks.
+3. Multiply top and bottom by $(n-k)!$: $(n)_k = n!/(n-k)!$. With $k = n$, $(n)_n = n!/0! = n!$, which is why $0! = 1$.
+4. Check: $(5)_2 = 20 = 120/6$.
+
+</StepThrough>
+
+<StepThrough title="Unordered picks: n choose k = (n)ₖ / k!" rigor="full">
+
+1. Every ordered pick of $k$ items is one subset of size $k$ put in some order.
+2. Each subset can be ordered in exactly $k!$ ways (the first derivation with $n = k$), and different subsets never give the same ordered pick.
+3. So the $(n)_k$ ordered picks fall into groups of exactly $k!$, one per subset: $(n)_k = k! \binom{n}{k}$.
+4. Divide by $k!$: $\binom{n}{k} = (n)_k / k! = \dfrac{n!}{k!\,(n-k)!}$. Check: $\binom{3}{2} = 6/2 = 3$ and $\binom{5}{3} = 60/6 = 10$.
+
+</StepThrough>
+
+Dividing works only because every group has the same size, $k!$. With repeated items it fails: "a 1 and a 1" has 1 order, not 2.
+
+| Property | Statement | Check |
+| --- | --- | --- |
+| Ends of a row | $\binom{n}{0} = \binom{n}{n} = 1$ | $\binom{3}{0} = \binom{3}{3} = 1$ |
+| Symmetry | $\binom{n}{k} = \binom{n}{n-k}$ | $\binom{10}{3} = \binom{10}{7} = 120$ |
+| Pascal's rule | $\binom{n}{k} = \binom{n-1}{k} + \binom{n-1}{k-1}$, for $0 < k < n$ | $10 = 6 + 4$ |
+| Row sum | $\sum_{k=0}^{n} \binom{n}{k} = 2^n$ | $1 + 3 + 3 + 1 = 8$ |
+| Too many | $\binom{n}{k} = (n)_k = 0$ for $k > n$ | $\binom{3}{4} = 0$ |
+| Captain identity | $k \binom{n}{k} = n \binom{n-1}{k-1}$ | $2 \times 10 = 5 \times 4 = 20$ |
+
+</FormalDefinition>
+
+## Worked examples
+
+<WorkedExample number={1} title="Line-ups and teams of five">
+
+Five children. Line-ups (ordered, all placed): 5! = 120. Gold and silver (ordered, no repeats): $(5)_2 = 20$. Teams of 2 (unordered): $\binom{5}{2} = 10$. A given child is first in 1/5 of random line-ups but on 2/5 of random teams.
+
+</WorkedExample>
+
+<WorkedExample number={2} title="Two marbles from the bag" faded>
+
+Draw 2 marbles from the bag of 3 red and 2 blue, without putting back. Step 1: all pairs, $\binom{5}{2} = 10$. Step 2: both red, $\binom{3}{2} = 3$ pairs, 3/10; both blue, 1 pair, 1/10. Your turn: the chance of one of each, and check that the three chances add up to 1.
+
+<div slot="solution">
+
+One of each: 3 × 2 = 6 pairs, so 6/10 = 3/5, and 3 + 1 + 6 = 10. The [multiplication rule](/probability/conditional-probability/#the-multiplication-rule) agrees on red-red: 3/5 × 2/4 = 3/10.
+
+</div>
+
+</WorkedExample>
+
+<WorkedExample number={3} title="Exactly two heads in four coin flips" faded>
+
+Flip 4 fair coins: 2⁴ = 16 equally likely sequences. Exactly 2 heads means choosing which 2 flips are heads. Your turn: how many sequences, what chance, and what chance of at least one head?
+
+<div slot="solution">
+
+$\binom{4}{2} = 6$: HHTT, HTHT, HTTH, THHT, THTH, TTHH. So 6/16 = 3/8. The row for 0 to 4 heads is 1, 4, 6, 4, 1, and at least one head is 1 − 1/16 = 15/16. Two coins give 1, 2, 1 out of 4, the chances on the [random variables page](/probability/random-variables-and-distributions/#equally-likely-outcomes-unequal-values). Unfair coins need more than counting.
+
+</div>
+
+</WorkedExample>
+
+<WorkedExample number={4} title="Find the slip" faded>
+
+(a) "Two dice show 21 results without order, so P(a 1 and a 2) = 1/21."
+
+(b) "Red then red can happen 3 × 2 = 6 ways, out of $\binom{5}{2} = 10$ pairs, so two red marbles is 6/10."
+
+(c) "There are 5!/3! = 20 teams of 2 from 5 children."
+
+What went wrong in each?
+
+<div slot="solution">
+
+(a) The 21 results are not equally likely. Of the 36 ordered rolls, (1, 2) and (2, 1) count, so 2/36 = 1/18; two 6s is 1/36.
+
+(b) Ordered on top, unordered below. Use 6/20 or 3/10, which are equal.
+
+(c) 5!/3! counts ordered picks, so each team is counted twice: 10.
+
+</div>
+
+</WorkedExample>
+
+<WorkedExample number={5} title="Three children from the class of 12" faded>
+
+The class from the [conditional probability page](/probability/conditional-probability/) has 12 children, 5 with hats. Pick 3 at random. What is the chance that exactly 2 wear hats, and that at least 1 does?
+
+<div slot="solution">
+
+There are $\binom{12}{3} = 220$ groups. Exactly 2 hats: 2 of the 5 and 1 of the other 7, 10 × 7 = 70 groups, so 7/22.
+
+| Hats in the group | Groups |
+| --- | --- |
+| 0 | $\binom{7}{3} = 35$ |
+| 1 | $5 \times \binom{7}{2} = 105$ |
+| 2 | $\binom{5}{2} \times 7 = 70$ |
+| 3 | $\binom{5}{3} = 10$ |
+| Total | 220 |
+
+At least one hat is 1 − 35/220 = 37/44. The 10 all-hat groups give the conditional page's 5/12 × 4/11 × 3/10 = 1/22. The table's chances form a hypergeometric distribution.
+
+</div>
+
+</WorkedExample>
+
+<WorkedExample number={6} title="How many splits does leave-p-out take?" faded>
+
+Leave-p-out cross-validation tests on every possible set of $p$ examples and trains on the rest. How many splits for 10 examples with $p = 2$, and for 100 with $p = 2$ and $p = 3$? In how many of the 10-example splits is a given example tested?
+
+<div slot="solution">
+
+A split is an unordered choice of $p$ test examples: $\binom{n}{p}$ splits. scikit-learn's example, 4 samples with $p = 2$, has $\binom{4}{2} = 6$ <Cite id="sklearn-leavepout" />. Then $\binom{10}{2} = 45$, $\binom{100}{2} = 4{,}950$ and $\binom{100}{3} = 161{,}700$. A given example is tested with each of the other 9, in 9 of the 45 splits, a share of 1/5 = p/n. Five-fold splitting makes 5 splits and tests each example once.
+
+</div>
+
+</WorkedExample>
+
+## Where counting shows up in machine learning
+
+### Counting splits for cross-validation
+
+Exhaustive cross-validation schemes are counting problems: leave-p-out uses every subset of $p$ examples as a test set, $\binom{n}{p}$ splits in all. scikit-learn's `LeavePOut` documentation warns that the number of iterations "grows combinatorically with the number of samples", suggests `KFold` or `ShuffleSplit` for large data sets, and notes that `LeavePOut(p)` is not `KFold(n_splits=n_samples // p)`, whose test sets never overlap <Cite id="sklearn-leavepout" />. Worked example 6 goes from 45 splits to 161,700.
+
+### Counting the rules a learner can choose from
+
+The simplest guarantee that a learned rule works on new data depends on how many rules the learner could have picked, and only through the logarithm of that count.
+
+<NotationKey symbols={["hypothesis-class", "training-size", "error-tolerance", "failure-chance"]} />
+
+Take a finite set $\mathcal{H}$ of rules. The learner sees $m$ examples, drawn independently, and returns any rule with no mistakes on them. A rule is bad if its error rate on new data is above $\epsilon$. A fixed bad rule gets all $m$ examples right with probability below $(1 - \epsilon)^m$. The [union bound](/probability/probability-axioms/#formal-definition), P(A₁ or A₂ or …) ≤ P(A₁) + P(A₂) + ⋯, caps the chance that some bad rule fits them all at $|\mathcal{H}|(1-\epsilon)^m \le |\mathcal{H}|e^{-\epsilon m}$. Schapire's lecture notes (§1 and §5.1) turn this into enough examples to keep that chance at most $\delta$ <Cite id="schapire2003-cos511" />:
+
+$$
+m \ge \frac{1}{\epsilon}\left(\ln|\mathcal{H}| + \ln\frac{1}{\delta}\right).
+$$
+
+Finding $|\mathcal{H}|$ is counting. A rule like "feature 2 and feature 5 and feature 7", over $n$ yes-or-no features, is fixed by the subset of features it uses: $2^n$ rules. A yes-or-no function of $n$ features answers each of the $2^n$ inputs its own way: $2^{2^n}$ functions. The notes give these as $\ln|\mathcal{H}| = n \ln 2$ and $|\mathcal{H}| = 2^{2^n}$, and read the bound as Occam's razor (§5.2) <Cite id="schapire2003-cos511" />.
+
+With $n = 10$, $\epsilon = 1/10$ and $\delta = 1/20$, the bound for the first class is met once $m \ge 10(\ln 1024 + \ln 20) \approx 99.27$, so 100 examples are enough. All functions of 10 features have $\ln|\mathcal{H}| = 1024 \ln 2 \approx 709.78$, and about 7,128 are enough: only 71 times as many, because the bound grows with the logarithm. It assumes some rule fits the data perfectly, and it says nothing about infinite classes (§5.3) <Cite id="schapire2003-cos511" />.
+
+## Check every count in code
+
+This runs in your browser, lists the outcomes and checks every formula with exact fractions.
+
+<PyRunner
+  title="counting.py"
+  code={`
+import math
+from collections import Counter
+from fractions import Fraction
+from itertools import combinations, combinations_with_replacement, permutations, product
+
+# Nothing here is random, so there is no seed: every outcome is listed.
+# math.perm and math.comb are only cross-checks; the listings are the evidence.
+
+
+def count(outcomes):
+    """How many outcomes an iterator lists."""
+    return len(list(outcomes))
+
+
+def prob(favorable, outcomes):
+    """Favorable over all, for equally likely outcomes listed the same way."""
+    if len(outcomes) == 0:
+        raise ValueError("no outcomes to divide by")
+    return Fraction(len(favorable), len(outcomes))
+
+
+def falling(n, k):
+    """(n)_k = n! / (n - k)!, and 0 when k > n."""
+    return math.factorial(n) // math.factorial(n - k) if k <= n else 0
+
+
+def choose(n, k):
+    """n choose k = n! / (k! (n - k)!), and 0 when k > n."""
+    return math.factorial(n) // (math.factorial(k) * math.factorial(n - k)) if k <= n else 0
+
+
+# Ana, Ben and Cai: photos and teams.
+friends = "ABC"
+photos = list(permutations(friends))
+assert len(photos) == 6 == math.factorial(3) == 3 * 2 * 1
+middle_ana = [p for p in photos if p[1] == "A"]
+assert middle_ana == [("B", "A", "C"), ("C", "A", "B")]
+assert prob(middle_ana, photos) == Fraction(1, 3)
+teams = list(combinations(friends, 2))
+assert len(teams) == 3
+assert prob([t for t in teams if "A" in t], teams) == Fraction(2, 3)
+pairs = list(permutations(friends, 2))
+assert len(pairs) == 6 == 3 * 2
+assert set(Counter(frozenset(p) for p in pairs).values()) == {2}
+print("photos:", len(photos), " teams:", len(teams), " Ana in the middle:", prob(middle_ana, photos))
+
+# Every formula against a listing, for n up to 8 and k one past n.
+for n in range(9):
+    for k in range(n + 2):
+        ordered = count(permutations(range(n), k))
+        unordered = count(combinations(range(n), k))
+        assert ordered == falling(n, k) == math.perm(n, k)
+        assert unordered == choose(n, k) == math.comb(n, k)
+        assert ordered == math.factorial(k) * unordered
+# With repeats allowed the listings grow as n^k, so stop at k = 4.
+for n in range(9):
+    for k in range(5):
+        assert count(product(range(n), repeat=k)) == n**k
+
+# Boundaries and properties.
+assert math.factorial(0) == 1 and falling(5, 5) == math.factorial(5)
+assert count(combinations("ABC", 4)) == 0 == choose(3, 4) == falling(3, 4)
+for n in range(9):
+    assert choose(n, 0) == choose(n, n) == 1
+    all_groups = sum(count(combinations(range(n), k)) for k in range(n + 1))
+    assert sum(choose(n, k) for k in range(n + 1)) == 2**n == all_groups
+    assert sum(choose(n, k) for k in range(2, n + 1)) == 2**n - n - 1
+    for k in range(n + 1):
+        assert choose(n, k) == choose(n, n - k)
+        if 0 < k < n:
+            assert choose(n, k) == choose(n - 1, k) + choose(n - 1, k - 1)
+        if k >= 1:
+            assert k * choose(n, k) == n * choose(n - 1, k - 1)
+assert 2**3 - 3 - 1 == 4 and 2**4 - 4 - 1 == 11
+assert [choose(3, k) for k in range(4)] == [1, 3, 3, 1]
+assert choose(10, 3) == choose(10, 7) == 120
+assert choose(5, 2) == choose(4, 2) + choose(4, 1) == 6 + 4 == 10
+assert 2 * choose(5, 2) == 5 * choose(4, 1) == 20
+rows = [[choose(n, k) for k in range(n + 1)] for n in range(6)]
+assert rows == [[1], [1, 1], [1, 2, 1], [1, 3, 3, 1], [1, 4, 6, 4, 1], [1, 5, 10, 10, 5, 1]]
+assert [sum(row) for row in rows] == [1, 2, 4, 8, 16, 32]
+assert falling(5, 2) == 20 == 120 // 6 and choose(3, 2) == 6 // 2 and choose(5, 3) == 60 // 6 == 10
+
+# The lock.
+assert count(product(range(10), repeat=3)) == 1000
+assert count(permutations(range(10), 3)) == 720 == 10 * 9 * 8
+
+# Worked example 1: five children.
+children = range(5)
+lineups = list(permutations(children))
+assert len(lineups) == 120 and count(permutations(children, 2)) == 20
+assert count(combinations(children, 2)) == 10
+assert count(permutations(children, 3)) == 60 and 60 // math.factorial(3) == 10 == count(combinations(children, 3))
+first = [line for line in lineups if line[0] == 0]
+assert len(first) == 24 and prob(first, lineups) == Fraction(1, 5)
+teams_of_5 = list(combinations(children, 2))
+assert prob([t for t in teams_of_5 if 0 in t], teams_of_5) == Fraction(4, 10) == Fraction(2, 5)
+
+# Worked example 2 and the slip in 4(b): 3 red and 2 blue marbles.
+bag = ["R1", "R2", "R3", "B1", "B2"]
+pairs_unordered = list(combinations(bag, 2))
+assert len(pairs_unordered) == 10
+
+
+def reds(pair):
+    return sum(marble[0] == "R" for marble in pair)
+
+
+both_red = [p for p in pairs_unordered if reds(p) == 2]
+both_blue = [p for p in pairs_unordered if reds(p) == 0]
+one_each = [p for p in pairs_unordered if reds(p) == 1]
+assert [len(both_red), len(both_blue), len(one_each)] == [3, 1, 6]
+assert prob(both_red, pairs_unordered) == Fraction(3, 10)
+assert prob(both_blue, pairs_unordered) == Fraction(1, 10)
+assert prob(one_each, pairs_unordered) == Fraction(3, 5)
+assert sum(prob(group, pairs_unordered) for group in (both_red, both_blue, one_each)) == 1
+pairs_ordered = list(permutations(bag, 2))
+red_red = [p for p in pairs_ordered if reds(p) == 2]
+assert len(pairs_ordered) == 20 and len(red_red) == 6
+assert prob(red_red, pairs_ordered) == Fraction(6, 20) == Fraction(3, 10)
+assert Fraction(3, 5) * Fraction(2, 4) == Fraction(3, 10)
+assert Fraction(6, 10) == Fraction(3, 5) != Fraction(3, 10)
+assert Fraction(6, 10) == 2 * Fraction(3, 10)
+
+# Worked example 3: four coins, and two.
+flips = list(product("HT", repeat=4))
+assert len(flips) == 16
+row = [count(s for s in flips if s.count("H") == j) for j in range(5)]
+assert row == [1, 4, 6, 4, 1] == [choose(4, j) for j in range(5)]
+two_heads = sorted("".join(s) for s in flips if s.count("H") == 2)
+assert two_heads == ["HHTT", "HTHT", "HTTH", "THHT", "THTH", "TTHH"]
+assert prob(two_heads, flips) == Fraction(3, 8)
+assert prob([s for s in flips if "H" in s], flips) == Fraction(15, 16) == 1 - Fraction(1, 16)
+two_coins = list(product("HT", repeat=2))
+assert [Fraction(count(s for s in two_coins if s.count("H") == j), 4) for j in range(3)] == [Fraction(1, 4), Fraction(1, 2), Fraction(1, 4)]
+
+# Worked example 4(a) and the fourth-box fold: two dice.
+rolls = list(product(range(1, 7), repeat=2))
+assert len(rolls) == 36
+weights = Counter(tuple(sorted(r)) for r in rolls)
+assert len(weights) == 21 == choose(6 + 2 - 1, 2) == choose(7, 2)
+assert sorted(Counter(weights.values()).items()) == [(1, 6), (2, 15)]
+one_and_two = [r for r in rolls if sorted(r) == [1, 2]]
+assert prob(one_and_two, rolls) == Fraction(2, 36) == Fraction(1, 18) != Fraction(1, 21)
+assert prob([r for r in rolls if r == (6, 6)], rolls) == Fraction(1, 36)
+for n in range(1, 7):
+    for k in range(5):
+        assert count(combinations_with_replacement(range(n), k)) == choose(n + k - 1, k)
+
+# Worked example 5: the class of 12, 5 of them with hats.
+hats = set(range(5))
+groups = list(combinations(range(12), 3))
+assert len(groups) == 220
+by_hats = Counter(len(hats.intersection(g)) for g in groups)
+assert dict(by_hats) == {0: 35, 1: 105, 2: 70, 3: 10}
+assert by_hats[0] == choose(7, 3) and by_hats[1] == 5 * choose(7, 2) and by_hats[2] == choose(5, 2) * 7
+assert prob([g for g in groups if len(hats.intersection(g)) == 2], groups) == Fraction(7, 22)
+assert 1 - Fraction(35, 220) == Fraction(37, 44)
+assert Fraction(10, 220) == Fraction(1, 22) == Fraction(5, 12) * Fraction(4, 11) * Fraction(3, 10)
+
+# Worked example 6: leave-p-out.
+assert count(combinations(range(4), 2)) == 6  # the scikit-learn example
+assert choose(10, 2) == 45 and choose(100, 2) == 4950 and choose(100, 3) == 161700
+splits = list(combinations(range(10), 2))
+with_example_0 = [s for s in splits if 0 in s]
+assert len(with_example_0) == 9 == choose(9, 1)
+assert prob(with_example_0, splits) == Fraction(9, 45) == Fraction(2, 10) == Fraction(1, 5)
+folds = [{2 * i, 2 * i + 1} for i in range(5)]
+assert set().union(*folds) == set(range(10)) and sum(len(f) for f in folds) == 10
+
+# Check yourself.
+digit_codes = list(permutations(range(10), 4))
+assert len(digit_codes) == 5040 == falling(10, 4)
+increasing = [c for c in digit_codes if list(c) == sorted(c)]
+assert len(increasing) == 210 == choose(10, 4)
+assert prob(increasing, digit_codes) == Fraction(1, 24) == Fraction(1, math.factorial(4))
+five_coins = list(product("HT", repeat=5))
+three_heads = [s for s in five_coins if s.count("H") == 3]
+assert len(five_coins) == 32 and len(three_heads) == 10
+assert prob(three_heads, five_coins) == Fraction(5, 16)
+
+# How many rules: subsets of 10 features, and every yes-or-no function of 2 features.
+assert sum(count(combinations(range(10), k)) for k in range(11)) == 1024 == 2**10
+truth_tables = list(product((0, 1), repeat=len(list(product((0, 1), repeat=2)))))
+assert len(truth_tables) == 16 == 2 ** (2**2)
+
+# The guarantee, in the notes' e-form: m >= (1 / epsilon)(ln|H| + ln(1 / delta)),
+# with epsilon = 1/10 and delta = 1/20.
+log_20 = math.log(20)
+m_conjunctions = 10 * (10 * math.log(2) + log_20)
+assert abs(m_conjunctions - 99.27) < 0.005 and math.ceil(m_conjunctions) == 100
+log_all = 1024 * math.log(2)
+assert abs(log_all - 709.78) < 0.005
+m_all = 10 * (log_all + log_20)
+assert math.ceil(m_all) == 7128
+assert 71 <= 7128 / 100 < 72
+print("examples needed:", math.ceil(m_conjunctions), "for 2^10 rules,", math.ceil(m_all), "for 2^1024 rules")
+
+# (1 - epsilon)^m <= e^(-epsilon m), the step that gives the e-form.
+for m in range(1, 201):
+    assert float(Fraction(9, 10) ** m) <= math.exp(-m / 10)
+
+
+# Solved without that step, |H| (9/10)^m <= 1/20 already holds a little earlier:
+# at m = 95 for 2^10 rules and m = 6766 for 2^1024. So the page's 100 and 7,128 are safe.
+def bound_holds(rules, m):
+    """|H| (9/10)^m <= 1/20, in whole numbers: rules * 9^m * 20 <= 10^m."""
+    return rules * 9**m * 20 <= 10**m
+
+
+assert next(m for m in range(1, 200) if bound_holds(2**10, m)) == 95
+assert bound_holds(2**10, 100)
+assert not bound_holds(2**1024, 6765) and bound_holds(2**1024, 6766) and bound_holds(2**1024, 7128)
+
+# Dividing by an empty list of outcomes fails loudly.
+try:
+    prob([], [])
+    raise AssertionError("an empty list of outcomes should fail")
+except ValueError as error:
+    print("no outcomes:", error)
+`}
+/>
+
+Listing small cases is the proof; the formulas are the shortcut. The scikit-learn count, display-only:
+
+```python title="leave_p_out.py"
+import numpy as np
+from sklearn.model_selection import LeavePOut
+
+X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
+print(LeavePOut(2).get_n_splits(X))  # 6, the number of ways to choose 2 of 4
+```
+
+## Check yourself
+
+<CheckYourself level="intuition" question="Is the number of ways to choose 3 books from 10 the same as the number of ways to choose 7?">
+Yes, 120 both ways. Choosing 3 books to take is the same as choosing the 7 to leave, so every choice of 3 matches exactly one choice of 7: $\binom{10}{3} = \binom{10}{7}$.
+</CheckYourself>
+
+<CheckYourself level="standard" question="A code uses 4 different digits from 0 to 9. How many codes are there, and what is the chance that a random one is in increasing order?">
+$(10)_4 = 10 \times 9 \times 8 \times 7 = 5{,}040$ codes. Each set of 4 digits appears in $4! = 24$ orders and exactly one of them is increasing, so 210 codes are increasing and the chance is $210/5{,}040 = 1/24$.
+</CheckYourself>
+
+<CheckYourself level="standard" question="Five fair coins: what is the chance of exactly 3 heads?">
+$\binom{5}{3} = 10$ of the $2^5 = 32$ equally likely sequences have exactly 3 heads, so the chance is $10/32 = 5/16$.
+</CheckYourself>
+
+<CheckYourself level="proof" question="Show that k × (n choose k) = n × (n − 1 choose k − 1) by counting teams with a captain two ways.">
+Pick the team first, then its captain: $\binom{n}{k}$ teams times $k$ captains. Or pick the captain first, then the other $k - 1$ players from the $n - 1$ left: $n \binom{n-1}{k-1}$. Both count the same teams-with-captain, so they are equal. For 5 children and teams of 2: $10 \times 2 = 5 \times 4 = 20$.
+</CheckYourself>
+
+## Common mistakes
+
+<CommonMistakes>
+  <Mistake wrong="Use combinations whenever you pick some items.">
+    First ask whether order matters. Gold and silver for 2 of 3 friends is ordered, 3 × 2 = 6 ways; a team is not, 3.
+  </Mistake>
+  <Mistake wrong="Count the favorable outcomes one way and all outcomes another.">
+    Top and bottom use the same convention. Ordered red-red over unordered pairs gives 6/10, not 3/10.
+  </Mistake>
+  <Mistake wrong="If a list has 21 possible results, each has probability 1/21.">
+    Counting needs equally likely outcomes, and unordered dice results are not. Count the 36 ordered rolls.
+  </Mistake>
+  <Mistake wrong="Add the choices at each step.">
+    Steps multiply. A 3-dial lock has 10 × 10 × 10 = 1,000 codes, not 30.
+  </Mistake>
+  <Mistake wrong="The counting principle is the multiplication rule for probabilities.">
+    One multiplies numbers of choices, the other probabilities, P(A and B) = P(A | B) P(B). They agree only on equally likely outcomes.
+  </Mistake>
+</CommonMistakes>
+
+## Key takeaways
+
+<Takeaways />
+
+## How this connects
+
+<ConceptMap />
+
+## References
+
+<References />
