@@ -194,7 +194,7 @@ The failure runs the other way too. Grinstead and Snell's Exercise 8 (p. 151) ta
 
 ## Notation
 
-<NotationKey symbols={["sample-space", "event-collection", "event", "intersection", "union", "complement", "empty-set", "probability", "conditional", "independent", "product", "argmax", "log"]} />
+<NotationKey symbols={["sample-space", "event-collection", "event", "intersection", "union", "complement", "empty-set", "probability", "conditional", "independent", "product", "feature-vector", "argmax", "log"]} />
 
 <PreciseStatement>
 
@@ -288,10 +288,10 @@ Each draw misses the class with probability $0.99$, and the draws are independen
 
 Independent training examples turn the probability of a whole data set into a product. Goodfellow and coauthors name the i.i.d. assumptions: the examples in each data set are independent of each other, and the training and test sets are identically distributed (§5.2) <Cite id="goodfellow2016ml" />.
 
-Say a coin has an unknown heads probability $\theta$ and you see H, H, T. Independence makes the chance of that sequence $\theta \times \theta \times (1 - \theta) = \theta^2 (1 - \theta)$, and the best guess for $\theta$ is the value that makes this product largest: it is $4/27 \approx 0.148$ at $\theta = 2/3$, against $1/8 = 0.125$ at $\theta = 1/2$, and $2/3$ is where it peaks. In general, with $m$ examples $x^{(1)}, \ldots, x^{(m)}$ and a model that gives example $x$ the probability $p_{\text{model}}(x; \theta)$, the maximum likelihood estimate is
+Say a coin has an unknown heads probability $\theta$ and you see H, H, T. Independence makes the chance of that sequence $\theta \times \theta \times (1 - \theta) = \theta^2 (1 - \theta)$, and the best guess for $\theta$ is the value that makes this product largest: it is $4/27 \approx 0.148$ at $\theta = 2/3$, against $1/8 = 0.125$ at $\theta = 1/2$, and $2/3$ is where it peaks. In general, with $m$ examples $\mathbf{x}^{(1)}, \ldots, \mathbf{x}^{(m)}$ and a model that gives example $\mathbf{x}$ the probability $p_{\text{model}}(\mathbf{x}; \theta)$, the maximum likelihood estimate is
 
 $$
-\theta_{\text{ML}} = \arg\max_{\theta} \prod_{i=1}^{m} p_{\text{model}}(x^{(i)}; \theta),
+\theta_{\text{ML}} = \arg\max_{\theta} \prod_{i=1}^{m} p_{\text{model}}(\mathbf{x}^{(i)}; \theta),
 $$
 
 where $\arg\max_{\theta}$ means "the $\theta$ that makes this largest". This is Goodfellow and coauthors' equation (5.57). They point out that the product is prone to numerical underflow, and that taking the logarithm turns it into a sum with the same maximizer, equation (5.58) <Cite id="goodfellow2016ml" />. Underflow is easy to reach. A thousand examples that each get probability $0.01$ have likelihood $10^{-2000}$, which a 64-bit float stores as 0, while the log-likelihood $1000 \log 0.01 \approx -4605.17$ is an ordinary number.
