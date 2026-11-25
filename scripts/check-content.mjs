@@ -8,13 +8,14 @@
 //   - SEO: descriptions 120-160 characters; titles, descriptions and primary queries unique (docs/seo/README.md);
 //     searchIntent matches the page type
 //   - spelling: page prose uses American English (decision 0010)
+//   - length: each concept page's reader-prose word count, printed, and held to its type's limits when complete
 // Frontmatter is parsed the way Astro parses it (the `yaml` package, core schema), so `draft: True`, comments,
 // quoting and multi-line values mean the same here as in the build.
 // Required frontmatter on concept pages is enforced during the build by src/routeData.ts.
 import assert from 'node:assert/strict';
 import { readdir, readFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseDocument } from 'yaml';
 import { TOPICS } from '../src/data/topics.mjs';
 import { NOTATION } from '../src/data/notation.mjs';
@@ -268,11 +269,234 @@ function intentProblems(pages) {
 	});
 }
 
+// ---- Reader-prose word count (owner decision 4, 2026-11-25) ----
+// A page type's word limits count what a reader reads in the spine and folds, nothing else. Left out: frontmatter,
+// imports, code (fences, inline code and PyRunner), tables (markdown and HTML), the reference list, CheckYourself
+// answers, and JSX tags with their attributes. Every formula, display or inline, counts as one word. The prose
+// children of components count (Fold, Simpler, GoDeeper, SideNote, Mistake, Analogy, WorkedExample, StepThrough,
+// WhyThisMatters, PreciseStatement, FormalDefinition, ResearchFrontier and any new one), and so do the attributes
+// in PROSE_ATTRIBUTES, which a reader reads as sentences.
+
+/**
+ * Word limits by page type, enforced on pages with `depthStatus: complete`. C to F are the content plan's satellite
+ * range (§4). A and B take the plan's spine range, applied to the whole count of spine and folds. F is a reference
+ * page made mostly of tables, so it has a cap and no floor.
+ */
+export const WORD_LIMITS = {
+	A: { min: 1500, max: 3000 },
+	B: { min: 1500, max: 3000 },
+	C: { min: 1200, max: 2500 },
+	D: { min: 1200, max: 2500 },
+	E: { min: 1200, max: 2500 },
+	F: { min: 0, max: 2500 },
+};
+
+/**
+ * Pages written before the counter existed that fall outside their type's limits, with the count measured when
+ * the counter landed (2026-11-25). They warn instead of failing, so the build passes until each page is cut or
+ * the owner rules on it. Remove an entry once its page fits; an entry for a page that doesn't exist fails the check.
+ */
+export const WORD_COUNT_EXCEPTIONS = {
+	'linear-algebra/dot-product': { measured: 4431 },
+	'linear-algebra/vectors': { measured: 4523 },
+	'probability/bayes-theorem': { measured: 4901 },
+	'probability/conditional-probability': { measured: 3716 },
+	'probability/independence': { measured: 4353 },
+	'probability/naive-bayes-classifier': { measured: 2723 },
+	'probability/probability-axioms': { measured: 4138 },
+	'probability/random-variables-and-distributions': { measured: 4796 },
+	'probability/sample-spaces-and-events': { measured: 3229 },
+	'statistics/variance-and-standard-deviation': { measured: 4569 },
+};
+
+/** Attributes that are reader prose: the CheckYourself question, the Analogy's limit, the Mistake, the one-liner. */
+const PROSE_ATTRIBUTES = new Set(['question', 'breaks', 'wrong', 'oneLiner']);
+/** Elements whose whole content is left out: code, tables, answers, and the generated lists. */
+const SKIPPED_ELEMENTS = new Set(['CheckYourself', 'PyRunner', 'References', 'PropertiesTable', 'NotationKey', 'Takeaways', 'ConceptMap', 'table', 'pre', 'code', 'svg', 'style', 'script']);
+/** Elements that render a single symbol, so they count like a formula. */
+const ONE_WORD_ELEMENTS = new Set(['Var']);
+/** Stands in for a formula, an inline code span or a symbol: one word each. */
+const ONE_WORD = ' formula ';
+
+/** The index just past a quoted string or template literal that starts at `start`. */
+function skipString(source, start) {
+	const quote = source[start];
+	for (let index = start + 1; index < source.length; index += 1) {
+		if (source[index] === '\\') index += 1;
+		else if (quote === '`' && source.startsWith('${', index)) index = skipExpression(source, index + 1) - 1;
+		else if (source[index] === quote) return index + 1;
+	}
+	throw new Error(`word count: unclosed ${quote} starting "${source.slice(start, start + 40)}"`);
+}
+
+/** The index just past the `}` that closes the `{` at `start`, skipping strings and nested braces. */
+function skipExpression(source, start) {
+	let depth = 0;
+	for (let index = start; index < source.length; index += 1) {
+		const character = source[index];
+		if (character === '"' || character === "'" || character === '`') index = skipString(source, index) - 1;
+		else if (character === '{') depth += 1;
+		else if (character === '}' && --depth === 0) return index + 1;
+	}
+	throw new Error(`word count: unclosed { starting "${source.slice(start, start + 40)}"`);
+}
+
+/** A JSX or HTML tag at `start`: its name, kind, end and string attributes; null when `<` doesn't open a tag. */
+function readTag(source, start) {
+	const head = /^<(\/?)([A-Za-z][\w.:-]*)/.exec(source.slice(start, start + 100));
+	if (!head) return null;
+	const attributes = [];
+	let index = start + head[0].length;
+	while (index < source.length) {
+		const rest = source.slice(index);
+		const space = /^\s+/.exec(rest);
+		if (space) index += space[0].length;
+		else if (rest.startsWith('/>')) return { name: head[2], closing: head[1] === '/', selfClosing: true, end: index + 2, attributes };
+		else if (rest.startsWith('>')) return { name: head[2], closing: head[1] === '/', selfClosing: false, end: index + 1, attributes };
+		else if (rest.startsWith('{')) index = skipExpression(source, index);
+		else {
+			const name = /^[^\s=/>{]+/.exec(rest)?.[0];
+			if (!name) throw new Error(`word count: unreadable tag at "${source.slice(start, start + 60)}"`);
+			index += name.length;
+			if (source[index] !== '=') continue;
+			index += 1;
+			if (source[index] === '{') index = skipExpression(source, index);
+			else if (source[index] === '"' || source[index] === "'") {
+				const end = skipString(source, index);
+				attributes.push([name, source.slice(index + 1, end - 1)]);
+				index = end;
+			} else throw new Error(`word count: unquoted attribute ${name} at "${source.slice(start, start + 60)}"`);
+		}
+	}
+	throw new Error(`word count: unclosed tag at "${source.slice(start, start + 60)}"`);
+}
+
+/** The index just past the tag that closes the element opened at `from`, counting nested elements of the same name. */
+function skipElement(source, from, name) {
+	let depth = 1;
+	for (let index = source.indexOf('<', from); index !== -1; index = source.indexOf('<', index + 1)) {
+		const tag = readTag(source, index);
+		if (!tag || tag.name !== name) continue;
+		if (tag.closing) depth -= 1;
+		else if (!tag.selfClosing) depth += 1;
+		if (depth === 0) return tag.end;
+		index = tag.end - 1;
+	}
+	throw new Error(`word count: <${name}> is never closed`);
+}
+
+/** The end of a math or inline-code span at `start` (one or two `$`, or backticks), or -1 when it isn't closed. */
+function spanEnd(source, start) {
+	const fence = /^(\$\$|\$|`+)/.exec(source.slice(start))[0];
+	const end = source.indexOf(fence, start + fence.length);
+	if (end === -1 || (fence !== '$$' && source.slice(start, end).includes('\n\n'))) return -1;
+	return end + fence.length;
+}
+
+/** The page's markdown with every tag removed, skipped elements dropped and prose attributes on their own lines. */
+function withoutMarkup(source) {
+	const pieces = [];
+	let index = 0;
+	while (index < source.length) {
+		const character = source[index];
+		if (character === '\\') {
+			pieces.push(source.slice(index, index + 2));
+			index += 2;
+		} else if (character === '$' || character === '`') {
+			const end = spanEnd(source, index);
+			pieces.push(end === -1 ? character : source.slice(index, end));
+			index = end === -1 ? index + 1 : end;
+		} else if (character === '{') {
+			index = skipExpression(source, index);
+		} else if (character === '<' && /^<https?:\/\//.test(source.slice(index, index + 10))) {
+			index = source.indexOf('>', index) + 1;
+		} else if (character === '<' && readTag(source, index)) {
+			const tag = readTag(source, index);
+			for (const [name, value] of tag.attributes) if (!tag.closing && PROSE_ATTRIBUTES.has(name)) pieces.push(`\n\n${value}\n\n`);
+			if (!tag.closing && ONE_WORD_ELEMENTS.has(tag.name)) pieces.push(ONE_WORD);
+			index = !tag.closing && !tag.selfClosing && SKIPPED_ELEMENTS.has(tag.name) ? skipElement(source, tag.end, tag.name) : tag.end;
+			pieces.push(' ');
+		} else {
+			pieces.push(character);
+			index += 1;
+		}
+	}
+	return pieces.join('');
+}
+
+/** The number of words a reader reads in a page's spine and folds, counted from its MDX source. */
+export function countReaderWords(source) {
+	const markdown = source
+		.replace(FRONTMATTER, '')
+		.replace(/^[ \t]*(```|~~~)[\s\S]*?^[ \t]*\1[^\n]*$/gm, '')
+		.replace(/\{\/\*[\s\S]*?\*\/\}|<!--[\s\S]*?-->/g, '')
+		.replace(/^(?:import|export)\s.*$/gm, '');
+	const prose = withoutMarkup(markdown)
+		.replace(/^[ \t]*\|.*$/gm, '')
+		.replace(/\$\$[\s\S]*?\$\$/g, ONE_WORD)
+		.replace(/(?<!\\)\$[^$]+?(?<!\\)\$/g, ONE_WORD)
+		.replace(/(`+)[\s\S]+?\1/g, ONE_WORD)
+		.replace(/!\[[^\]]*\]\([^)]*\)/g, '')
+		.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+		.replace(/https?:\/\/\S+/g, '')
+		.replace(/&(?:[a-z]+|#\d+);/gi, ' ')
+		.replace(/^[ \t]*(?:#{1,6}|[-*+]|\d+[.)]|>)[ \t]+/gm, '');
+	return prose.split(/\s+/).filter((word) => /[\p{L}\p{N}]/u.test(word)).length;
+}
+
+/** Pins what the counter counts and leaves out, so a change to it fails loudly. */
+function checkWordCounter() {
+	const sentence = 'The mean balances the bar.';
+	assert.equal(countReaderWords(sentence), 5);
+	assert.equal(countReaderWords(`${sentence}\n\n<PropertiesTable rows={[{ name: "Mean", value: "np" }]} examples={["\\\\text{three heads}"]} />\n`), 5);
+	assert.equal(countReaderWords(`---\ntitle: "Four words of title"\n---\n\nimport Fold from "../Fold.astro";\n\n${sentence}`), 5);
+	assert.equal(countReaderWords('One sum:\n\n$$\n\\sum_{i=1}^{n} x_i\n$$\n\nand $x < y$ here.'), 6, 'a formula is one word');
+	assert.equal(countReaderWords('| A | B |\n| --- | --- |\n| one two | three |\n\n<table><tr><td>four five</td></tr></table>\n\nKept words.'), 2, 'tables are left out');
+	assert.equal(countReaderWords('<CheckYourself level="standard" question="Is it fair?">\nYes, because the answer is hidden.\n</CheckYourself>'), 3, 'the question counts, the answer does not');
+	assert.equal(countReaderWords('Run it.\n\n<PyRunner title="a.py" code={`\nprint(f"{x:.3f}")  # a < b\n`} />\n\n```python\nx = 1\n```'), 2, 'code is left out');
+	assert.equal(countReaderWords('<Fold kind="answer" label="the check">\n\n1. First step here.\n2. Then `np.std` and <Var name="mu" />.\n\n</Fold>'), 7, 'fold children and list items count, markers do not');
+	assert.equal(countReaderWords('See [the normal page](/statistics/normal-distribution/#tails) <Cite id="he2015" />.'), 4, 'link text counts, the address does not');
+	assert.equal(countReaderWords('<Mistake wrong="Equal counts mean no mode.">\n  One value repeated is the mode.\n</Mistake>\n\n<References />'), 11);
+	assert.equal(countReaderWords('{/* a note for writers */}\nTwo words.'), 2);
+}
+
+/** A page's word count against its type's limits: a problem, or a warning when the page has a recorded exception. */
+function wordCountProblems(pages) {
+	const problems = [];
+	const warnings = [];
+	const counts = [];
+	const ids = new Set(pages.map((page) => page.id));
+	for (const id of Object.keys(WORD_COUNT_EXCEPTIONS)) if (!ids.has(id)) problems.push(`WORD_COUNT_EXCEPTIONS: no page "${id}"`);
+	for (const { name, id, source, data, error } of pages) {
+		const type = text(data.type);
+		if (error || !type) continue;
+		let words;
+		try {
+			words = countReaderWords(source);
+		} catch (countError) {
+			problems.push(`${name}: ${countError.message}`);
+			continue;
+		}
+		counts.push({ id, type, words, depthStatus: text(data.depthStatus) });
+		const limits = WORD_LIMITS[type];
+		if (!limits || text(data.depthStatus) !== 'complete') continue;
+		const exception = WORD_COUNT_EXCEPTIONS[id];
+		const inRange = words >= limits.min && words <= limits.max;
+		const range = limits.min > 0 ? `${limits.min}-${limits.max}` : `at most ${limits.max}`;
+		if (inRange && exception) warnings.push(`${name}: ${words} reader words now fits type ${type} (${range}); remove it from WORD_COUNT_EXCEPTIONS`);
+		else if (!inRange && exception) warnings.push(`${name}: ${words} reader words, outside type ${type}'s ${range} (recorded exception, measured ${exception.measured})`);
+		else if (!inRange) problems.push(`${name}: ${words} reader words; a complete type ${type} page has ${range} (owner decision 4)`);
+	}
+	return { problems, warnings, counts };
+}
+
 async function main() {
 	checkCitationRules();
+	checkWordCounter();
 	const pages = await readPages();
 	const pagesById = new Map(pages.map((page) => [page.id, page]));
 	const seo = seoProblems(pages);
+	const wordCounts = wordCountProblems(pages);
 	const problems = [
 		...duplicateIds(pages, 'id', 'src/content/docs (two files serve the same route)'),
 		...topicProblems(pagesById),
@@ -282,8 +506,13 @@ async function main() {
 		...seo.problems,
 		...intentProblems(pages),
 		...spellingProblems(pages),
+		...wordCounts.problems,
 	];
-	for (const warning of seo.warnings) console.warn(`  warning: ${warning}`);
+	console.log('Reader words per concept page (type, depthStatus):');
+	for (const { id, type, words, depthStatus } of [...wordCounts.counts].sort((a, b) => a.id.localeCompare(b.id))) {
+		console.log(`  ${String(words).padStart(5)}  ${type}  ${depthStatus ?? 'no depthStatus'}  ${id}`);
+	}
+	for (const warning of [...seo.warnings, ...wordCounts.warnings]) console.warn(`  warning: ${warning}`);
 	if (problems.length > 0) {
 		console.error(`Content check failed with ${problems.length} problem(s):`);
 		for (const problem of problems) console.error(`  - ${problem}`);
@@ -292,7 +521,10 @@ async function main() {
 	console.log(`Content check passed: ${pages.length} pages, ${TOPICS.length} topics, ${NOTATION.length} symbols, ${REFERENCES.length} references.`);
 }
 
-main().catch((error) => {
-	console.error('Content check crashed:', error);
-	process.exit(1);
-});
+// Run only as a script, so another script can import countReaderWords without running the whole check.
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+	main().catch((error) => {
+		console.error('Content check crashed:', error);
+		process.exit(1);
+	});
+}
