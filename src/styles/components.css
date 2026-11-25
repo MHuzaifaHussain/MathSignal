@@ -1359,18 +1359,20 @@
 /* Pictures: one ink bar per child, drawn to height from the floor; bars slide when the class lines up. */
 .ms-desc-lineup {
 	--ms-desc-slot: min(calc(100% / var(--count)), 48px);
+	container-type: inline-size;
 	position: relative;
 	block-size: 13rem;
 	print-color-adjust: exact;
 }
 
+/* The labels shrink a little when ten bars share 320px, so neighboring three-digit heights don't run together. */
 .ms-desc-bar {
 	position: absolute;
 	inset-block: 0;
 	left: calc(var(--slot) * var(--ms-desc-slot));
 	inline-size: var(--ms-desc-slot);
 	color: var(--ms-board-ink);
-	font: 500 0.8125rem var(--ms-font-mono);
+	font: 500 clamp(0.6875rem, calc(100cqi / var(--count) * 0.4), 0.8125rem) var(--ms-font-mono);
 	text-align: center;
 }
 

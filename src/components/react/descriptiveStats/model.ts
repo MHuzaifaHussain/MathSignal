@@ -202,3 +202,22 @@ export function rankOf(values: readonly number[], index: number): { shorter: num
 		same: others.filter((value) => value === own).length,
 	};
 }
+
+/**
+ * The indices of the middle values: the one value with as many below as above when n is odd, or the two values with
+ * one more on one side than the other when n is even. A value that shares its place with an equal value is not a
+ * middle value, so a tie at the middle returns fewer than the 1 or 2 indices a clean middle has.
+ */
+export function middleIndices(values: readonly number[]): number[] {
+	requireWholeNumbers(values);
+	const isMiddle = (index: number) => {
+		const rank = rankOf(values, index);
+		return rank.same === 0 && Math.abs(rank.shorter - rank.taller) <= 1;
+	};
+	return values.map((_, index) => index).filter(isMiddle);
+}
+
+/** How many middle values a list without a tie at the middle has: 1 when n is odd, 2 when n is even. */
+export function middleCount(values: readonly number[]): 1 | 2 {
+	return values.length % 2 === 1 ? 1 : 2;
+}

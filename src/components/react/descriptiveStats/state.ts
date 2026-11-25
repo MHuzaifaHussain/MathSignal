@@ -3,7 +3,7 @@
 // scripts/check-boards.mjs checks them. Design and reasoning: decision 0015.
 import * as guided from '../guided/guided.ts';
 import { pumpkins } from './datasets.ts';
-import { median, populationSD, rankOf, type Root } from './model.ts';
+import { middleCount, middleIndices, populationSD, type Root } from './model.ts';
 import { CUTOFFS, SCALES, getSetup, presetById, type Cutoff, type Preset, type Scale, type Setup, type SetupId, type Stage } from './setups.ts';
 
 /** Check's verdict on the middle child, or `shown` when the reader pressed "Show the answer". */
@@ -107,17 +107,19 @@ export function valuesNow(state: DescriptiveState): readonly number[] {
 	return state.newcomer === null ? state.values : [...state.values, state.newcomer];
 }
 
-/** The child whose height is the median: the one with as many shorter as taller. */
-export function middleChild(values: readonly number[]): number {
-	const middle = median(values);
-	const index = values.findIndex((value) => middle.denominator === 1 && value === middle.numerator);
-	if (index < 0) throw new Error('DescriptiveStats: no child stands at the median height.');
-	return index;
+/**
+ * The middle children, shortest first: one when the class is odd in number (as many shorter as taller), two when it
+ * is even (the median is halfway between them). Setup validation keeps ties out of the middle.
+ */
+export function middleChildren(values: readonly number[]): number[] {
+	const found = middleIndices(values).sort((a, b) => values[a] - values[b]);
+	if (found.length !== middleCount(values)) throw new Error('DescriptiveStats: two children tie in the middle of the line.');
+	return found;
 }
 
+/** Right on an even class too: either of the two middle children counts, and the verdict names the other. */
 export function isMiddle(values: readonly number[], child: number): boolean {
-	const rank = rankOf(values, child);
-	return rank.shorter === rank.taller && rank.same === 0;
+	return middleChildren(values).includes(child);
 }
 
 /** Every change to the values goes through here: stale feedback and refusals are cleared. */
@@ -133,7 +135,18 @@ function check(setup: Setup, state: DescriptiveState): DescriptiveState {
 	return { ...state, ...progress, feedback: { kind: right ? 'right' : 'wrong', child: state.pick }, refusal: null };
 }
 
+/**
+ * A line-up preset is a new class to find the middle of: it arrives unsorted, and the hunt starts again, so nothing
+ * of the new class's summary shows before its own Check. Pressing the class already in view changes nothing.
+ */
+function loadClass(setup: Setup, state: DescriptiveState, preset: Preset, values: readonly number[]): DescriptiveState {
+	if (state.activePreset === preset.id) return state;
+	const next: DescriptiveState = { ...withValues(state, values, preset.id), linedUp: false, pick: null, feedback: null, checked: false, failedChecks: 0 };
+	return stageAllowed(next, next.stage) ? next : { ...next, stage: setup.openingStage };
+}
+
 function applyPreset(setup: Setup, state: DescriptiveState, preset: Preset): DescriptiveState {
+	if (setup.kind === 'lineup' && preset.values) return loadClass(setup, state, preset, preset.values);
 	if (setup.kind === 'newcomer') {
 		return { ...withValues(state, state.values, preset.id), newcomer: preset.newcomer ?? null };
 	}
@@ -215,7 +228,7 @@ function transition(setup: Setup, state: DescriptiveState, action: Action): Desc
 			return check(setup, state);
 		case 'show-answer': {
 			if (setup.kind !== 'lineup' || !guided.canShowAnswer(state)) return state;
-			const child = middleChild(state.values);
+			const child = middleChildren(state.values)[0];
 			return { ...state, checked: true, pick: child, feedback: { kind: 'shown', child }, refusal: null };
 		}
 		case 'select':

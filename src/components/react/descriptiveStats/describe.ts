@@ -36,7 +36,7 @@ import {
 	type Root,
 } from './model.ts';
 import type { Scale, Setup, Stage } from './setups.ts';
-import { isCovered, setupOf, valuesNow, type Action, type DescriptiveState } from './state.ts';
+import { isCovered, middleChildren, setupOf, valuesNow, type Action, type DescriptiveState } from './state.ts';
 
 export const STAGE_LABELS: Readonly<Record<Stage, string>> = {
 	pictures: 'Pictures',
@@ -188,25 +188,67 @@ export function checkRefusal(state: DescriptiveState): string | null {
 	return `Pick a child under ${CONTROL_LABELS.pick} first.`;
 }
 
-const shorterAndTaller = (shorter: number, taller: number) => `${plural(shorter, 'child', 'children')} shorter and ${taller} taller`;
+type Rank = ReturnType<typeof rankOf>;
+
+/** "4 children shorter and 4 taller", naming children of the same height only when there are some. */
+function shorterAndTaller(rank: Rank): string {
+	const shorter = plural(rank.shorter, 'child', 'children');
+	return rank.same === 0 ? `${shorter} shorter and ${rank.taller} taller` : `${shorter} shorter, ${rank.taller} taller and ${rank.same} the same height`;
+}
+
+/** "8 children are shorter and none is taller", for the child standing in the middle of the arrival line. */
+function rankClauses(rank: Rank): string {
+	const taller = rank.taller === 0 ? 'none is taller' : `${rank.taller} ${rank.taller === 1 ? 'is' : 'are'} taller`;
+	const same = rank.same === 0 ? [] : [`${rank.same} ${rank.same === 1 ? 'is' : 'are'} the same height`];
+	const shorter = rank.shorter === 0 ? 'no child is shorter' : `${plural(rank.shorter, 'child is', 'children are')} shorter`;
+	return joinWords([shorter, ...same, taller]);
+}
+
+/** The places in the arrival line that look like the middle: one child when n is odd, two when n is even. */
+function arrivalMiddle(count: number): number[] {
+	return count % 2 === 1 ? [(count - 1) / 2] : [count / 2 - 1, count / 2];
+}
+
+/** "(133 + 136) / 2 = 134.5 cm": the median of an even class, halfway between its two middle children. */
+function halfwaySum(values: readonly number[], pair: readonly number[]): string {
+	return `(${pair.map((child) => values[child]).join(' + ')}) / 2 ${equalsAmount(median(values))} cm`;
+}
+
+/** The verdict for the right child, or for the answer shown after two misses. */
+function middleVerdict(values: readonly number[], child: number, shown: boolean): string {
+	const pair = middleChildren(values);
+	const height = values[child];
+	const name = childName(child);
+	if (pair.length === 1) {
+		const rank = rankOf(values, child);
+		const atMedian = `so the median height is ${height} cm.`;
+		if (shown) return `The middle child is ${name.toLowerCase()} (${height} cm): ${plural(rank.shorter, 'child is', 'children are')} shorter and ${rank.taller} taller, ${atMedian}`;
+		return `Yes. ${name} (${height} cm) has ${shorterAndTaller(rank)}, ${atMedian}`;
+	}
+	const halfway = `so the median height is halfway between them: ${halfwaySum(values, pair)}.`;
+	const outside = values.length / 2 - 1;
+	if (shown) {
+		const [low, high] = pair.map((index) => `${childName(index).toLowerCase()} (${values[index]} cm)`);
+		return `The two middle children are ${low} and ${high}: ${plural(outside, 'child is', 'children are')} shorter than both and ${outside} taller than both, ${halfway}`;
+	}
+	const other = pair.find((index) => index !== child) ?? child;
+	return `Yes. ${name} (${height} cm) is one of the two middle children, with ${shorterAndTaller(rankOf(values, child))}. The other is ${childName(other).toLowerCase()} (${values[other]} cm), ${halfway}`;
+}
 
 export function feedbackLine(state: DescriptiveState): string | null {
 	const { feedback } = state;
 	if (!feedback) return null;
 	const values = state.values;
+	if (feedback.kind !== 'wrong') return middleVerdict(values, feedback.child, feedback.kind === 'shown');
 	const height = values[feedback.child];
 	const rank = rankOf(values, feedback.child);
 	const name = childName(feedback.child);
-	const median = `so the median height is ${height} cm.`;
-	if (feedback.kind === 'right') return `Yes. ${name} (${height} cm) has ${shorterAndTaller(rank.shorter, rank.taller)}, ${median}`;
-	if (feedback.kind === 'shown') return `The middle child is ${name.toLowerCase()} (${height} cm): ${plural(rank.shorter, 'child is', 'children are')} shorter and ${rank.taller} taller, ${median}`;
 	const hint = rank.shorter > rank.taller ? 'Try a shorter child.' : 'Try a taller child.';
-	if (feedback.child === (values.length - 1) / 2) {
-		const taller = rank.taller === 0 ? 'none is taller' : `${rank.taller} ${rank.taller === 1 ? 'is' : 'are'} taller`;
+	if (arrivalMiddle(values.length).includes(feedback.child)) {
 		const next = state.linedUp ? hint : 'Line them up first.';
-		return `${name} stands in the middle of the arrival line, but ${plural(rank.shorter, 'child is', 'children are')} shorter and ${taller}. ${next}`;
+		return `${name} stands in the middle of the arrival line, but ${rankClauses(rank)}. ${next}`;
 	}
-	return `${name} (${height} cm) has ${shorterAndTaller(rank.shorter, rank.taller)}. ${hint}`;
+	return `${name} (${height} cm) has ${shorterAndTaller(rank)}. ${hint}`;
 }
 
 /** "(122 + 125 + … + 148) / 9 = 1,206 / 9 = 134": the mean as a sum over the sorted values. */
@@ -585,6 +627,22 @@ export interface SymbolLine {
 	spoken: string;
 }
 
+/** "median = x₍₅₎", or halfway between the two middle heights when n is even. */
+function medianSymbolLine(values: readonly number[]): SymbolLine {
+	const count = n(values);
+	const value = amount(median(values));
+	if (count % 2 === 1) {
+		const middle = (count + 1) / 2;
+		return { text: `median = x₍${subscript(middle)}₎ = ${value} cm`, spoken: `The median is x ${middle} in brackets, the ${ordinal(middle)} height in order: ${value} cm.` };
+	}
+	const low = count / 2;
+	const high = low + 1;
+	return {
+		text: `median = (x₍${subscript(low)}₎ + x₍${subscript(high)}₎) / 2 = ${value} cm`,
+		spoken: `The median is halfway between x ${low} and x ${high} in brackets, the ${ordinal(low)} and ${ordinal(high)} heights in order: ${value} cm.`,
+	};
+}
+
 export function symbolLines(state: DescriptiveState): SymbolLine[] {
 	if (state.stage !== 'symbols') return [];
 	const setup = setupOf(state);
@@ -592,10 +650,9 @@ export function symbolLines(state: DescriptiveState): SymbolLine[] {
 	const count = n(values);
 	const center = mean(values);
 	if (setup.kind === 'lineup') {
-		const middle = (count + 1) / 2;
 		return [
 			{ text: `x₍₁₎ ≤ x₍₂₎ ≤ … ≤ x₍${subscript(count)}₎`, spoken: `The heights in order: x 1 in brackets is the shortest, x ${count} in brackets the tallest.` },
-			{ text: `median = x₍${subscript(middle)}₎ = ${amount(median(values))} cm`, spoken: `The median is x ${middle} in brackets, the ${ordinal(middle)} height in order: ${amount(median(values))} cm.` },
+			medianSymbolLine(values),
 			{ text: `μ = (1/n) Σ xᵢ = ${groupThousands(sum(values))} / ${count} ${equalsAmount(center)} cm`, spoken: `mu, the mean, is 1 over n times the sum of every x i: ${groupThousands(sum(values))} divided by ${count}, ${amount(center)} cm.` },
 		];
 	}
@@ -651,7 +708,7 @@ export function dataTable(state: DescriptiveState): TableData {
 	const showPlaces = (setup.kind === 'lineup' || setup.kind === 'spread' || setup.kind === 'box') && !isCovered(state);
 	const order = places(values);
 	const caption: Record<string, string> = {
-		lineup: 'Our class, in the order they arrived.',
+		lineup: 'The children, in the order they arrived.',
 		spread: 'Our class, child by child.',
 		box: 'Our class, child by child.',
 		newcomer: 'Savings, customer by customer.',
@@ -823,6 +880,8 @@ export function announcementFor(state: DescriptiveState, action: Action): string
 			if (setup.kind === 'newcomer') return state.newcomer === null ? `${label}. ${readouts}` : `${label}. ${newcomerChange(state)}`;
 			if (setup.kind === 'scaling') return action.id === setup.presets[0]?.id ? `${label}. ${readouts}` : lowMarkChange(state);
 			if (setup.kind === 'spread') return `${label}. ${readouts} ${goal ?? ''}`.trim();
+			// A new class arrives unsorted and covered, so it is introduced, not summarized.
+			if (setup.kind === 'lineup') return `${label}. ${statusLine(state)}`;
 			return `${label}. ${readouts}`;
 		}
 		case 'stage': {

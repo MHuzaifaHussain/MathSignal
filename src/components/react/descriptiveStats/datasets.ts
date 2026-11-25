@@ -5,6 +5,18 @@
 /** Our class: 9 children's heights in cm, numbered in the order they arrived. Mean 134, median 133, no mode. */
 export const CLASS_HEIGHTS: readonly number[] = [133, 122, 140, 128, 148, 125, 137, 131, 142];
 
+/**
+ * Our class and a tenth child, 136 cm, who arrives last. With an even count no child stands in the middle: the
+ * median is halfway between child 1 (133 cm) and child 10 (136 cm), 134.5 cm, a height nobody has. Mean 134.2.
+ */
+export const CLASS_OF_TEN: readonly number[] = [...CLASS_HEIGHTS, 136];
+
+/**
+ * Another class of 9 in which two heights repeat: 127 cm and 141 cm are each held by 2 children, so there are two
+ * modes. The repeats sit away from the middle, so the middle child is still one child (child 7, 132 cm). Mean 134.
+ */
+export const SHARED_HEIGHTS: readonly number[] = [141, 127, 136, 149, 123, 130, 132, 127, 141];
+
 /** Our class with one very tall child: child 5 is 162 cm instead of 148. Quartiles and fences don't move. */
 export const CLASS_TALL: readonly number[] = CLASS_HEIGHTS.map((height) => (height === 148 ? 162 : height));
 

@@ -1,9 +1,9 @@
 // The board configurations pages pick with <DescriptiveStats setup="…" />. Each one fixes its data set, axis,
 // slider, presets and stages. validateSetup runs at import, so a setup the board can't draw at 320px, or whose
 // slider can carry a dot off the chart, fails the build. Design and reasoning: decision 0015.
-import { CAFE_SAVINGS, CLASS_HEIGHTS, CLASS_TALL, EVERYONE_134, TEST_A, TEST_B, TEST_B_LOW, TIGHT_CLASS, pumpkins, type MarkList } from './datasets.ts';
+import { CAFE_SAVINGS, CLASS_HEIGHTS, CLASS_OF_TEN, CLASS_TALL, EVERYONE_134, SHARED_HEIGHTS, TEST_A, TEST_B, TEST_B_LOW, TIGHT_CLASS, pumpkins, type MarkList } from './datasets.ts';
 import { MAX_STACK, MIN_DISTINCT_PX, closestPair, type Axis } from './layout.ts';
-import { mean, minMax, populationSD, sortedValues, zScore } from './model.ts';
+import { mean, middleCount, middleIndices, minMax, populationSD, sortedValues, zScore } from './model.ts';
 import { toNumber } from '../boardMath.ts';
 
 export type SetupId = 'class-lineup' | 'cafe-millionaire' | 'class-spread' | 'class-box' | 'marks-scaling' | 'pumpkin-outliers';
@@ -91,12 +91,19 @@ const SETUP_LIST: readonly Setup[] = [
 	{
 		id: 'class-lineup',
 		kind: 'lineup',
-		label: 'Nine children of our class as bars drawn to their height. Find the child in the middle.',
+		label: 'A class of children as bars drawn to their height. Find the child in the middle.',
 		words: HEIGHT_WORDS,
 		opening: CLASS_HEIGHTS,
 		axis: { min: 120, max: 150, tickStep: 5, narrowTickStep: 10 },
 		lane: false,
-		presets: [],
+		// Each preset is a new class to line up, chosen for what lining up shows: one middle child when n is odd,
+		// two when n is even (the median is halfway between them), and repeated heights standing side by side (the
+		// mode, here two). The "Line them up" switch stays the step that sorts them.
+		presets: [
+			{ id: 'our-class', label: 'Our class', values: CLASS_HEIGHTS },
+			{ id: 'ten-children', label: 'Ten children', values: CLASS_OF_TEN },
+			{ id: 'shared-heights', label: 'Shared heights', values: SHARED_HEIGHTS },
+		],
 		stages: ['pictures', 'numbers', 'symbols'],
 		stageLegend: 'Show as',
 		openingStage: 'pictures',
@@ -274,6 +281,7 @@ export function validateSetup(setup: Setup): Setup {
 	const unknownWait = setup.waitsForCheck.find((stage) => !setup.stages.includes(stage));
 	if (unknownWait) throw setupError(setup, `holds back stage "${unknownWait}", which it doesn't offer.`);
 	if (setup.waitsForCheck.length > 0 && setup.kind !== 'lineup') throw setupError(setup, 'holds stages back for Check, but only line-up setups have a Check.');
+	if (setup.kind === 'lineup' && setup.presets.some((preset) => !preset.values)) throw setupError(setup, 'has a preset without a class to line up.');
 	const lists = listsOf(setup);
 	const counts = new Set(lists.map((list) => list.values.length));
 	if (setup.kind === 'spread' && counts.size !== 1) throw setupError(setup, 'needs the same number of children in every preset, because "Child to move" lists them.');
@@ -282,8 +290,9 @@ export function validateSetup(setup: Setup): Setup {
 		if (setup.kind === 'box' && values.length % 4 !== 1) {
 			throw setupError(setup, `${name}: a box setup needs n = 4k + 1 values so the quartiles land on data points; it has ${values.length}.`);
 		}
-		if (setup.kind === 'lineup' && (values.length % 2 === 0 || new Set(values).size !== values.length)) {
-			throw setupError(setup, `${name}: the middle child must be one child, so the heights must be distinct and odd in number.`);
+		if (setup.kind === 'lineup' && middleIndices(values).length !== middleCount(values)) {
+			const middle = middleCount(values) === 1 ? 'the middle height must belong to one child' : 'the two middle heights must each belong to one child';
+			throw setupError(setup, `${name}: ${middle}, so no two children may tie in the middle.`);
 		}
 		if (setup.kind !== 'scaling') validatePlacement(setup, name, setup.axis, values, setup.lane);
 	}

@@ -1523,6 +1523,37 @@ const announcerRun = () => {
 	assert.deepEqual(dm.rankOf(klass, 6), { shorter: 5, taller: 3, same: 0 });
 	assert.deepEqual(dm.rankOf(klass, 0), { shorter: 4, taller: 4, same: 0 });
 	assert.deepEqual(dm.iqrFlags(klass), klass.map(() => false));
+	assert.deepEqual(dm.middleIndices(klass), [0], 'child 1 is the one middle child');
+	assert.equal(dm.middleCount(klass), 1);
+
+	// Line-up presets. Ten children: our class and a tenth child of 136 cm, so the median falls between two children.
+	const ten = dd.CLASS_OF_TEN;
+	assert.deepEqual(ten, [133, 122, 140, 128, 148, 125, 137, 131, 142, 136]);
+	assert.equal(dm.sum(ten), 1342);
+	assert.deepEqual(dm.mean(ten), f(671, 5), 'mean 134.2');
+	assert.deepEqual(dm.median(ten), f(269, 2), 'median 134.5, a height nobody has');
+	assert.ok(!ten.includes(134.5));
+	assert.deepEqual(dm.middleIndices(ten), [0, 9], 'child 1 (133 cm) and child 10 (136 cm)');
+	assert.equal(dm.middleCount(ten), 2);
+	assert.deepEqual(dm.rankOf(ten, 0), { shorter: 4, taller: 5, same: 0 });
+	assert.deepEqual(dm.rankOf(ten, 9), { shorter: 5, taller: 4, same: 0 });
+	assert.deepEqual(dm.modes(ten), []);
+	assert.equal(dm.range(ten), 26);
+	// Shared heights: two heights held by 2 children each, kept away from the middle child.
+	const shared = dd.SHARED_HEIGHTS;
+	assert.deepEqual(dm.sortedValues(shared), [123, 127, 127, 130, 132, 136, 141, 141, 149]);
+	assert.equal(dm.sum(shared), 1206);
+	assert.deepEqual(dm.mean(shared), f(134, 1));
+	assert.deepEqual(dm.median(shared), f(132, 1));
+	assert.deepEqual(dm.modes(shared), [127, 141]);
+	assert.equal(dm.topCount(shared), 2);
+	assert.equal(dm.range(shared), 26);
+	assert.deepEqual(dm.middleIndices(shared), [6], 'child 7 (132 cm)');
+	assert.deepEqual(dm.rankOf(shared, 1), { shorter: 1, taller: 6, same: 1 });
+	// A tie in the middle leaves no single middle child, or only one of an even pair.
+	assert.deepEqual(dm.middleIndices([131, 133, 133, 137, 140]), []);
+	assert.deepEqual(dm.middleIndices([122, 133, 133, 140]), []);
+	assert.deepEqual(dm.middleIndices([122, 130, 133, 133, 140, 145]), [], 'a tie at one of the two middle places');
 
 	// The tight class has the same mean and median, two modes and a quarter of the variance.
 	const tight = dd.TIGHT_CLASS;
@@ -1664,7 +1695,16 @@ const announcerRun = () => {
 	assert.throws(() => ds.validateSetup({ ...pumpkinSetup, lane: false }), /"pumpkin-outliers".*60 is past the axis, which ends at 30/);
 	// 320px spacing: on a 0–60 kg axis the ordinary pumpkins, 1 kg apart, could not be told apart.
 	assert.throws(() => ds.validateSetup({ ...pumpkinSetup, axis: { min: 0, max: 60, tickStep: 10, narrowTickStep: 20 } }), /"pumpkin-outliers" the opening: 4 and 5 sit 4\.2px apart at 320px/);
-	assert.throws(() => ds.validateSetup({ ...ds.getSetup('class-lineup'), opening: [...dd.CLASS_HEIGHTS, 130] }), /"class-lineup".*distinct and odd/);
+	// A line-up class may be even in number or repeat heights, but no two children may tie in the middle.
+	const lineupSetup = ds.getSetup('class-lineup');
+	assert.deepEqual(lineupSetup.presets.map((preset) => preset.id), ['our-class', 'ten-children', 'shared-heights']);
+	assert.ok(ds.validateSetup({ ...lineupSetup, opening: dd.CLASS_OF_TEN }));
+	assert.throws(() => ds.validateSetup({ ...lineupSetup, opening: dd.CLASS_HEIGHTS.map((h) => (h === 131 ? 133 : h)) }), /"class-lineup" the opening: the middle height must belong to one child/);
+	assert.throws(
+		() => ds.validateSetup({ ...lineupSetup, presets: [{ id: 'tie', label: 'Tied pair', values: dd.CLASS_OF_TEN.map((h) => (h === 136 ? 133 : h)) }] }),
+		/"class-lineup" preset "Tied pair": the two middle heights must each belong to one child/,
+	);
+	assert.throws(() => ds.validateSetup({ ...lineupSetup, presets: [{ id: 'nobody', label: 'Nobody', newcomer: null }] }), /"class-lineup" has a preset without a class/);
 	assert.throws(() => ds.validateSetup({ ...ds.getSetup('class-lineup'), waitsForCheck: ['box'] }), /"class-lineup".*stage "box"/);
 	assert.throws(() => ds.validateSetup({ ...spread, waitsForCheck: ['symbols'] }), /"class-spread".*only line-up setups have a Check/);
 	assert.throws(() => ds.validateSetup({ ...spread, presets: [...spread.presets, ...box.presets.map((p) => ({ ...p, id: `${p.id}-2` }))] }), /"class-spread".*5 presets/);
@@ -1679,7 +1719,11 @@ const announcerRun = () => {
 	assert.equal(dst.stageAllowed(lineupOpen, 'symbols'), false, 'Symbols waits for Check');
 	assert.equal(dst.stageAllowed(lineupOpen, 'numbers'), true);
 	assert.equal(dst.reducer(lineupOpen, { type: 'stage', stage: 'symbols' }).stage, 'pictures', 'a held-back stage is ignored');
-	assert.equal(dst.middleChild(dd.CLASS_HEIGHTS), 0);
+	assert.deepEqual(dst.middleChildren(dd.CLASS_HEIGHTS), [0]);
+	assert.deepEqual(dst.middleChildren(dd.CLASS_OF_TEN), [0, 9], 'shortest first');
+	assert.deepEqual(dst.middleChildren(dd.SHARED_HEIGHTS), [6]);
+	assert.throws(() => dst.middleChildren([131, 133, 133, 137, 140]), /tie in the middle/);
+	assert.equal(lineupOpen.activePreset, 'our-class', 'the opening class is the first preset');
 	assert.deepEqual(run('class-lineup', { type: 'check' }).refusal, { kind: 'no-pick' });
 	assert.equal(run('class-lineup', { type: 'check' }).failedChecks, 0, 'a refused Check is not a miss');
 	const wrongFive = run('class-lineup', { type: 'pick', child: 4 }, { type: 'check' });
@@ -1700,6 +1744,37 @@ const announcerRun = () => {
 	assert.equal(dst.stageAllowed(right, 'symbols'), true);
 	assert.equal(dst.reducer(right, { type: 'check' }), right, 'Check is ignored once it has passed');
 	assert.equal(dst.reducer(right, { type: 'pick', child: 3 }), right, 'the pick is locked after Check');
+
+	// A line-up preset is a new class: it arrives unsorted and covered, and its hunt starts from scratch.
+	const solvedOnSymbols = dst.reducer(right, { type: 'stage', stage: 'symbols' });
+	assert.equal(solvedOnSymbols.stage, 'symbols');
+	const tenLoaded = dst.reducer(solvedOnSymbols, { type: 'preset', id: 'ten-children' });
+	assert.deepEqual(tenLoaded.values, dd.CLASS_OF_TEN);
+	assert.equal(tenLoaded.activePreset, 'ten-children');
+	assert.equal(dst.isCovered(tenLoaded), true, 'the new class is covered again');
+	assert.equal(tenLoaded.linedUp, false, 'the new class arrives unsorted');
+	assert.equal(tenLoaded.pick, null);
+	assert.equal(tenLoaded.feedback, null);
+	assert.equal(tenLoaded.failedChecks, 0);
+	assert.equal(tenLoaded.stage, 'pictures', 'Symbols waits for Check again, so the board goes back to the opening stage');
+	assert.equal(dst.reducer(dst.reducer(right, { type: 'stage', stage: 'numbers' }), { type: 'preset', id: 'shared-heights' }).stage, 'numbers', 'an allowed stage stays');
+	const twoMissesThenPreset = run('class-lineup', { type: 'pick', child: 4 }, { type: 'check' }, { type: 'check' }, { type: 'preset', id: 'shared-heights' });
+	assert.equal(guidedModule.canShowAnswer(twoMissesThenPreset), false, 'misses on one class do not offer the answer on the next');
+	assert.equal(dst.reducer(tenLoaded, { type: 'preset', id: 'ten-children' }), tenLoaded, 'pressing the class in view changes nothing');
+	assert.equal(dst.reducer(right, { type: 'preset', id: 'our-class' }), right, 'nor does pressing it after Check');
+	// Ten children: either middle child is right; "Show the answer" names the shorter one and the verdict both.
+	assert.equal(dst.reducer(dst.reducer(tenLoaded, { type: 'pick', child: 0 }), { type: 'check' }).checked, true);
+	assert.equal(dst.reducer(dst.reducer(tenLoaded, { type: 'pick', child: 9 }), { type: 'check' }).checked, true);
+	assert.equal(dst.reducer(dst.reducer(tenLoaded, { type: 'pick', child: 4 }), { type: 'check' }).checked, false);
+	const tenShown = [{ type: 'pick', child: 4 }, { type: 'check' }, { type: 'check' }, { type: 'show-answer' }].reduce(dst.reducer, tenLoaded);
+	assert.deepEqual(tenShown.feedback, { kind: 'shown', child: 0 });
+	assert.equal(dst.reducer(tenLoaded, { type: 'pick', child: 9 }).pick, 9, 'child 10 can be picked');
+	assert.equal(dst.reducer(tenLoaded, { type: 'pick', child: 10 }).pick, null, 'no child 11');
+	// Shared heights: the middle child is child 7, and the twins of height are not.
+	const sharedLoaded = run('class-lineup', { type: 'preset', id: 'shared-heights' });
+	assert.equal(dst.reducer(dst.reducer(sharedLoaded, { type: 'pick', child: 6 }), { type: 'check' }).checked, true);
+	assert.equal(dst.reducer(dst.reducer(sharedLoaded, { type: 'pick', child: 1 }), { type: 'check' }).checked, false);
+	assert.deepEqual(dst.reducer(sharedLoaded, { type: 'reset' }), dst.initialState('class-lineup'), 'Reset returns to our class');
 
 	// class-spread: presets keep the previous σ as a ghost; moving a child steps away from every preset.
 	const spreadOpen = dst.initialState('class-spread');
@@ -1828,6 +1903,66 @@ const announcerRun = () => {
 	assert.deepEqual(dsay.dataTable(found).headers, ['Child', 'Height (cm)', 'Place in line']);
 	assert.deepEqual(dsay.dataTable(found).rows[0], { header: 'Child 1', cells: ['133', '5th'] });
 	assert.deepEqual(dsay.summaryTable(open).rows, []);
+	assert.equal(dsay.dataTable(open).caption, 'The children, in the order they arrived.');
+	assert.equal(dsay.boardLabel(ds.getSetup('class-lineup')), 'A class of children as bars drawn to their height. Find the child in the middle.');
+
+	// Ten children: no child stands at the median, which is halfway between the two middle children.
+	const ten = run('class-lineup', { type: 'preset', id: 'ten-children' });
+	assert.equal(dsay.statusLine(ten), '10 children, in the order they arrived. Heights from 122 cm to 148 cm.');
+	assert.equal(dsay.announcementFor(ten, { type: 'preset', id: 'ten-children' }), 'Ten children. 10 children, in the order they arrived. Heights from 122 cm to 148 cm.');
+	assert.equal(
+		dsay.feedbackLine(dst.reducer(dst.reducer(ten, { type: 'pick', child: 4 }), { type: 'check' })),
+		'Child 5 stands in the middle of the arrival line, but 9 children are shorter and none is taller. Line them up first.',
+	);
+	assert.equal(
+		dsay.feedbackLine(dst.reducer(dst.reducer(ten, { type: 'pick', child: 5 }), { type: 'check' })),
+		'Child 6 stands in the middle of the arrival line, but 1 child is shorter and 8 are taller. Line them up first.',
+	);
+	assert.equal(dsay.feedbackLine(dst.reducer(dst.reducer(ten, { type: 'pick', child: 6 }), { type: 'check' })), 'Child 7 (137 cm) has 6 children shorter and 3 taller. Try a shorter child.');
+	const tenFound = dst.reducer(dst.reducer(ten, { type: 'pick', child: 9 }), { type: 'check' });
+	assert.equal(
+		dsay.feedbackLine(tenFound),
+		'Yes. Child 10 (136 cm) is one of the two middle children, with 5 children shorter and 4 taller. The other is child 1 (133 cm), so the median height is halfway between them: (133 + 136) / 2 = 134.5 cm.',
+	);
+	assert.equal(
+		dsay.feedbackLine(dst.reducer(dst.reducer(ten, { type: 'pick', child: 0 }), { type: 'check' })),
+		'Yes. Child 1 (133 cm) is one of the two middle children, with 4 children shorter and 5 taller. The other is child 10 (136 cm), so the median height is halfway between them: (133 + 136) / 2 = 134.5 cm.',
+	);
+	const tenGiven = [{ type: 'pick', child: 4 }, { type: 'check' }, { type: 'check' }, { type: 'show-answer' }].reduce(dst.reducer, ten);
+	assert.equal(
+		dsay.feedbackLine(tenGiven),
+		'The two middle children are child 1 (133 cm) and child 10 (136 cm): 4 children are shorter than both and 4 taller than both, so the median height is halfway between them: (133 + 136) / 2 = 134.5 cm.',
+	);
+	assert.deepEqual(dsay.readoutLines(tenFound), [
+		'Mean: (122 + 125 + 128 + 131 + 133 + 136 + 137 + 140 + 142 + 148) / 10 = 1,342 / 10 = 134.2 cm. The shortest children stand further below the median than the tallest stand above it, so the mean sits 0.3 cm lower.',
+		'No height repeats, so this class has no mode.',
+		'Range: 148 − 122 = 26 cm.',
+	]);
+	assert.deepEqual(dsay.summaryTable(tenFound).rows.find((entry) => entry.header === 'Median'), { header: 'Median', cells: ['134.5 cm', 'The average of the 5th and 6th in order'] });
+	const tenSymbols = dsay.symbolLines(dst.reducer(tenFound, { type: 'stage', stage: 'symbols' }));
+	assert.deepEqual(tenSymbols.map((line) => line.text), ['x₍₁₎ ≤ x₍₂₎ ≤ … ≤ x₍₁₀₎', 'median = (x₍₅₎ + x₍₆₎) / 2 = 134.5 cm', 'μ = (1/n) Σ xᵢ = 1,342 / 10 = 134.2 cm']);
+	assert.equal(tenSymbols[1].spoken, 'The median is halfway between x 5 and x 6 in brackets, the 5th and 6th heights in order: 134.5 cm.');
+	for (const line of tenSymbols) assert.ok(!/[₍₎ᵢΣ≤]/.test(line.spoken), `spoken form has symbols: ${line.spoken}`);
+	assert.deepEqual(dsay.dataTable(tenFound).rows.map((entry) => entry.cells[1]), ['5th', '1st', '8th', '3rd', '10th', '2nd', '7th', '4th', '9th', '6th']);
+
+	// Shared heights: equal heights stand side by side once lined up, and two of them tie for the mode.
+	const shared = run('class-lineup', { type: 'preset', id: 'shared-heights' });
+	assert.equal(dsay.statusLine(shared), '9 children, in the order they arrived. Heights from 123 cm to 149 cm.');
+	assert.equal(dsay.feedbackLine(dst.reducer(dst.reducer(shared, { type: 'pick', child: 1 }), { type: 'check' })), 'Child 2 (127 cm) has 1 child shorter, 6 taller and 1 the same height. Try a taller child.');
+	assert.equal(
+		dsay.feedbackLine(dst.reducer(dst.reducer(shared, { type: 'pick', child: 4 }), { type: 'check' })),
+		'Child 5 stands in the middle of the arrival line, but no child is shorter and 8 are taller. Line them up first.',
+	);
+	const sharedFound = dst.reducer(dst.reducer(shared, { type: 'pick', child: 6 }), { type: 'check' });
+	assert.equal(dsay.feedbackLine(sharedFound), 'Yes. Child 7 (132 cm) has 4 children shorter and 4 taller, so the median height is 132 cm.');
+	assert.deepEqual(dsay.readoutLines(sharedFound), [
+		'Mean: (123 + 127 + 127 + 130 + 132 + 136 + 141 + 141 + 149) / 9 = 1,206 / 9 = 134 cm. The tallest children stand further above the median than the shortest stand below it, so the mean sits 2 cm higher.',
+		'Mode: 127 cm and 141 cm, each held by 2 children.',
+		'Range: 149 − 123 = 26 cm.',
+	]);
+	assert.deepEqual(dsay.summaryTable(sharedFound).rows.find((entry) => entry.header === 'Mode'), { header: 'Mode', cells: ['127 and 141', 'The most common value'] });
+	// Equal heights share the first place they take.
+	assert.deepEqual(dsay.dataTable(sharedFound).rows.map((entry) => entry.cells[1]), ['7th', '2nd', '6th', '9th', '1st', '4th', '5th', '2nd', '7th']);
 
 	// The cover: before Check, nothing states the median, the mean, the mode, a place or a summary row ("133" may
 	// appear, because it is child 1's height in the data table).
@@ -1839,8 +1974,14 @@ const announcerRun = () => {
 		...Array.from({ length: 9 }, (_, child) => run('class-lineup', { type: 'line-up', on: true }, { type: 'pick', child }, { type: 'check' })),
 		run('class-lineup', { type: 'stage', stage: 'numbers' }),
 		run('class-lineup', { type: 'check' }),
+		// Every preset, loaded fresh or after the last class was solved, with each pick checked, sorted or not.
+		...ds.getSetup('class-lineup').presets.flatMap((preset) => {
+			const loaded = [dst.initialState('class-lineup'), found].map((from) => dst.reducer(from, { type: 'preset', id: preset.id }));
+			const picks = preset.values.flatMap((_, child) => [false, true].map((on) => [{ type: 'line-up', on }, { type: 'pick', child }, { type: 'check' }].reduce(dst.reducer, loaded[0])));
+			return [...loaded, ...picks];
+		}),
 	].filter((state) => dst.isCovered(state));
-	assert.ok(coveredStates.length >= 18);
+	assert.ok(coveredStates.length >= 70);
 	for (const state of coveredStates) {
 		const texts = [
 			dsay.statusLine(state),
@@ -1854,6 +1995,7 @@ const announcerRun = () => {
 			dsay.announcementFor(state, { type: 'line-up', on: state.linedUp }),
 			dsay.announcementFor(state, { type: 'reset' }),
 			dsay.announcementFor(state, { type: 'stage', stage: state.stage }),
+			...ds.getSetup('class-lineup').presets.map((preset) => dsay.announcementFor(state, { type: 'preset', id: preset.id })),
 		];
 		for (const text of texts) assert.ok(!summaryWords.test(text), `covered line-up says: ${text}`);
 		// A wrong verdict is allowed "middle" (of the arrival line) but never the median.
@@ -2051,7 +2193,7 @@ const announcerRun = () => {
 	assert.equal(found.mean.label, 'mean 134');
 	assert.equal(found.median.label, 'median 133');
 	assert.deepEqual(found.spans, [], 'no blue on the line-up page');
-	assert.equal(found.reserve, 1);
+	assert.equal(found.reserve, 2, 'room for the shared-heights preset, whose equal heights stack two high');
 	assert.deepEqual(dc.lineUpBars(run('class-lineup', { type: 'line-up', on: true })).map((bar) => bar.slot), [4, 0, 6, 2, 8, 1, 5, 3, 7]);
 
 	const rich = dc.chartRows(run('cafe-millionaire', { type: 'preset', id: 'millionaire' }))[0];
