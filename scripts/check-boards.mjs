@@ -337,7 +337,7 @@ assert.deepEqual([intersect(montyIds('car-1'), montyIds('opens-3')).size, inters
 const montySetup = getSetup('monty-condition');
 assert.equal(montySetup.mode, 'condition');
 assert.equal(montySetup.holdOverlap, true);
-assert.deepEqual(montySetup.chalkNote, { long: "the coin is the host's tie-break", short: 'coin = tie-break' });
+assert.deepEqual(montySetup.chalkNote, { long: "the coin column is the host's tie-break", short: 'coin = tie-break' });
 const montyFresh = initialState('monty-condition');
 const montyRun = (...actions) => actions.reduce(reducer, montyFresh);
 const shrinkOn = { type: 'shrink', on: true };

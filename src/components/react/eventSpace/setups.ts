@@ -194,7 +194,7 @@ const SETUPS: Record<SetupId, Setup> = {
 			A: { editable: false, initial: 'car-1', presets: ['car-1', 'car-2', 'car-3'] },
 			B: { editable: false, initial: 'opens-3', presets: ['opens-3', 'opens-2'] },
 		},
-		chalkNote: { long: "the coin is the host's tie-break", short: 'coin = tie-break' },
+		chalkNote: { long: "the coin column is the host's tie-break", short: 'coin = tie-break' },
 	},
 };
 
