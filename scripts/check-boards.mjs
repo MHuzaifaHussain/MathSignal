@@ -2115,6 +2115,13 @@ const announcerRun = () => {
 		dsay.readoutLines(tight).slice(2).join(' '),
 		'Squared: 36 + 16 + 16 + 4 + 0 + 4 + 16 + 16 + 36 = 144 cm². Variance: 144 / 9 = 16 cm². Standard deviation: √16 = 4 cm. Dashed: σ for Our class was 8 cm; now it is 4 cm.',
 	);
+	// The child-by-child table names the class that is loaded, never "Our class" for another preset's heights.
+	assert.equal(dsay.dataTable(spread).caption, 'Heights, child by child: Our class.');
+	assert.equal(dsay.dataTable(tight).caption, 'Heights, child by child: Tight class.');
+	assert.equal(dsay.dataTable(run('class-spread', { type: 'preset', id: 'everyone-134' })).caption, 'Heights, child by child: Everyone 134 cm.');
+	assert.equal(dsay.dataTable(dst.reducer(tight, { type: 'reset' })).caption, 'Heights, child by child: Our class.');
+	assert.equal(dsay.dataTable(run('class-spread', { type: 'select', child: 3 }, { type: 'set-value', value: 131 })).caption, 'Heights, child by child.');
+	assert.equal(dsay.dataTable(run('class-box', { type: 'preset', id: 'one-very-tall' })).caption, 'Heights, child by child: One very tall child.');
 	assert.deepEqual(dsay.readoutLines(run('class-spread', { type: 'preset', id: 'everyone-134' })), [
 		'Every child is 134 cm: every distance is 0, so the variance is 0 and σ = 0 cm.',
 		'Dashed: σ for Our class was 8 cm; now it is 0 cm.',

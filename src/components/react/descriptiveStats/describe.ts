@@ -35,7 +35,7 @@ import {
 	zScore,
 	type Root,
 } from './model.ts';
-import type { Scale, Setup, Stage } from './setups.ts';
+import { presetById, type Scale, type Setup, type Stage } from './setups.ts';
 import { isCovered, middleChildren, setupOf, valuesNow, type Action, type DescriptiveState } from './state.ts';
 
 export const STAGE_LABELS: Readonly<Record<Stage, string>> = {
@@ -692,6 +692,15 @@ function places(values: readonly number[]): string[] {
 	return values.map((value) => ordinal(ordered.indexOf(value) + 1));
 }
 
+/** "Heights, child by child: Tight class." Names the loaded preset, so the caption never calls another class ours. */
+function heightsCaption(state: DescriptiveState): string {
+	const caption = 'Heights, child by child';
+	if (state.activePreset === null) return `${caption}.`;
+	const preset = presetById(setupOf(state), state.activePreset);
+	if (!preset) throw new Error(`DescriptiveStats: active preset "${state.activePreset}" is not one of setup "${state.setupId}"'s presets.`);
+	return `${caption}: ${preset.label}.`;
+}
+
 export function dataTable(state: DescriptiveState): TableData {
 	const setup = setupOf(state);
 	if (setup.kind === 'scaling') {
@@ -707,20 +716,19 @@ export function dataTable(state: DescriptiveState): TableData {
 	const values = valuesNow(state);
 	const showPlaces = (setup.kind === 'lineup' || setup.kind === 'spread' || setup.kind === 'box') && !isCovered(state);
 	const order = places(values);
-	const caption: Record<string, string> = {
+	const fixedCaption: Record<string, string> = {
 		lineup: 'The children, in the order they arrived.',
-		spread: 'Our class, child by child.',
-		box: 'Our class, child by child.',
 		newcomer: 'Savings, customer by customer.',
 		outliers: 'The pumpkins, one by one.',
 	};
+	const caption = setup.kind === 'spread' || setup.kind === 'box' ? heightsCaption(state) : fixedCaption[setup.kind];
 	const rowName = (index: number) => {
 		if (setup.kind === 'newcomer' && index >= state.values.length) return 'Newcomer';
 		if (setup.kind === 'outliers' && index >= values.length - state.giants) return `Pumpkin ${index + 1} (giant)`;
 		return `${setup.words.itemTitle} ${index + 1}`;
 	};
 	return {
-		caption: caption[setup.kind],
+		caption,
 		headers: [setup.words.itemTitle, setup.words.valueTitle, ...(showPlaces ? ['Place in line'] : [])],
 		rows: values.map((value, index) => ({ header: rowName(index), cells: [groupThousands(value), ...(showPlaces ? [order[index]] : [])] })),
 	};
