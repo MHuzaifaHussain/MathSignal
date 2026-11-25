@@ -5818,8 +5818,18 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		'Ruler to x = −0.5: rise −0.5 over run −1, slope 0.5.',
 		"Tangent at x = 0.5: slope 1. This ruler's slope, 0.5, is 0.5 below it.",
 	]);
-	// Line C over its full value set: the template on every (curve, x, h), and 188 matches, all on ReLU and |x|.
+	// Line C over its full value set, on every (curve, x, h), against tangent slopes written out here from xIndex = 2a:
+	// 2a on x², 3a² on x³, 2(a − 3) on Loss, the piece's slope on ReLU and |x|. The miss is |ruler slope − that slope|,
+	// with the ruler's slope already checked against the BigInt reference above. 188 matches, all on ReLU and |x|.
 	{
+		const TANGENT_BY_PRESET = {
+			bowl: (xIndex) => F(xIndex, 1),
+			's-curve': (xIndex) => F(3 * xIndex * xIndex, 4),
+			loss: (xIndex) => F(xIndex - 6, 1),
+			hinge: (xIndex) => (xIndex === 0 ? null : F(xIndex > 0 ? 1 : 0, 1)),
+			v: (xIndex) => (xIndex === 0 ? null : F(Math.sign(xIndex), 1)),
+		};
+		const CORNER_LEFT = { hinge: '0', v: '−1' };
 		const matches = {};
 		for (const [setupId, preset] of fcPresetsByCurve) {
 			const f = fcSetups.curveOf(preset);
@@ -5827,20 +5837,22 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 				fcSetups.H_LADDER.forEach((h, hIndex) => {
 					const a = F(xIndex, 2);
 					const text = fcSay.tangentLine(fcAfter(setupId, { preset, xIndex, hIndex, stage: 'tangent' })).visible;
-					const slope = fcModel.ruler(f, a, h).slope;
-					const tangent = fcModel.miss(f, a, h);
+					const rulerSlope = fcModel.ruler(f, a, h).slope;
+					const tangentSlope = TANGENT_BY_PRESET[preset](xIndex);
 					const where = `${f.variable} = ${fcText(a)}`;
-					if (!tangent) {
-						assert.match(text, new RegExp(`^No tangent at ${where}: rulers to the right give 1, rulers to the left give (0|−1)\\.$`));
+					const label = `${preset} at ${fcText(a)}, h ${fcText(h)}`;
+					if (tangentSlope === null) {
+						assert.equal(text, `No tangent at ${where}: rulers to the right give 1, rulers to the left give ${CORNER_LEFT[preset]}.`, label);
 						return;
 					}
-					const comparison = tangent.kind === 'matches' ? 'matches it.' : `is ${fcText(tangent.size)} ${tangent.kind} it.`;
-					if (tangent.kind === 'matches') matches[preset] = (matches[preset] ?? 0) + 1;
-					const opening = preset === 'loss' ? /^Slope (−?[\d.]+): (a step to the right (lowers|raises) the loss|the loss is flat here)\.$/ : null;
-					const [first, rest] = [text.slice(0, text.indexOf(" This ruler's")), text.slice(text.indexOf(" This ruler's") + 1)];
-					assert.equal(rest, `This ruler's slope, ${fcText(slope)}, ${comparison}`, `${preset} at ${fcText(a)}, h ${fcText(h)}`);
-					if (opening) assert.match(first, opening);
-					else assert.match(first, new RegExp(`^Tangent at ${where.replace('.', '\\.')}: slope −?[\\d.]+\\.$`));
+					const gap = subtractFractions(rulerSlope, tangentSlope);
+					const order = compareFractions(gap, F(0, 1));
+					const comparison = order === 0 ? 'matches it.' : `is ${fcText(fcModel.absolute(gap))} ${order > 0 ? 'above' : 'below'} it.`;
+					if (order === 0) matches[preset] = (matches[preset] ?? 0) + 1;
+					const sign = compareFractions(tangentSlope, F(0, 1));
+					const lossOpening = sign === 0 ? 'Slope 0: the loss is flat here.' : `Slope ${fcText(tangentSlope)}: a step to the right ${sign < 0 ? 'lowers' : 'raises'} the loss.`;
+					const opening = preset === 'loss' ? lossOpening : `Tangent at ${where}: slope ${fcText(tangentSlope)}.`;
+					assert.equal(text, `${opening} This ruler's slope, ${fcText(rulerSlope)}, ${comparison}`, label);
 				});
 			}
 		}
