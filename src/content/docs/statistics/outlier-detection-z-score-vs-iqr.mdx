@@ -15,7 +15,7 @@ takeaways:
   - The z-score rule measures distance in standard deviations from the mean. The IQR rule measures distance past the middle half of the data. A value exactly on a fence is not flagged.
   - With 9 pumpkins, one 30 kg giant has z ≈ 2.81 (with σ), so |z| > 3 misses it, while the IQR rule's upper fence is 10 kg and flags it.
   - Among n values no single z-score can pass √(n − 1) with σ, or (n − 1)/√n with s, and it equals the bound only when the other values are all equal. With 9 values that is about 2.83 or 2.67, so |z| > 3 can never fire.
-  - Outliers inflate the σ they are measured with. Two 30 kg giants among 9 pumpkins each get z ≈ 1.87, and two equal giants can never reach √3.5 ≈ 1.87, however heavy. The quartiles still flag both.
+  - Outliers inflate the σ they are measured with. Two 30 kg giants among 9 pumpkins each get z ≈ 1.865, and two equal giants can never reach √3.5 ≈ 1.871, however heavy. The quartiles still flag both.
   - The IQR rule can be fooled too. Three giants among 9 move Q₃ onto a giant, and skewed but regular data cross the fence often, about 4.8% of exponential data against 0.7% of normal data.
 references:
   - nist-outlier-detection
@@ -62,23 +62,25 @@ import DescriptiveStats from "../../../components/react/DescriptiveStats.tsx";
 
 <Analogy breaks="Judge Middle is not always right. If three of the nine pumpkins were giants, the middle half would reach a giant and nothing would be flagged. And a flag only means look again: the giant may be a real prize-winner.">
 
-Nine pumpkins are weighed at the village fair. Eight weigh 4, 5, 5, 6, 6, 6, 7 and 7 kg; the ninth weighs 30 kg. Two judges decide which pumpkins are unusual.
+Nine pumpkins are weighed at a fair. Eight weigh 4, 5, 5, 6, 6, 6, 7 and 7 kg; the ninth weighs 30 kg. Two judges decide which pumpkins are unusual.
 
 Judge Average works out the typical weight and how far pumpkins usually sit from it, then flags any pumpkin more than 3 of those usual distances away. Judge Middle looks only at the middle half of the line, from 5 kg to 7 kg, a gap of 2 kg, and flags anything more than one and a half gaps past it: above 10 kg or below 2 kg.
 
-Judge Middle flags the giant at once. Judge Average doesn't, because the giant was counted when the typical weight and the usual distance were worked out. It dragged the average up to about 8.4 kg and stretched the usual distance to about 7.7 kg, so it is measured with a ruler it stretched itself.
+Do the two judges agree about the giant? That is the first question in the next section.
 
 Judge Middle has a blind spot too. In a class's pocket money most children get a little and a few get much more, with no mistake anywhere, yet Judge Middle flags those few.
 
 </Analogy>
 
 <WhyThisMatters>
-Before training, data are checked for values that look wrong: a sensor that reported 999, a price with an extra zero, a mislabeled example. The cheapest checks are these two rules, run one feature at a time. A z-score rule can pass two corrupted entries, because they inflate the standard deviation that judges them. An IQR rule can flag hundreds of regular rows in a skewed feature such as latency.
+Before training, data are checked for values that look wrong: a sensor that reported 999, a price with an extra zero, a mislabeled example. The cheapest checks are these two rules, and they don't always agree about which entries look wrong. An IQR rule can flag hundreds of regular rows in a skewed feature such as latency.
 </WhyThisMatters>
 
 ## Weigh the giant pumpkin
 
-Decide first, because every readout on this board updates at once. A 30 kg giant joins eight pumpkins of 4 to 7 kg. Will |z| > 3 flag it? If a second 30 kg giant replaces a 7 kg pumpkin, will |z| > 2 flag either giant? Going further: how heavy must one giant be before |z| > 3 flags it?
+Judge Average uses the z-score rule: a pumpkin's z-score is its distance from the mean in standard deviations; |z| drops the sign. Judge Middle uses the IQR rule: the interquartile range, IQR, is the width of the middle half, and the rule flags anything more than 1.5 IQR past it.
+
+Decide first, because the board shows each verdict as soon as you move the giant or press a preset. A 30 kg giant joins eight pumpkins of 4 to 7 kg. Will |z| > 3 flag it? If a second 30 kg giant replaces a 7 kg pumpkin, will |z| > 2 flag either giant? How heavy must one giant be before |z| > 3 flags it?
 
 The Giant pumpkin slider sets the giant from 8 to 60 kg (arrow keys 1 kg, Page Up and Page Down 5 kg). Flag when |z| is above sets the cutoff, 2 or 3. The presets are No giant (8 kg), One giant (30 kg) and Two giants (30 kg each). The IQR rule's flag is a solid ring tagged "IQR", the z-score rule's a dashed ring tagged "z". Table view shows the data as tables.
 
@@ -90,27 +92,25 @@ Your task: find a giant weight that only the z-score rule flags, then one that o
 
 **The prediction.** One giant (30 kg) reads "Mean ≈ 8.44 kg, σ ≈ 7.68 kg, so its z-score is ≈ 2.81: flagged at |z| > 2, not at |z| > 3." With the cutoff at 3 the board adds "With 9 pumpkins no z-score can reach √8 ≈ 2.83, however heavy the giant, so |z| > 3 can never flag anything here." At 60 kg the z-score is still only ≈ 2.82, because every extra kilogram also raises the mean and <Var name="sigma" />. So no weight is heavy enough. Two giants (30 kg each) reads "Mean 11 kg, σ ≈ 10.19 kg, each z ≈ 1.87. Neither passes |z| > 2: the two giants hide each other. The IQR rule still flags both."
 
-**The task.** With the cutoff at 2, a 9 or 10 kg giant is flagged only by the z-score rule; at 10 kg the board says "On the fence is not past it: the IQR rule doesn't flag 10 kg, but z ≈ 2.34 passes |z| > 2." From 11 kg up, with the cutoff at 3, only the IQR rule flags the giant, and with two giants of 11 kg or more it alone flags both. So the z-score rule fires first on one mild giant, and fails when the outlier is big or has company.
+**The task.** With the cutoff at 2, a 9 or 10 kg giant is flagged only by the z-score rule; at 10 kg the board says "On the fence is not past it: the IQR rule doesn't flag 10 kg, but z ≈ 2.34 passes |z| > 2." From 11 kg up, with the cutoff at 3, only the IQR rule flags the giant, and with two giants of 11 kg or more it alone flags both.
 
 ## Two yardsticks for "far from the rest"
 
-Both rules flag a value that is far from the rest of the data; they differ in the yardstick, the mean and standard deviation for one, the quartiles for the other.
-
 ### The z-score rule measures with the mean and σ
 
-The z-score rule flags x when its z-score, z = (x − <Var name="mu" />)/<Var name="sigma" />, is above a cutoff in size: usually 3, sometimes 2 or 2.5. The cutoff is a convention. On normal data |z| > 2 happens about 4.55% of the time and |z| > 3 about 0.27% (see [the 68-95-99.7 rule](/statistics/normal-distribution/#the-68-95-997-rule)). Rousseeuw and Hubert use 2.5 as their example cutoff, with s in place of <Var name="sigma" /> <Cite id="rousseeuw2017" />.
+The z-score rule flags x when its z-score, z = (x − <Var name="mu" />)/<Var name="sigma" />, is above a cutoff in size: usually 3, sometimes 2 or 2.5. The cutoff is a convention. On normal data |z| > 2 happens about 4.55% of the time and |z| > 3 about 0.27% ([the 68-95-99.7 rule](/statistics/normal-distribution/#the-68-95-997-rule)). Rousseeuw and Hubert use 2.5 as their example cutoff, with s, the standard deviation that divides by n − 1, in place of <Var name="sigma" /> <Cite id="rousseeuw2017" />.
 
 ### The IQR rule measures with the quartiles
 
-The IQR rule flags x when it lies below Q₁ − 1.5 × IQR or above Q₃ + 1.5 × IQR, where IQR = Q₃ − Q₁ is the width of the middle half. These cutoffs are the fences; a value on a fence is not flagged. NIST calls a point beyond an inner fence a mild outlier, and one beyond an outer fence, at 3 × IQR, an extreme one <Cite id="nist-outlier-fences" />. The pumpkins' outer fences are −1 and 13 kg, so a 30 kg giant is extreme and an 11 kg one mild.
+The first quartile Q₁ sits a quarter of the way along the sorted list and the third quartile Q₃ three quarters of the way; for the pumpkins they are the 3rd and 7th values, 5 and 7 kg ([box plots](/statistics/reading-box-plots-quartiles-iqr/) show them). The IQR rule flags x when it lies below Q₁ − 1.5 × IQR or above Q₃ + 1.5 × IQR, where IQR = Q₃ − Q₁. These cutoffs are the fences; a value on a fence is not flagged. NIST calls a point beyond an inner fence a mild outlier, and one beyond an outer fence, at 3 × IQR, an extreme one <Cite id="nist-outlier-fences" />. The pumpkins' outer fences are −1 and 13 kg, so a 30 kg giant is extreme and an 11 kg one mild.
 
-On normal data the rules nearly agree: the upper fence sits about 4 × 0.6745 ≈ 2.70 standard deviations from the mean, so the IQR rule acts like |z| > 2.70 and flags about 0.70% of values. They part company when the data are not normal.
+On normal data the rules nearly agree. Q₃ sits 0.6745 standard deviations above the mean and Q₁ as far below, so the upper fence sits 0.6745 + 1.5 × 2 × 0.6745 = 4 × 0.6745 ≈ 2.70 standard deviations out, and the IQR rule acts like |z| > 2.70 and flags about 0.70% of values.
 
 ### Why a giant hides from z-scores
 
-The giant is included in the mean and <Var name="sigma" /> that judge it, so the heavier it gets, the more it stretches its own ruler. Rousseeuw and Hubert call this masking: outliers can pull classical estimates so far that they no longer stand out <Cite id="rousseeuw2017" />. The variance page shows [masking with a typo in five measurements](/statistics/variance-and-standard-deviation/#research-frontier).
+The giant is included in the mean and <Var name="sigma" /> that judge it, so the heavier it gets, the more it stretches its own ruler. Rousseeuw and Hubert call this masking: outliers can pull classical estimates so far that they no longer stand out <Cite id="rousseeuw2017" />. The [median is not pulled this way](/statistics/mean-vs-median-vs-mode/). The variance page shows [masking with a typo in five measurements](/statistics/variance-and-standard-deviation/#research-frontier).
 
-The giant's z-score creeps toward a ceiling of √8 ≈ 2.83 that it never reaches. pandas' `std` divides by n − 1 by default <Cite id="pandas-std" />. With that s, every z-score shrinks by √((n − 1)/n) = √(8/9) ≈ 0.943, so the giant scores ≈ 2.65 and the ceiling is (n − 1)/√n = 8/3 ≈ 2.67. NIST warns that z-scores mislead on small samples because no z-score can pass (n − 1)/√n <Cite id="nist-outlier-detection" />. Two equal giants share the stretch: their ceiling is √3.5 ≈ 1.871, just above their exact z of 1.865, so |z| > 2 never flags them, at any weight.
+The giant's z-score creeps toward a ceiling of √(n − 1) = √8 ≈ 2.83 that it never reaches (the fold below proves it). pandas' `std` divides by n − 1 by default <Cite id="pandas-std" />. With that s, every z-score shrinks by √((n − 1)/n) = √(8/9) ≈ 0.943, so the giant scores ≈ 2.65 and the ceiling is (n − 1)/√n = 8/3 ≈ 2.67. NIST warns that z-scores mislead on small samples because no z-score can pass (n − 1)/√n <Cite id="nist-outlier-detection" />. Two equal giants share the stretch: their ceiling is √((9 − 2)/2) = √3.5 ≈ 1.871, just above their z of ≈ 1.865 at 30 kg, so |z| > 2 never flags them, at any weight.
 
 <GoDeeper id="most-z-can-reach" label="how far can a z-score go? a full proof">
 
@@ -133,11 +133,11 @@ The eight ordinary pumpkins are not all equal, so the bound is never reached, wh
 
 The quartiles resist a few outliers, not many, and assume a symmetric middle.
 
-**Too many outliers.** Make both 7 kg pumpkins giants too: 4, 5, 5, 6, 6, 6, 30, 30, 30. Now Q₃ = 30, IQR = 25 and the upper fence is 67.5 kg, so nothing is flagged. The board holds two giants at most; the code checks this case. Rousseeuw and Hubert give the normalized IQR a breakdown value of 25% <Cite id="rousseeuw2017" />: 2 giants of 9 (22%) are survived, 3 of 9 (33%) are not.
+**Too many outliers.** Make both 7 kg pumpkins giants too: 4, 5, 5, 6, 6, 6, 30, 30, 30. Now Q₃ = 30, IQR = 25 and the upper fence is 67.5 kg, so nothing is flagged. The board holds two giants at most; the code checks this case. Rousseeuw and Hubert give the IQR a breakdown value of 25%, the share of outliers that can carry it arbitrarily far <Cite id="rousseeuw2017" />: 2 giants of 9 (22%) are survived, 3 of 9 (33%) are not.
 
-**Skewed data.** The boxplot assumes symmetry, so on skewed data it flags many regular points; Rousseeuw and Hubert point to a boxplot adjusted for skewness <Cite id="rousseeuw2017" />. For exponential data, a common right-skewed shape for waiting times, about 4.81% of values land past the upper fence, against 0.70% for normal data.
+**Skewed data.** The IQR rule is how a boxplot marks outliers, and the boxplot assumes symmetry, so on skewed data it flags many regular points; Rousseeuw and Hubert point to a boxplot adjusted for skewness <Cite id="rousseeuw2017" />. For exponential data, a common right-skewed shape for waiting times, about 4.81% of values are flagged, all past the upper fence (the lower fence is below 0), against 0.70% for normal data, 0.35% on each side.
 
-**The quartile method.** NumPy lists nine quantile methods in Hyndman and Fan's order, with 'linear', number 7, as the default <Cite id="numpy-percentile" />. With one giant every common method gives the pumpkins 5 and 7, but worked example 2 shows a list where the verdict changes.
+**The quartile method.** NumPy numbers nine quantile methods in Hyndman and Fan's order, with 'linear', number 7, as the default, and adds four variations of it <Cite id="numpy-percentile" />. With one giant the five methods the second program checks all give the pumpkins 5 and 7, but worked example 2 shows a list where the verdict changes.
 
 <Simpler label="the same idea with two giants side by side">
 
@@ -149,6 +149,8 @@ Read the σ column: the second giant makes σ the culprit.
 | 2 | 11 | ≈ 10.19 | ≈ 1.87 | no | yes |
 
 </Simpler>
+
+A third rule, the modified z-score, keeps the z-score's shape with robust parts: the median for the mean, and the MAD, the median distance from the median, for <Var name="sigma" />.
 
 | | z-score rule | IQR rule |
 | --- | --- | --- |
@@ -165,7 +167,7 @@ Read the σ column: the second giant makes σ the culprit.
 
 <GoDeeper id="median-and-mad" label="a third rule: the median and the MAD">
 
-A third rule keeps the z-score's shape with robust parts: the median for the mean, and the MAD, the median distance from the median, for <Var name="sigma" />. NIST gives Iglewicz and Hoaglin's modified z-score, Mᵢ = 0.6745 (xᵢ − median)/MAD, and their advice to flag |Mᵢ| > 3.5 <Cite id="nist-outlier-detection" />.
+NIST gives Iglewicz and Hoaglin's modified z-score, Mᵢ = 0.6745 (xᵢ − median)/MAD, and their advice to flag |Mᵢ| > 3.5 <Cite id="nist-outlier-detection" />.
 
 With one, two or three giants the pumpkins' median stays 6 and their MAD stays 1, so every giant scores 0.6745 × 24 = 16.188 and is flagged, even where both other rules fail. Rousseeuw and Hubert's robust score multiplies the MAD by 1.4826 instead <Cite id="rousseeuw2017" />, and 0.6745 ≈ 1/1.4826.
 
@@ -174,13 +176,13 @@ With one, two or three giants the pumpkins' median stays 6 and their MAD stays 1
 ### When to use which
 
 - **Large, roughly symmetric data, one suspect at most:** |z| > 3 is fine.
-- **Small samples or several suspects:** use the IQR rule or the modified z-score. With 10 or fewer values |z| > 3 can never fire, with <Var name="sigma" /> or s.
-- **Skewed features such as incomes or latencies:** transform first, for example with a log, or use an adjusted boxplot.
+- **Small samples or several suspects:** use the IQR rule or the modified z-score. The ceiling passes 3 only from 11 values on, so with 10 or fewer |z| > 3 never fires, with <Var name="sigma" /> or s.
+- **Skewed features such as latencies:** log-transform first, or use an adjusted boxplot.
 - **Always:** a flag starts a check. Outliers may be errors, or "valuable nuggets of information" <Cite id="rousseeuw2017" />.
 
 ## Notation
 
-<NotationKey symbols={["data-value", "sample-size", "mu", "sigma", "sample-sd", "z", "absolute-value", "median", "first-quartile", "third-quartile", "iqr", "fences", "mad", "modified-z"]} />
+<NotationKey symbols={["data-value", "sample-size", "mu", "sigma", "sample-sd", "z", "absolute-value", "median", "quantile-level", "quantile-position", "first-quartile", "third-quartile", "iqr", "fences", "mad", "modified-z"]} />
 
 <PreciseStatement>
 
@@ -200,7 +202,7 @@ $$
 x_i < Q_1 - 1.5\,\operatorname{IQR} \quad \text{or} \quad x_i > Q_3 + 1.5\,\operatorname{IQR}.
 $$
 
-Boundary cases. If every value is equal, $\vsigma = 0$, $z$ is undefined and the IQR rule flags nothing. A value on a fence is not flagged. No $|z_i|$ passes $\sqrt{n - 1}$, and it equals it only when the other values are all equal, so a cutoff $c$ never fires when $n \le c^2 + 1$. With $\operatorname{IQR} = 0$ every value off $Q_1$ is flagged: in 5, 5, 5, 5, 6 the 6 is flagged.
+Boundary cases. If every value is equal, $\vsigma = 0$, $z$ is undefined and the IQR rule flags nothing. A value on a fence is not flagged. No $|z_i|$ passes $\sqrt{n - 1}$, and it equals it only when the other values are all equal, so a cutoff such as 3 never fires when $n - 1 \le 3^2$, that is, with 10 or fewer values. With $\operatorname{IQR} = 0$ every value off $Q_1$ is flagged: in 5, 5, 5, 5, 6 the 6 is flagged.
 
 </PreciseStatement>
 
@@ -214,7 +216,7 @@ Seedling heights in cm: 2, 4, 4, 4, 5, 5, 7, 9. The mean is $40/8 = 5$. The squa
 
 <WorkedExample number={2} title="The same seedlings, the IQR rule">
 
-With NumPy's 'linear' method, $Q_1$ sits at position $1.75$, between 4 and 4, so $Q_1 = 4$; $Q_3$ sits at position $5.25$, a quarter of the way from 5 to 7, so $Q_3 = 5.5$. Then $\operatorname{IQR} = 1.5$ and the fences are 1.75 and 7.75: the 9 cm seedling is flagged, the 2 cm one is not. NumPy's 'weibull' method, number 6 <Cite id="numpy-percentile" />, gives $Q_3 = 6.5$, an upper fence of 10.25, and no flag. Same data, same rule, a different verdict: always say which quartile method you used.
+With NumPy's 'linear' method, $Q_1$ sits at position $1.75$, between 4 and 4, so $Q_1 = 4$; $Q_3$ sits at position $5.25$, a quarter of the way from 5 to 7, so $Q_3 = 5.5$. Then $\operatorname{IQR} = 1.5$ and the fences are 1.75 and 7.75: the 9 cm seedling is flagged, the 2 cm one is not. NumPy's 'weibull' method, number 6 <Cite id="numpy-percentile" />, counts positions from 1, so $Q_3$ sits at position $(8 + 1) \times 0.75 = 6.75$, between the 6th and 7th values: $Q_3 = 5 + 0.75 \times (7 - 5) = 6.5$, an upper fence of 10.25, and no flag. Same data, same rule, a different verdict: always say which quartile method you used.
 
 </WorkedExample>
 
@@ -234,15 +236,15 @@ A model server logs nine response times in ms: 120, 125, 125, 130, 130, 130, 135
 
 ### Cleaning training data, one feature at a time
 
-A per-feature screen with either rule is a standard first check, and masking is why a z-score screen can pass a column with several corrupted entries. Rousseeuw and Hubert also name swamping, where an outlier-pulled fit makes good points look outlying <Cite id="rousseeuw2017" />. So compute the yardstick robustly, flag, then inspect; never delete automatically.
+A per-feature screen with either rule is a standard first check, and masking lets a z-score screen pass several corrupted entries. Rousseeuw and Hubert also name swamping, where an outlier-pulled fit makes good points look outlying <Cite id="rousseeuw2017" />. So flag, then inspect; never delete automatically.
 
 ### Robust scaling uses the IQR as its yardstick
 
-scikit-learn's `RobustScaler` subtracts the median and divides by the IQR by default, because outliers can distort the mean and variance <Cite id="sklearn-robustscaler" />. It turns the 30 kg pumpkin into (30 − 6)/2 = 12, where standardizing gives ≈ 2.81. Comparing scalers belongs to the standardization page.
+scikit-learn's `RobustScaler` subtracts the median and divides by the IQR by default, because outliers can distort the mean and variance <Cite id="sklearn-robustscaler" />. It turns the 30 kg pumpkin into (30 − 6)/2 = 12, where standardizing gives ≈ 2.81. Comparing scalers belongs to [standardization vs min-max scaling](/statistics/standardization-vs-min-max-scaling/).
 
 ### Beyond one feature: outlier and novelty detection
 
-scikit-learn separates outlier detection, where the training data contain outliers, from novelty detection, where they are clean and the question is whether a new point is an outlier (§2.7) <Cite id="sklearn-outlier-detection" />. Its elliptic envelope estimates the location and covariance of Gaussian inliers without being influenced by outliers (§2.7.3.1), the many-feature version of not letting outliers set the yardstick <Cite id="sklearn-outlier-detection" />. `IsolationForest` isolates points with random splits, and anomalies get shorter paths (§2.7.3.2) <Cite id="sklearn-outlier-detection" />. A `contamination` parameter sets the flagging threshold, a cutoff in the spirit of 3 or 1.5 (§2.7) <Cite id="sklearn-outlier-detection" />.
+scikit-learn separates outlier detection, where the training data contain outliers, from novelty detection, where they are clean and the question is whether a new point is an outlier <Cite id="sklearn-outlier-detection" />. `IsolationForest` isolates points with random splits, and anomalies get shorter paths <Cite id="sklearn-outlier-detection" />.
 
 ## Check both rules in code
 
@@ -407,7 +409,8 @@ assert round(1 / 1.4826, 4) == 0.6745
 normal = statistics.NormalDist()
 fence = 4 * normal.inv_cdf(0.75)
 assert abs(fence - 2.6980) < 1e-4
-assert abs(2 * (1 - normal.cdf(fence)) - 0.006977) < 1e-5
+assert round(normal.inv_cdf(0.75), 4) == 0.6745 and Fraction("0.6745") * (1 + Fraction(3, 2) * 2) == 4 * Fraction("0.6745")
+assert abs(2 * (1 - normal.cdf(fence)) - 0.006977) < 1e-5 and abs((1 - normal.cdf(fence)) - 0.003488) < 1e-5
 assert abs(2 * (1 - normal.cdf(2)) - 0.045500) < 1e-5 and abs(2 * (1 - normal.cdf(3)) - 0.002700) < 1e-5
 
 # Exponential data (waiting times): Q1 = ln(4/3), Q3 = ln 4, about 4.81% past the upper fence.
