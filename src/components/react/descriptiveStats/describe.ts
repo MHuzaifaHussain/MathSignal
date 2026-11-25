@@ -557,6 +557,16 @@ export function lowMarkChange(state: DescriptiveState): string {
 
 // ---- Outliers ----
 
+/**
+ * True once a giant is in: two giants, or one heavier or lighter than the opening's 8 kg. Until then the ceiling
+ * sentence for |z| > 3 would answer the page's "how heavy must the giant be?" before the reader has tried a weight
+ * (answer gating, decision 0015). Moving the giant back to 8 kg hides it again: that is the opening view.
+ */
+function giantTried(state: DescriptiveState): boolean {
+	const opening = setupOf(state).opening;
+	return state.giants === 2 || state.giant !== opening[opening.length - 1];
+}
+
 function outlierLines(state: DescriptiveState): string[] {
 	const values = state.values;
 	const { q1, q3 } = quartiles(values);
@@ -589,7 +599,7 @@ function outlierLines(state: DescriptiveState): string[] {
 		lines.push(iqrText);
 		lines.push(`${meanText}, so its z-score is ${zText}: ${zFlagText}.`);
 	}
-	if (state.cutoff === 3) lines.push(`With ${values.length} pumpkins no z-score can reach √${values.length - 1} ${approxNumber(Math.sqrt(values.length - 1))}, however heavy the giant, so |z| > 3 can never flag anything here.`);
+	if (state.cutoff === 3 && giantTried(state)) lines.push(`With ${values.length} pumpkins no z-score can reach √${values.length - 1} ${approxNumber(Math.sqrt(values.length - 1))}, however heavy the giant, so |z| > 3 can never flag anything here.`);
 	return lines;
 }
 
@@ -787,6 +797,42 @@ function quartileRows(values: readonly number[], setup: Setup): SummaryRow[] {
 	];
 }
 
+/**
+ * class-box: the summary rows each step may show. Every quartile row waits for the Quartiles step, the IQR and the
+ * fences for Box plot, so the table never answers "which child marks the first quarter?" early (decision 0015).
+ */
+export const BOX_SUMMARY_ROWS: Readonly<Record<'line-up' | 'quartiles' | 'box', readonly string[]>> = {
+	'line-up': ['Smallest', 'Largest'],
+	quartiles: ['Smallest', 'Q1', 'Median', 'Q3', 'Largest'],
+	box: ['Smallest', 'Q1', 'Median', 'Q3', 'Largest', 'IQR', 'Fences'],
+};
+
+/**
+ * marks-scaling: the summary rows each scale may show, only the numbers its own readout uses. Raw shows none, since
+ * the means, σs and ends would give both scaled scores before the reader picks a scale (decision 0015).
+ */
+export const SCALING_SUMMARY_ROWS: Readonly<Record<Scale, readonly ('ends' | 'mean' | 'sd')[]>> = {
+	raw: [],
+	minmax: ['ends'],
+	z: ['mean', 'sd'],
+};
+
+/** Shown where the summary would be while a gate keeps every row of it back; null when the summary has rows. */
+export function summaryNote(state: DescriptiveState): string | null {
+	if (setupOf(state).kind !== 'scaling' || SCALING_SUMMARY_ROWS[state.scale].length > 0) return null;
+	const picks = (['minmax', 'z'] as const).map((scale) => SCALE_LABELS[scale]).join(' or ');
+	return `Each test's summary appears when you pick ${picks} under ${CONTROL_LABELS.scale}.`;
+}
+
+/** The box summary rows for the step in view, in quartileRows' order. */
+function boxRows(state: DescriptiveState, values: readonly number[], setup: Setup): SummaryRow[] {
+	if (state.stage !== 'line-up' && state.stage !== 'quartiles' && state.stage !== 'box') {
+		throw new Error(`DescriptiveStats: setup "${setup.id}" has no box step "${state.stage}".`);
+	}
+	const shown = BOX_SUMMARY_ROWS[state.stage];
+	return quartileRows(values, setup).filter((entry) => shown.includes(entry.header));
+}
+
 export function summaryTable(state: DescriptiveState): TableData {
 	const setup = setupOf(state);
 	const headers = ['Statistic', 'Value', 'How it is computed'];
@@ -801,7 +847,7 @@ export function summaryTable(state: DescriptiveState): TableData {
 		case 'spread':
 			return { caption, headers, rows: [row('Mean, μ', `${amount(mean(values))} cm`, `The sum, ${groupThousands(sum(values))}, divided by ${n(values)}`), ...spreadRows(values, setup, state.sample)] };
 		case 'box':
-			return { caption, headers, rows: quartileRows(values, setup) };
+			return { caption, headers, rows: boxRows(state, values, setup) };
 		case 'outliers':
 			return {
 				caption,
@@ -816,11 +862,14 @@ export function summaryTable(state: DescriptiveState): TableData {
 		case 'scaling': {
 			const testA = setup.testA;
 			if (!testA) throw new Error(`DescriptiveStats: setup "${setup.id}" has no tests.`);
-			const testRows = (name: string, list: readonly number[]) => [
-				row(`Test ${name} mean, μ`, amount(mean(list)), `The sum, ${groupThousands(sum(list))}, divided by ${n(list)}`),
-				row(`Test ${name} standard deviation, σ`, rootAmount(populationSD(list)), 'Dividing by n (np.std)'),
-				row(`Test ${name} lowest and highest`, `${sortedValues(list)[0]} and ${sortedValues(list)[n(list) - 1]}`, 'The ends min–max scaling uses'),
-			];
+			const testRows = (name: string, list: readonly number[]) => {
+				const all = {
+					mean: row(`Test ${name} mean, μ`, amount(mean(list)), `The sum, ${groupThousands(sum(list))}, divided by ${n(list)}`),
+					sd: row(`Test ${name} standard deviation, σ`, rootAmount(populationSD(list)), 'Dividing by n (np.std)'),
+					ends: row(`Test ${name} lowest and highest`, `${sortedValues(list)[0]} and ${sortedValues(list)[n(list) - 1]}`, 'The ends min–max scaling uses'),
+				};
+				return SCALING_SUMMARY_ROWS[state.scale].map((key) => all[key]);
+			};
 			return { caption, headers, rows: [...testRows('A', testA.values), ...testRows('B', state.values)] };
 		}
 	}
@@ -906,7 +955,8 @@ export function announcementFor(state: DescriptiveState, action: Action): string
 		case 'preset': {
 			const label = setup.presets.find((preset) => preset.id === action.id)?.label ?? '';
 			if (setup.kind === 'newcomer') return state.newcomer === null ? `${label}. ${readouts}` : `${label}. ${newcomerChange(state)}`;
-			if (setup.kind === 'scaling') return action.id === setup.presets[0]?.id ? `${label}. ${readouts}` : lowMarkChange(state);
+			// On Raw marks the change in scaled scores would answer the page before a scale is picked: say what shows.
+			if (setup.kind === 'scaling') return action.id === setup.presets[0]?.id || state.scale === 'raw' ? `${label}. ${readouts}` : lowMarkChange(state);
 			if (setup.kind === 'spread') return `${label}. ${readouts} ${goal ?? ''}`.trim();
 			// A new class arrives unsorted and covered, so it is introduced, not summarized.
 			if (setup.kind === 'lineup') return `${label}. ${statusLine(state)}`;

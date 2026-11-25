@@ -2401,10 +2401,17 @@ for (const open of [true, false]) {
 	);
 	assert.equal(lines(run('marks-scaling', { type: 'scale', scale: 'z' })), 'Test A: (36 − 30) / 6 = 1. Test B: (58 − 50) / 8 = 1. Ana is exactly one standard deviation above the mean on both.');
 	const low = run('marks-scaling', { type: 'preset', id: 'low-mark' });
+	// On Raw marks the low mark is announced as what shows (gate 2); with a scale picked, as the change in both scores.
 	assert.equal(
 		dsay.announcementFor(low, { type: 'preset', id: 'low-mark' }),
-		"One mark of 10 moved both scores for test B: min–max rose from ≈ 0.77 to 48/54 = 8/9 ≈ 0.89, the z-score fell from 1 to ≈ 0.76. Ana's 58 did not change.",
+		'One very low mark on B. Ana scored 36 out of 50 on test A (72%) and 58 out of 80 on test B (72.5%).',
 	);
+	for (const scale of ['minmax', 'z']) {
+		assert.equal(
+			dsay.announcementFor(run('marks-scaling', { type: 'scale', scale }, { type: 'preset', id: 'low-mark' }), { type: 'preset', id: 'low-mark' }),
+			"One mark of 10 moved both scores for test B: min–max rose from ≈ 0.77 to 48/54 = 8/9 ≈ 0.89, the z-score fell from 1 to ≈ 0.76. Ana's 58 did not change.",
+		);
+	}
 	assert.equal(lines(dst.reducer(low, { type: 'scale', scale: 'z' })), 'Test A: (36 − 30) / 6 = 1. Test B: mean ≈ 46.89, σ ≈ 14.70, so z = (58 − 46.89) / 14.70 ≈ 0.76. z says test A.');
 
 	// pumpkin-outliers.
@@ -2425,6 +2432,87 @@ for (const open of [true, false]) {
 	assert.equal(dsay.describeGiant(run('pumpkin-outliers', { type: 'preset', id: 'two-giants' }), 30), 'both giant pumpkins, 30 kg');
 	assert.equal(dsay.describeGiant(dst.initialState('pumpkin-outliers'), 30), 'giant pumpkin, 30 kg');
 	assert.equal(dsay.laneLabel(45, ds.getSetup('pumpkin-outliers')), '45 kg →');
+
+	// Answer gating (decision 0015, amended 2026-11-25): before the reader commits, no readout, announcement or table
+	// row answers a prediction the page asks, folded or not.
+	const summaryOf = (state) => dsay.summaryTable(state).rows.map((entry) => [entry.header, ...entry.cells].join(' | '));
+	const headersOf = (state) => dsay.summaryTable(state).rows.map((entry) => entry.header);
+	// Gate 1, class-box: the quartile rows wait for the Quartiles step, the IQR and fences for Box plot.
+	assert.deepEqual(dsay.BOX_SUMMARY_ROWS, {
+		'line-up': ['Smallest', 'Largest'],
+		quartiles: ['Smallest', 'Q1', 'Median', 'Q3', 'Largest'],
+		box: ['Smallest', 'Q1', 'Median', 'Q3', 'Largest', 'IQR', 'Fences'],
+	});
+	const boxOpen = dst.initialState('class-box');
+	assert.deepEqual(summaryOf(boxOpen), ['Smallest | 122 cm | The 1st in order', 'Largest | 148 cm | The 9th in order']);
+	assert.ok(!summaryOf(boxOpen).some((text) => /128|133|140|Q1/.test(text)), 'the Line-up step gives no quartile away');
+	assert.deepEqual(summaryOf(run('class-box', { type: 'stage', stage: 'quartiles' })), [
+		'Smallest | 122 cm | The 1st in order',
+		"Q1 | 128 cm | A quarter of the way along the line (NumPy's linear method)",
+		'Median | 133 cm | Halfway along the line',
+		'Q3 | 140 cm | Three quarters of the way along the line',
+		'Largest | 148 cm | The 9th in order',
+	]);
+	assert.deepEqual(summaryOf(run('class-box', { type: 'stage', stage: 'box' })), [
+		'Smallest | 122 cm | The 1st in order',
+		"Q1 | 128 cm | A quarter of the way along the line (NumPy's linear method)",
+		'Median | 133 cm | Halfway along the line',
+		'Q3 | 140 cm | Three quarters of the way along the line',
+		'Largest | 148 cm | The 9th in order',
+		'IQR | 12 cm | Q3 − Q1',
+		'Fences | 110 cm and 158 cm | 1.5 × IQR below Q1 and above Q3',
+	]);
+	for (const stage of ['line-up', 'quartiles', 'box']) {
+		const ours = run('class-box', { type: 'stage', stage });
+		const tall = run('class-box', { type: 'preset', id: 'one-very-tall' }, { type: 'stage', stage });
+		assert.deepEqual(headersOf(ours), dsay.BOX_SUMMARY_ROWS[stage]);
+		assert.deepEqual(headersOf(tall), dsay.BOX_SUMMARY_ROWS[stage]);
+		// One very tall child: only Largest moves.
+		assert.deepEqual(summaryOf(tall), summaryOf(ours).map((text) => (text.startsWith('Largest') ? 'Largest | 162 cm | The 9th in order' : text)));
+	}
+	// Gate 1 filters only class-box: pumpkin-outliers keeps its quartile rows at the opening and with every giant preset.
+	const pumpkinHeaders = ['Q1', 'Q3', 'IQR', 'Fences', 'Mean, μ', 'Standard deviation, σ', "Giant's z-score"];
+	assert.deepEqual(headersOf(dst.initialState('pumpkin-outliers')), pumpkinHeaders);
+	for (const preset of ds.getSetup('pumpkin-outliers').presets) assert.deepEqual(headersOf(run('pumpkin-outliers', { type: 'preset', id: preset.id })), pumpkinHeaders, preset.id);
+	// Gate 2, marks-scaling: each scale shows only the numbers its own readout uses; Raw shows a note instead.
+	assert.deepEqual(dsay.SCALING_SUMMARY_ROWS, { raw: [], minmax: ['ends'], z: ['mean', 'sd'] });
+	const scaled = (scale, ...more) => run('marks-scaling', { type: 'scale', scale }, ...more);
+	for (const preset of ['two-tests', 'low-mark']) assert.deepEqual(summaryOf(scaled('raw', { type: 'preset', id: preset })), [], preset);
+	assert.equal(dsay.summaryNote(dst.initialState('marks-scaling')), "Each test's summary appears when you pick Min–max (0 to 1) or z-scores under Scale.");
+	assert.deepEqual(summaryOf(scaled('minmax')), ['Test A lowest and highest | 21 and 39 | The ends min–max scaling uses', 'Test B lowest and highest | 38 and 64 | The ends min–max scaling uses']);
+	assert.deepEqual(summaryOf(scaled('z')), [
+		'Test A mean, μ | 30 | The sum, 270, divided by 9',
+		'Test A standard deviation, σ | 6 | Dividing by n (np.std)',
+		'Test B mean, μ | 50 | The sum, 450, divided by 9',
+		'Test B standard deviation, σ | 8 | Dividing by n (np.std)',
+	]);
+	assert.deepEqual(summaryOf(scaled('minmax', { type: 'preset', id: 'low-mark' })), [
+		'Test A lowest and highest | 21 and 39 | The ends min–max scaling uses',
+		'Test B lowest and highest | 10 and 64 | The ends min–max scaling uses',
+	]);
+	assert.deepEqual(summaryOf(scaled('z', { type: 'preset', id: 'low-mark' })).slice(2), [
+		'Test B mean, μ | ≈ 46.89 | The sum, 422, divided by 9',
+		'Test B standard deviation, σ | ≈ 14.70 | Dividing by n (np.std)',
+	]);
+	for (const scale of ['minmax', 'z']) assert.equal(dsay.summaryNote(scaled(scale)), null, scale);
+	for (const id of ds.SETUP_IDS.filter((setupId) => setupId !== 'marks-scaling')) assert.equal(dsay.summaryNote(dst.initialState(id)), null, id);
+	// Gate 3, pumpkin-outliers: the |z| > 3 ceiling waits until a giant is in, so the opening doesn't answer it.
+	const cutoff3 = { type: 'cutoff', cutoff: 3 };
+	assert.deepEqual(dsay.readoutLines(run('pumpkin-outliers', cutoff3)), [
+		'Q1 = 5 kg, Q3 = 7 kg, IQR = 2 kg, so the upper fence is 7 + 3 = 10 kg.',
+		'Every pumpkin is inside the fences (2 kg to 10 kg) and every |z| is at most ≈ 1.73: nothing is flagged.',
+	]);
+	assert.equal(
+		dsay.announcementFor(run('pumpkin-outliers', cutoff3), cutoff3),
+		'Flagging when |z| is above 3. Q1 = 5 kg, Q3 = 7 kg, IQR = 2 kg, so the upper fence is 7 + 3 = 10 kg. Every pumpkin is inside the fences (2 kg to 10 kg) and every |z| is at most ≈ 1.73: nothing is flagged.',
+	);
+	const ceiling = 'With 9 pumpkins no z-score can reach √8 ≈ 2.83, however heavy the giant, so |z| > 3 can never flag anything here.';
+	const saysCeiling = (state) => dsay.readoutLines(state).some((line) => line.includes('can never'));
+	for (const preset of ['one-giant', 'two-giants']) assert.equal(dsay.readoutLines(run('pumpkin-outliers', { type: 'preset', id: preset }, cutoff3)).at(-1), ceiling, preset);
+	assert.equal(dsay.readoutLines(run('pumpkin-outliers', cutoff3, { type: 'set-value', value: 9 })).at(-1), ceiling, 'a 9 kg giant counts as tried');
+	// No latch: moving back to 8 kg, or pressing No giant, is the opening view again, so the sentence goes with it.
+	assert.ok(!saysCeiling(run('pumpkin-outliers', cutoff3, { type: 'set-value', value: 9 }, { type: 'set-value', value: 8 })));
+	assert.ok(!saysCeiling(run('pumpkin-outliers', { type: 'preset', id: 'one-giant' }, cutoff3, { type: 'preset', id: 'no-giant' })));
 
 	// Board labels match the notation registry's symbols for μ, σ and z (decision 0009).
 	const { NOTATION } = await import('../src/data/notation.mjs');

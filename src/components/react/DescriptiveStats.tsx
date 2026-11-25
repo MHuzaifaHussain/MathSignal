@@ -35,6 +35,7 @@ import {
   readoutLines,
   stageOptions,
   statusLine,
+  summaryNote,
   summaryTable,
   symbolLines,
 } from "./descriptiveStats/describe.ts";
@@ -297,7 +298,7 @@ export default function DescriptiveStats({ setup: setupId }: DescriptiveStatsPro
             ))}
           </div>
         )}
-        <StatsTables data={dataTable(state)} summary={summaryTable(state)} covered={covered ? coveredText() : null} />
+        <StatsTables data={dataTable(state)} summary={summaryTable(state)} covered={covered ? coveredText() : summaryNote(state)} />
       </div>
     </Board>
   );
