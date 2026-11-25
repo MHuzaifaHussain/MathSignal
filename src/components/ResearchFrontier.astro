@@ -1,5 +1,7 @@
 ---
 // Where research on the topic stands now, with cited papers and the date it was last reviewed (decision 0008).
+import { reviewedDateText } from '../seo/citation.mjs';
+
 interface Props {
 	/** ISO date the frontier section was last checked against the literature. */
 	reviewed: string;
@@ -8,7 +10,7 @@ interface Props {
 const { reviewed } = Astro.props;
 const reviewedDate = new Date(reviewed);
 if (Number.isNaN(reviewedDate.getTime())) throw new Error(`<ResearchFrontier>: "${reviewed}" is not a valid date.`);
-const reviewedLabel = reviewedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
+const reviewedLabel = reviewedDateText(reviewedDate);
 ---
 
 <div class="research-frontier">
