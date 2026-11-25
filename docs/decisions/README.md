@@ -19,11 +19,12 @@ Format: context, decision, consequences, alternatives considered. Number them in
 | [0011](0011-eventspace-html-board.md) | EventSpace, the first HTML board | Accepted; amended 2026-11-24 (condition and compare modes) and by [0013](0013-shared-board-modules.md) |
 | [0012](0012-distribution-board.md) | DistributionBoard, the second HTML board | Accepted; amended by [0013](0013-shared-board-modules.md), [0017](0017-table-view-fold.md) and [0018](0018-distribution-families-and-density.md) |
 | [0013](0013-shared-board-modules.md) | Shared guided board modules | Accepted; amended by [0017](0017-table-view-fold.md) |
-| [0014](0014-vector-board.md) | VectorBoard2D, a Mafs board for vectors | Accepted; amended by [0017](0017-table-view-fold.md) |
+| [0014](0014-vector-board.md) | VectorBoard2D, a Mafs board for vectors | Accepted; amended by [0017](0017-table-view-fold.md) and [0021](0021-norm-balls-and-normball-model.md) |
 | [0015](0015-descriptive-stats-board.md) | DescriptiveStats, the third HTML board | Accepted; amended 2026-11-25 (line-up presets, answer gating) and by [0017](0017-table-view-fold.md) |
 | [0016](0016-bayes-board-presets-and-table.md) | Page presets and a count table on the BayesTheorem board | Accepted; amended by [0017](0017-table-view-fold.md) |
 | [0017](0017-table-view-fold.md) | A "Table view" fold for tall boards | Accepted |
 | [0018](0018-distribution-families-and-density.md) | DistributionBoard families and density mode | Accepted; amends [0012](0012-distribution-board.md) |
 | [0019](0019-normal-distribution-z-mode.md) | NormalDistribution z mode | Accepted |
 | [0020](0020-function-curve-board.md) | FunctionCurve, a Mafs board for slopes, rulers and corners | Accepted; the drawing is provisional until its browser pass |
+| [0021](0021-norm-balls-and-normball-model.md) | Norm balls on VectorBoard2D, and the NormBall model | Accepted; amends [0014](0014-vector-board.md); copy provisional, NormBall's UI follows its page specs |
 | [0023](0023-page-footer-and-properties-table.md) | The full page footer and PropertiesTable | Accepted; extends [0009](0009-single-sources-of-truth.md) |
