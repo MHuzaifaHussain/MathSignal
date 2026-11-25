@@ -74,7 +74,7 @@ Five friends compare how many candies they brought: 1, 2, 2, 4 and 6. What is a 
 
 **Share them out.** Pile all 15 candies on the table and deal them out evenly. Everyone gets 3. That even share is the mean, and nobody actually brought 3.
 
-**Line them up.** Stand the friends in a row from fewest candies to most. The friend in the middle has 2: two friends have no more than that and two have no fewer. That is the median.
+**Line them up.** Stand the friends in a row from fewest candies to most. The friend in the middle has 2: the two friends on one side have 2 or fewer, and the two on the other side have 2 or more. That is the median.
 
 **Count the most common.** Two friends brought 2, more than any other amount, so 2 is the mode.
 
@@ -83,26 +83,26 @@ One group, three different "typical" answers, because each one answers a differe
 </Analogy>
 
 <WhyThisMatters>
-Before training anything, a practitioner reads a summary of every column, the kind pandas' `describe()` prints: count, mean, spread, smallest and largest values, quartiles. Missing values, a column in the wrong units, or a label that appears 95 times in 100 show up there first. Summaries are also the first model to beat: a regressor that always predicts the training mean, or a classifier that always predicts the most common class, sets the score below which a model has learned nothing. And every training loss in a log is itself a mean over examples.
+Before training anything, a practitioner reads a summary of every column, the kind pandas' `describe()` prints: count, mean, spread, smallest and largest values, and quartiles (the values a quarter and three quarters of the way up the sorted list). Missing values, a column in the wrong units, or a label that appears 95 times in 100 show up there first. Summaries are also the first model to beat: a regressor that always predicts the training mean, or a classifier that always predicts the most common class, sets the score below which a model has learned nothing. And every reported training loss is itself a mean over examples.
 </WhyThisMatters>
 
 ## Find the middle of the class
 
-The median of a class is the height of the child who has as many children shorter as taller, and the board below lets you find that child yourself. Before you touch anything: nine children are standing in the order they arrived. Is the child in the middle of that line also the middle of the class by height? Going further: once you have found the middle child, will the class's mean height be above or below that child's height?
+The median of a class is the height of the child who has as many children shorter as taller, and the board below lets you find that child yourself. Nine children are standing in the order they arrived. Before you look closely: which child do you expect to be the middle of the class by height, the one in the middle of the arrival line (child 5) or someone else? Going further: once you have found the middle child, will the class's mean height be above or below that child's height?
 
-The bars are the children, drawn to their height and numbered in arrival order. Line them up sorts the bars from shortest to tallest. Choose a child under Your pick for the middle, then press Check; after two misses, Show the answer appears. Show as switches between Pictures (the bars) and Numbers (one dot per child on a height axis); Symbols joins them only after Check. The presets Our class, Ten children and Shared heights each bring in a new class, unsorted and covered again. Table view lists the heights, and Reset starts over.
+The bars are the children, drawn to their height and numbered in arrival order. **Line them up** sorts the bars from shortest to tallest. Choose a child under **Your pick for the middle**, then press **Check**; after two misses, **Show the answer** appears. **Show as** switches between **Pictures** (the bars) and **Numbers** (one dot per child on a height axis); **Symbols** joins them only after **Check**. The presets **Our class**, **Ten children** and **Shared heights** each bring in a new class, unsorted and covered again. **Table view** lists the heights, and **Reset** starts over.
 
-Your task: under Your pick for the middle, choose the child with as many children shorter as taller, then press Check.
+Your task: under **Your pick for the middle**, choose the child with as many children shorter as taller, then press Check.
 
 <div class="not-content">
   <DescriptiveStats client:visible setup="class-lineup" />
 </div>
 
-**No: the middle of the arrival line is the tallest child.** The board opens with "9 children, in the order they arrived. Heights from 122 cm to 148 cm." Pick child 5 before lining them up and Check says "Child 5 stands in the middle of the arrival line, but 8 children are shorter and none is taller. Line them up first." After Line them up the status reads "9 children, lined up from shortest to tallest. Heights from 122 cm to 148 cm." A near miss such as child 7 gives "Child 7 (137 cm) has 5 children shorter and 3 taller. Try a shorter child." The middle child is child 1, who arrived first: "Yes. Child 1 (133 cm) has 4 children shorter and 4 taller, so the median height is 133 cm."
+**Someone else: the middle of the arrival line is the tallest child.** The board opens with "9 children, in the order they arrived. Heights from 122 cm to 148 cm." Pick child 5 before lining them up and Check says "Child 5 stands in the middle of the arrival line, but 8 children are shorter and none is taller. Line them up first." After Line them up the status reads "9 children, lined up from shortest to tallest. Heights from 122 cm to 148 cm." A near miss such as child 7 gives "Child 7 (137 cm) has 5 children shorter and 3 taller. Try a shorter child." The middle child is child 1, who arrived first: "Yes. Child 1 (133 cm) has 4 children shorter and 4 taller, so the median height is 133 cm."
 
 **Above.** Once Check passes, the summary appears, and its first line answers the deeper question: "Mean: (122 + 125 + 128 + 131 + 133 + 137 + 140 + 142 + 148) / 9 = 1,206 / 9 = 134 cm. The tallest children stand further above the median than the shortest stand below it, so the mean sits 1 cm higher." The next lines say "No height repeats, so this class has no mode." and "Range: 148 − 122 = 26 cm." Show as now offers Symbols, which writes the median as "median = x₍₅₎ = 133 cm".
 
-**Two more classes.** Press Ten children: our class plus a child of 136 cm who arrived last. With an even count nobody stands in the middle, so either middle child passes Check, and the board names the other one: "Yes. Child 10 (136 cm) is one of the two middle children, with 5 children shorter and 4 taller. The other is child 1 (133 cm), so the median height is halfway between them: (133 + 136) / 2 = 134.5 cm." No child is 134.5 cm tall. The mean is now 134.2 cm: the newcomer moved it up only 0.2 cm, and the median 1.5 cm. Then press Shared heights. Its middle child is child 7 (132 cm), and its summary says "Mode: 127 cm and 141 cm, each held by 2 children." It has the same total, 1,206 cm, so the same mean, 134 cm, but a different median, and two modes nowhere near the middle. A mode tells you what repeats, not where the center is.
+**Two more classes.** Press Ten children: our class plus a child of 136 cm who arrived last. With an even count nobody stands in the middle, so either middle child passes Check, and the board names the other one: "Yes. Child 10 (136 cm) is one of the two middle children, with 5 children shorter and 4 taller. The other is child 1 (133 cm), so the median height is halfway between them: (133 + 136) / 2 = 134.5 cm." The mean is now 134.2 cm: the newcomer moved it up only 0.2 cm and the median 1.5 cm, so this time the mean sits 0.3 cm below the median. Then press Shared heights and find its middle child yourself before reading on. It is child 7 (132 cm), and its summary says "Mode: 127 cm and 141 cm, each held by 2 children." It has the same total, 1,206 cm, so the same mean, 134 cm, but a different median, and two modes nowhere near the middle. A mode tells you what repeats, not where the center is.
 
 ## Three ways to say where the middle is
 
@@ -110,11 +110,11 @@ The center of a list can be measured three common ways: the mean shares the tota
 
 ### The mean: share the total out equally
 
-The mean is the sum of the values divided by how many there are. For our class, 1,206 / 9 = 134 cm. Deisenroth, Faisal and Ong call this the empirical (or sample) mean, the arithmetic average of the observations (§6.4.2, Definition 6.9, p. 192) <Cite id="deisenroth2020" />.
+The mean is the sum of the values divided by how many there are. For our class, 1,206 / 9 = 134 cm. Deisenroth, Faisal and Ong call this the empirical mean, the arithmetic average of the observations (§6.4.2, Definition 6.9) <Cite id="deisenroth2020" />.
 
-Why does it sit 1 cm above the median of 133 cm? The 4 taller children stand 4 + 7 + 9 + 15 = 35 cm above 133 in total, and the 4 shorter ones only 2 + 5 + 8 + 11 = 26 cm below it. Sharing the extra 9 cm among 9 children lifts the mean by exactly 1 cm. The mean is the balance point of the list: the distances above it and below it cancel, as the [variance page shows](/statistics/variance-and-standard-deviation/#how-far-from-the-mean-on-average).
+Why does it sit 1 cm above the median of 133 cm? Start every child at 133 cm. The 4 taller children bring 4 + 7 + 9 + 15 = 35 cm extra, and the 4 shorter ones are 2 + 5 + 8 + 11 = 26 cm short, so 35 − 26 = 9 cm is left over. Shared among 9 children, that lifts the mean by exactly 1 cm, to 134 cm. The mean is the balance point of the list: [the distances above and below it cancel](/statistics/variance-and-standard-deviation/#how-far-from-the-mean-on-average).
 
-That balance makes the mean easy to drag. If child 5's 148 cm is typed as 1,480, the mean becomes 2,538 / 9 = 282 cm, taller than any child, while the median stays 133 cm. Changing any one child to any height keeps the median between 131 and 137 cm, the 4th and 6th heights in order. Which center to trust when one value is extreme gets its own page, mean vs median vs mode.
+That balance makes the mean easy to drag. If child 5's 148 cm is typed as 1,480, the mean becomes 2,538 / 9 = 282 cm, taller than any child, while the median stays 133 cm. Changing any one child to any height moves the middle by at most one place in the sorted line, so the median stays between 131 and 137 cm, the 4th and 6th heights in order. Which center to trust when one value is extreme is the subject of [mean vs median vs mode](/statistics/mean-vs-median-vs-mode/).
 
 <Simpler label="the mean as a fair share">
 
@@ -124,17 +124,17 @@ Go back to the five friends with 1, 2, 2, 4 and 6 candies, 15 in all. Dealt out 
 
 ### The median: the middle of the line
 
-To find the median, sort the list, then take the middle value when n is odd, or the average of the two middle values when n is even. NIST's handbook defines it as the value with half the data smaller and half larger, and gives the same rule for even counts <Cite id="nist-location" />. Sorting is the step the board would not let you skip: in arrival order, the middle of the line was the tallest child. With ten children the median is (133 + 136) / 2 = 134.5 cm, a height nobody has.
+To find the median, sort the list, then take the middle value when n is odd, or the average of the two middle values when n is even. NIST's handbook defines it as the value with half the data smaller and half larger, and gives the same rule for even counts <Cite id="nist-location" />. Sorting is the step the arrival line hides: in arrival order, the child in the middle of the line was the tallest child.
 
 <GoDeeper label="why there is no single median of points in a plane" id="median-in-higher-dimensions">
 
-Deisenroth and coauthors point out that generalizing the median beyond one dimension is non-trivial, because there is no obvious way to sort points in more than one dimension (§6.4.1, p. 188) <Cite id="deisenroth2020" />. One fix is the coordinate-wise median, which takes the median of each coordinate separately. How well such fixes resist bad data when there are many coordinates is the problem in the [research frontier](#research-frontier) below.
+Beyond one dimension there is no single median, because there is no obvious way to sort points in a plane. One fix is the coordinate-wise median, which takes the median of each coordinate separately. How well such fixes resist bad data when there are many coordinates is the problem in the [research frontier](#research-frontier) below.
 
 </GoDeeper>
 
 ### The mode: the most common value
 
-The mode is the value that appears most often. A list can have one mode, several (Shared heights has two: 127 cm and 141 cm), or, by this site's convention, none, when two or more different values all appear equally often, as in our class. A list whose values are all equal has that value as its mode. NIST notes that the mode is not necessarily unique and is typically used in a qualitative way, for example to spot humps in the data <Cite id="nist-location" />. The mode is also the only center a category has, since labels can't be added or sorted. Turning labels into number codes doesn't help: [averaging codes means nothing](/probability/random-variables-and-distributions/#labels-become-numbers-by-a-choice).
+The mode is the value that appears most often. A list can have one mode, several (Shared heights has two: 127 cm and 141 cm), or, by this site's convention, none, when two or more different values all appear equally often, as in our class. NIST notes that the mode is not necessarily unique and is typically used in a qualitative way, for example to spot humps in the data <Cite id="nist-location" />. The mode is also the only center a category has, since labels can't be added or sorted. Turning labels into number codes doesn't help: [averaging codes means nothing](/probability/random-variables-and-distributions/#labels-become-numbers-by-a-choice).
 
 <SideNote>
 Tools disagree about ties. This site says "no mode" when every value appears equally often, but Python's `statistics.multimode` returns every most common value, so for our class it lists all nine heights <Cite id="python-statistics" />. pandas' `Series.mode()` can return several modes, in sorted order <Cite id="pandas-mode" />, and `describe()` reports one `top` value, chosen arbitrarily among ties <Cite id="pandas-describe" />.
@@ -142,7 +142,7 @@ Tools disagree about ties. This site says "no mode" when every value appears equ
 
 ### Which center to report
 
-For a normal distribution the mean, median and mode are the same; for skewed data they come apart, and the mean is pulled in the direction of the skew <Cite id="nist-location" />. For categories only the mode exists. When to use which, and what one millionaire walking into a cafe does to each, gets its own page.
+For the bell-shaped curve of a [normal distribution](/statistics/normal-distribution/) the mean, median and mode are the same, though a list drawn from it only comes close. For skewed data, with a long tail on one side, they come apart, and the mean is pulled toward the tail <Cite id="nist-location" />. For categories only the mode exists. [Mean vs median vs mode](/statistics/mean-vs-median-vs-mode/) covers when to use which, and what one millionaire walking into a cafe does to each.
 
 <CheckYourself level="intuition" question="A tenth child of exactly 134 cm joins our class. What are the new mean and median?">
 The mean stays 134 cm: (1,206 + 134) / 10 = 1,340 / 10 = 134, because the newcomer stands exactly at the mean. The median becomes the average of the two middle heights, 133 and 134: (133 + 134) / 2 = 133.5 cm.
@@ -154,7 +154,7 @@ Two lists can share a center and still look nothing alike, so a description also
 
 ### The range: tallest minus shortest
 
-The range is the largest value minus the smallest. For our class it is 148 − 122 = 26 cm. Shared heights has a range of 149 − 123 = 26 cm too, with a different shape inside it. The range depends on two values only, so one typo of 1,480 cm makes it 1,358 cm. Spreads that use every value are the [variance and standard deviation](/statistics/variance-and-standard-deviation/) and the interquartile range of a box plot, which has its own page.
+The range is the largest value minus the smallest. For our class it is 148 − 122 = 26 cm. Shared heights has a range of 149 − 123 = 26 cm too, with a different shape inside it. The range depends on two values only, so one typo of 1,480 cm makes it 1,358 cm. Spreads that use every value are the [variance and standard deviation](/statistics/variance-and-standard-deviation/) and the interquartile range, the distance between the quartiles that a box plot draws, on [reading box plots](/statistics/reading-box-plots-quartiles-iqr/).
 
 ### Draw the whole list: dot plots and histograms
 
@@ -166,7 +166,7 @@ A dot plot puts one dot per value on an axis, as the board's Numbers stage does.
 | 115, 125, 135, 145, 155 (10 cm wide, shifted by 5) | 1, 4, 3, 1 | a hump |
 | 120, 125, 130, 135, 140, 145, 150 (5 cm wide) | 1, 2, 2, 1, 2, 1 | bumpy |
 
-Same data, three pictures. scikit-learn's user guide makes the same point: the choice of binning can have a disproportionate effect, and shifting the bins can make two histograms of the same data look entirely different (§2.8.1) <Cite id="sklearn-density" />. So try at least two bin widths and two starting points before you read a shape. A histogram's tallest bin is its modal bin, which is how NIST's humps show up.
+Same data, three pictures. scikit-learn's user guide makes the same point: the choice of binning can have a disproportionate effect, and shifting the bins can make two histograms of the same data look entirely different (§2.8.1) <Cite id="sklearn-density" />. So try at least two bin widths and two starting points before you read a shape. A histogram's tallest bin, its modal bin, is where values crowd together most: the humps NIST suggests the mode is used to spot.
 
 <Simpler label="a histogram by hand" id="histograms">
 
@@ -182,7 +182,7 @@ scikit-learn's guide describes a histogram as a stack of blocks, one per data va
 
 ### Describing a list, not guessing beyond it
 
-Descriptive statistics describe the list you have. Using a list to say something about a bigger group it came from is inference, and it changes some formulas. Deisenroth and coauthors separate population statistics from empirical statistics computed on a finite data set (§6.4.2, pp. 191–192) <Cite id="deisenroth2020" />. The difference first shows in the n − 1 of the [sample standard deviation](/statistics/variance-and-standard-deviation/#two-versions-the-whole-group-or-a-sample), where the sample mean is written x̄.
+Descriptive statistics describe the list you have. Using a list to say something about a bigger group it came from is inference, and it changes some formulas. Deisenroth and coauthors call a mean computed from a finite data set an empirical mean (§6.4.2) <Cite id="deisenroth2020" />. The difference first shows in the n − 1 of the [sample standard deviation](/statistics/variance-and-standard-deviation/#two-versions-the-whole-group-or-a-sample), where the sample mean is written x̄.
 
 ## Notation
 
@@ -196,9 +196,9 @@ $$
 \vmu = \frac{1}{n} \sum_{i=1}^{n} x_i, \qquad \operatorname{median}(x_1, \ldots, x_n) = \begin{cases} x_{((n+1)/2)} & n \text{ odd}, \\ \tfrac{1}{2}\left(x_{(n/2)} + x_{(n/2+1)}\right) & n \text{ even}, \end{cases} \qquad \text{range} = x_{(n)} - x_{(1)}.
 $$
 
-With $n_v$ the number of values equal to $v$, the modes are the values $v$ whose count $n_v$ is largest. By this site's convention there is no mode when the list has at least two distinct values and they all have the same count; a list whose values are all equal has that value as its mode.
+With $n_v$ the number of values equal to $v$, the modes, $\operatorname{mode}(x_1, \ldots, x_n)$, are the values $v$ whose count $n_v$ is largest. By this site's convention there is no mode when the list has at least two distinct values and they all have the same count; a list whose values are all equal has that value as its mode.
 
-Conventions: the median is the 50% point of NumPy's default linear quantile, which for $p = 1/2$ gives exactly this definition. $\vmu$ is the mean of the list in view; a sample's mean is written $\bar{x}$ on the variance page. Boundary cases: for $n = 1$ the mean and median equal the value and the range is 0; when every value is equal, mean, median and mode are that value and the range is 0; ties at the middle don't matter; the mean needs numbers that can be added and the median values that can be ordered, while the mode works for any category; and the mean can be a value nobody has (134.2 cm), as can the median when $n$ is even (134.5 cm).
+Conventions: the median is the 50% point of NumPy's default linear quantile, which for $p = 1/2$ gives exactly this definition. $\vmu$ is the mean of the list in view; a sample's mean is written $\bar{x}$ on the variance page. Boundary cases: for $n = 1$ the mean and median equal the value and the range is 0; when every value is equal, mean, median and mode are that value and the range is 0; if several values share the middle height, the median is that shared height, whichever of them you count as the middle; the mean needs numbers that can be added and the median values that can be ordered, while the mode works for any category; and the mean can be a value nobody has (134.2 cm), as can the median when $n$ is even (134.5 cm).
 
 </PreciseStatement>
 
@@ -224,7 +224,7 @@ Conventions: the median is the 50% point of NumPy's default linear quantile, whi
 
 <StepThrough title="The median follows any increasing rule; the mean doesn't" rigor="full">
 
-1. Let $n$ be odd and $f$ increasing. Applying $f$ to every value keeps the order, so the middle value of the $f(x_i)$ is $f$ of the middle value: the median of the $f(x_i)$ is $f(\operatorname{median})$.
+1. Let $n$ be odd and $f$ strictly increasing. Applying $f$ to every value keeps the order, so the middle value of the $f(x_i)$ is $f$ of the middle value: the median of the $f(x_i)$ is $f(\operatorname{median})$.
 2. The mean has no such rule. Square our class's heights: the median of the squares is $133^2 = 17{,}689$, but the mean of the squares is $162{,}180 / 9 = 18{,}020$, while $134^2 = 17{,}956$.
 3. So the mean of the squares is not the square of the mean. The gap, $18{,}020 - 17{,}956 = 64$, is the class's variance, by the [shortcut on the variance page](/statistics/variance-and-standard-deviation/).
 4. For $n$ even the median is an average of two values, and $f$ of an average need not be the average of the two $f$ values, so step 1 needs $n$ odd.
@@ -236,8 +236,8 @@ Conventions: the median is the 50% point of NumPy's default linear quantile, whi
 | Needs | numbers to add | values to order | anything | sweater colors |
 | Shift by $b$ | $+\,b$ | $+\,b$ | $+\,b$ | soles: 144, 143 |
 | Scale by $a > 0$ | $\times\,a$ | $\times\,a$ | $\times\,a$ | meters: 1.34, 1.33 |
-| Increasing map $f$, $n$ odd | no rule | $f(\operatorname{median})$ | $f$ of each mode | 18,020 against 17,689 |
-| One value typed 10 times too big | can move without limit | stays between $x_{(4)}$ and $x_{(6)}$ | may change | 282 against 133 |
+| Strictly increasing map $f$, $n$ odd | no rule | $f(\operatorname{median})$ | $f$ of each mode | mean 18,020 ≠ 134² = 17,956; median 17,689 = 133² |
+| One value typed 10 times too big | can move without limit | moves at most one place in line ($x_{(4)}$ to $x_{(6)}$ here) | may change | 282 against 133 |
 | Can be a value nobody has | yes | yes, when $n$ is even | no | 134.2, 134.5 |
 | Unique | yes | yes | no | Shared heights: 127, 141 |
 
@@ -273,21 +273,27 @@ Sorted: 0.1, 0.1, 0.2, 0.2, 0.2, 0.3, 0.4, 2.5. The median is (0.2 + 0.2)/2 = 0.
 
 ### Read the summary table first
 
-pandas' `DataFrame.describe()` returns, for each numeric column, the count, mean, standard deviation, minimum, the 25th, 50th and 75th percentiles and the maximum, and the 50th percentile is the median; for a column of labels it returns the count, the number of unique values, the most common value (`top`) and its frequency <Cite id="pandas-describe" />. Our class as a column gives count 9, mean 134, std about 8.49, min 122, 25% 128, 50% 133, 75% 140 and max 148. This std divides by n − 1, so it differs from the 8 cm of [the whole-group version](/statistics/variance-and-standard-deviation/#two-versions-the-whole-group-or-a-sample); the 25% and 75% rows are quartiles, which box plots draw. The habit is what matters: a max of 1,480 in a height column is a typo you catch before training.
+pandas' `DataFrame.describe()` returns, for each numeric column, the count, mean, standard deviation, minimum, the 25th, 50th and 75th percentiles and the maximum, and the 50th percentile is the median; for a column of labels it returns the count, the number of unique values, the most common value (`top`) and its frequency <Cite id="pandas-describe" />. Our class as a column gives count 9, mean 134, std about 8.49, min 122, 25% 128, 50% 133, 75% 140 and max 148. This std divides by n − 1, like `np.std(heights, ddof=1)` in the NumPy program below, so it differs from the 8 cm of [the whole-group version](/statistics/variance-and-standard-deviation/#two-versions-the-whole-group-or-a-sample); the 25% and 75% rows are quartiles, which [box plots](/statistics/reading-box-plots-quartiles-iqr/) draw. The habit is what matters: a max of 1,480 in a height column is a typo you catch before training.
 
 ### Baselines that predict a summary
 
-scikit-learn's `DummyRegressor` ignores the inputs and always predicts the training mean (`strategy="mean"`, the default) or median (`"median"`). Its score is R² = 1 − u/v, with u the sum of squared errors and v the sum of squared distances of the targets from their mean, and a constant model that always predicts the expected value gets R² = 0 <Cite id="sklearn-dummyregressor" />. In the documentation's example the targets are 2, 3, 5 and 10, the model predicts 5 every time and scores 0.0 <Cite id="sklearn-dummyregressor" />. Predicting the median, 4, gives u = 42 against v = 38, so R² = −2/19 ≈ −0.105. Any constant other than the mean scores below 0, as the last check below proves.
+scikit-learn's `DummyRegressor` ignores the inputs and always predicts the training mean (`strategy="mean"`, the default) or median (`"median"`). Its score is R² = 1 − u/v, with u the sum of squared errors and v the sum of squared distances of the targets from their mean, and a constant model that always predicts the targets' mean gets R² = 0 <Cite id="sklearn-dummyregressor" />. In the documentation's example the targets are 2, 3, 5 and 10, the model predicts 5 every time and scores 0.0 <Cite id="sklearn-dummyregressor" />. Predicting the median, 4, gives u = 42 against v = 38, so R² = −2/19 ≈ −0.105. Scored on the same targets, any constant other than their mean scores below 0, as the last check below proves; on new data even the training mean usually scores a little below 0.
 
-`DummyClassifier` with `strategy="most_frequent"` always predicts the most frequent training label, the mode; the default, `"prior"`, predicts the same label and also reports the class shares <Cite id="sklearn-dummyclassifier" />. In its example the labels are 0, 1, 1 and 1, it predicts 1 every time and scores an accuracy of 0.75 <Cite id="sklearn-dummyclassifier" />. So a classifier with 95% accuracy on labels that are 95% one class has learned nothing beyond the mode.
+`DummyClassifier` with `strategy="most_frequent"` always predicts the most frequent training label, the mode; the default, `"prior"`, predicts the same label and also reports the class shares <Cite id="sklearn-dummyclassifier" />. In its example the labels are 0, 1, 1 and 1, it predicts 1 every time and scores an accuracy of 0.75 <Cite id="sklearn-dummyclassifier" />. So a classifier with 95% accuracy on labels that are 95% one class has not beaten the mode.
 
 ### A reported loss is a mean
 
-Training minimizes the average loss over the examples, and logs report a mean per batch or per epoch, as in worked example 3. The total is a sum of per-example terms because the examples are treated as independent, so [a likelihood becomes a product](/probability/independence/#a-likelihood-becomes-a-product) and its logarithm a sum. When some examples are corrupted on purpose, that plain mean is the weak point ([research frontier](#research-frontier)).
+Training minimizes the average loss over the examples, and logs report a mean, as in worked example 3. When some examples are corrupted on purpose, that plain mean is the weak point ([research frontier](#research-frontier)).
+
+<GoDeeper label="why the total loss is a sum" id="why-the-loss-is-a-sum">
+
+When the loss is a negative log-likelihood, the total is a sum of per-example terms because the examples are treated as independent, so [a likelihood becomes a product](/probability/independence/#a-likelihood-becomes-a-product) and its logarithm a sum.
+
+</GoDeeper>
 
 ## Summarize a list in code
 
-This program runs in your browser with exact fractions and stops with an error if any number on this page is off. It uses only Python's standard library; its helpers follow this page's definitions and NumPy's rule for bin edges.
+This program runs in your browser with exact fractions and stops with an error if any number on this page is off. Its helpers follow this page's definitions and NumPy's rule for bin edges.
 
 <PyRunner
   title="describe.py"
@@ -505,7 +511,7 @@ assert 10000 ** 0.5 == 100
 `}
 />
 
-The code is the board's math in Python, with the board's conventions, on every list the board shows. The second program asks NumPy for the same numbers, including the two histograms and the quartiles that `describe()` prints:
+A second program asks NumPy for the same numbers, including the two histograms and the quartiles that `describe()` prints:
 
 <PyRunner
   title="describe_numpy.py"
@@ -536,7 +542,7 @@ print(heights.describe())
 
 <ResearchFrontier reviewed="2026-11-25">
 
-**The mean is easy to break; in one dimension the median isn't.** One typed 1,480 sends our class's mean to 282 cm, while the median can't leave 131 to 137 cm. Diakonikolas and Kane state the clean case for data with many features: with $n$ samples from a Gaussian in $d$ dimensions, the sample mean is within $O(\sqrt{d/n})$ of the true mean, which is the best possible, yet even a single outlier can arbitrarily compromise it (p. 1) <Cite id="diakonikolas2019" />. They study the strong contamination model, in which an adversary inspects the $n$ samples and replaces up to $\epsilon n$ of them with arbitrary points (Definition 1.1, p. 2) <Cite id="diakonikolas2019" />. No estimator can then guarantee an error below a constant times $\epsilon$ (Fact 1.2, p. 4), and in one dimension the median matches that bound, with error $O(\epsilon)$ (p. 4) <Cite id="diakonikolas2019" />.
+**The mean is easy to break; in one dimension the median isn't.** One typed 1,480 sends our class's mean to 282 cm, while the median can't leave 131 to 137 cm. Diakonikolas and Kane state the clean case: with $n$ samples from a spherical Gaussian (identity covariance) in $d$ dimensions, the sample mean is, with high probability, within $O(\sqrt{d/n})$ of the true mean, which is the best possible, yet even a single outlier can arbitrarily compromise it (p. 1) <Cite id="diakonikolas2019" />. They study the strong contamination model, in which an adversary inspects the $n$ samples and replaces up to $\epsilon n$ of them with arbitrary points (Definition 1.1, p. 2) <Cite id="diakonikolas2019" />. No estimator can then guarantee an error below a constant times $\epsilon$ (Fact 1.2, p. 4), and in one dimension the median matches that bound, with error $O(\epsilon)$ (p. 4) <Cite id="diakonikolas2019" />.
 
 **Many features: why the obvious fixes fail.** There is no single way to sort points in a plane, as the median fold above says. The coordinate-wise median can be off by order $\epsilon\sqrt{d}$ in distance, and so can most natural ways to generalize the median; the Tukey median is sample-efficient but NP-hard to compute (pp. 2, 4) <Cite id="diakonikolas2019" />. The trouble is that outliers can't be spotted one at a time: an $\epsilon$ share of them placed $\sqrt{d}$ away in the same direction moves the sample mean by order $\epsilon\sqrt{d}$, though none looks unusual on its own (§2.1, p. 6) <Cite id="diakonikolas2019" />. The gap between order $\epsilon\sqrt{d}$ and order $\epsilon$ grows like $\sqrt{d}$, which is 100 when $d = 10{,}000$, up to constant factors. In 2016, Diakonikolas, Kamath, Kane, Li, Moitra and Stewart gave the first computationally efficient robust estimators whose error doesn't depend on the dimension, in many cases scaling nearly linearly in $\epsilon$ <Cite id="diakonikolas2016" />, and Lai, Rao and Vempala gave polynomial-time estimates of the mean and covariance when a fraction of the data is adversarially corrupted <Cite id="lai2016" />. In machine learning the same threat is data poisoning, where a small fraction of fake training data can substantially degrade the learned model (p. 2) <Cite id="diakonikolas2019" />.
 
@@ -559,7 +565,7 @@ With 120, 135, 150: the first bin holds 122, 125, 128, 131 and 133, which is 5; 
 </CheckYourself>
 
 <CheckYourself level="proof" question="A baseline always predicts the same number c. Show that its R² is 0 when c is the mean of the targets and negative for any other c (assume the targets are not all equal).">
-Let $\bar{y}$ be the targets' mean, $u = \sum_{i=1}^{n} (y_i - c)^2$ and $v = \sum_{i=1}^{n} (y_i - \bar{y})^2 > 0$. Write $y_i - c = (y_i - \bar{y}) + (\bar{y} - c)$ and expand: $u = v + 2(\bar{y} - c)\sum_{i=1}^{n} (y_i - \bar{y}) + n(\bar{y} - c)^2$. The middle sum is 0, because the [distances from the mean add up to 0](/statistics/variance-and-standard-deviation/#how-far-from-the-mean-on-average). So $u = v + n(c - \bar{y})^2$ and $R^2 = 1 - u/v = -n(c - \bar{y})^2/v$, which is 0 at $c = \bar{y}$ and negative everywhere else. Check: for 2, 3, 5, 10 and $c = 4$, $u = 38 + 4 \times 1 = 42$ and $R^2 = -4/38 = -2/19$.
+Let $\bar{y}$ be the targets' mean, as scikit-learn writes it, $u = \sum_{i=1}^{n} (y_i - c)^2$ and $v = \sum_{i=1}^{n} (y_i - \bar{y})^2 > 0$ (scikit-learn's names; this $v$ is not a value of the list). Write $y_i - c = (y_i - \bar{y}) + (\bar{y} - c)$ and expand: $u = v + 2(\bar{y} - c)\sum_{i=1}^{n} (y_i - \bar{y}) + n(\bar{y} - c)^2$. The middle sum is 0, because the [distances from the mean add up to 0](/statistics/variance-and-standard-deviation/#how-far-from-the-mean-on-average). So $u = v + n(c - \bar{y})^2$ and $R^2 = 1 - u/v = -n(c - \bar{y})^2/v$, which is 0 at $c = \bar{y}$ and negative everywhere else. Check: for 2, 3, 5, 10 and $c = 4$, $u = 38 + 4 \times 1 = 42$ and $R^2 = -4/38 = -2/19$.
 </CheckYourself>
 
 ## Common mistakes
