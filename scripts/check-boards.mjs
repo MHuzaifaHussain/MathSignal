@@ -5470,4 +5470,722 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	}
 }
 
+// ---- FunctionCurve: setups, state and every sentence (decision 0020) ----
+{
+	const F = fraction;
+	const fcModel = await import('../src/components/react/functionCurve/model.ts');
+	const { CATALOG } = await import('../src/components/react/functionCurve/functions.ts');
+	const fcSetups = await import('../src/components/react/functionCurve/setups.ts');
+	const fcState = await import('../src/components/react/functionCurve/state.ts');
+	const fcSay = await import('../src/components/react/functionCurve/describe.ts');
+	const fcMarks = await import('../src/components/react/functionCurve/marks.ts');
+	const { reducer: fcReduce, initialState: fcInitial } = fcState;
+	const fcText = fcModel.numberText;
+	const R2T = 'ruler-to-tangent';
+	const fcRun = (setupId, ...actions) => actions.reduce(fcReduce, fcInitial(setupId));
+	/** A state after Check, with the given fields; every combination used here is one the reducer can reach. */
+	const fcAfter = (setupId, patch) => ({ ...fcInitial(setupId), checked: true, ...patch });
+	const hAt = (n, d) => fcSetups.H_LADDER.findIndex((h) => compareFractions(h, F(n, d)) === 0);
+	const visible = (lines) => lines.map((entry) => entry.visible);
+	const PASS_R2T = [{ type: 'guess', index: 8 }, { type: 'check' }];
+
+	// The grids, pinned.
+	assert.deepEqual(fcSetups.H_LADDER.map(fcText), ['−1', '−0.5', '−0.25', '−0.1', '−0.01', '−0.001', '0.001', '0.01', '0.1', '0.25', '0.5', '1']);
+	assert.deepEqual(fcSetups.PRE_CHECK_H_INDICES.map((index) => fcText(fcSetups.H_LADDER[index])), ['−1', '−0.5', '−0.25', '0.25', '0.5', '1']);
+	assert.equal(fcText(fcSetups.H_LADDER[fcSetups.OPENING_H_INDEX]), '1');
+	assert.deepEqual(fcSetups.LINE_SLOPES.hinge.map(fcText), ['−0.5', '0', '0.25', '0.5', '0.75', '1', '1.5']);
+	assert.deepEqual(fcSetups.LINE_SLOPES.v.map(fcText), ['−1.5', '−1', '−0.5', '0', '0.5', '1', '1.5']);
+	assert.deepEqual(
+		Object.values(fcSetups.PRESETS).map((preset) => [preset.id, preset.label, preset.curve, preset.xIndex]),
+		[
+			['bowl', 'Bowl: x² at 1', 'square', 2],
+			['s-curve', 'S-curve: x³ at 1', 'cube', 2],
+			['loss', 'Loss: (w − 3)² at 0', 'loss', 0],
+			['hinge', 'Hinge: ReLU at 0', 'relu', 0],
+			['v', 'V: |x| at 0', 'abs', 0],
+			['smooth', 'Smooth: x² at 0', 'square', 0],
+		],
+	);
+	assert.deepEqual(fcSetups.SETUPS[R2T].presets, ['bowl', 's-curve', 'loss']);
+	assert.deepEqual(fcSetups.SETUPS.corner.presets, ['hinge', 'v', 'smooth']);
+	assert.deepEqual(
+		Object.entries(fcSetups.CURVE_VIEWS).map(([id, view]) => [id, view.equalScale, view.xIndexRange, view.strip.y]),
+		[
+			['square', true, [-4, 4], [-5, 5]],
+			['relu', true, [-4, 4], [-1.5, 1.5]],
+			['abs', true, [-4, 4], [-1.5, 1.5]],
+			['cube', false, [-3, 3], [-1, 13]],
+			['loss', false, [0, 12], [-7.5, 7.5]],
+		],
+	);
+
+	// validateSetup throws, naming the setup, for each broken rule.
+	{
+		const setup = fcSetups.SETUPS[R2T];
+		const views = fcSetups.CURVE_VIEWS;
+		const fails = (patch, grids, pattern) => assert.throws(() => fcSetups.validateSetup({ ...setup, ...patch }, grids), pattern);
+		fails({}, { ladder: [...fcSetups.H_LADDER, F(0, 1)] }, /setup "ruler-to-tangent": the h ladder holds 0/);
+		fails({}, { ladder: [...fcSetups.H_LADDER, F(1, 3)] }, /the h ladder holds 0\.333\d*, which has no exact decimal/);
+		fails({}, { preCheck: [0, 3] }, /the pre-Check ladder holds -0\.1, shorter than 0\.25/);
+		fails({}, { views: { ...views, square: { ...views.square, view: { x: views.square.view.x, y: [F(-1, 2), F(5, 1)] } } } }, /preset "bowl" has an equal-scale view that isn't square/);
+		fails({}, { views: { ...views, cube: { ...views.cube, xIndexRange: [-1, 1] } } }, /preset "s-curve" puts the point outside its range/);
+		fails({}, { views: { ...views, cube: { ...views.cube, view: { x: views.cube.view.x, y: [F(-1, 1), F(1, 1)] } } } }, /preset "s-curve" can put the point off the board, at -1\.5/);
+		fails({ guess: { ...setup.guess, openingIndex: 8 } }, {}, /the opening guess is the answer/);
+		fails({ presets: ['bowl', 's-curve', 'loss', 'hinge', 'v'] }, {}, /has 5 presets, more than 4/);
+		fails({ openingPreset: 'hinge' }, {}, /opens on preset "hinge", which it doesn't offer/);
+		assert.throws(() => fcSetups.getSetup('slice'), (error) => error.message === 'FunctionCurve: unknown setup "slice"');
+	}
+
+	// Registry: the h note agrees with notation.mjs's run, and the curve names share the registry's words.
+	{
+		const { NOTATION } = await import('../src/data/notation.mjs');
+		const entry = (key) => NOTATION.find((item) => item.key === key);
+		assert.equal(entry('run').tex, 'h');
+		assert.match(entry('run').meaning, /never 0/);
+		assert.ok(fcSay.hNote(fcInitial(R2T)).visible.startsWith('h = 0 is left out'));
+		assert.match(entry('absolute-value').say, /absolute value/);
+		assert.equal(entry('absolute-value').tex, '|c|');
+		assert.ok(CATALOG.abs.name.visible.startsWith('|') && CATALOG.abs.name.visible.endsWith('|') && CATALOG.abs.name.spoken.includes('absolute value'));
+		assert.match(entry('relu').say, /relu/);
+		assert.equal(CATALOG.relu.name.spoken, 'relu');
+	}
+
+	// ---- ruler-to-tangent: the opening and everything before Check ----
+	const opening = fcInitial(R2T);
+	assert.deepEqual(fcSay.statusLine(opening), {
+		visible: 'Find the slope exactly at x = 1: try rulers on both sides, set your guess, then press Check.',
+		spoken: 'Find the slope exactly at x equals 1: try rulers on both sides, set your guess, then press Check.',
+	});
+	assert.deepEqual(fcSay.boardLabel(opening), {
+		visible: 'The curve y = x² with a ruler from x = 1. Choose the ruler with the Ruler length h slider, set Your slope at x = 1, then press Check.',
+		spoken: 'The curve y equals x squared with a ruler from x equals 1. Choose the ruler with the Ruler length h slider, set Your slope at x equals 1, then press Check.',
+	});
+	assert.deepEqual(fcSay.hNote(opening), {
+		visible: 'h = 0 is left out: rise 0 over run 0 has no value. Shorter rulers appear after Check.',
+		spoken: 'h equals 0 is left out: rise 0 over run 0 has no value. Shorter rulers appear after Check.',
+	});
+	assert.equal(fcSay.hNote(fcRun(R2T, ...PASS_R2T)).visible, 'h = 0 is left out: rise 0 over run 0 has no value.');
+	assert.deepEqual(visible(fcSay.readoutLines(opening)), ['You sit 1 square across, 1 square up.', 'A pencil to 2 across climbs 3 squares in 1: 3 up for every 1 across.']);
+	assert.equal(fcSay.guessLabel(opening), 'Your slope at x = 1');
+	assert.equal(fcSay.pointLabel(opening), 'Point x');
+	assert.equal(fcSay.pointLabel(fcAfter(R2T, { preset: 'loss', xIndex: 0, stage: 'ruler' })), 'Point w');
+	assert.deepEqual(fcSay.CONTROL_LABELS, {
+		h: 'Ruler length h',
+		lineSlope: 'Line slope s',
+		showAs: 'Show as',
+		check: 'Check',
+		showAnswer: 'Show the answer',
+		lines: 'Lines under the corner',
+		presets: 'Curve presets',
+		presetsCaption: 'Curves',
+	});
+	assert.deepEqual(fcSay.STAGE_LABELS, { slide: 'Slide', ruler: 'Ruler', tangent: 'Tangent', 'slope-curve': 'Slope curve' });
+	assert.equal(fcSay.chalkNote(opening), null);
+	assert.deepEqual(fcSay.presetsFor(opening), []);
+	const allowedStages = (state) => ['slide', 'ruler', 'tangent', 'slope-curve'].filter((stage) => fcState.stageAllowed(state, stage));
+	assert.deepEqual(allowedStages(opening), ['slide', 'ruler']);
+	assert.deepEqual(allowedStages(fcInitial('corner')), ['ruler']);
+	assert.deepEqual(allowedStages(fcRun(R2T, ...PASS_R2T)), ['slide', 'ruler', 'tangent', 'slope-curve']);
+	assert.deepEqual(allowedStages(fcAfter(R2T, { preset: 's-curve', stage: 'ruler' })), ['ruler', 'tangent', 'slope-curve']);
+	assert.deepEqual(allowedStages(fcAfter(R2T, { xIndex: 1, stage: 'ruler' })), ['ruler', 'tangent', 'slope-curve']);
+	assert.deepEqual(allowedStages(fcAfter(R2T, { xIndex: 5, stage: 'ruler' })), ['ruler', 'tangent', 'slope-curve']);
+	assert.deepEqual(allowedStages(fcAfter(R2T, { xIndex: 4, stage: 'ruler' })), ['slide', 'ruler', 'tangent', 'slope-curve']);
+
+	// The six rulers before Check, at x = 1, in the Ruler stage (line B), pinned word for word.
+	{
+		const pinned = [
+			[[1, 1], 'Ruler to x = 2: rise 3 over run 1, slope 3.'],
+			[[1, 2], 'Ruler to x = 1.5: rise 1.25 over run 0.5, slope 2.5.'],
+			[[1, 4], 'Ruler to x = 1.25: rise 0.5625 over run 0.25, slope 2.25.'],
+			[[-1, 4], 'Ruler to x = 0.75: rise −0.4375 over run −0.25, slope 1.75.'],
+			[[-1, 2], 'Ruler to x = 0.5: rise −0.75 over run −0.5, slope 1.5.'],
+			[[-1, 1], 'Ruler to x = 0: rise −1 over run −1, slope 1.'],
+		];
+		for (const [[n, d], text] of pinned) {
+			const state = { ...opening, stage: 'ruler', hIndex: hAt(n, d) };
+			assert.deepEqual(visible(fcSay.readoutLines(state)), ['Point: x = 1, y = 1.', text]);
+		}
+		assert.deepEqual(fcSay.rulerLine({ ...opening, stage: 'ruler', hIndex: hAt(-1, 2) }), {
+			visible: 'Ruler to x = 0.5: rise −0.75 over run −0.5, slope 1.5.',
+			spoken: 'Ruler to x equals 0.5: rise minus 0.75 over run minus 0.5, slope 1.5.',
+		});
+		const shorter = [
+			[[1, 10], 'Ruler to x = 1.1: rise 0.21 over run 0.1, slope 2.1.'],
+			[[1, 100], 'Ruler to x = 1.01: rise 0.0201 over run 0.01, slope 2.01.'],
+			[[1, 1000], 'Ruler to x = 1.001: rise 0.002001 over run 0.001, slope 2.001.'],
+			[[-1, 10], 'Ruler to x = 0.9: rise −0.19 over run −0.1, slope 1.9.'],
+			[[-1, 100], 'Ruler to x = 0.99: rise −0.0199 over run −0.01, slope 1.99.'],
+			[[-1, 1000], 'Ruler to x = 0.999: rise −0.001999 over run −0.001, slope 1.999.'],
+		];
+		for (const [[n, d], text] of shorter) assert.equal(fcSay.rulerLine(fcAfter(R2T, { stage: 'ruler', hIndex: hAt(n, d) })).visible, text);
+	}
+	// The Slide stage at x = 1.
+	{
+		const slide = (n, d) => fcSay.rulerLine({ ...opening, hIndex: hAt(n, d) }).visible;
+		assert.equal(slide(1, 2), 'A pencil to 1.5 across climbs 1.25 squares in 0.5: 2.5 up for every 1 across.');
+		assert.equal(slide(-1, 2), 'A pencil back to 0.5 across drops 0.75 squares in 0.5: 1.5 up for every 1 across.');
+		assert.equal(slide(-1, 1), 'A pencil back to 0 across drops 1 square in 1: 1 up for every 1 across.');
+		assert.equal(fcSay.pointLine(fcAfter(R2T, { xIndex: 3 })).visible, 'You sit 1.5 squares across, 2.25 squares up.');
+	}
+	// The Slide template over its whole value set: x from 1 to 2, every ruler. Every pencil there slopes up, and a
+	// unit is singular only when the value is exactly 1.
+	{
+		const unit = (value) => (value.numerator === value.denominator ? 'square' : 'squares');
+		for (let xIndex = 2; xIndex <= 4; xIndex += 1) {
+			fcSetups.H_LADDER.forEach((h, hIndex) => {
+				const state = fcAfter(R2T, { xIndex, hIndex, stage: 'slide' });
+				const r = fcModel.ruler(CATALOG.square, F(xIndex, 2), h);
+				assert.equal(r.slope.numerator > 0, true, `the pencil at ${xIndex / 2}, h ${fcText(h)} slopes up`);
+				const a = F(xIndex, 2);
+				const y = r.start.y;
+				const lineA = `You sit ${fcText(a)} ${unit(a)} across, ${fcText(y)} ${unit(y)} up.`;
+				const rise = fcModel.absolute(r.rise);
+				const lineB = h.numerator > 0
+					? `A pencil to ${fcText(r.end.x)} across climbs ${fcText(rise)} ${unit(rise)} in ${fcText(h)}: ${fcText(r.slope)} up for every 1 across.`
+					: `A pencil back to ${fcText(r.end.x)} across drops ${fcText(rise)} ${unit(rise)} in ${fcText(fcModel.absolute(h))}: ${fcText(r.slope)} up for every 1 across.`;
+				const lines = fcSay.readoutLines(state);
+				assert.equal(lines[0].visible, lineA);
+				assert.equal(lines[1].visible, lineB);
+				for (const entry of lines) assert.equal(entry.visible, entry.spoken, 'Slide lines hold no symbol to speak differently');
+			});
+		}
+	}
+
+	// Line B over every (curve, x, h), visible and spoken.
+	const fcPresetsByCurve = [[R2T, 'bowl'], [R2T, 's-curve'], [R2T, 'loss'], ['corner', 'hinge'], ['corner', 'v']];
+	const xRange = (preset) => {
+		const [low, high] = fcSetups.viewOf(preset).xIndexRange;
+		return Array.from({ length: high - low + 1 }, (_, index) => low + index);
+	};
+	const speak = (value) => fcText(value).replace('−', 'minus ');
+	for (const [setupId, preset] of fcPresetsByCurve) {
+		const f = fcSetups.curveOf(preset);
+		const v = f.variable;
+		for (const xIndex of xRange(preset)) {
+			fcSetups.H_LADDER.forEach((h, hIndex) => {
+				const r = fcModel.ruler(f, F(xIndex, 2), h);
+				assert.deepEqual(fcSay.rulerLine(fcAfter(setupId, { preset, xIndex, hIndex, stage: 'ruler' })), {
+					visible: `Ruler to ${v} = ${fcText(r.end.x)}: rise ${fcText(r.rise)} over run ${fcText(h)}, slope ${fcText(r.slope)}.`,
+					spoken: `Ruler to ${v} equals ${speak(r.end.x)}: rise ${speak(r.rise)} over run ${speak(h)}, slope ${speak(r.slope)}.`,
+				});
+			});
+		}
+	}
+
+	// Edge sentences: exactly these ruler ends leave the board (strict: an end on the edge stays on it).
+	{
+		const expected = {
+			bowl: ['-2,-1', '-2,-0.5', '-2,-0.25', '-1.5,-1', '1.5,1', '2,0.25', '2,0.5', '2,1'],
+			's-curve': ['-1.5,-1', '-1.5,-0.5', '-1.5,-0.25', '-1.5,-0.1', '-1,-1', '1,1', '1.5,0.1', '1.5,0.25', '1.5,0.5', '1.5,1'],
+			loss: ['0,-1', '0,-0.5', '0,-0.25', '0.5,-1', '5.5,1', '6,0.25', '6,0.5', '6,1'],
+			hinge: ['-2,-1', '2,1'],
+			v: ['-2,-1', '2,1'],
+		};
+		for (const [setupId, preset] of fcPresetsByCurve) {
+			const found = [];
+			for (const xIndex of xRange(preset)) {
+				fcSetups.H_LADDER.forEach((h, hIndex) => {
+					if (fcSay.edgeLine(fcAfter(setupId, { preset, xIndex, hIndex, stage: 'ruler' }))) found.push(`${xIndex / 2},${fcModel.numberText(h).replace('−', '-')}`);
+				});
+			}
+			assert.deepEqual(found, expected[preset], preset);
+		}
+		// The 8 ends that land exactly on the view's edge have no edge sentence.
+		for (const preset of ['hinge', 'v']) {
+			for (const [xIndex, n, d] of [[-4, -1, 2], [-3, -1, 1], [3, 1, 1], [4, 1, 2]]) {
+				assert.equal(fcSay.edgeLine(fcAfter('corner', { preset, xIndex, hIndex: hAt(n, d), stage: 'ruler' })), null, `${preset} at ${xIndex / 2}, h ${n}/${d}`);
+			}
+		}
+		assert.deepEqual(fcSay.edgeLine(fcAfter(R2T, { xIndex: 4, hIndex: hAt(1, 1), stage: 'ruler' })), {
+			visible: "The ruler's other end, (3, 9), is off the board.",
+			spoken: "The ruler's other end, at x equals 3, y equals 9, is off the board.",
+		});
+		assert.deepEqual(fcSay.edgeLine(fcAfter(R2T, { preset: 'loss', xIndex: 0, hIndex: hAt(-1, 1), stage: 'tangent' })), {
+			visible: "The ruler's other end, (−1, 16), is off the board.",
+			spoken: "The ruler's other end, at w equals minus 1, loss 16, is off the board.",
+		});
+		assert.equal(fcSay.edgeLine(fcAfter(R2T, { xIndex: 3, hIndex: hAt(1, 1), stage: 'slide' })).visible, "The pencil's other end is off the paper.");
+		// The edge sentence is the third line, after the point and the ruler.
+		assert.equal(fcSay.readoutLines(fcAfter(R2T, { xIndex: 4, hIndex: hAt(1, 1), stage: 'tangent' }))[2].visible, "The ruler's other end, (3, 9), is off the board.");
+	}
+
+	// ---- Check, the verdicts and Show the answer ----
+	{
+		const evidence = 'Rulers to the right gave 3, 2.5 and 2.25; rulers to the left gave 1, 1.5 and 1.75. Both sides close in on 2.';
+		const passed = fcRun(R2T, ...PASS_R2T);
+		assert.deepEqual(fcSay.feedbackLine(passed), { visible: `Yes, 2. ${evidence}`, spoken: `Yes, 2. ${evidence}` });
+		assert.equal(fcSay.statusLine(passed), null);
+		assert.equal(fcSay.announcementFor(passed, { type: 'check' }), `Yes, 2. ${evidence}`);
+		// Every one of the 16 wrong guesses, its second miss, and the answer shown after two misses.
+		for (let index = 0; index <= 16; index += 1) {
+			if (index === 8) continue;
+			const g = fcText(F(index, 4));
+			const once = fcRun(R2T, { type: 'guess', index }, { type: 'check' });
+			const text = `Not yet: ${g} is not where the rulers close in. Compare a ruler to the right with one to the left: the slope at x = 1 sits between them.`;
+			assert.deepEqual(fcSay.feedbackLine(once), { visible: text, spoken: text.replace('x = 1', 'x equals 1') });
+			const twice = fcReduce(once, { type: 'check' });
+			assert.equal(fcSay.feedbackLine(twice).visible, `${text} You can now show the answer.`);
+			// The miss is a hint, never the answer.
+			for (const half of [fcSay.feedbackLine(twice).visible, fcSay.feedbackLine(twice).spoken]) {
+				assert.ok(!/slope (at x = 1 )?(is )?2(?![.\d])/.test(half) && !/slope (at x equals 1 )?(is )?2(?![.\d])/.test(half) && !half.includes('close in on'), half);
+			}
+			const shown = fcReduce(twice, { type: 'show-answer' });
+			assert.equal(shown.guessIndex, 8);
+			assert.equal(shown.checked, true);
+			assert.equal(fcSay.feedbackLine(shown).visible, `Here it is: 2. ${evidence}`);
+		}
+	}
+	// corner: once mode, refused until a choice is made.
+	{
+		const openingCorner = fcInitial('corner');
+		assert.deepEqual(fcSay.statusLine(openingCorner), {
+			visible: 'Try rulers on both sides of x = 0, then choose One slope or Two different slopes and press Check.',
+			spoken: 'Try rulers on both sides of x equals 0, then choose One slope or Two different slopes and press Check.',
+		});
+		assert.equal(
+			fcSay.boardLabel(openingCorner).visible,
+			'The ReLU curve with a ruler from x = 0. Try ruler lengths on both sides with the Ruler length h slider, choose One slope or Two different slopes, then press Check.',
+		);
+		assert.equal(fcSay.choiceLegend(openingCorner), 'Slope at x = 0');
+		assert.deepEqual(fcSay.CHOICE_OPTIONS, [{ value: 'one', label: 'One slope' }, { value: 'two', label: 'Two different slopes' }]);
+		assert.equal(fcSay.checkRefusal(openingCorner), 'Pick One slope or Two different slopes first.');
+		assert.equal(fcSay.rulerLine({ ...openingCorner, hIndex: hAt(1, 4) }).visible, 'Ruler to x = 0.25: rise 0.25 over run 0.25, slope 1.');
+		assert.equal(fcSay.rulerLine({ ...openingCorner, hIndex: hAt(-1, 4) }).visible, 'Ruler to x = −0.25: rise 0 over run −0.25, slope 0.');
+		const refused = fcReduce(openingCorner, { type: 'check' });
+		assert.equal(refused.refused, true);
+		assert.equal(refused.checked, false);
+		assert.equal(fcSay.announcementFor(refused, { type: 'check' }), 'Pick One slope or Two different slopes first.');
+		const chosen = fcReduce(refused, { type: 'choice', choice: 'one' });
+		assert.equal(chosen.refused, false);
+		assert.equal(fcSay.checkRefusal(chosen), null);
+		assert.equal(fcSay.announcementFor(chosen, { type: 'choice', choice: 'one' }), null);
+		assert.deepEqual(fcSay.feedbackLine(fcReduce(chosen, { type: 'check' })), {
+			visible: 'Not quite. Every ruler to the right gives 1 and every ruler to the left gives 0, however short, so there is no single slope at x = 0.',
+			spoken: 'Not quite. Every ruler to the right gives 1 and every ruler to the left gives 0, however short, so there is no single slope at x equals 0.',
+		});
+		const yes = fcRun('corner', { type: 'choice', choice: 'two' }, { type: 'check' });
+		assert.deepEqual(fcSay.feedbackLine(yes), {
+			visible: 'Yes. Every ruler to the right gives 1 and every ruler to the left gives 0, however short. ReLU has no single slope at x = 0.',
+			spoken: 'Yes. Every ruler to the right gives 1 and every ruler to the left gives 0, however short. relu has no single slope at x equals 0.',
+		});
+		assert.equal(fcReduce(yes, { type: 'show-answer' }), yes, 'corner has no Show the answer');
+		assert.equal(fcReduce(yes, { type: 'choice', choice: 'one' }), yes, 'the choice is gone after Check');
+		// The verdict stays about ReLU after another preset.
+		assert.equal(fcSay.feedbackLine(fcReduce(yes, { type: 'preset', id: 'v' })).visible, fcSay.feedbackLine(yes).visible);
+	}
+
+	// ---- After Check: line C, the slope curve and the presets ----
+	const lineC = (setupId, preset, xIndex, hn, hd, stage = 'tangent') => fcSay.tangentLine(fcAfter(setupId, { preset, xIndex, hIndex: hAt(hn, hd), stage }));
+	assert.deepEqual(lineC(R2T, 'bowl', 2, 1, 100), {
+		visible: "Tangent at x = 1: slope 2. This ruler's slope, 2.01, is 0.01 above it.",
+		spoken: "Tangent at x equals 1: slope 2. This ruler's slope, 2.01, is 0.01 above it.",
+	});
+	assert.equal(lineC(R2T, 'bowl', 2, -1, 100).visible, "Tangent at x = 1: slope 2. This ruler's slope, 1.99, is 0.01 below it.");
+	assert.equal(lineC(R2T, 's-curve', 0, 1, 2).visible, "Tangent at x = 0: slope 0. This ruler's slope, 0.25, is 0.25 above it.");
+	assert.equal(lineC(R2T, 's-curve', 0, -1, 2).visible, "Tangent at x = 0: slope 0. This ruler's slope, 0.25, is 0.25 above it.");
+	assert.equal(lineC(R2T, 's-curve', 2, 1, 10).visible, "Tangent at x = 1: slope 3. This ruler's slope, 3.31, is 0.31 above it.");
+	assert.equal(lineC(R2T, 's-curve', 2, 1, 100).visible, "Tangent at x = 1: slope 3. This ruler's slope, 3.0301, is 0.0301 above it.");
+	assert.deepEqual(lineC(R2T, 'loss', 0, 1, 2), {
+		visible: "Slope −6: a step to the right lowers the loss. This ruler's slope, −5.5, is 0.5 above it.",
+		spoken: "Slope minus 6: a step to the right lowers the loss. This ruler's slope, minus 5.5, is 0.5 above it.",
+	});
+	assert.equal(lineC(R2T, 'loss', 8, 1, 2).visible, "Slope 2: a step to the right raises the loss. This ruler's slope, 2.5, is 0.5 above it.");
+	assert.equal(lineC(R2T, 'loss', 6, -1, 4).visible, "Slope 0: the loss is flat here. This ruler's slope, −0.25, is 0.25 below it.");
+	assert.deepEqual(visible(fcSay.readoutLines(fcAfter(R2T, { preset: 'loss', xIndex: 0, hIndex: hAt(1, 2), stage: 'ruler' }))), ['Loss at w = 0: 9.', 'Ruler to w = 0.5: rise −2.75 over run 0.5, slope −5.5.']);
+	assert.deepEqual(
+		fcSetups.H_LADDER.map((h) => fcText(fcModel.ruler(CATALOG.loss, F(0, 1), h).slope)),
+		['−7', '−6.5', '−6.25', '−6.1', '−6.01', '−6.001', '−5.999', '−5.99', '−5.9', '−5.75', '−5.5', '−5'],
+	);
+	// The corner setup's line C in full.
+	assert.equal(lineC('corner', 'hinge', 2, 1, 1).visible, "Tangent at x = 1: slope 1. This ruler's slope, 1, matches it.");
+	assert.equal(lineC('corner', 'hinge', -2, 1, 1).visible, "Tangent at x = −1: slope 0. This ruler's slope, 0, matches it.");
+	assert.deepEqual(lineC('corner', 'hinge', 0, 1, 1), {
+		visible: 'No tangent at x = 0: rulers to the right give 1, rulers to the left give 0.',
+		spoken: 'No tangent at x equals 0: rulers to the right give 1, rulers to the left give 0.',
+	});
+	assert.equal(lineC('corner', 'v', 0, -1, 2).visible, 'No tangent at x = 0: rulers to the right give 1, rulers to the left give −1.');
+	assert.equal(lineC('corner', 'smooth', 0, 1, 4).visible, "Tangent at x = 0: slope 0. This ruler's slope, 0.25, is 0.25 above it.");
+	assert.equal(lineC('corner', 'smooth', 0, -1, 4).visible, "Tangent at x = 0: slope 0. This ruler's slope, −0.25, is 0.25 below it.");
+	// A ruler that crosses the corner reads its exact secant.
+	assert.deepEqual(visible(fcSay.readoutLines(fcAfter('corner', { xIndex: 1, hIndex: hAt(-1, 1), stage: 'tangent' }))), [
+		'Point: x = 0.5, y = 0.5.',
+		'Ruler to x = −0.5: rise −0.5 over run −1, slope 0.5.',
+		"Tangent at x = 0.5: slope 1. This ruler's slope, 0.5, is 0.5 below it.",
+	]);
+	// Line C over its full value set: the template on every (curve, x, h), and 188 matches, all on ReLU and |x|.
+	{
+		const matches = {};
+		for (const [setupId, preset] of fcPresetsByCurve) {
+			const f = fcSetups.curveOf(preset);
+			for (const xIndex of xRange(preset)) {
+				fcSetups.H_LADDER.forEach((h, hIndex) => {
+					const a = F(xIndex, 2);
+					const text = fcSay.tangentLine(fcAfter(setupId, { preset, xIndex, hIndex, stage: 'tangent' })).visible;
+					const slope = fcModel.ruler(f, a, h).slope;
+					const tangent = fcModel.miss(f, a, h);
+					const where = `${f.variable} = ${fcText(a)}`;
+					if (!tangent) {
+						assert.match(text, new RegExp(`^No tangent at ${where}: rulers to the right give 1, rulers to the left give (0|−1)\\.$`));
+						return;
+					}
+					const comparison = tangent.kind === 'matches' ? 'matches it.' : `is ${fcText(tangent.size)} ${tangent.kind} it.`;
+					if (tangent.kind === 'matches') matches[preset] = (matches[preset] ?? 0) + 1;
+					const opening = preset === 'loss' ? /^Slope (−?[\d.]+): (a step to the right (lowers|raises) the loss|the loss is flat here)\.$/ : null;
+					const [first, rest] = [text.slice(0, text.indexOf(" This ruler's")), text.slice(text.indexOf(" This ruler's") + 1)];
+					assert.equal(rest, `This ruler's slope, ${fcText(slope)}, ${comparison}`, `${preset} at ${fcText(a)}, h ${fcText(h)}`);
+					if (opening) assert.match(first, opening);
+					else assert.match(first, new RegExp(`^Tangent at ${where.replace('.', '\\.')}: slope −?[\\d.]+\\.$`));
+				});
+			}
+		}
+		assert.deepEqual(matches, { hinge: 94, v: 94 });
+	}
+	// Slope curve: every x² value from −2 to 2, the pinned −1.5, and the corners.
+	assert.deepEqual(
+		[-4, -3, -2, -1, 0, 1, 2, 3, 4].map((xIndex) => lineC(R2T, 'bowl', xIndex, 1, 1, 'slope-curve').visible.match(/is (−?[\d.]+)\.$/)[1]),
+		['−4', '−3', '−2', '−1', '0', '1', '2', '3', '4'],
+	);
+	assert.deepEqual(lineC(R2T, 'bowl', -3, 1, 1, 'slope-curve'), {
+		visible: 'Slope curve: at x = −1.5 the slope of y = x² is −3.',
+		spoken: 'Slope curve: at x equals minus 1.5 the slope of y equals x squared is minus 3.',
+	});
+	assert.equal(lineC('corner', 'hinge', 0, 1, 1, 'slope-curve').visible, 'Slope curve: ReLU has no slope at x = 0. Rulers to the right give 1, rulers to the left give 0.');
+	assert.equal(lineC('corner', 'v', 0, 1, 1, 'slope-curve').visible, 'Slope curve: |x| has no slope at x = 0. Rulers to the right give 1, rulers to the left give −1.');
+	assert.equal(lineC(R2T, 'bowl', 2, 1, 1, 'ruler'), null, 'no line C in Ruler');
+	assert.equal(lineC(R2T, 'bowl', 2, 1, 1, 'slide'), null, 'no line C in Slide');
+
+	// After Check: the board label, the presets, the ChalkNote and the point's value text.
+	{
+		const passed = fcRun(R2T, ...PASS_R2T);
+		assert.deepEqual(fcSay.boardLabel(passed), {
+			visible: 'The curve y = x² with a ruler from x = 1. Move the point with the Point x slider and choose the ruler with Ruler length h.',
+			spoken: 'The curve y equals x squared with a ruler from x equals 1. Move the point with the Point x slider and choose the ruler with Ruler length h.',
+		});
+		assert.equal(fcSay.boardLabel(fcAfter(R2T, { preset: 'loss', xIndex: 0, stage: 'ruler' })).visible, 'The curve L(w) = (w − 3)² with a ruler from w = 0. Move the point with the Point w slider and choose the ruler with Ruler length h.');
+		assert.deepEqual(fcSay.presetsFor(passed), [
+			{ id: 'bowl', label: 'Bowl: x² at 1' },
+			{ id: 's-curve', label: 'S-curve: x³ at 1' },
+			{ id: 'loss', label: 'Loss: (w − 3)² at 0' },
+		]);
+		assert.deepEqual(fcSay.chalkNote({ ...passed, stage: 'tangent' }), { long: "shorter ruler, closer to the curve's own tilt", short: 'shorter ruler, closer tilt' });
+		for (const stage of ['slide', 'ruler', 'slope-curve']) assert.equal(fcSay.chalkNote({ ...passed, stage }), null);
+		assert.equal(fcSay.chalkNote(fcAfter('corner', { stage: 'tangent' })), null);
+		assert.equal(fcSay.pointDescription(passed)(3), 'x equals 1.5, y equals 2.25');
+		assert.equal(fcSay.pointDescription(fcAfter(R2T, { preset: 'loss', xIndex: 0 }))(0), 'w equals 0, loss 9');
+		assert.equal(fcSay.pointFormat(-3), '−1.5');
+		assert.equal(fcSay.hDescription(opening)(2), 'h equals minus 0.25, ruler to x equals 0.75');
+		assert.equal(fcSay.hFormat(opening)(2), '−0.25');
+		assert.equal(fcSay.hFormat(passed)(5), '−0.001');
+		assert.equal(fcSay.guessDescription(9), 'your slope 2.25');
+		assert.equal(fcSay.guessFormat(9), '2.25');
+	}
+
+	// "Lines under the corner": all 14 (preset, s) readouts.
+	{
+		const readouts = (preset) =>
+			fcSetups.LINE_SLOPES[preset].map((_, lineSlopeIndex) => fcSay.cornerLineReadout(fcAfter('corner', { preset, linesOn: true, lineSlopeIndex })).visible);
+		const under = (s) => `A line of slope ${s} through the corner stays on or below the curve everywhere.`;
+		assert.deepEqual(readouts('hinge'), [
+			'Slope −0.5: the line rises above the curve to the left of 0.',
+			under('0'),
+			under('0.25'),
+			under('0.5'),
+			under('0.75'),
+			under('1'),
+			'Slope 1.5: the line rises above the curve to the right of 0.',
+		]);
+		assert.deepEqual(readouts('v'), [
+			'Slope −1.5: the line rises above the curve to the left of 0.',
+			under('−1'),
+			under('−0.5'),
+			under('0'),
+			under('0.5'),
+			under('1'),
+			'Slope 1.5: the line rises above the curve to the right of 0.',
+		]);
+		assert.equal(fcSay.cornerLineReadout(fcAfter('corner', { preset: 'v', linesOn: true, lineSlopeIndex: 0 })).spoken, 'Slope minus 1.5: the line rises above the curve to the left of 0.');
+		assert.equal(fcSay.cornerLineReadout(fcAfter('corner', {})), null);
+		assert.equal(fcSay.lineSlopeDescription(fcAfter('corner', { preset: 'hinge' }))(0), 'line slope minus 0.5');
+		assert.equal(fcSay.lineSlopeDescription(fcAfter('corner', { preset: 'hinge' }))(3), 'line slope 0.5');
+		const on = fcRun('corner', { type: 'choice', choice: 'two' }, { type: 'check' }, { type: 'lines', on: true });
+		assert.equal(fcSay.announcementFor(on, { type: 'lines', on: true }), 'A line of slope 0.5 through the corner stays on or below the curve everywhere.');
+		assert.equal(fcSay.announcementFor(fcReduce(on, { type: 'line-slope', index: 6 }), { type: 'line-slope', index: 6 }), 'Slope 1.5: the line rises above the curve to the right of 0.');
+	}
+
+	// Slide gives way to Ruler, said once.
+	{
+		const passed = fcRun(R2T, ...PASS_R2T);
+		const toCube = fcReduce(passed, { type: 'preset', id: 's-curve' });
+		assert.equal(toCube.stage, 'ruler');
+		assert.deepEqual(fcSay.noticeLine(toCube), { visible: 'Showing Ruler: the slide picture is only for y = x².', spoken: 'Showing Ruler: the slide picture is only for y equals x squared.' });
+		assert.ok(fcSay.announcementFor(toCube, { type: 'preset', id: 's-curve' }).startsWith('Showing Ruler: the slide picture is only for y equals x squared. Point: x equals 1, y equals 1.'));
+		assert.equal(fcReduce(toCube, { type: 'h', index: 10 }).notice, null, 'the notice is said once');
+		const outside = fcReduce(passed, { type: 'point', xIndex: 1 });
+		assert.equal(outside.stage, 'ruler');
+		assert.deepEqual(fcSay.noticeLine(outside), {
+			visible: 'Showing Ruler: the slide picture covers seats from x = 1 to x = 2.',
+			spoken: 'Showing Ruler: the slide picture covers seats from x equals 1 to x equals 2.',
+		});
+		assert.equal(fcReduce(passed, { type: 'point', xIndex: 4 }).stage, 'slide');
+		assert.equal(fcReduce(passed, { type: 'point', xIndex: 2 }).stage, 'slide');
+		const rulerStage = fcReduce(passed, { type: 'stage', stage: 'ruler' });
+		assert.equal(fcReduce(rulerStage, { type: 'preset', id: 'loss' }).notice, null, 'no notice when Slide was not showing');
+		assert.equal(fcReduce(fcReduce(toCube, { type: 'preset', id: 'bowl' }), { type: 'stage', stage: 'slide' }).stage, 'slide', 'Bowl at 1 offers Slide again');
+	}
+
+	// ---- Table view ----
+	{
+		const headers = fcSay.tableHeaders(opening);
+		assert.deepEqual(headers, { caption: { visible: 'Rulers of length h from x = 1 on y = x²', spoken: 'Rulers of length h from x equals 1 on y equals x squared' }, columns: ['h', 'Rise', 'Slope'] });
+		assert.deepEqual(
+			fcSay.tableRows(opening).map((row) => [row.header, ...row.cells]),
+			[['−1', '−1', '1'], ['−0.5', '−0.75', '1.5'], ['−0.25', '−0.4375', '1.75'], ['0.25', '0.5625', '2.25'], ['0.5', '1.25', '2.5'], ['1 (shown)', '3', '3']],
+		);
+		assert.deepEqual(fcSay.tableFoldBody(opening), { visible: 'It lists the 6 rulers from x = 1, with their rise and slope.', spoken: 'It lists the 6 rulers from x equals 1, with their rise and slope.' });
+		assert.equal(fcSay.announcementFor({ ...opening, tableOpen: true }, { type: 'table', open: true }), 'Table shown under the switch. It lists the 6 rulers from x equals 1, with their rise and slope.');
+		const tangent = fcAfter(R2T, { stage: 'tangent', hIndex: hAt(1, 100) });
+		assert.deepEqual(fcSay.tableHeaders(tangent).columns, ['h', 'Slope', 'Miss']);
+		assert.deepEqual(
+			fcSay.tableRows(tangent).map((row) => [row.header, ...row.cells]),
+			[
+				['−1', '1', '1 below'],
+				['−0.5', '1.5', '0.5 below'],
+				['−0.25', '1.75', '0.25 below'],
+				['−0.1', '1.9', '0.1 below'],
+				['−0.01', '1.99', '0.01 below'],
+				['−0.001', '1.999', '0.001 below'],
+				['0.001', '2.001', '0.001 above'],
+				['0.01 (shown)', '2.01', '0.01 above'],
+				['0.1', '2.1', '0.1 above'],
+				['0.25', '2.25', '0.25 above'],
+				['0.5', '2.5', '0.5 above'],
+				['1', '3', '1 above'],
+			],
+		);
+		assert.equal(fcSay.tableFoldBody(tangent).visible, "It lists the 12 rulers from x = 1, with their slope and how far each misses the tangent's slope.");
+		assert.deepEqual(fcSay.tableRows(fcAfter('corner', { xIndex: 2, stage: 'tangent' })).map((row) => row.cells[1]), Array(12).fill('matches'));
+		// At a corner there is no tangent, so the table keeps rise and slope.
+		assert.deepEqual(fcSay.tableHeaders(fcAfter('corner', { stage: 'tangent' })).columns, ['h', 'Rise', 'Slope']);
+		// The widest cells, in both views.
+		const widest = fcAfter(R2T, { preset: 's-curve', xIndex: -3, hIndex: hAt(-1, 1000), stage: 'ruler' });
+		assert.deepEqual(fcSay.tableRows(widest)[5].header, '−0.001 (shown)');
+		assert.deepEqual(fcSay.tableRows(widest)[5].cells, ['−0.006754501', '6.754501']);
+		assert.deepEqual(fcSay.tableRows({ ...widest, stage: 'tangent' })[5].cells, ['6.754501', '0.004501 above']);
+		// No Miss column and no ruler shorter than 0.25 before Check, whatever the stage.
+		for (const stage of ['slide', 'ruler']) {
+			assert.deepEqual(fcSay.tableHeaders({ ...opening, stage }).columns, ['h', 'Rise', 'Slope']);
+			assert.equal(fcSay.tableRows({ ...opening, stage }).length, 6);
+		}
+	}
+
+	// ---- The reducer ----
+	{
+		const same = (state, action, why) => assert.equal(fcReduce(state, action), state, why);
+		// While covered: no point, preset, corner lines, short ruler or answer stage.
+		same(opening, { type: 'point', xIndex: 3 }, 'covered ignores the point');
+		same(opening, { type: 'preset', id: 'loss' }, 'covered ignores presets');
+		same(opening, { type: 'lines', on: true }, 'covered ignores the corner lines');
+		same(opening, { type: 'line-slope', index: 0 }, 'covered ignores the line slope');
+		for (const index of [3, 4, 5, 6, 7, 8]) same(opening, { type: 'h', index }, `covered ignores h index ${index}`);
+		same(opening, { type: 'stage', stage: 'tangent' }, 'Tangent waits for Check');
+		same(opening, { type: 'stage', stage: 'slope-curve' }, 'Slope curve waits for Check');
+		same(fcInitial('corner'), { type: 'stage', stage: 'slide' }, 'corner has no Slide');
+		same(opening, { type: 'show-answer' }, 'no answer before two misses');
+		same(fcRun(R2T, { type: 'guess', index: 1 }, { type: 'check' }), { type: 'show-answer' }, 'no answer after one miss');
+		assert.throws(() => fcReduce(opening, { type: 'guess', index: 17 }), /guess index 17 is outside 0 to 16/);
+		assert.throws(() => fcReduce(fcRun(R2T, ...PASS_R2T), { type: 'point', xIndex: 5 + 4 }), /point index 9 is outside -4 to 4/);
+		// Every value change clears a stale miss; the misses still count toward Show the answer.
+		const missed = fcRun(R2T, { type: 'guess', index: 1 }, { type: 'check' });
+		assert.equal(missed.missShown, true);
+		assert.equal(fcReduce(missed, { type: 'guess', index: 2 }).missShown, false);
+		assert.equal(fcReduce(missed, { type: 'h', index: 10 }).missShown, false);
+		assert.equal(fcReduce(missed, { type: 'h', index: 10 }).failedChecks, 1);
+		assert.equal(fcReduce(missed, { type: 'table', open: true }).missShown, true, 'opening the table changes no value');
+		// Check and Show the answer keep h, for each of the six pre-Check rulers.
+		for (const index of fcSetups.PRE_CHECK_H_INDICES) {
+			assert.equal(fcRun(R2T, { type: 'h', index }, ...PASS_R2T).hIndex, index);
+			assert.equal(fcRun(R2T, { type: 'h', index }, { type: 'check' }, { type: 'check' }, { type: 'show-answer' }).hIndex, index);
+			assert.equal(fcRun('corner', { type: 'h', index }, { type: 'choice', choice: 'one' }, { type: 'check' }).hIndex, index);
+		}
+		// Reset: the opening state, table folded, h = 1, guess 0, Slide.
+		const busy = fcRun(R2T, { type: 'table', open: true }, { type: 'h', index: 2 }, ...PASS_R2T, { type: 'preset', id: 'loss' }, { type: 'h', index: 5 });
+		assert.deepEqual(fcReduce(busy, { type: 'reset' }), opening);
+		assert.equal(opening.tableOpen, false);
+		assert.equal(opening.hIndex, 11);
+		assert.equal(opening.guessIndex, 0);
+		assert.equal(opening.stage, 'slide');
+		assert.equal(fcSay.announcementFor(opening, { type: 'reset' }), fcSay.statusLine(opening).spoken);
+		// A preset keeps h, loads its curve and point; Hinge and V reset s to 0.5, and the switch goes off on Smooth.
+		const corner = fcRun('corner', { type: 'choice', choice: 'two' }, { type: 'check' }, { type: 'h', index: 7 }, { type: 'lines', on: true }, { type: 'line-slope', index: 6 });
+		const toV = fcReduce(corner, { type: 'preset', id: 'v' });
+		assert.equal(toV.hIndex, 7);
+		assert.equal(toV.linesOn, true);
+		assert.equal(fcText(fcState.lineSlopeOf(toV)), '0.5');
+		const backToHinge = fcReduce(fcReduce(toV, { type: 'line-slope', index: 0 }), { type: 'preset', id: 'hinge' });
+		assert.equal(fcText(fcState.lineSlopeOf(backToHinge)), '0.5');
+		const smooth = fcReduce(toV, { type: 'preset', id: 'smooth' });
+		assert.equal(smooth.linesOn, false);
+		same(smooth, { type: 'lines', on: true }, 'no corner lines on Smooth');
+		same(fcReduce(corner, { type: 'lines', on: false }), { type: 'line-slope', index: 2 }, 'the slope waits for the switch');
+		// xIndex is 2x on every range, and the point slider reaches every grid point.
+		for (const [setupId, preset] of fcPresetsByCurve) {
+			for (const xIndex of xRange(preset)) {
+				assert.deepEqual(multiplyFractions(fcSetups.pointValue(xIndex), F(2, 1)), F(xIndex, 1));
+				const moved = fcReduce(fcAfter(setupId, { preset, stage: 'ruler' }), { type: 'point', xIndex });
+				assert.equal(moved.xIndex, xIndex);
+			}
+		}
+		assert.throws(() => fcReduce(fcRun(R2T, ...PASS_R2T), { type: 'preset', id: 'hinge' }), /setup "ruler-to-tangent" has no preset "hinge"/);
+	}
+
+	// ---- Cover tests: nothing before Check gives the answer away ----
+	{
+		const COVER_BANS = [/tangent/i, /derivative/i, /close in on/, /Miss/, /′/, /Slope curve/];
+		const ANSWER_TEXT = /slope (at x = 1 )?(is )?2(?![.\d])/;
+		const ANSWER_SPOKEN = /slope (at x equals 1 )?(is )?2(?![.\d])/;
+		const CORNER_BANS = [/no single slope/, /No tangent/, /however short/, /subgradient/];
+		/** Every string a covered board shows or speaks, except the guess slider's own value text and its commit, which echo the reader. */
+		const coveredStrings = (state) => {
+			const pairs = [fcSay.statusLine(state), fcSay.boardLabel(state), fcSay.hNote(state), ...fcSay.readoutLines(state), fcSay.feedbackLine(state), fcSay.noticeLine(state), fcSay.tableHeaders(state).caption, fcSay.tableFoldBody(state)].filter(Boolean);
+			const texts = pairs.flatMap((pair) => [pair.visible, pair.spoken]);
+			texts.push(...fcSay.tableHeaders(state).columns, ...fcSay.tableRows(state).flatMap((row) => [row.header, ...row.cells]));
+			texts.push(...Object.values(fcSay.CONTROL_LABELS).filter((label) => label !== fcSay.CONTROL_LABELS.lines), fcSay.guessLabel(state), fcSay.choiceLegend(state));
+			texts.push(...['slide', 'ruler', 'tangent', 'slope-curve'].filter((stage) => fcState.stageAllowed(state, stage)).map((stage) => fcSay.STAGE_LABELS[stage]));
+			texts.push(...fcState.allowedHIndices(state).map((_, position) => fcSay.hDescription(state)(position)));
+			texts.push(...fcMarks.planeMarks(state).flatMap((mark) => (mark.label ? [mark.label.text] : [])));
+			const note = fcSay.chalkNote(state);
+			if (note) texts.push(note.long, note.short);
+			for (const action of [{ type: 'h', index: state.hIndex }, { type: 'stage', stage: state.stage }, { type: 'table', open: true }, { type: 'table', open: false }, { type: 'check' }, { type: 'reset' }, { type: 'choice', choice: 'one' }]) {
+				const said = fcSay.announcementFor(state, action);
+				if (said) texts.push(said);
+			}
+			return texts;
+		};
+		let coveredStates = 0;
+		for (const misses of [0, 1, 2]) {
+			const missActions = Array.from({ length: misses }, () => [{ type: 'guess', index: 1 }, { type: 'check' }]).flat();
+			for (const index of fcSetups.PRE_CHECK_H_INDICES) {
+				for (let guessIndex = 0; guessIndex <= 16; guessIndex += 1) {
+					for (const stage of ['slide', 'ruler']) {
+						for (const open of [false, true]) {
+							// Last, a Check on a wrong guess, so the miss verdict itself is scanned too.
+							const tail = guessIndex === 8 ? [] : [{ type: 'check' }];
+							const state = fcRun(R2T, ...missActions, { type: 'h', index }, { type: 'stage', stage }, { type: 'table', open }, { type: 'guess', index: guessIndex }, ...tail);
+							assert.equal(state.checked, false);
+							for (const text of coveredStrings(state)) {
+								for (const ban of COVER_BANS) assert.ok(!ban.test(text), `ruler-to-tangent before Check says ${ban}: "${text}"`);
+								assert.ok(!ANSWER_TEXT.test(text) && !ANSWER_SPOKEN.test(text), `ruler-to-tangent before Check gives the slope: "${text}"`);
+							}
+							coveredStates += 1;
+						}
+					}
+				}
+			}
+		}
+		assert.equal(coveredStates, 3 * 6 * 17 * 2 * 2);
+		for (const index of fcSetups.PRE_CHECK_H_INDICES) {
+			for (const choice of [null, 'one', 'two']) {
+				for (const open of [false, true]) {
+					const actions = [{ type: 'h', index }, { type: 'table', open }, ...(choice ? [{ type: 'choice', choice }] : []), ...(choice ? [] : [{ type: 'check' }])];
+					const state = fcRun('corner', ...actions);
+					assert.equal(state.checked, false);
+					for (const text of coveredStrings(state)) {
+						for (const ban of [...CORNER_BANS, ...COVER_BANS]) assert.ok(!ban.test(text), `corner before Check says ${ban}: "${text}"`);
+					}
+				}
+			}
+		}
+		// The pre-Check ladder holds no ruler shorter than 0.25.
+		for (const index of fcSetups.PRE_CHECK_H_INDICES) assert.ok(compareFractions(fcModel.absolute(fcSetups.H_LADDER[index]), F(1, 4)) >= 0);
+	}
+
+	// ---- What the plane draws: one ochre mark in every reachable state, labels ink, line styles fixed ----
+	{
+		const STYLE_BY_KIND = {
+			curve: ['solid', 2.5],
+			ground: ['solid', 1.5],
+			ruler: ['dashed', 2.5],
+			'run-leg': ['dotted', 2],
+			'rise-leg': ['dotted', 2],
+			tangent: ['solid', 3],
+			'corner-line': ['solid', 3],
+		};
+		const straightSolid = new Set(['tangent', 'corner-line', 'ground']);
+		const reachable = [];
+		for (const setupId of [R2T, 'corner']) {
+			const setup = fcSetups.SETUPS[setupId];
+			const start = fcInitial(setupId);
+			for (const hIndex of fcSetups.PRE_CHECK_H_INDICES) {
+				for (const stage of setup.stages) {
+					const state = { ...start, hIndex, stage };
+					if (fcState.stageAllowed(state, stage)) reachable.push(state);
+				}
+			}
+			for (const preset of setup.presets) {
+				const lines = fcState.hasCornerLines(preset) ? [false, true] : [false];
+				for (const xIndex of xRange(preset)) {
+					for (const hIndex of fcState.allowedHIndices({ ...start, checked: true })) {
+						for (const stage of setup.stages) {
+							for (const linesOn of lines) {
+								const slopes = linesOn ? fcSetups.LINE_SLOPES[preset].map((_, index) => index) : [3];
+								for (const lineSlopeIndex of slopes) {
+									const state = fcAfter(setupId, { preset, xIndex, hIndex, stage, linesOn, lineSlopeIndex: linesOn ? lineSlopeIndex : start.lineSlopeIndex });
+									if (fcState.stageAllowed(state, stage)) reachable.push(state);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		assert.ok(reachable.length > 2000, `enumerated ${reachable.length} states`);
+		for (const state of reachable) {
+			const where = `${state.setupId} ${state.preset} x=${state.xIndex / 2} h#${state.hIndex} ${state.stage} lines=${state.linesOn}`;
+			const marks = fcMarks.planeMarks(state);
+			assert.equal(marks.filter((mark) => mark.color === 'ochre').length, 1, `exactly one ochre mark: ${where}`);
+			assert.equal(marks.find((mark) => mark.color === 'ochre').kind, fcMarks.ochreElement(state), where);
+			for (const mark of [...marks, ...fcMarks.stripMarks(state)]) {
+				if (mark.label) assert.equal(mark.label.color, 'ink', `${mark.kind}'s label is ink: ${where}`);
+				const style = STYLE_BY_KIND[mark.kind];
+				if (style) assert.deepEqual([mark.lineStyle, mark.weight], style, `${mark.kind}: ${where}`);
+			}
+			assert.equal(fcMarks.stripMarks(state).filter((mark) => mark.color === 'ochre').length, 0, `the strip is ink only: ${where}`);
+			if (state.linesOn) assert.ok(!marks.some((mark) => mark.kind === 'tangent'), `no tangent while the corner lines are on: ${where}`);
+			assert.ok(marks.filter((mark) => straightSolid.has(mark.kind)).length <= 1, `at most one solid straight line besides the curve: ${where}`);
+			assert.equal(marks.at(-1).kind, 'point', 'the point is drawn last, on top');
+			assert.equal(marks.find((mark) => mark.kind === 'point').color, 'ink', 'the point is ink');
+			assert.equal(marks.find((mark) => mark.kind === 'point').movable, state.checked, 'the point moves only after Check');
+		}
+		// The point's label: "you" on the slide, its coordinates elsewhere; leg labels only from |h| = 0.5.
+		const labels = (state) => fcMarks.planeMarks(state).flatMap((mark) => (mark.label ? [mark.label.text] : []));
+		assert.deepEqual(labels(opening), ['1 across', '3 up', 'you']);
+		assert.deepEqual(labels({ ...opening, stage: 'ruler', hIndex: hAt(-1, 2) }), ['run −0.5', 'rise −0.75', '(1, 1)']);
+		assert.deepEqual(labels({ ...opening, hIndex: hAt(-1, 2) }), ['0.5 across', '0.75 down', 'you']);
+		assert.deepEqual(labels({ ...opening, stage: 'ruler', hIndex: hAt(1, 4) }), ['(1, 1)']);
+		assert.deepEqual(labels(fcAfter(R2T, { stage: 'tangent', hIndex: hAt(1, 4) })), ['tangent', '(1, 1)']);
+		assert.deepEqual(labels(fcAfter('corner', { linesOn: true, stage: 'tangent', xIndex: 2 })), ['run 1', 'rise 1', 'slope 0.5 line', '(1, 1)']);
+		assert.deepEqual(labels(fcAfter(R2T, { preset: 'loss', xIndex: 0, hIndex: hAt(1, 4), stage: 'ruler' })), ['w', 'loss', '(0, 9)']);
+		// A ReLU corner draws two pieces, so the corner stays sharp; the strip marks the jump with two open dots and no value.
+		const hinge = fcAfter('corner', { stage: 'slope-curve' });
+		assert.equal(fcMarks.planeMarks(hinge).filter((mark) => mark.kind === 'curve').length, 2);
+		assert.deepEqual(fcMarks.stripMarks(hinge).filter((mark) => mark.kind === 'open-dot').map((mark) => mark.at), [[0, 0], [0, 1]]);
+		assert.equal(fcMarks.stripMarks(hinge).filter((mark) => mark.kind === 'value-dot').length, 0);
+		assert.deepEqual(fcMarks.stripMarks(fcAfter('corner', { stage: 'slope-curve', xIndex: 2 })).find((mark) => mark.kind === 'value-dot').at, [1, 1]);
+		assert.deepEqual(fcMarks.stripMarks(fcAfter('corner', { stage: 'tangent' })), [], 'no strip outside Slope curve');
+	}
+
+	// Table view from every state: the shared opening, and "Table hidden." on closing.
+	for (const state of [opening, fcInitial('corner'), fcRun(R2T, ...PASS_R2T), fcAfter(R2T, { preset: 'loss', xIndex: 6, stage: 'tangent' }), fcAfter('corner', { stage: 'tangent' })]) {
+		assertTableFoldSays(`FunctionCurve ${state.setupId}`, (open) => fcSay.announcementFor({ ...state, tableOpen: open }, { type: 'table', open }));
+	}
+	assert.deepEqual(fcReduce(opening, { type: 'table', open: true }).tableOpen, true);
+	assert.equal(fcSay.announcementFor(opening, { type: 'guess', index: 9 }), 'Your slope at x equals 1: 0.');
+	assert.equal(fcSay.announcementFor(fcRun(R2T, { type: 'guess', index: 9 }), { type: 'guess', index: 9 }), 'Your slope at x equals 1: 2.25.');
+	assert.equal(fcSay.announcementFor({ ...opening, stage: 'ruler', hIndex: hAt(-1, 2) }, { type: 'h', index: hAt(-1, 2) }), 'Ruler to x equals 0.5: rise minus 0.75 over run minus 0.5, slope 1.5.');
+	assert.equal(
+		fcSay.announcementFor(fcAfter(R2T, { stage: 'tangent', xIndex: 3 }), { type: 'point', xIndex: 3 }),
+		"Point: x equals 1.5, y equals 2.25. Ruler to x equals 2.5: rise 4 over run 1, slope 4. The ruler's other end, at x equals 2.5, y equals 6.25, is off the board. Tangent at x equals 1.5: slope 3. This ruler's slope, 4, is 1 above it.",
+	);
+}
+
 console.log('Board check passed.');
