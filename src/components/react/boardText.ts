@@ -1,5 +1,6 @@
 // Small wording helpers shared by the boards' sentences. Their decimals always go through formatNumber, so a
 // value is never written as an exact equation when it has been rounded.
+import { formatFraction, type Fraction } from './boardMath.ts';
 import { formatNumber } from './plotColors.ts';
 
 export const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
@@ -15,4 +16,13 @@ export const equalsDecimal = (numerator: number, denominator: number) => `${isRo
 export function joinWords(words: readonly string[]): string {
 	if (words.length <= 1) return words.join('');
 	return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
+}
+
+/**
+ * An exact fraction as reader text: "105/512", "3" for 3/1, "0", and "−3/4" with a real minus sign on the numerator.
+ * The reduced form comes from boardMath's formatFraction, which keeps the plain hyphen for its error messages.
+ */
+export function fractionText(value: Fraction): string {
+	const text = formatFraction(value);
+	return value.numerator < 0 ? `−${text.slice(1)}` : text;
 }

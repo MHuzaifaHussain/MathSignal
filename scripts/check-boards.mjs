@@ -3,7 +3,7 @@
 // Each section names the behavior it pins; the exact values come from the board's design doc.
 import assert from 'node:assert/strict';
 import { fraction, formatFraction, addFractions, subtractFractions, divideFractions, multiplyFractions, compareFractions, toNumber, isPerfectSquare, squareRoot } from '../src/components/react/boardMath.ts';
-import { joinWords, plural, equalsDecimal } from '../src/components/react/boardText.ts';
+import { joinWords, plural, equalsDecimal, fractionText } from '../src/components/react/boardText.ts';
 import { probability, checkGoal, pour, intersect, union, complement, WEIGHT_TOTAL } from '../src/components/react/eventSpace/model.ts';
 import { SCENARIOS, hasWordedRowHeaders } from '../src/components/react/eventSpace/scenarios.ts';
 import { getSetup } from '../src/components/react/eventSpace/setups.ts';
@@ -88,6 +88,16 @@ assert.equal(joinWords(['1', '2', '3']), '1, 2 and 3');
 assert.equal(plural(1, 'candy', 'candies'), '1 candy');
 assert.equal(equalsDecimal(1, 6), '≈ 0.17');
 assert.equal(equalsDecimal(1, 2), '= 0.50');
+// Exact fractions as reader text: reduced, whole numbers plain, and a real minus sign on the numerator.
+assert.equal(fractionText(fraction(105, 512)), '105/512');
+assert.equal(fractionText(fraction(210, 1024)), '105/512');
+assert.equal(fractionText(fraction(1, 1)), '1');
+assert.equal(fractionText(fraction(4, 2)), '2');
+assert.equal(fractionText(fraction(0, 7)), '0');
+assert.equal(fractionText(fraction(-3, 4)), '−3/4');
+assert.equal(fractionText(fraction(-6, 2)), '−3');
+assert.equal(fractionText(divideFractions(fraction(3, 4), fraction(-1, 1000))), '−750');
+assert.equal(fractionText(subtractFractions(fraction(1, 8), fraction(1, 2))), '−3/8');
 
 const coins = SCENARIOS['two-coins'];
 const dice = SCENARIOS['two-dice'];
