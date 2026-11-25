@@ -9,7 +9,7 @@ type: B
 objectives:
   - Decide whether two events are independent by comparing P(A ∩ B) with P(A) P(B), or P(A | B) with P(A).
   - Use the product rule P(A ∩ B) = P(A) P(B) for independent events, and refuse it when independence has not been shown.
-  - Explain why independence depends on the probabilities, not on the picture, so that a loaded die can break it and two events about one roll can have it.
+  - Explain why independence is decided by the probabilities, not by the picture, and why a loaded die can break it.
   - Tell pairwise independence apart from mutual independence for three or more events, and say what the i.i.d. assumption asks of a training set.
 takeaways:
   - A and B are independent when P(A ∩ B) = P(A) P(B). When P(B) > 0 this is the same as P(A | B) = P(A), so knowing B leaves A's chance where it was.
@@ -64,7 +64,7 @@ import EventSpace from "../../../components/react/EventSpace.tsx";
 
 <Analogy breaks="Separate objects are a good reason to expect independence, not a proof of it, and one die can give two independent events. The picture also breaks once someone chooses what to tell you: if your friend mentions the coin only when the die shows a six, then hearing about the coin is itself a clue, and the share changes.">
 
-You hold a coin in one hand and a die in the other. A friend takes both behind a screen, flips the coin, rolls the die, and tells you only one thing: the coin landed heads. Is a six now more likely, less likely, or neither? The die never saw the coin, and nothing about heads seems able to push the die toward one face or away from it. Hold that thought; the board below lets you count it.
+You hold a coin in one hand and a die in the other. A friend takes both behind a screen, flips the coin, rolls the die, and tells you only one thing: the coin landed heads. Is a six now more likely, less likely, or neither? Hold your answer; the board below lets you count it.
 
 That picture leans on two separate objects, which is its blind spot. Take one die and ask two questions about the same roll: is it even, and is it at most 2? Learning "at most 2" leaves only the faces 1 and 2, and one of those two is even. So the chance of even is still 1 in 2, exactly as before you learned anything. Independence is about shares, not about separate objects.
 
