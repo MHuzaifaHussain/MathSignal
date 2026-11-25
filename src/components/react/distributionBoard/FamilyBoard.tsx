@@ -49,7 +49,7 @@ export default function FamilyBoard({ setup: setupId }: { setup: FamilySetupId }
   const setup = familySetupOf(state);
   const [announcement, announce] = useAnnouncer();
   const sliderGuard = useCommittedSlider<SliderKey>();
-  const ids = { status: useId(), check: useId(), locked: useId(), fewer: useId(), more: useId() };
+  const ids = { check: useId(), locked: useId(), fewer: useId(), more: useId() };
   const pending = useRef<{ previous: FamilyState; action: FamilyAction } | null>(null);
   /** The state before a slider started moving, so its commit can say what clamped since. */
   const slideFrom = useRef<FamilyState | null>(null);
@@ -197,7 +197,7 @@ export default function FamilyBoard({ setup: setupId }: { setup: FamilySetupId }
   return (
     <Board label={FAMILY_BOARD_LABELS[setup.kind]} tray={tray} onReset={() => send({ type: "reset" })} announcement={announcement}>
       <div className="ms-dist">
-        <p id={ids.status} className="ms-dist-status">
+        <p className="ms-dist-status">
           <SpokenText line={status} />
         </p>
         {guess && <p className="ms-dist-guess">{guess}</p>}

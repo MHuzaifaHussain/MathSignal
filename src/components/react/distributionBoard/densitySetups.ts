@@ -124,4 +124,3 @@ export function getDensitySetup(id: DensitySetupId): DensitySetup {
 }
 
 export const shapeOf = (id: ShapeId) => SHAPES[id];
-export const shapeByName = (setup: DensitySetup, name: string) => setup.shapes.map(shapeOf).find((shape) => shape.name === name) ?? null;

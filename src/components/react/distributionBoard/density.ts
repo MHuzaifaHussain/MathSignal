@@ -97,9 +97,6 @@ export function heightAt(shape: PiecewiseLinear, x: Fraction): Fraction {
 	return interpolate(segment[0], segment[1], x);
 }
 
-/** The same height as a float, for drawing only. */
-export const heightNumber = (shape: PiecewiseLinear, x: Fraction) => toNumber(heightAt(shape, x));
-
 /** The share of the sand left of x. */
 export function cdf(shape: PiecewiseLinear, x: Fraction): Fraction {
 	return sum(
