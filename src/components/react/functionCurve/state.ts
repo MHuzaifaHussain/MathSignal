@@ -14,7 +14,6 @@ import {
 	SLIDE_X_INDICES,
 	curveOf,
 	getSetup,
-	guessValue,
 	pointValue,
 	viewOf,
 	type Choice,
@@ -228,9 +227,6 @@ export function reducer(state: CurveState, action: Action): CurveState {
 function sameState(a: CurveState, b: CurveState): boolean {
 	return (Object.keys(a) as (keyof CurveState)[]).every((key) => a[key] === b[key]);
 }
-
-/** The guess as a Fraction, for the readouts. */
-export const guessOf = (state: CurveState): Fraction => guessValue(state.guessIndex);
 
 /** Where the h slider sits: its position among the allowed rulers. */
 export const hPosition = (state: CurveState): number => allowedHIndices(state).indexOf(state.hIndex);

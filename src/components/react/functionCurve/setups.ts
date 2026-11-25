@@ -1,7 +1,7 @@
 // FunctionCurve's setups, presets, views and ladders. Every value the reader can pick is an index on a fixed grid,
 // and every grid value is a Fraction built from integers, so nothing the board prints comes from a float.
 // validateSetup runs at import. Design and reasoning: decision 0020.
-import { compareFractions, fraction, toNumber, type Fraction } from '../boardMath.ts';
+import { compareFractions, fraction, multiplyFractions, toNumber, type Fraction } from '../boardMath.ts';
 import { terminatesWithin } from '../boardText.ts';
 import type { CheckMode } from '../guided/guided.ts';
 import { CATALOG, evaluate, type CurveId, type ExactFunction } from './functions.ts';
@@ -24,7 +24,7 @@ export const OPENING_H_INDEX = 11;
 
 /** The guess is a quarter-step index: index 8 is slope 2. */
 export const GUESS_STEP = f(1, 4);
-export const guessValue = (index: number): Fraction => f(index, 4);
+export const guessValue = (index: number): Fraction => multiplyFractions(f(index, 1), GUESS_STEP);
 
 /** The point's x is a half-step index, the same meaning on every range: xIndex = 2x. */
 export const pointValue = (xIndex: number): Fraction => f(xIndex, 2);

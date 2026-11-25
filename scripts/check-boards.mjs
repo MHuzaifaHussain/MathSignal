@@ -5493,6 +5493,10 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	assert.deepEqual(fcSetups.H_LADDER.map(fcText), ['−1', '−0.5', '−0.25', '−0.1', '−0.01', '−0.001', '0.001', '0.01', '0.1', '0.25', '0.5', '1']);
 	assert.deepEqual(fcSetups.PRE_CHECK_H_INDICES.map((index) => fcText(fcSetups.H_LADDER[index])), ['−1', '−0.5', '−0.25', '0.25', '0.5', '1']);
 	assert.equal(fcText(fcSetups.H_LADDER[fcSetups.OPENING_H_INDEX]), '1');
+	// The guess is index × GUESS_STEP, a quarter: 0 to 4 over indices 0 to 16, and the answer index 8 is 2.
+	assert.deepEqual(fcSetups.GUESS_STEP, F(1, 4));
+	assert.deepEqual(Array.from({ length: 17 }, (_, index) => fcText(fcSetups.guessValue(index))), ['0', '0.25', '0.5', '0.75', '1', '1.25', '1.5', '1.75', '2', '2.25', '2.5', '2.75', '3', '3.25', '3.5', '3.75', '4']);
+	assert.deepEqual(fcSetups.guessValue(fcSetups.SETUPS[R2T].guess.answerIndex), F(2, 1));
 	assert.deepEqual(fcSetups.LINE_SLOPES.hinge.map(fcText), ['−0.5', '0', '0.25', '0.5', '0.75', '1', '1.5']);
 	assert.deepEqual(fcSetups.LINE_SLOPES.v.map(fcText), ['−1.5', '−1', '−0.5', '0', '0.5', '1', '1.5']);
 	assert.deepEqual(
