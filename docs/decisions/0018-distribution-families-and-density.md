@@ -42,7 +42,7 @@ The binomial page needs a distribution with up to 11 values whose chances come f
 - `mu` and `sigma` on `highlight` join `contrastRules` as graphics, because the μ guide and σ span cross the ochre read column and shaded stretch.
 - On the 0 to 2 per cm scale Even sand's bars are short (1/8 of the plot), and on the 0 to 1 scale Fair coin's tallest bar is a quarter of it. That is honest: the scale is the lesson.
 - Density sentences are provisional until the density page has had its review; `check-boards` asserts their numbers, the no-spoiler words and the tables, and pins them word for word after that review.
-- `sand-pour`'s gridline is labeled "1" with "Height (per cm)" above the plot, because "1 per cm" doesn't fit the 28px gutter at 320px.
+- The density gridlines carry bare numbers, "1" on `sand-pour` and "1/4" and "1/2" on `sand-interval`, with "Height (per cm)" above the plot, because "1 per cm" and "1/4 per cm" don't fit the 28px gutter at 320px.
 - "C(10, 6)", "√(13/18)" and "cm²" join the owed NVDA and VoiceOver pass.
 
 ## Alternatives considered

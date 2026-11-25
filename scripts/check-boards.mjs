@@ -2551,6 +2551,11 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	assert.equal(lopChart.curve.length, 3);
 	assert.deepEqual(densityChart(densRun('sand-pour')).ticks.filter((tick) => tick.label).map((tick) => tick.label), ['0', '1', '2', '3', '4']);
 	assert.equal(densityChart(densRun('sand-pour')).ticks.length, 17, 'quarter ticks, unlabeled');
+	// Bare gridline labels: the unit sits once in "Height (per cm)" above the plot, since "1/4 per cm" doesn't fit the
+	// 28 px gutter at 320 px.
+	assert.deepEqual(densityChart(densRun('sand-pour')).gridlines.map((line) => line.label), ['1']);
+	assert.deepEqual(densityChart(densRun('sand-interval')).gridlines.map((line) => line.label), ['1/4', '1/2']);
+	assert.equal(densityChart(densRun('sand-interval')).heightUnit, 'Height (per cm)');
 	// The setups' validation.
 	const pour = densSetups.DENSITY_SETUPS['sand-pour'];
 	for (const id of ['sand-pour', 'sand-interval']) assert.equal(densSetups.getDensitySetup(id).id, id);
@@ -2675,14 +2680,18 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	const pourAll = walk('sand-pour', [...viewActions, ...['Even sand', 'Sand heap', 'Narrow sand'].map((name) => ({ type: 'preset', name }))], Infinity);
 	assert.equal(pourAll.size, 36);
 	for (const text of pourAll.said) assert.ok(!text.includes('Lopsided'), text);
-	// sand-interval: the opening says nothing of the answer.
+	// sand-interval: the opening says nothing of the answer. The full word list applies to the opening only: "P(X =",
+	// "3/4", "μ" and "Variance" are what the reader's own From, To and spread moves are there to show.
 	for (const text of texts(densState.initialDensityState('sand-interval'))) {
 		for (const word of ['3/4', 'Lopsided', 'P(X =', 'μ', 'Variance']) assert.ok(!text.includes(word), `sand-interval opening: "${text}"`);
 	}
 	// Without a preset, no From, To, switch or table move reaches the Lopsided heap.
-	const quarterMoves = [0, 4, 8, 12, 16].flatMap((quarters) => [{ type: 'from', quarters }, { type: 'to', quarters }]);
-	const intervalOpening = walk('sand-interval', [...quarterMoves, { type: 'spread', on: true }, { type: 'spread', on: false }, { type: 'table', open: true }, { type: 'reset' }], Infinity);
-	assert.equal(intervalOpening.size, 15 * 2 * 2, 'every stretch on the whole-cm stops, the switch and the table');
+	const quarterStops = Array.from({ length: densState.LAST_QUARTER + 1 }, (_, quarters) => quarters);
+	const quarterMoves = quarterStops.flatMap((quarters) => [{ type: 'from', quarters }, { type: 'to', quarters }]);
+	const intervalOpening = walk('sand-interval', [...quarterMoves, { type: 'spread', on: true }, { type: 'spread', on: false }, { type: 'table', open: true }, { type: 'table', open: false }, { type: 'reset' }], Infinity);
+	// From and To push each other along, so every From ≤ To pair on the quarter stops is reachable.
+	const stretches = (quarterStops.length * (quarterStops.length + 1)) / 2;
+	assert.equal(intervalOpening.size, stretches * 2 * 2, 'every stretch on the quarter stops, the switch and the table');
 	for (const text of intervalOpening.said) assert.ok(!text.includes('Lopsided'), text);
 	// Shared scans.
 	const british = /centre|colour|metre|normalis/i;
