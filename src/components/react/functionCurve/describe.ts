@@ -267,14 +267,15 @@ export function tableHeaders(state: CurveState): { caption: SpokenLine; columns:
 	return { caption, columns: tableShowsMiss(state) ? ['h', 'Slope', 'Miss'] : ['h', 'Rise', 'Slope'] };
 }
 
+/** One row of the table; every cell is a spoken pair, so "−0.001" is read as "minus 0.001". */
 export interface TableRow {
 	hIndex: number;
 	/** The ruler's length, with " (shown)" on the ruler the plane draws. */
-	header: string;
-	cells: readonly [string, string];
+	header: SpokenLine;
+	cells: readonly [SpokenLine, SpokenLine];
 }
 
-const missText = (result: Miss) => (result.kind === 'matches' ? 'matches' : `${numberText(result.size)} ${result.kind}`);
+const missCell = (result: Miss): SpokenLine => (result.kind === 'matches' ? line('matches') : line(num(result.size), ` ${result.kind}`));
 
 export function tableRows(state: CurveState): readonly TableRow[] {
 	const f = curveFor(state);
@@ -284,8 +285,8 @@ export function tableRows(state: CurveState): readonly TableRow[] {
 		const h = H_LADDER[hIndex];
 		const r = ruler(f, a, h);
 		const result = withMiss ? miss(f, a, h) : null;
-		const cells: readonly [string, string] = result ? [numberText(r.slope), missText(result)] : [numberText(r.rise), numberText(r.slope)];
-		return { hIndex, header: `${numberText(h)}${hIndex === state.hIndex ? ' (shown)' : ''}`, cells };
+		const cells: readonly [SpokenLine, SpokenLine] = result ? [num(r.slope), missCell(result)] : [num(r.rise), num(r.slope)];
+		return { hIndex, header: line(num(h), hIndex === state.hIndex ? ' (shown)' : ''), cells };
 	});
 }
 

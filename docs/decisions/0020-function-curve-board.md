@@ -31,7 +31,7 @@ The derivatives page teaches the slope at a point by shortening a ruler (a secan
   - P7: "Lines under the corner" is built, so the subgradients fold keeps its board text.
   - P8: the S-curve's x range is −1.5 to 1.5, not −2 to 2.
   - P9: Loss's direction sentence ("Slope −6: a step to the right lowers the loss.") appears only in the Tangent and Slope curve stages, where slope as a derivative is taught.
-- Still owed: the NVDA/VoiceOver pass over the spoken forms ("y equals x squared", "minus") and the hidden handle, and Windows high contrast.
+- Still owed: the NVDA/VoiceOver pass over the spoken forms ("y equals x squared", "minus") and the hidden handle, and Windows high contrast. Every readout and table cell is a spoken pair, but two control names hold "=" and have only their visible form, because the shared TraySlider and TrayChoice take a plain-text label: the guess slider "Your slope at x = 1" and the choice legend "Slope at x = 0". The pass checks how they are read, and if "=" isn't read as "equals", the shared controls get a spoken label.
 
 ## Alternatives considered
 - An HTML/SVG board: it would rebuild dragging, coordinates and curve sampling; a continuous plane is the Mafs side of [0011](0011-eventspace-html-board.md)'s split.

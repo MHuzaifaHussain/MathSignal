@@ -5956,7 +5956,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		const headers = fcSay.tableHeaders(opening);
 		assert.deepEqual(headers, { caption: { visible: 'Rulers of length h from x = 1 on y = x²', spoken: 'Rulers of length h from x equals 1 on y equals x squared' }, columns: ['h', 'Rise', 'Slope'] });
 		assert.deepEqual(
-			fcSay.tableRows(opening).map((row) => [row.header, ...row.cells]),
+			fcSay.tableRows(opening).map((row) => visible([row.header, ...row.cells])),
 			[['−1', '−1', '1'], ['−0.5', '−0.75', '1.5'], ['−0.25', '−0.4375', '1.75'], ['0.25', '0.5625', '2.25'], ['0.5', '1.25', '2.5'], ['1 (shown)', '3', '3']],
 		);
 		assert.deepEqual(fcSay.tableFoldBody(opening), { visible: 'It lists the 6 rulers from x = 1, with their rise and slope.', spoken: 'It lists the 6 rulers from x equals 1, with their rise and slope.' });
@@ -5964,7 +5964,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		const tangent = fcAfter(R2T, { stage: 'tangent', hIndex: hAt(1, 100) });
 		assert.deepEqual(fcSay.tableHeaders(tangent).columns, ['h', 'Slope', 'Miss']);
 		assert.deepEqual(
-			fcSay.tableRows(tangent).map((row) => [row.header, ...row.cells]),
+			fcSay.tableRows(tangent).map((row) => visible([row.header, ...row.cells])),
 			[
 				['−1', '1', '1 below'],
 				['−0.5', '1.5', '0.5 below'],
@@ -5981,14 +5981,23 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 			],
 		);
 		assert.equal(fcSay.tableFoldBody(tangent).visible, "It lists the 12 rulers from x = 1, with their slope and how far each misses the tangent's slope.");
-		assert.deepEqual(fcSay.tableRows(fcAfter('corner', { xIndex: 2, stage: 'tangent' })).map((row) => row.cells[1]), Array(12).fill('matches'));
+		assert.deepEqual(fcSay.tableRows(fcAfter('corner', { xIndex: 2, stage: 'tangent' })).map((row) => row.cells[1]), Array(12).fill({ visible: 'matches', spoken: 'matches' }));
 		// At a corner there is no tangent, so the table keeps rise and slope.
 		assert.deepEqual(fcSay.tableHeaders(fcAfter('corner', { stage: 'tangent' })).columns, ['h', 'Rise', 'Slope']);
 		// The widest cells, in both views.
 		const widest = fcAfter(R2T, { preset: 's-curve', xIndex: -3, hIndex: hAt(-1, 1000), stage: 'ruler' });
-		assert.deepEqual(fcSay.tableRows(widest)[5].header, '−0.001 (shown)');
-		assert.deepEqual(fcSay.tableRows(widest)[5].cells, ['−0.006754501', '6.754501']);
-		assert.deepEqual(fcSay.tableRows({ ...widest, stage: 'tangent' })[5].cells, ['6.754501', '0.004501 above']);
+		assert.deepEqual(fcSay.tableRows(widest)[5].header, { visible: '−0.001 (shown)', spoken: 'minus 0.001 (shown)' });
+		assert.deepEqual(fcSay.tableRows(widest)[5].cells, [
+			{ visible: '−0.006754501', spoken: 'minus 0.006754501' },
+			{ visible: '6.754501', spoken: '6.754501' },
+		]);
+		assert.deepEqual(visible(fcSay.tableRows({ ...widest, stage: 'tangent' })[5].cells), ['6.754501', '0.004501 above']);
+		// Every cell and row header is a spoken pair: the visible half differs from the spoken one only by "−" read as "minus ".
+		for (const state of [opening, tangent, widest, { ...widest, stage: 'tangent' }, fcAfter('corner', { xIndex: -2, stage: 'tangent' })]) {
+			for (const pair of fcSay.tableRows(state).flatMap((row) => [row.header, ...row.cells])) {
+				assert.equal(pair.spoken, pair.visible.replaceAll('−', 'minus '), `table pair "${pair.visible}"`);
+			}
+		}
 		// No Miss column and no ruler shorter than 0.25 before Check, whatever the stage.
 		for (const stage of ['slide', 'ruler']) {
 			assert.deepEqual(fcSay.tableHeaders({ ...opening, stage }).columns, ['h', 'Rise', 'Slope']);
@@ -6066,7 +6075,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		const coveredStrings = (state) => {
 			const pairs = [fcSay.statusLine(state), fcSay.boardLabel(state), fcSay.hNote(state), ...fcSay.readoutLines(state), fcSay.feedbackLine(state), fcSay.noticeLine(state), fcSay.tableHeaders(state).caption, fcSay.tableFoldBody(state)].filter(Boolean);
 			const texts = pairs.flatMap((pair) => [pair.visible, pair.spoken]);
-			texts.push(...fcSay.tableHeaders(state).columns, ...fcSay.tableRows(state).flatMap((row) => [row.header, ...row.cells]));
+			texts.push(...fcSay.tableHeaders(state).columns, ...fcSay.tableRows(state).flatMap((row) => [row.header, ...row.cells].flatMap((pair) => [pair.visible, pair.spoken])));
 			texts.push(...Object.values(fcSay.CONTROL_LABELS).filter((label) => label !== fcSay.CONTROL_LABELS.lines), fcSay.guessLabel(state), fcSay.choiceLegend(state));
 			texts.push(...['slide', 'ruler', 'tangent', 'slope-curve'].filter((stage) => fcState.stageAllowed(state, stage)).map((stage) => fcSay.STAGE_LABELS[stage]));
 			texts.push(...fcState.allowedHIndices(state).map((_, position) => fcSay.hDescription(state)(position)));

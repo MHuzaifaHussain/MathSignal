@@ -27,9 +27,15 @@ export default function CurveTables({ state }: { state: CurveState }) {
         <tbody>
           {tableRows(state).map((row) => (
             <tr key={row.hIndex}>
-              <th scope="row">{row.header}</th>
-              <td>{row.cells[0]}</td>
-              <td>{row.cells[1]}</td>
+              <th scope="row">
+                <SpokenText line={row.header} />
+              </th>
+              <td>
+                <SpokenText line={row.cells[0]} />
+              </td>
+              <td>
+                <SpokenText line={row.cells[1]} />
+              </td>
             </tr>
           ))}
         </tbody>
