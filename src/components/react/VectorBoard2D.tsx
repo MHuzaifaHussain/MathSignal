@@ -65,7 +65,7 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
   const lastAction = useRef<Action | null>(null);
   /** The handle moved since the last interaction ended; a press elsewhere in the board leaves it null. */
   const movedHandle = useRef<HandleId | null>(null);
-  /** True while the latest change is a slider move, so a late slider commit can't talk over a button pressed since. */
+  /** True while the latest change is a slider move, so a late slider commit can't talk over a button or handle moved since. */
   const scalarMoving = useRef(false);
   const stateRef = useRef(state);
   const feedbackRef = useRef<HTMLParagraphElement>(null);
@@ -80,6 +80,7 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
 
   /** Mafs drags and arrow keys update silently; the board speaks once the interaction ends. */
   const moveHandle = useCallback((id: HandleId, to: Vec2) => {
+    scalarMoving.current = false;
     lastAction.current = null;
     movedHandle.current = id;
     dispatch({ type: "move", id, to });
