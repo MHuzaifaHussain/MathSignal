@@ -4327,5 +4327,144 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	);
 	assert.equal(bell.gaussian(0, 0, 1), 1 / Math.sqrt(2 * Math.PI));
 }
+// The prop guard: no props is the bell; a z mode needs a known setup; anything else fails the build loudly.
+const zSetups = await import('../src/components/react/normalDistribution/setups.ts');
+const zModel = await import('../src/components/react/normalDistribution/model.ts');
+{
+	const { resolveNormalProps } = zSetups;
+	for (const props of [{}, { mode: 'bell' }, { children: undefined }, { mode: undefined, setup: undefined }, { children: { type: 'astro-slot' } }, { children: 'text' }]) {
+		assert.deepEqual(resolveNormalProps(props), { mode: 'bell' }, JSON.stringify(props));
+	}
+	assert.deepEqual(resolveNormalProps({ mode: 'z', setup: 'taller-for-age' }), { mode: 'z', setup: 'taller-for-age' });
+	assert.deepEqual(resolveNormalProps({ mode: 'z', setup: 'taller-for-age', children: 'x' }), { mode: 'z', setup: 'taller-for-age' });
+	assert.throws(() => resolveNormalProps({ mode: 'z' }), /mode="z" needs a setup: taller-for-age/);
+	assert.throws(() => resolveNormalProps({ setup: 'taller-for-age' }), /a setup needs mode="z"/);
+	assert.throws(() => resolveNormalProps({ mode: 'z', setup: 'nope' }), /unknown setup "nope"; the setups are taller-for-age/);
+	assert.throws(() => resolveNormalProps({ mode: 'x' }), /mode must be "bell" or "z", got "x"/);
+	assert.throws(() => resolveNormalProps({ mode: 'z', setup: 'taller-for-age', presets: [] }), /unknown prop "presets"/);
+	assert.throws(() => resolveNormalProps({ initialPreset: 'nine-140' }), /unknown prop "initialPreset"/);
+}
+
+// Setups: the real one validates; each broken copy fails with its own reason.
+{
+	const { validateSetup, answerFor, Z_PRESETS, Z_SETUPS } = zSetups;
+	const setup = Z_SETUPS['taller-for-age'];
+	validateSetup(setup);
+	assert.equal(answerFor(setup), 'first');
+	const withPreset = (id, change) => ({ ...Z_PRESETS, [id]: { ...Z_PRESETS[id], ...change } });
+	const broken = (why, changedSetup, presets = Z_PRESETS) => assert.throws(() => validateSetup({ ...setup, ...changedSetup }, presets), why);
+	broken(/nine-140 needs a whole sd above 0, got 0/, {}, withPreset('nine-140', { sd: 0 }));
+	broken(/nine-140 needs a whole sd above 0, got -1/, {}, withPreset('nine-140', { sd: -1 }));
+	broken(/nine-140 needs a whole mean/, {}, withPreset('nine-140', { mean: 134.5 }));
+	broken(/opens at index 6.5/, {}, withPreset('nine-140', { openingIndex: 6.5 }));
+	broken(/opens at index 25, outside the whole numbers from −24 to 24/, {}, withPreset('nine-140', { openingIndex: 25 }));
+	broken(/nine-140 has a step that doesn't divide its sd 8/, {}, withPreset('nine-140', { step: { numerator: 3, denominator: 1 } }));
+	broken(/nine-140 is measured, so its step must be whole/, {}, withPreset('nine-140', { step: { numerator: 1, denominator: 2 } }));
+	broken(/needs 2 to 4 presets, got 1/, { presets: ['nine-140'], waitsForCommit: [] });
+	broken(/needs 2 to 4 presets, got 5/, { presets: ['nine-140', 'eleven-150', 'standard-075', 'nine-140', 'eleven-150'] });
+	broken(/lists a preset twice/, { presets: ['nine-140', 'eleven-150', 'nine-140'] });
+	broken(/opens on standard-075, which waits for Check/, { opening: 'standard-075' });
+	broken(/opens on eleven-150, which isn't in its presets/, { presets: ['nine-140', 'standard-075'], opening: 'eleven-150', waitsForCommit: ['standard-075'] });
+	broken(/opens on standard-075, which isn't one of the two children asked about/, { opening: 'standard-075', waitsForCommit: ['eleven-150'] });
+	broken(/names an unknown preset "ten-130"/, { presets: ['nine-140', 'ten-130'] });
+	broken(/names an unknown preset "ten-130"/, { waitsForCommit: ['ten-130'] });
+	broken(/asks about standard-075, which isn't a measured preset in its list/, { question: { ...setup.question, children: ['nine-140', 'standard-075'] } });
+	broken(/don't stand the same distance above their means/, {}, withPreset('eleven-150', { openingIndex: 7 }));
+	broken(/same z-score, so the question has no answer/, {}, withPreset('eleven-150', { sd: 8 }));
+	broken(/a first child who is taller for their age and a second who is taller in units/, { question: { ...setup.question, children: ['eleven-150', 'nine-140'] } });
+}
+
+// Model: exact z from an integer step index; Φ from the erf series, against Python's math.erf.
+{
+	const { Z_PRESETS } = zSetups;
+	const nine = Z_PRESETS['nine-140'];
+	const eleven = Z_PRESETS['eleven-150'];
+	const standard = Z_PRESETS['standard-075'];
+	assert.deepEqual(zModel.zAt(nine, 6), fraction(3, 4));
+	assert.deepEqual(zModel.zAt(eleven, 6), fraction(1, 2));
+	assert.deepEqual(zModel.zAt(standard, 15), fraction(3, 4));
+	assert.deepEqual([nine, eleven, standard].map(zModel.maxIndex), [24, 36, 60]);
+	const ends = (preset) => [-1, 1].map((sign) => zModel.valueAt(preset, sign * zModel.maxIndex(preset)));
+	assert.deepEqual(ends(nine), [fraction(110, 1), fraction(158, 1)]);
+	assert.deepEqual(ends(eleven), [fraction(108, 1), fraction(180, 1)]);
+	assert.deepEqual(ends(standard), [fraction(-3, 1), fraction(3, 1)]);
+	assert.deepEqual(zModel.valueAt(standard, 15), fraction(3, 4));
+	assert.deepEqual(zModel.distanceAt(nine, -12), fraction(-12, 1));
+	assert.throws(() => zModel.zAt(nine, 25), /index 25 is not a whole number from −24 to 24 on nine-140/);
+	assert.throws(() => zModel.valueAt(nine, 1.5), /index 1.5 is not a whole number/);
+	assert.equal(zModel.indexFromSlider(nine, 140.4), 6);
+	assert.equal(zModel.indexFromSlider(standard, 0.7500000001), 15);
+	assert.equal(zModel.indexFromSlider(nine, 999), 24);
+	assert.ok(Object.is(zModel.indexFromSlider(nine, 133.8), 0), 'a rounded −0 is the plain index 0');
+	assert.equal(zModel.indexFromDragX(nine, 0.76), 6);
+	assert.equal(zModel.indexFromDragX(eleven, 0.54), 6);
+	assert.equal(zModel.indexFromDragX(standard, 0.774), 15);
+	assert.equal(zModel.indexFromDragX(nine, -9), -24);
+	assert.throws(() => zModel.indexFromDragX(nine, Number.NaN), /NaN is not a finite position/);
+	const units = (preset) => zModel.rulerTicks(preset).map((tick) => tick.unitLabel);
+	assert.deepEqual(units(nine), ['110', '118', '126', '134', '142', '150', '158']);
+	assert.deepEqual(units(eleven), ['108', '120', '132', '144', '156', '168', '180']);
+	assert.deepEqual(units(standard), [null, null, null, null, null, null, null]);
+	assert.deepEqual(zModel.rulerTicks(nine).map((tick) => tick.zLabel), ['−3', '−2', '−1', '0', '1', '2', '3']);
+	assert.deepEqual(zModel.rulerTicks(nine).map((tick) => tick.z), [-3, -2, -1, 0, 1, 2, 3]);
+	const PYTHON_PHI = [
+		[0.75, 0.7733726476231317],
+		[0.5, 0.691462461274013],
+		[-1.5, 0.06680720126885809],
+		[1, 0.8413447460685428],
+		[-3, 0.0013498980316301035],
+		[3, 0.9986501019683699],
+		[7 / 12, 0.7201655364002942],
+		[-1 / 8, 0.4502617751698871],
+	];
+	for (const [z, phi] of PYTHON_PHI) assert.ok(Math.abs(zModel.standardNormalCdf(z) - phi) < 1e-12, `Φ(${z})`);
+	assert.equal(zModel.standardNormalCdf(0), 0.5);
+	for (const bad of [6.5, -7, Number.NaN, Infinity]) assert.throws(() => zModel.standardNormalCdf(bad), /z must be finite and within ±6/);
+	// The drawing: pinned constants, and the pixel offsets they give on the 240 px canvas.
+	assert.deepEqual([zModel.Z_VIEW_X, zModel.Z_VIEW_Y, zModel.Z_BOARD_HEIGHT], [[-4, 4], [-0.125, 0.47], 240]);
+	assert.deepEqual([zModel.UNIT_ROW_Y, zModel.Z_ROW_Y, zModel.ROW_CAPTION_X, zModel.RULER_LABEL_SIZE], [-0.045, -0.095, -3.7, 14]);
+	assert.deepEqual([zModel.MU_LABEL_AT, zModel.SIGMA_LABEL_AT, zModel.LABEL_HALF_SIZE], [[0, 0.43], [1.2, 0.27], [0.15, 0.02]]);
+	const pxPerUnit = zModel.Z_BOARD_HEIGHT / (zModel.Z_VIEW_Y[1] - zModel.Z_VIEW_Y[0]);
+	assert.equal(Math.round(pxPerUnit), 403);
+	assert.equal(Math.round(-zModel.Z_VIEW_Y[0] * pxPerUnit), 50, 'the axis sits 50 px above the bottom');
+	assert.equal(Math.round((zModel.Z_VIEW_Y[1] - zModel.standardNormalDensity(0)) * pxPerUnit), 29, 'the peak sits 29 px below the top');
+	assert.equal(Math.round(-zModel.UNIT_ROW_Y * pxPerUnit), 18, 'the cm row sits 18 px under the axis');
+	assert.equal(Math.round(-zModel.Z_ROW_Y * pxPerUnit), 38, 'the z row sits 38 px under the axis');
+	// The shaded area runs along the curve, left to right, and ends on the marker.
+	const shade = zModel.shadePolygon(0.75);
+	assert.deepEqual(shade[0], [-4, 0]);
+	assert.deepEqual(shade.slice(-2), [[0.75, zModel.standardNormalDensity(0.75)], [0.75, 0]]);
+	assert.ok(shade.every((point, index) => index === 0 || point[0] >= shade[index - 1][0]), 'x never goes back');
+	assert.ok(zModel.shadePolygon(-3).length >= 3);
+	assert.throws(() => zModel.shadePolygon(-5), /z must be in/);
+}
+
+// Sweep: all 243 reachable states (49 + 73 + 121). Φ never sits near a rounding boundary of the readouts, and no
+// marker crosses the μ or σ label.
+{
+	const { Z_PRESETS } = zSetups;
+	let states = 0;
+	let tightest = Infinity;
+	const [halfWidth, halfHeight] = zModel.LABEL_HALF_SIZE;
+	const crosses = (z, [x, y]) => Math.abs(z - x) <= halfWidth && zModel.standardNormalDensity(z) >= y - halfHeight;
+	for (const preset of Object.values(Z_PRESETS)) {
+		const limit = zModel.maxIndex(preset);
+		for (let index = -limit; index <= limit; index += 1) {
+			states += 1;
+			const z = toNumber(zModel.zAt(preset, index));
+			assert.ok(!crosses(z, zModel.MU_LABEL_AT) && !crosses(z, zModel.SIGMA_LABEL_AT), `${preset.id} at ${index}: the marker runs through a label`);
+			if (index === 0) continue;
+			const phi = zModel.standardNormalCdf(z);
+			for (const places of [3, 4]) {
+				const scaled = phi * 10 ** places;
+				const margin = Math.abs(scaled - Math.floor(scaled) - 0.5) / 10 ** places;
+				tightest = Math.min(tightest, margin);
+				assert.ok(margin >= 1e-8, `${preset.id} at ${index}: Φ = ${phi} is within 1e−8 of a ${places}-decimal rounding boundary`);
+			}
+		}
+	}
+	assert.equal(states, 243);
+	assert.ok(tightest > 1.0e-7 && tightest < 1.03e-7, `the tightest rounding margin is about 1.02e−7, got ${tightest}`);
+}
 
 console.log('Board check passed.');
