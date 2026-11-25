@@ -363,6 +363,13 @@ assert.equal(describe.announcementFor(montyRun(shrinkOn, montyA('car-2')), monty
 // The second preset for B: the host opens door 2.
 assert.deepEqual(describe.readoutLines(montyRun(montyB('opens-2'), shrinkOn)), ['Inside B: 3 outcomes, 1 of them also in A, {(car 1, heads)}. P(A | B) = 1/3 ≈ 0.33, while P(A) = 2/6 = 1/3 ≈ 0.33.']);
 assert.deepEqual(describe.readoutLines(montyRun(montyB('opens-2'), shrinkOn, montyA('car-3'))), ['Inside B: 3 outcomes, 2 of them also in A, {(car 3, heads), (car 3, tails)}. P(A | B) = 2/3 ≈ 0.67, while P(A) = 2/6 = 1/3 ≈ 0.33.']);
+// The page's order: shrink first, press Car behind door 2, then Host opens door 2. Changing B keeps the board shrunk.
+const montyPageOrder = montyRun(shrinkOn, montyA('car-2'), montyB('opens-2'));
+assert.equal(montyPageOrder.shrink, true);
+assert.deepEqual(describe.readoutLines(montyPageOrder), ['Inside B: 3 outcomes, none of them also in A. P(A | B) = 0/3 = 0, while P(A) = 2/6 = 1/3 ≈ 0.33.']);
+assert.deepEqual(describe.readoutLines(reducer(montyPageOrder, montyA('car-1'))), describe.readoutLines(montyRun(montyB('opens-2'), shrinkOn)));
+assert.deepEqual(describe.readoutLines(reducer(montyPageOrder, montyA('car-3'))), describe.readoutLines(montyRun(montyB('opens-2'), shrinkOn, montyA('car-3'))));
+assert.equal(reducer(montyPageOrder, montyA('car-3')).shrink, true);
 // Cells start with the visible label "opens 3" (label in name), then say the game with its subject, then membership.
 assert.equal(describe.cellName(montyShrunk, monty.outcomes[1]), 'opens 3. Car behind door 1, coin tails, host opens door 3. In A and B.');
 assert.equal(describe.cellName(montyShrunk, monty.outcomes[0]), 'opens 2. Car behind door 1, coin heads, host opens door 2. In A. Ruled out.');
