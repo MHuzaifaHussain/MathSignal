@@ -93,15 +93,13 @@ export default function DensityBoard({ setup: setupId }: { setup: DensitySetupId
 
   const tray = (
     <>
-      {setup.stages.length > 1 && (
-        <StageChoice<DensityStage>
-          legend={DENSITY_LABELS.showAs}
-          options={stageOptions}
-          isAllowed={() => true}
-          value={state.stage}
-          onChange={(stage) => send({ type: "stage", stage })}
-        />
-      )}
+      <StageChoice<DensityStage>
+        legend={DENSITY_LABELS.showAs}
+        options={stageOptions}
+        isAllowed={() => true}
+        value={state.stage}
+        onChange={(stage) => send({ type: "stage", stage })}
+      />
       {state.stage === "bars" && setup.binWidths.length > 1 && (
         <TrayChoice
           legend={DENSITY_LABELS.binWidth}
