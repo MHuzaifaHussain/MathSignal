@@ -195,7 +195,7 @@ export function validateSetup(setup: Setup): Setup {
 			throw new Error(`EventSpace: setup "${setup.id}" gives event ${key} ${event.presets.length} presets; the most is ${MAX_PRESETS_PER_EVENT}.`);
 		}
 		for (const preset of [...event.presets, ...(event.initial ? [event.initial] : [])]) {
-			if (preset !== CLEAR_PRESET && !scenario.events[preset]) {
+			if (preset !== CLEAR_PRESET && !Object.hasOwn(scenario.events, preset)) {
 				throw new Error(`EventSpace: setup "${setup.id}" uses "${preset}", which scenario "${scenario.id}" doesn't define.`);
 			}
 		}
