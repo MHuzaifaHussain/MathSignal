@@ -82,9 +82,9 @@ Your goal: shrink the world to B = "host opens door 3", then read P(A | B) as on
 | **door 2** | opens 3 | opens 3 |
 | **door 3** | opens 2 | opens 2 |
 
-Switch. B holds 3 of the 6 cells, and one of them has the car behind door 1, so P(car 1 | opens 3) = 1/3. Two have the car behind door 2, so P(car 2 | opens 3) = 2/3, and the car-3 row has no cell in B. If he opens door 2, the count gives 1/3 for door 1 and 2/3 for door 3.
+Read the rows first. The host opens door 3 in 1 of 2 cells of row 1, both cells of row 2, and neither of row 3. Those shares, 1/2, 1 and 0, are the likelihoods: how likely his action is for each place the car could be. They are the whole puzzle. The coin only matters in row 1, where both other doors hide goats; that is his tie-break.
 
-Now read the rows. The host opens door 3 in 1 of 2 cells of row 1, both cells of row 2, and neither of row 3. Those shares, 1/2, 1 and 0, are the likelihoods: how likely his action is for each place the car could be. They are the whole puzzle. The coin only matters in row 1, where both other doors hide goats; that is his tie-break.
+Then shrink the world to B, and the answer is to switch. B holds 3 of the 6 cells, and one of them has the car behind door 1, so P(car 1 | opens 3) = 1/3. Two have the car behind door 2, so P(car 2 | opens 3) = 2/3, and the car-3 row has no cell in B. If he opens door 2, the count gives 1/3 for door 1 and 2/3 for door 3.
 
 ## Decide before the host moves: stick wins 1 game in 3
 
