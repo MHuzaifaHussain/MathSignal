@@ -2273,6 +2273,11 @@ const announcerRun = () => {
 	assert.equal(vst.reducer(tripsArrows, moveTo('a', [2, 2])).activePreset, null);
 	const tripPreset = (id) => vst.reducer(tripsArrows, { type: 'preset', id });
 	assert.deepEqual(vd.readoutLines(tripPreset('there-and-back')), ['a = (3, 2), b = (−3, −2), a + b = (0, 0).', 'Both trips: you end where you started. a + b = (0, 0), the zero vector.']);
+	// The chalk note agrees with the length readout: same direction, the lengths add; a zero sum gets no note.
+	assert.deepEqual(vd.chalkNote(tripPreset('same-direction')), { long: 'same direction: the lengths add too', short: 'same way: lengths add' });
+	assert.ok(!vd.chalkNote(tripPreset('same-direction')).long.includes("lengths don't"));
+	assert.equal(vd.chalkNote(tripPreset('there-and-back')), null);
+	assert.deepEqual(vd.chalkNote(tripPreset('square-corner')), { long: "the trips add, the lengths don't", short: "trips add, lengths don't" });
 	assert.equal(vd.ochreElement(tripPreset('there-and-back')), null);
 	assert.ok(vd.planeLabels(tripPreset('there-and-back')).some((label) => label.text === 'zero vector'));
 	// When b runs straight back along a, their labels sit on opposite sides of the shared line.

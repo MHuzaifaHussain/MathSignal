@@ -607,12 +607,26 @@ const ALIGN_NOTES: Readonly<Record<Sign, ChalkText>> = {
 	negative: { long: 'wider than a right angle: negative', short: 'past a right angle: negative' },
 };
 
+const ADD_NOTES = {
+	lengthsDont: { long: "the trips add, the lengths don't", short: "trips add, lengths don't" },
+	sameDirection: { long: 'same direction: the lengths add too', short: 'same way: lengths add' },
+} as const satisfies Record<string, ChalkText>;
+
+/**
+ * The add note follows a and b too, so it agrees with the Arrows readout (sumLengthLine): the lengths add when both
+ * trips point the same way. A zero trip or a zero sum has nothing to compare, so it gets no note.
+ */
+function addNote(a: Vec2, b: Vec2): ChalkText | null {
+	if (isZero(a) || isZero(b) || isZero(add(a, b))) return null;
+	return cross(a, b) === 0 && dot(a, b) > 0 ? ADD_NOTES.sameDirection : ADD_NOTES.lengthsDont;
+}
+
 /** Notes drawn on the board after Check. Qualitative only, never a number (ChalkNote). */
 export function chalkNote(state: VectorState): ChalkText | null {
 	if (!state.checked) return null;
 	switch (setupOf(state).kind) {
 		case 'add':
-			return { long: "the trips add, the lengths don't", short: "trips add, lengths don't" };
+			return addNote(state.a, state.b);
 		case 'cart':
 			return { long: 'only the part along the track moves it', short: 'only the track part counts' };
 		case 'align':
