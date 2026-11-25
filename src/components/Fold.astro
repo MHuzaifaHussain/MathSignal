@@ -29,19 +29,7 @@ const { kind, label, id, open = false } = Astro.props;
 </details>
 
 <script>
-	// Open a fold (and any folds around it) when the URL points into it, on load and on in-page navigation.
-	function openFoldForHash() {
-		const id = decodeURIComponent(location.hash.slice(1));
-		if (!id) return;
-		const target = document.getElementById(id);
-		let fold = target?.closest('details') ?? null;
-		while (fold) {
-			fold.open = true;
-			fold = fold.parentElement?.closest('details') ?? null;
-		}
-	}
-	openFoldForHash();
-	window.addEventListener('hashchange', openFoldForHash);
+	import './openFoldForHash';
 </script>
 
 <style>
