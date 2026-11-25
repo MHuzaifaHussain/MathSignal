@@ -26,6 +26,8 @@ export interface Words {
 	itemTitle: string;
 	/** Column header for the value, e.g. "Height (cm)". */
 	valueTitle: string;
+	/** What the values are, in a sentence: "heights", "savings". */
+	values: string;
 	/** Written after a number: "cm", "kg", "thousand dollars". */
 	unit: string;
 	/** Squared unit, for variance: "cm²". */
@@ -85,7 +87,7 @@ export const MAX_PRESETS = 4;
 export const CUTOFFS: readonly Cutoff[] = [2, 3];
 export const SCALES: readonly Scale[] = ['raw', 'minmax', 'z'];
 
-const HEIGHT_WORDS: Words = { item: 'child', items: 'children', itemTitle: 'Child', valueTitle: 'Height (cm)', unit: 'cm', unitSquared: 'cm²' };
+const HEIGHT_WORDS: Words = { item: 'child', items: 'children', itemTitle: 'Child', valueTitle: 'Height (cm)', values: 'heights', unit: 'cm', unitSquared: 'cm²' };
 
 const SETUP_LIST: readonly Setup[] = [
 	{
@@ -113,7 +115,7 @@ const SETUP_LIST: readonly Setup[] = [
 		id: 'cafe-millionaire',
 		kind: 'newcomer',
 		label: "Nine cafe customers' savings as a dot plot, with the mean, median and mode. A newcomer can walk in.",
-		words: { item: 'customer', items: 'customers', itemTitle: 'Customer', valueTitle: 'Savings (thousand dollars)', unit: 'thousand dollars', unitSquared: '' },
+		words: { item: 'customer', items: 'customers', itemTitle: 'Customer', valueTitle: 'Savings (thousand dollars)', values: 'savings', unit: 'thousand dollars', unitSquared: '' },
 		opening: CAFE_SAVINGS,
 		axis: { min: 0, max: 10, tickStep: 1, narrowTickStep: 2 },
 		lane: true,
@@ -170,7 +172,7 @@ const SETUP_LIST: readonly Setup[] = [
 		id: 'marks-scaling',
 		kind: 'scaling',
 		label: "Two tests' marks, out of 50 and out of 80, on raw, min–max and z-score scales. Ana's marks are marked.",
-		words: { item: 'mark', items: 'marks', itemTitle: 'Student', valueTitle: 'Mark', unit: 'marks', unitSquared: '' },
+		words: { item: 'mark', items: 'marks', itemTitle: 'Student', valueTitle: 'Mark', values: 'marks', unit: 'marks', unitSquared: '' },
 		opening: TEST_B.values,
 		axis: { min: 0, max: 80, tickStep: 10, narrowTickStep: 20 },
 		lane: false,
@@ -195,7 +197,7 @@ const SETUP_LIST: readonly Setup[] = [
 		id: 'pumpkin-outliers',
 		kind: 'outliers',
 		label: 'Nine pumpkins at the village fair as a dot plot and a box plot, with the IQR rule and the z-score rule.',
-		words: { item: 'pumpkin', items: 'pumpkins', itemTitle: 'Pumpkin', valueTitle: 'Weight (kg)', unit: 'kg', unitSquared: 'kg²' },
+		words: { item: 'pumpkin', items: 'pumpkins', itemTitle: 'Pumpkin', valueTitle: 'Weight (kg)', values: 'weights', unit: 'kg', unitSquared: 'kg²' },
 		opening: pumpkins(8, 1),
 		axis: { min: 0, max: 30, tickStep: 5, narrowTickStep: 10 },
 		lane: true,

@@ -1750,23 +1750,6 @@
 	vertical-align: top;
 }
 
-.ms-desc-covered {
-	display: grid;
-	place-items: center;
-	flex: 1 1 14rem;
-	min-block-size: 6rem;
-	padding: 1rem;
-	border: 2px dashed var(--ms-board-axis);
-	border-radius: 4px;
-	text-align: center;
-}
-
-.ms-desc-covered p {
-	margin: 0;
-	font-size: 0.9375rem;
-	color: var(--ms-board-ink);
-}
-
 /* ── VectorBoard2D: vectors on a whole-number grid (decision 0014) ──
  * Arrows are ink, told apart by label and line style (a solid, b dashed). Exactly one element is ochre at a time,
  * drawn in Mafs code; pink and blue never appear. The plane stays square so a right angle looks like one. */

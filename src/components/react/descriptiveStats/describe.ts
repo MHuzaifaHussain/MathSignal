@@ -9,6 +9,7 @@
 import { compareFractions, formatFraction, fraction, multiplyFractions, toNumber, type Fraction } from '../boardMath.ts';
 import { capitalize, joinWords, plural } from '../boardText.ts';
 import { CHECKS_BEFORE_ANSWER } from '../guided/guided.ts';
+import { tableFoldAnnouncement } from '../guided/tableFold.ts';
 import { formatNumber } from '../plotColors.ts';
 import { CAFE_SAVINGS, TEST_B } from './datasets.ts';
 import {
@@ -149,6 +150,14 @@ export function stageOptions(setup: Setup): { value: Stage; label: string }[] {
 
 export function childOptions(state: DescriptiveState): { value: string; label: string }[] {
 	return state.values.map((_, child) => ({ value: String(child), label: childName(child) }));
+}
+
+/**
+ * "Your pick for the middle": each radio names its child and height ("Child 1, 133 cm"), so a screen-reader user can
+ * find the middle without opening the table. The heights are drawn on the bars, so naming them gives nothing away.
+ */
+export function pickOptions(state: DescriptiveState): { value: string; label: string }[] {
+	return state.values.map((height, child) => ({ value: String(child), label: `${childName(child)}, ${formatHeight(height)}` }));
 }
 
 export const CUTOFF_OPTIONS: readonly { value: '2' | '3'; label: string }[] = [
@@ -875,6 +884,34 @@ export function summaryTable(state: DescriptiveState): TableData {
 	}
 }
 
+/**
+ * The body said after "Table shown under the switch.": what the folded tables hold. While a gate keeps the summary
+ * back, its second sentence is the board's own reason (coveredText or summaryNote), never a restatement of it.
+ */
+export function tableFoldSentence(state: DescriptiveState): string {
+	const setup = setupOf(state);
+	const { items, values } = setup.words;
+	const count = valuesNow(state).length;
+	const then = 'and then the summary.';
+	switch (setup.kind) {
+		case 'lineup':
+			return isCovered(state)
+				? `It lists the ${count} ${items} in the order they arrived, with their ${values}. ${coveredText()}`
+				: `It lists the ${count} ${items} in the order they arrived, with their ${values} and places in line, ${then}`;
+		case 'spread':
+		case 'box':
+			return `It lists the ${count} ${items}, with their ${values} and places in line, ${then}`;
+		case 'newcomer':
+		case 'outliers':
+			return `It lists the ${count} ${items}, with their ${values}, ${then}`;
+		case 'scaling': {
+			const note = summaryNote(state);
+			const marks = `It lists the ${count} ${items} on each test, lowest first`;
+			return note ? `${marks}. ${note}` : `${marks}, ${then}`;
+		}
+	}
+}
+
 // ---- Chart labels ----
 
 export function meanLabel(state: DescriptiveState): string {
@@ -976,6 +1013,8 @@ export function announcementFor(state: DescriptiveState, action: Action): string
 			return `${SCALE_LABELS[state.scale]}. ${readouts}`;
 		case 'cutoff':
 			return `Flagging when |z| is above ${state.cutoff}. ${readouts}`;
+		case 'table':
+			return tableFoldAnnouncement(action.open, tableFoldSentence(state));
 		case 'reset':
 			return `Back to the start. ${statusLine(state)}`;
 	}

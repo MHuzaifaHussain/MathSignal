@@ -37,6 +37,8 @@ export interface DescriptiveState extends guided.CheckProgress {
 	/** The preset the values came from, or null once the reader has stepped away from it. */
 	activePreset: string | null;
 	refusal: Refusal | null;
+	/** "Table view": the data and summary tables open under the switch. Off at the start and after Reset (decision 0017). */
+	tableOpen: boolean;
 }
 
 export type Action =
@@ -53,6 +55,7 @@ export type Action =
 	| { type: 'newcomer'; on: boolean }
 	| { type: 'scale'; scale: Scale }
 	| { type: 'cutoff'; cutoff: Cutoff }
+	| { type: 'table'; open: boolean }
 	| { type: 'reset' };
 
 export function setupOf(state: DescriptiveState): Setup {
@@ -89,6 +92,7 @@ export function initialState(setupId: SetupId): DescriptiveState {
 		cutoff: 2,
 		activePreset: openingPreset(setup),
 		refusal: null,
+		tableOpen: false,
 	};
 }
 
@@ -252,6 +256,8 @@ function transition(setup: Setup, state: DescriptiveState, action: Action): Desc
 			return setup.kind === 'scaling' && SCALES.includes(action.scale) ? { ...state, scale: action.scale, refusal: null } : state;
 		case 'cutoff':
 			return setup.kind === 'outliers' && CUTOFFS.includes(action.cutoff) ? { ...state, cutoff: action.cutoff, refusal: null } : state;
+		case 'table':
+			return { ...state, tableOpen: action.open };
 		case 'reset':
 			return initialState(state.setupId);
 	}

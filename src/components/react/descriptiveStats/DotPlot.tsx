@@ -126,7 +126,8 @@ interface DotPlotProps {
 
 /**
  * Dot plots on value-positioned axes: ties stack, marks sit on rows of their own so labels never collide, and
- * values past the axis wait in a lane at the right edge. aria-hidden: the readouts and tables are its equivalent.
+ * values past the axis wait in a lane at the right edge. aria-hidden: its equivalent is the readouts, plus the tables
+ * behind Table view, since the readouts never list every value.
  */
 export default function DotPlot({ rows, scrub }: DotPlotProps) {
   return (

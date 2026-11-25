@@ -4,6 +4,7 @@ import TrayChoice from "./TrayChoice";
 import TraySlider from "./TraySlider";
 import CheckButtons from "./guided/CheckButtons.tsx";
 import PresetButtons from "./guided/PresetButtons.tsx";
+import TableFold from "./guided/TableFold.tsx";
 import { RefusalNote } from "./guided/refusal.tsx";
 import StageChoice from "./guided/StageChoice.tsx";
 import useAnnouncer from "./guided/useAnnouncer.ts";
@@ -32,6 +33,7 @@ import {
   formatSavings,
   goalLine,
   goalStatus,
+  pickOptions,
   readoutLines,
   stageOptions,
   statusLine,
@@ -164,7 +166,7 @@ export default function DescriptiveStats({ setup: setupId }: DescriptiveStatsPro
       {setup.kind === "lineup" && !state.checked && (
         <TrayChoice
           legend={CONTROL_LABELS.pick}
-          options={childOptions(state)}
+          options={pickOptions(state)}
           value={state.pick === null ? null : String(state.pick)}
           onChange={(child) => send({ type: "pick", child: Number(child) })}
         />
@@ -260,6 +262,9 @@ export default function DescriptiveStats({ setup: setupId }: DescriptiveStatsPro
           onPick={(id) => send({ type: "preset", id })}
         />
       )}
+      <TableFold open={state.tableOpen} onToggle={(open) => send({ type: "table", open })}>
+        <StatsTables data={dataTable(state)} summary={summaryTable(state)} note={summaryNote(state)} />
+      </TableFold>
     </>
   );
 
@@ -289,8 +294,10 @@ export default function DescriptiveStats({ setup: setupId }: DescriptiveStatsPro
             {verdict}
           </p>
         )}
-        {readouts.length > 0 && (
+        {(readouts.length > 0 || covered) && (
           <div className="ms-desc-readouts">
+            {/* While the summary waits for Check, the canvas says why, outside the fold. */}
+            {covered && <p className="ms-board-readout">{coveredText()}</p>}
             {readouts.map((line) => (
               <p key={line} className="ms-board-readout">
                 {line}
@@ -298,7 +305,6 @@ export default function DescriptiveStats({ setup: setupId }: DescriptiveStatsPro
             ))}
           </div>
         )}
-        <StatsTables data={dataTable(state)} summary={summaryTable(state)} covered={covered ? coveredText() : summaryNote(state)} />
       </div>
     </Board>
   );

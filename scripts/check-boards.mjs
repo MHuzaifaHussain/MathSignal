@@ -1709,6 +1709,13 @@ for (const open of [true, false]) {
 	assert.throws(() => tableFold.tableFoldAnnouncement(open, 'Table shown under the switch. It lists 3 bars.'), /starts with "Table shown", which the fold already says/);
 	assert.throws(() => tableFold.tableFoldAnnouncement(open, 'Table hidden.'), /starts with "Table hidden", which the fold already says/);
 }
+// Every board's switch, from any state it can reach: never a throw from a click, the open sentence starts with the
+// shared opening, and closing says only "Table hidden.".
+const assertTableFoldSays = (where, announce) => {
+	const opened = announce(true);
+	assert.ok(opened.startsWith(`${tableFold.TABLE_FOLD_SHOWN} `), `${where}: "${opened}"`);
+	assert.equal(announce(false), tableFold.TABLE_FOLD_HIDDEN, where);
+};
 // Bayes: the body is tableSummary, unchanged.
 {
 	const bayesScenarios = await import('../src/components/react/bayesTheorem/scenarios.ts');
@@ -1740,7 +1747,7 @@ for (const open of [true, false]) {
 	assert.ok(printRule > screenRule, 'a later @media print block shows .ms-board-table-fold.is-folded, so print wins');
 	// Every component a board wraps in <TableFold>, as a path under src/components/react/. A file joins in the commit
 	// that wraps it, and must stay read-only: folding a control would hide a keyboard path.
-	const TABLE_FOLD_CHILDREN = ['bayesTheorem/CountTable.tsx'];
+	const TABLE_FOLD_CHILDREN = ['bayesTheorem/CountTable.tsx', 'descriptiveStats/StatsTables.tsx'];
 	const CONTROL_TOKENS = ['<button', '<input', '<select', '<textarea', 'tabIndex', 'onFocus', 'onKeyDown', 'onClick'];
 	const wrapped = new Set();
 	for (const file of filesUnder('src/components/react').filter((name) => name.endsWith('.tsx'))) {
@@ -2513,6 +2520,78 @@ for (const open of [true, false]) {
 	// No latch: moving back to 8 kg, or pressing No giant, is the opening view again, so the sentence goes with it.
 	assert.ok(!saysCeiling(run('pumpkin-outliers', cutoff3, { type: 'set-value', value: 9 }, { type: 'set-value', value: 8 })));
 	assert.ok(!saysCeiling(run('pumpkin-outliers', { type: 'preset', id: 'one-giant' }, cutoff3, { type: 'preset', id: 'no-giant' })));
+
+	// "Table view" (decision 0017): the reducer owns the switch, Reset closes it, and every other control leaves it alone.
+	for (const id of ds.SETUP_IDS) {
+		assert.equal(dst.initialState(id).tableOpen, false, id);
+		const opened = run(id, { type: 'table', open: true });
+		assert.equal(opened.tableOpen, true, id);
+		assert.equal(dst.reducer(opened, { type: 'table', open: false }).tableOpen, false, id);
+		assert.equal(dst.reducer(opened, { type: 'reset' }).tableOpen, false, id);
+		const setup = ds.getSetup(id);
+		const keepers = [
+			...setup.presets.map((preset) => ({ type: 'preset', id: preset.id })),
+			...setup.stages.map((stage) => ({ type: 'stage', stage })),
+			{ type: 'pick', child: 4 }, { type: 'check' }, { type: 'scale', scale: 'z' }, { type: 'cutoff', cutoff: 3 },
+		];
+		for (const action of keepers) assert.equal(dst.reducer(opened, action).tableOpen, true, `${id}: ${action.type} closed the table`);
+	}
+	// Each board's body, word for word, and the announcement on and off.
+	const foldSays = (state) => dsay.tableFoldSentence(state);
+	const lineupOpen = dst.initialState('class-lineup');
+	const lineupFound = run('class-lineup', { type: 'pick', child: 0 }, { type: 'check' });
+	assert.equal(lineupFound.checked, true, 'child 1 is the middle of Our class');
+	assert.equal(foldSays(lineupOpen), 'It lists the 9 children in the order they arrived, with their heights. The summary appears when you find the middle of the class.');
+	assert.ok(foldSays(lineupOpen).endsWith(dsay.coveredText()), 'the before-Check body ends with the covered line itself');
+	for (const word of ['median', 'mean', 'mode', '133', '134', 'places in line']) assert.ok(!foldSays(lineupOpen).includes(word), `the covered fold says "${word}"`);
+	assert.equal(foldSays(lineupFound), 'It lists the 9 children in the order they arrived, with their heights and places in line, and then the summary.');
+	assert.equal(foldSays(run('class-lineup', { type: 'preset', id: 'ten-children' })), 'It lists the 10 children in the order they arrived, with their heights. The summary appears when you find the middle of the class.');
+	assert.equal(
+		foldSays(run('class-lineup', { type: 'preset', id: 'ten-children' }, { type: 'pick', child: 0 }, { type: 'check' }, { type: 'check' }, { type: 'show-answer' })),
+		'It lists the 10 children in the order they arrived, with their heights and places in line, and then the summary.',
+	);
+	assert.equal(foldSays(dst.initialState('cafe-millionaire')), 'It lists the 9 customers, with their savings, and then the summary.');
+	assert.equal(foldSays(run('cafe-millionaire', { type: 'newcomer', on: true })), 'It lists the 10 customers, with their savings, and then the summary.');
+	for (const state of [dst.initialState('class-spread'), run('class-spread', { type: 'preset', id: 'tight-class' }), ...['line-up', 'quartiles', 'box'].map((stage) => run('class-box', { type: 'stage', stage }))]) {
+		assert.equal(foldSays(state), 'It lists the 9 children, with their heights and places in line, and then the summary.');
+	}
+	const marksRaw = dst.initialState('marks-scaling');
+	assert.equal(foldSays(marksRaw), "It lists the 9 marks on each test, lowest first. Each test's summary appears when you pick Min–max (0 to 1) or z-scores under Scale.");
+	assert.ok(foldSays(marksRaw).endsWith(dsay.summaryNote(marksRaw)), 'the Raw body ends with the summary note itself');
+	for (const scale of ['minmax', 'z']) assert.equal(foldSays(run('marks-scaling', { type: 'scale', scale })), 'It lists the 9 marks on each test, lowest first, and then the summary.');
+	assert.equal(foldSays(dst.initialState('pumpkin-outliers')), 'It lists the 9 pumpkins, with their weights, and then the summary.');
+	assert.equal(
+		dsay.announcementFor(run('cafe-millionaire', { type: 'table', open: true }), { type: 'table', open: true }),
+		'Table shown under the switch. It lists the 9 customers, with their savings, and then the summary.',
+	);
+	assert.equal(dsay.announcementFor(dst.initialState('cafe-millionaire'), { type: 'table', open: false }), 'Table hidden.');
+	// The tables print and read the same: before Check there is no Summary table at all, and Raw shows only its note.
+	assert.deepEqual(dsay.summaryTable(lineupOpen).rows, []);
+	assert.equal(dsay.summaryNote(lineupOpen), null, 'before Check the reason is the covered line in the canvas, not a note in the fold');
+	// Your pick for the middle: each radio names its child and height; Child to move keeps the bare name.
+	const pickLabels = (state) => dsay.pickOptions(state).map((option) => option.label);
+	assert.equal(pickLabels(lineupOpen)[0], 'Child 1, 133 cm');
+	assert.equal(pickLabels(lineupOpen).at(-1), 'Child 9, 142 cm');
+	assert.equal(pickLabels(run('class-lineup', { type: 'preset', id: 'ten-children' })).at(-1), 'Child 10, 136 cm');
+	assert.equal(pickLabels(run('class-lineup', { type: 'preset', id: 'shared-heights' }))[0], 'Child 1, 141 cm');
+	assert.equal(pickLabels(run('class-lineup', { type: 'preset', id: 'shared-heights' })).at(-1), 'Child 9, 141 cm');
+	assert.deepEqual(dsay.pickOptions(lineupOpen).map((option) => option.value), dsay.childOptions(lineupOpen).map((option) => option.value));
+	assert.equal(dsay.childOptions(dst.initialState('class-spread'))[2].label, 'Child 3');
+	// No state may throw from the switch: every setup, opening, after Check, each preset, stage, scale and cutoff.
+	for (const id of ds.SETUP_IDS) {
+		const setup = ds.getSetup(id);
+		const reached = [
+			dst.initialState(id),
+			run(id, { type: 'pick', child: 0 }, { type: 'check' }, { type: 'check' }, { type: 'show-answer' }),
+			...setup.presets.map((preset) => run(id, { type: 'preset', id: preset.id })),
+			...setup.stages.map((stage) => run(id, { type: 'stage', stage })),
+			...['raw', 'minmax', 'z'].map((scale) => run(id, { type: 'scale', scale })),
+			...[2, 3].map((cutoff) => run(id, { type: 'cutoff', cutoff })),
+			...setup.presets.flatMap((preset) => ['raw', 'minmax', 'z'].map((scale) => run(id, { type: 'preset', id: preset.id }, { type: 'scale', scale }))),
+			...setup.presets.map((preset) => run(id, { type: 'preset', id: preset.id }, { type: 'cutoff', cutoff: 3 })),
+		];
+		for (const state of reached) assertTableFoldSays(`DescriptiveStats ${id}`, (open) => dsay.announcementFor(state, { type: 'table', open }));
+	}
 
 	// Board labels match the notation registry's symbols for μ, σ and z (decision 0009).
 	const { NOTATION } = await import('../src/data/notation.mjs');
