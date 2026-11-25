@@ -1707,6 +1707,29 @@ const announcerRun = () => {
 	assert.deepEqual(shown, []);
 }
 
+// ---- Shared guided piece: the slider guard (guided/sliderGuard.ts, decision 0018) ----
+// A slider's late commit speaks only if that slider was the last thing moved and the board still holds its value.
+{
+	const { createSliderGuard } = await import('../src/components/react/guided/sliderGuard.ts');
+	const guard = createSliderGuard();
+	assert.equal(guard.take('n', true), false, 'nothing moved yet');
+	guard.moved('n');
+	assert.equal(guard.take('n', false), false, 'the value has moved on since');
+	assert.equal(guard.take('n', true), true, 'the last move, still held');
+	assert.equal(guard.take('n', true), false, 'a commit speaks once');
+	guard.moved('n');
+	guard.moved('p');
+	assert.equal(guard.take('n', true), false, 'another slider moved since');
+	assert.equal(guard.take('p', true), true);
+	guard.moved('p');
+	guard.interrupt();
+	assert.equal(guard.take('p', true), false, 'a button was pressed since');
+	// The outcome board's pencil goes through the guard, not a hand-written flag.
+	const { readFileSync } = await import('node:fs');
+	const outcomeBoard = readFileSync('src/components/react/distributionBoard/OutcomeBoard.tsx', 'utf8');
+	assert.ok(outcomeBoard.includes('useCommittedSlider') && !outcomeBoard.includes('pencilMoving'));
+}
+
 // ---- Shared guided piece: the "Table view" fold (guided/tableFold.ts and TableFold.tsx, decision 0017) ----
 // One switch, named and worded the same on every board; each board writes only the body of its opening sentence.
 const tableFold = await import('../src/components/react/guided/tableFold.ts');

@@ -34,6 +34,7 @@ import { RefusalNote, refusedBy } from "../guided/refusal.tsx";
 import StageChoice from "../guided/StageChoice.tsx";
 import TableFold from "../guided/TableFold.tsx";
 import useAnnouncer from "../guided/useAnnouncer.ts";
+import useCommittedSlider from "../guided/useCommittedSlider.ts";
 
 const STAGE_OPTIONS: readonly { value: Stage; label: string }[] = (["pictures", "numbers", "symbols"] as const).map((value) => ({ value, label: STAGE_LABELS[value] }));
 
@@ -55,8 +56,8 @@ export default function OutcomeBoard({ setup: setupId }: OutcomeBoardProps) {
   const statusId = useId();
   const parkedReasonId = useId();
   const lastAction = useRef<Action | null>(null);
-  /** True while the latest change is a pencil move, so a late slider commit can't talk over a button pressed since. */
-  const pencilMoving = useRef(false);
+  /** The pencil's slider and strip commit late; the guard keeps a stale commit from talking over a button pressed since. */
+  const sliderGuard = useCommittedSlider<"pencil">();
   const stateRef = useRef(state);
   // A layout effect, so a commit that ends a drag (pointerup) reads the state of the drag's last move, whose passive
   // effects may still be pending.
@@ -66,18 +67,24 @@ export default function OutcomeBoard({ setup: setupId }: OutcomeBoardProps) {
   const feedbackRef = useRef<HTMLParagraphElement>(null);
   const goalRef = useRef<HTMLParagraphElement>(null);
 
-  const send = useCallback((action: Action) => {
-    pencilMoving.current = false;
-    lastAction.current = action;
-    dispatch(action);
-  }, []);
+  const send = useCallback(
+    (action: Action) => {
+      sliderGuard.interrupt();
+      lastAction.current = action;
+      dispatch(action);
+    },
+    [sliderGuard],
+  );
 
   /** Pencil moves from the slider or the strip update the board silently; the commit below speaks once. */
-  const movePencil = useCallback((k: number) => {
-    lastAction.current = null;
-    pencilMoving.current = true;
-    dispatch({ type: "pencil", k });
-  }, []);
+  const movePencil = useCallback(
+    (k: number) => {
+      lastAction.current = null;
+      sliderGuard.moved("pencil");
+      dispatch({ type: "pencil", k });
+    },
+    [sliderGuard],
+  );
 
   // The slider commits a keyboard change after a pause, so only announce; dispatching here could undo a
   // preset or Reset pressed in the meantime. A stale commit (the pencil has moved since, or a button was pressed
@@ -85,11 +92,10 @@ export default function OutcomeBoard({ setup: setupId }: OutcomeBoardProps) {
   const commitPencil = useCallback(
     (k: number) => {
       const current = stateRef.current;
-      if (!pencilMoving.current || current.pencil !== k) return;
-      pencilMoving.current = false;
+      if (!sliderGuard.take("pencil", current.pencil === k)) return;
       announce(announcementFor(current, { type: "pencil", k }));
     },
-    [announce],
+    [announce, sliderGuard],
   );
 
   // Announce when an interaction ends: at once for buttons, after a pause for a burst of − / + presses.
