@@ -34,7 +34,7 @@ The binomial page needs a distribution with up to 11 values whose chances come f
   | `coins-binomial`, after Check | 924px | 591, 332 |
   | `binomial-spread`, spread on with a ghost | 1,120px | 650, 469 |
   | `sand-pour`, Bars / Curve | 779 / 723px | |
-  | `sand-interval`, opening / spread on | 833 / 1,017px | |
+  | `sand-interval`, opening / spread on | 833 / 992px | |
 
   The levers, if wanted later: a two-column tray at 560px and up (nothing at 375px), a two-thumb interval slider, or the guess as a select.
 - The island grew from about 16.7 KB to 29.8 KB gzip (esbuild, minified, React and Base UI external), past the 10 KB mark this design set for splitting the modes. So `FamilyBoard` and `DensityBoard` load as lazy chunks keyed by the setup's mode, and `boardModeOf` reads the family and density ids from `setupIds.ts`, not their registries. Measured with rolldown (minified, React and Base UI external, gzip): an outcome-only page loads 18.8 KB, down from 27.8 KB before the split; a family page adds 7.9 KB and a density page 7.2 KB. The outcome boards sit outside any Suspense boundary, so their server render is byte-identical; the family and density boards render in full on the server inside `<!--$-->` markers, with no fallback or swap script.
