@@ -7,5 +7,6 @@ export const DOMAINS = Object.freeze([
 	Object.freeze({ label: 'Statistics', directory: 'statistics' }),
 	Object.freeze({ label: 'Probability', directory: 'probability' }),
 	Object.freeze({ label: 'Linear algebra', directory: 'linear-algebra' }),
+	Object.freeze({ label: 'Calculus', directory: 'calculus' }),
 	Object.freeze({ label: 'Machine learning', directory: 'ml' }),
 ]);
