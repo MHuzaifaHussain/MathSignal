@@ -1,0 +1,530 @@
+---
+title: "Probability density functions (PDFs)"
+description: "A probability density function describes where a continuous random variable tends to land. Pour sand along a ruler and see why probability is an area."
+sidebar:
+  order: 18
+draft: true
+topic: probability/probability-density-functions
+type: B
+objectives:
+  - Explain why a continuous random variable gets its probabilities from areas under a density, and compute P(a ≤ X ≤ b) for uniform and straight-sided densities.
+  - Check whether a function is a valid density, never negative with total area 1.
+  - Explain how tall a density can be, and what chance a single value gets.
+  - Read a density as the limit of histogram bars whose height is the share in the bar divided by its width, and find the mean and variance of a uniform distribution.
+  - "Recognize densities in machine learning: likelihoods of continuous data, uniform weight initialization, and image models that add noise to pixel values."
+takeaways:
+  - "A density p(x) is not a probability. The probability that X lands between a and b is the area under p from a to b."
+  - "A valid density is never negative and has total area 1. Its height can pass 1: sand piled on half a centimeter stands 2 per cm tall."
+  - "Every single value has probability 0, because a strip of width 0 holds no area. So P(a ≤ X ≤ b) and P(a < X < b) are the same."
+  - "A histogram bar's height is its share divided by its width. As the bars get thinner, their tops close in on the density: 1/4, 3/8, 7/16, 15/32, toward 1/2 at the top of the heap."
+  - "The uniform distribution on [a, b] has height 1/(b − a), mean (a + b)/2 and variance (b − a)²/12."
+references:
+  - grinstead2003
+  - deisenroth2020
+  - goodfellow2016prob
+  - glorot2010
+  - theis2015
+  - nalisnick2018
+author: Muhammad Huzaifa Hussain
+reviewedAt: 2026-11-25
+aiAssisted: true
+primaryQuery: probability density function
+searchIntent: learn
+depthStatus: complete
+---
+
+import Analogy from "../../../components/Analogy.astro";
+import CheckYourself from "../../../components/CheckYourself.astro";
+import Cite from "../../../components/Cite.astro";
+import CommonMistakes from "../../../components/CommonMistakes.astro";
+import ConceptHeader from "../../../components/ConceptHeader.astro";
+import ConceptMap from "../../../components/ConceptMap.astro";
+import FormalDefinition from "../../../components/FormalDefinition.astro";
+import GoDeeper from "../../../components/GoDeeper.astro";
+import Mistake from "../../../components/Mistake.astro";
+import NotationKey from "../../../components/NotationKey.astro";
+import PreciseStatement from "../../../components/PreciseStatement.astro";
+import PropertiesTable from "../../../components/PropertiesTable.astro";
+import PyRunner from "../../../components/PyRunner.astro";
+import References from "../../../components/References.astro";
+import ResearchFrontier from "../../../components/ResearchFrontier.astro";
+import Simpler from "../../../components/Simpler.astro";
+import StepThrough from "../../../components/StepThrough.astro";
+import Takeaways from "../../../components/Takeaways.astro";
+import WhyThisMatters from "../../../components/WhyThisMatters.astro";
+import WorkedExample from "../../../components/WorkedExample.astro";
+import DistributionBoard from "../../../components/react/DistributionBoard.tsx";
+
+<ConceptHeader
+  oneLiner="A probability density function describes a continuous random variable: the probability that it lands between two values is the area under the curve between them, not the curve's height."
+  difficulty="beginner"
+/>
+
+## In everyday terms
+
+<Analogy breaks="Real sand comes in grains, so a tiny enough stretch holds either one grain or none, and the pile has a bumpy top. A density is smooth all the way down: any stretch, however thin, holds its exact share. The picture also hides that the ruler can be endless: a density such as the normal one spreads over the whole number line, with its tails thinning out but never reaching zero.">
+
+Take a ruler 4 cm long and one bag of sand. Pour the sand evenly along the whole ruler. Now close your eyes, pick one grain at random, and ask where it lies. It could be at 1 cm, at 1.5 cm, at 1.4999 cm: there are far too many places to give each one its own share. So ask about stretches instead. Is the grain between 1 and 3 cm? Half the ruler holds half the sand, so the chance is one half.
+
+Now pour the same bag in a heap in the middle. Stretches near the middle hold more sand than stretches near the ends, so the grain is more likely to be there. The height of the pile at a point tells you how crowded the sand is there. The amount of sand over a stretch tells you how likely the grain is to be in it.
+
+A pile of sand looks like "how much is here", which tempts you to read its height as a chance. So picture one more thing: spread the bag thinly over a long table, or push it into a narrow trench. The amount of sand is the same, and the heights are very different. Height measures crowding, sand per centimeter. Only the amount of sand over a stretch is a chance.
+
+</Analogy>
+
+<WhyThisMatters>
+Most quantities a model sees are continuous: scaled pixel intensities, sensor readings, weights, the noise fed to a generator. A model of such data gives density values, not probabilities, and training maximizes the sum of their logarithms. A model that gives a point a high density is not saying that the point is likely, and the research frontier below shows image models that give higher densities to pictures they never saw than to the kind they were trained on.
+</WhyThisMatters>
+
+## Pour the sand into bars
+
+A histogram turns sand into bars whose areas are shares of the sand; this board pours one bag three ways and reads each bar's height. Before you touch it: pour all the sand onto the first half centimeter of the ruler. With bars 0.5 cm wide, how tall is that bar, in sand per cm: less than 1, exactly 1, or more than 1?
+
+<GoDeeper label="a sharper question before you start">
+Can a probability density ever be taller than 1? If you think not, say which rule of probability it would break.
+</GoDeeper>
+
+Show as switches between Bars and Curve; in the Bars view, Bar width picks 1 cm, 0.5 cm or 0.25 cm. The presets Even sand, Sand heap and Narrow sand pour the same bag three ways, and Table view lists every bar. A bar's height is its share of the sand divided by its width, measured "per cm"; the solid gridline marks 1 per cm.
+
+Your task: press Narrow sand, then make the bars thinner and watch the first bar.
+
+<div class="not-content">
+  <DistributionBoard client:visible setup="sand-pour" />
+</div>
+
+More than 1: the bar stands 2 per cm tall. With bars 0.5 cm wide the board says "The tallest bar, 0 to 0.5 cm, holds all the sand. Height = 1 ÷ 0.5 = 2 per cm, taller than 1." All the sand, a share of 1, sits on a bar 0.5 cm wide, and height is share divided by width. Thinner bars don't change it. At 0.25 cm the board says "The tallest bars, 0 to 0.25 cm and 0.25 to 0.5 cm, hold 1/2 of the sand each. Height = 1/2 ÷ 0.25 = 2 per cm, taller than 1." Nothing is broken: the bar's area, 0.5 × 2 = 1, is the probability, and areas never pass 1. The height is a rate, sand per centimeter, and a rate can be as large as the crowding makes it.
+
+Now press Sand heap and thin the bars again. The tallest bars grow: 3/8 per cm at 1 cm wide, 7/16 at 0.5 cm, 15/32 at 0.25 cm. The Curve view shows where they are heading: "The curve is the pile's height at each point: it rises from 0 at 0 cm to 1/2 per cm at 2 cm and falls back to 0 at 4 cm."
+
+## A continuous random variable gets its probabilities from areas
+
+A probability density function, or density, is a curve p(x) whose area between a and b is the probability that X lands between a and b. A random variable that is described this way is called continuous. Its density plays the part that the bar chart of a [discrete random variable](/probability/random-variables-and-distributions/) plays, with one change: the chance sits in areas, not in heights.
+
+### Height is share per unit, area is share
+
+Turn the board's rule around: height = share ÷ width means share = height × width, so a bar's share of the sand is its area. A density is what the bars become as they get as thin as you like, and the rule survives: the probability of any stretch is the area under the curve over it.
+
+Deisenroth and coauthors define a probability density function as any function that is never negative and has total area 1, and tie it to a random variable by P(a ≤ X ≤ b) = the area under p from a to b (§6.2.2, Definition 6.1, equations (6.15) and (6.16)) <Cite id="deisenroth2020" />. Grinstead and Snell make that equation the definition of a density function for X (§2.2, Definition 2.1, p. 59) <Cite id="grinstead2003" />. Goodfellow and coauthors list the same requirements and add, "Note that we do not require p(x) ≤ 1" (§3.3.2) <Cite id="goodfellow2016prob" />. So a density needs no negative heights, since a negative area would be a negative chance, and total area 1, since the grain is somewhere.
+
+<Simpler label="the same idea with a spinner">
+
+Grinstead and Snell's spinner is a pointer on a circle whose edge is labeled from 0 up to 1. Its density is 1 everywhere from 0 to 1, so the area over any arc is the arc's length times 1. The chance that the pointer stops in the upper half, from 0 to 1/2, is the area 1/2 × 1 = 1/2 (Example 2.10, p. 59) <Cite id="grinstead2003" />. A circle instead of a ruler, and the same rule: chance is area.
+
+</Simpler>
+
+<GoDeeper label="why thinner bars close in on the curve" id="bars-to-curve">
+
+<StepThrough title="The bars' heights close in on the density" rigor="sketch">
+
+1. A bar over the stretch from x to x + Δx holds the share P(x ≤ X ≤ x + Δx), so its height is that share divided by Δx: the average height of the curve over the bar.
+2. On the heap, the tallest bar is the one that ends at 2 cm. Under it the curve climbs in a straight line to 1/2, so the bar holds a trapezoid of sand and its height is the average of the curve over it: 1/2 − Δx/8. That gives 1/4, 3/8, 7/16 and 15/32 at Δx = 2, 1, 0.5 and 0.25 cm, the last three being the board's readouts.
+3. As Δx shrinks, the height closes in on 1/2, the curve's height at 2 cm. In general, p(x) is the limit of share ÷ width as the width goes to 0.
+
+</StepThrough>
+
+</GoDeeper>
+
+## Shade a stretch of the ruler
+
+The chance that X lands in a stretch is the shaded area over it; this board measures that area for any stretch you pick. Before you touch it: pour the sand in a lopsided heap, tallest at 1 cm, a quarter of the way along the 4 cm ruler. Is a grain as likely to lie left of the top as right of it?
+
+<GoDeeper label="a sharper question before you start">
+What share of the sand lies left of 1 cm, exactly? And what is the chance that the grain lies at exactly 1 cm, where the pile is tallest?
+</GoDeeper>
+
+From and To are sliders from 0 to 4 cm in steps of 0.25 cm; moving one past the other pushes it along. Show the mean and spread adds the pile's balance point and spread, used later. The presets are Even sand, Sand heap and Lopsided heap, and the board opens on Even sand from 1 to 2 cm, where it says "From 1 to 2 cm: the shaded area is 1/4 of the sand, so P(1 ≤ X ≤ 2) = 1/4 = 0.25."
+
+Your task: press Lopsided heap and shade from 0 to 1 cm. Then move To up to 4 cm and From up to 1 cm, to shade from 1 to 4 cm. Last, bring To back down to 1 cm.
+
+<div class="not-content">
+  <DistributionBoard client:visible setup="sand-interval" />
+</div>
+
+No: the grain is three times as likely to lie right of the top. The board says "From 0 to 1 cm: the shaded area is 1/4 of the sand, so P(0 ≤ X ≤ 1) = 1/4 = 0.25." and then "From 1 to 4 cm: the shaded area is 3/4 of the sand, so P(1 ≤ X ≤ 4) = 3/4 = 0.75." Both sides are triangles of the same height, 1/2 per cm, but the left one is 1 cm wide and the right one 3 cm wide, so their areas are 1/2 × 1 × 1/2 = 1/4 and 1/2 × 3 × 1/2 = 3/4.
+
+And exactly at 1 cm the chance is 0: "From 1 to 1 cm: no width, so no area. P(X = 1) = 0, although the curve is 1/2 per cm tall there." However tall the pile, a stretch with no width holds no sand. The top of a density marks where the sand is most crowded, not a value with a large chance.
+
+Width matters as much as height. On the Sand heap, the quarter centimeter beside the top holds 15/128 of the sand (board 1 at 0.25 cm), while the thin first centimeter holds 1/8 = 16/128 (board 1 at 1 cm), although the curve there never passes 1/4 per cm.
+
+## One point holds no sand
+
+For a variable with a density, every single value has probability 0, so including or leaving out the endpoints of a stretch changes nothing: on the Lopsided heap, P(1 ≤ X ≤ 4) = P(1 < X < 4) = 3/4. Deisenroth and coauthors make the same remark: asking for P(X = x) is like asking for a stretch from a to b with a = b (§6.2.2) <Cite id="deisenroth2020" />. So a density value p(x) is not the probability of x.
+
+<GoDeeper label="what p(x) does say about a single point" id="density-at-a-point">
+Grinstead and Snell say that p(x) is not the probability of the outcome x, adding that with infinitesimals you can read p(x) dx as one (p. 56) <Cite id="grinstead2003" />. Goodfellow and coauthors put it the same way: a tiny region of width δx around x holds probability p(x)δx (§3.3.2) <Cite id="goodfellow2016prob" />. On Narrow sand, the strip from 0.25 to 0.35 cm is 0.1 wide and 2 tall, so it holds 1/5 of the sand.
+</GoDeeper>
+
+Probability 0 does not mean impossible. Every exact position has probability 0, and the grain still lies somewhere. A die is different: it gives each face 1/6, so a discrete variable has no density. Not every continuous-valued random variable has one either, Grinstead and Snell note; like this page, their book treats only those that do (p. 59) <Cite id="grinstead2003" />.
+
+### Why single values can't carry the probability
+
+A ruler has more points than any list can hold, so giving every point the same positive share, however small, would push the total past 1. Grinstead and Snell reach the same dead end with a spinner on a circle of circumference 1: every outcome must get probability 0, and then the outcomes add up to 0, not 1 (Example 2.1, p. 41) <Cite id="grinstead2003" />. So the model is built from arcs instead, an arc of length p getting probability p <Cite id="grinstead2003" />. The third axiom adds probabilities over [countably many events](/probability/probability-axioms/#countable-additivity) only, so it never asks you to add up a ruler's worth of zeros.
+
+<CheckYourself level="intuition" question="On Narrow sand the curve is 2 per cm tall at 0.3 cm. Is the chance that the grain lies at exactly 0.3 cm equal to 2?">
+No. 2 is sand per centimeter, not a chance. The grain lies in the strip from 0.25 to 0.35 cm with chance $0.1 \times 2 = 1/5$, and a strip of width 0 holds 0.
+</CheckYourself>
+
+<CheckYourself level="standard" question="A density is p(x) = c(2 − x) for x from 0 to 2, and 0 elsewhere. Find c, then P(X ≤ 1).">
+The area is a triangle with base 2 and height $2c$, so it is $\tfrac{1}{2} \times 2 \times 2c = 2c$, and total area 1 gives $c = 1/2$. Right of 1 sits a triangle with base 1 and height $1/2$, area $1/4$, so $P(X \le 1) = 1 - 1/4 = 3/4$.
+</CheckYourself>
+
+<GoDeeper label="a running total of the sand" id="cdf-of-a-density">
+
+The cumulative distribution function F(x) = P(X ≤ x) is the sand left of x. On the heap F(1) = 1/8, F(2) = 1/2, F(3) = 7/8 and F(4) = 1. It climbs smoothly, with no steps, because single points hold nothing: compare the stairs in the [running total of the bars](/probability/random-variables-and-distributions/#cdf-preview) for a discrete variable. Where the density is continuous, the [slope](/calculus/derivatives/) of F at x is p(x) (Theorem 2.1, p. 61) <Cite id="grinstead2003" />. A later page puts PMF, PDF and CDF side by side.
+
+</GoDeeper>
+
+## The uniform distribution: sand poured evenly
+
+The uniform distribution on [a, b] spreads probability evenly: its density is 1/(b − a) between a and b and 0 elsewhere, so the chance of any stretch inside is its width divided by b − a. Goodfellow and coauthors write this density as u(x; a, b) and the variable as x ∼ U(a, b) (§3.3.2) <Cite id="goodfellow2016prob" />. Even sand is 𝒰(0, 4), with height 1/4. Narrow sand is 𝒰(0, 1/2), with height 2. The narrower the block, the taller it stands, because the area stays 1. Deisenroth and coauthors' uniform density on 0.9 ≤ X ≤ 1.6 stands 1/0.7 ≈ 1.43 tall for the same reason (Example 6.3) <Cite id="deisenroth2020" />.
+
+### Where the block balances, and how far it spreads
+
+The expected value of a variable with a density is the area-weighted average of its values, 𝔼[X] = ∫ x p(x) dx, each position weighted by how much sand sits there (§3.8) <Cite id="goodfellow2016prob" />. On this page the integral sign is only notation: read ∫ as "the area under". It is the point where the pile balances, as the bars balanced on a pencil on the [expected value page](/probability/expectation-and-variance/#why-it-is-the-balance-point). A uniform block balances at its middle, so the mean of 𝒰(a, b) is (a + b)/2, and its variance is (b − a)²/12. For Even sand that is 16/12 = 4/3 cm², and Show the mean and spread confirms it: "Variance: 4/3 ≈ 1.33 cm². Standard deviation: σ = √(4/3) ≈ 1.15 cm."
+
+With the switch on, Sand heap has the same mean, 2 cm, and a smaller variance, "Variance: 2/3 ≈ 0.67 cm²", because its sand is piled toward the middle. The Lopsided heap is tallest at 1 cm, but the board says "The mean is μ = 5/3 ≈ 1.67 cm: the pile balances there." The long right side pulls the balance point past the top, just as the tallest bar of a die game was not its balance point.
+
+Every number on this page comes from rectangles, triangles or symmetry; nothing needs calculus.
+
+<GoDeeper label="why the variance is (b − a)²/12, without calculus" id="uniform-variance">
+The Formal definition fold below finds the variance of 𝒰(0, 1) by cutting the block in half: each half is a smaller copy of the whole, and that is enough to pin down 1/12.
+</GoDeeper>
+
+## Notation
+
+<NotationKey symbols={["random-variable", "pmf", "density", "interval-probability", "area-under-density", "bin-width", "uniform", "expectation", "variance", "cdf", "log", "absolute-value"]} />
+
+<PreciseStatement>
+
+In plain words: a density is a curve that is never negative and has total area 1, and X has that density when every stretch's chance is the area over it.
+
+Let $X$ be a real random variable. A function $p\colon \mathbb{R} \to \mathbb{R}$ is a density of $X$ if $p(x) \ge 0$ for every $x$, $\int_{-\infty}^{\infty} p(x)\,dx = 1$, and
+
+$$
+P(a \le X \le b) = \int_a^b p(x)\,dx \quad \text{for all } a \le b.
+$$
+
+Then $P(X \in E) = \int_E p(x)\,dx$ for every set $E$ for which the area makes sense (Grinstead and Snell, p. 59). Consequences: $P(X = x) = 0$ for every $x$, so $P(a \le X \le b) = P(a < X < b) = P(a < X \le b)$. No upper bound on $p$ is required. The uniform distribution $\mathcal{U}(a, b)$, for $a < b$, has $p(x) = 1/(b - a)$ on $[a, b]$ and 0 elsewhere. The expected value is $\mathbb{E}[X] = \int x\,p(x)\,dx$, provided $\int |x|\,p(x)\,dx$ is finite.
+
+Boundary cases and conventions. Changing $p$ at finitely many points changes no area, so a density is unique only up to such changes: Narrow sand's height at exactly 0.5 cm can be taken as 2 or as 0. A discrete random variable has no density, and some continuous-valued random variables have none either; this page treats only those that do. For vectors the same definition holds with volumes in place of lengths (Deisenroth et al., Definition 6.1, for $\mathbb{R}^D$). Many textbooks write the density $f(x)$; machine learning texts write $p(x)$ and call its value at a data point the likelihood.
+
+</PreciseStatement>
+
+<FormalDefinition>
+
+<StepThrough title="A single value has probability 0" rigor="full">
+
+1. Assume $p$ is bounded near $x$: $p \le M$ on some stretch around $x$, as every density on this page is. Take any $\delta > 0$ small enough to stay inside that stretch.
+2. The event $X = x$ lies inside the event $x - \delta \le X \le x + \delta$, so by monotonicity ([probability axioms](/probability/probability-axioms/)) $P(X = x) \le P(x - \delta \le X \le x + \delta)$.
+3. That area is at most its width times the largest height over it: $P(x - \delta \le X \le x + \delta) \le 2\delta M$.
+4. So $0 \le P(X = x) \le 2\delta M$ for every small $\delta > 0$. The only such number is 0.
+5. Hence the endpoints carry nothing: $P(a \le X \le b) = P(a < X < b) + P(X = a) + P(X = b) = P(a < X < b)$ for $a < b$. Without the bound on $p$ the result still holds, but the proof needs the continuity of the integral instead.
+
+</StepThrough>
+
+<StepThrough title="The variance of a uniform distribution is (b − a)²/12" rigor="sketch">
+
+This sketch uses two facts from the [expected value page](/probability/expectation-and-variance/): scaling a variable by $c$ multiplies its variance by $c^2$, and the variance splits into the average variance inside cases plus the spread of the case averages, which that page states in its fold on [splitting into cases](/probability/expectation-and-variance/#law-of-total-expectation) without proving it.
+
+1. Let $U \sim \mathcal{U}(0, 1)$, with mean $1/2$ by symmetry, and write $v = \operatorname{Var}[U]$.
+2. Split $[0, 1]$ into halves. Each half happens with probability $1/2$, and given a half, $U$ is uniform on it: a copy of $U$ shrunk by $1/2$. By the scaling rule its variance there is $v/4$.
+3. The halves' means are $1/4$ and $3/4$, each $1/4$ from $1/2$, so the spread between the halves is $\tfrac{1}{2}(1/4)^2 + \tfrac{1}{2}(1/4)^2 = 1/16$.
+4. Inside plus between: $v = v/4 + 1/16$, so $\tfrac{3}{4}v = 1/16$ and $v = 1/12$.
+5. For $\mathcal{U}(a, b)$ write $X = a + (b - a)U$. Then $\operatorname{Var}[X] = (b - a)^2/12$. Even sand: $16/12 = 4/3$. Narrow sand: $(1/4)/12 = 1/48$.
+
+</StepThrough>
+
+<PropertiesTable family="uniform" examplesHeading="On the boards" examples={{ height: "Even sand $1/4$ per cm, Narrow sand $2$ per cm", mean: "Even sand 2 cm, Narrow sand $1/4$ cm", variance: "Even sand $4/3$ cm², Narrow sand $1/48$ cm²", point: "0 on every preset, however tall the curve" }} />
+
+The Sand heap is not uniform but obeys the same rules: height 1/2 at 2 cm, mean 2 cm, variance 2/3 cm², and probability 0 at every single point.
+
+</FormalDefinition>
+
+## Worked examples
+
+<WorkedExample number={1} title="A spinner">
+
+Grinstead and Snell's spinner has density 1 from 0 to 1 (Example 2.10, p. 59) <Cite id="grinstead2003" />. The chance that it stops between 0.2 and 0.45 is the area of a rectangle 0.25 wide and 1 tall: $0.25 \times 1 = 1/4$. The chance that it stops at exactly 0.3 is 0, a rectangle with no width.
+
+</WorkedExample>
+
+<WorkedExample number={2} title="The sum of two spinners">
+
+Spin two spinners and add the results: $Z = X + Y$. Grinstead and Snell derive its density: $z$ from 0 to 1, and $2 - z$ from 1 to 2 (Example 2.14, pp. 63–64) <Cite id="grinstead2003" />. (a) It is a density: a triangle with base 2 and height 1, so its area is 1. (b) $P(Z \le 1/2)$ is a small triangle with base $1/2$ and height $1/2$, area $\tfrac{1}{2} \times \tfrac{1}{2} \times \tfrac{1}{2} = 1/8$. (c) By symmetry $P(Z \ge 3/2) = 1/8$ too, so $P(1/2 \le Z \le 3/2) = 1 - 2 \times 1/8 = 3/4$. (d) The Sand heap is this triangle with every position doubled, twice as wide and half as tall, and shading it from 1 to 3 cm on the second board gives the same 3/4.
+
+</WorkedExample>
+
+<WorkedExample number={3} title="The density of initial weights" faded>
+
+Glorot and Bengio's normalized initialization draws each weight uniformly from $[-a, a]$ with $a = \sqrt{6}/\sqrt{n_j + n_{j+1}}$, where $n_j$ and $n_{j+1}$ are the sizes of the two layers (§4.2.1, equation (16), p. 253) <Cite id="glorot2010" />. With 64 inputs and 32 outputs, $a = \sqrt{6/96} = 1/4$, so the density is $1/(1/4 - (-1/4)) = 2$ on $[-1/4, 1/4]$, like Narrow sand. Find (a) the chance that a weight lies within $1/8$ of 0, $P(|W| \le 1/8)$; (b) the variance of a weight, and compare it with $2/(n_j + n_{j+1})$; (c) its standard deviation.
+
+<div slot="solution">
+
+(a) The stretch from $-1/8$ to $1/8$ is $1/4$ wide under a block 2 tall: $1/4 \times 2 = 1/2$. (b) The width is $1/2$, so the variance is $(1/2)^2/12 = 1/48$, which equals $2/96 = 2/(64 + 32)$, the variance the normalized initialization is built to give. (c) $\sqrt{1/48} \approx 0.144$.
+
+</div>
+
+</WorkedExample>
+
+## Where densities show up in machine learning
+
+### Likelihoods of continuous data are density values
+
+A model of continuous data gives each data point a density value, and training maximizes the sum of their logarithms, the log-likelihood. Nalisnick and coauthors stress that a density value $p(x_n; \theta)$ alone has no interpretation as a probability; to get a probability, integrate the density over a region (§2.1) <Cite id="nalisnick2018" />. Ten data points modeled by 𝒰(0, 1/2) each get density 2, so the log-likelihood is $10 \log 2 \approx 6.93$: positive, which no model of discrete data could give, since the log of a probability is never above 0. [Gaussian naive Bayes](/probability/naive-bayes-classifier/#worked-examples) multiplies density values the same way.
+
+### Uniform weight initialization
+
+Glorot and Bengio compare a common heuristic, weights drawn uniformly from $[-1/\sqrt{n}, 1/\sqrt{n}]$ with $n$ the size of the previous layer (§2.3, equation (1), p. 251), with their normalized initialization (equation (16)) <Cite id="glorot2010" />. For the heuristic they find $n \operatorname{Var}[W] = 1/3$ (equation (15), p. 253) <Cite id="glorot2010" />, and the uniform variance formula reproduces it: the width is $2/\sqrt{n}$, so $\operatorname{Var}[W] = (2/\sqrt{n})^2/12 = 1/(3n)$. Why the variance matters is on the [normal distribution page](/statistics/normal-distribution/#weight-initialization). The density reading adds one thing: the block's height, $1/(2a)$, is 2 for the 64-by-32 layer and grows as layers get wider.
+
+### Image models add noise to make pixels continuous
+
+Pixel values are stored as whole numbers from 0 to 255, but image models often use densities. Theis and coauthors point out that a density fitted to such discrete data can reach arbitrarily high likelihoods, even on test data <Cite id="theis2015" />: Narrow sand pushed to its limit. The usual fix adds uniform noise from $[0, 1)$ to each pixel value, dequantizing it <Cite id="theis2015" />. Then the area of the model's density over each pixel's cell of width 1 is a genuine probability, and by Jensen's inequality the log-likelihood on the noisy data is at most the log-likelihood of those probabilities (§3.1, equations (3)–(6)) <Cite id="theis2015" />. Spread each pixel's sand over a cell of width 1, and the heights become comparable to probabilities again. Models that turn simple noise into samples through an invertible map, and get exact densities that way, are on the [random variables page](/probability/random-variables-and-distributions/#generators-turn-noise-into-samples).
+
+## Measure the sand in code
+
+This runs in your browser with exact fractions and stops with an error if a number on this page is off. The first half recomputes every board number from the straight pieces of each pile, the way the board does. The second half pours 200,000 simulated grains and checks that the bars land near the exact heights.
+
+<PyRunner
+  title="density.py"
+  code={`
+import math
+import random
+from fractions import Fraction as F
+
+# The four ways to pour the bag, as straight pieces between knots (position in cm, height per cm).
+# Outside the first and last knot the height is 0. Every knot is a Fraction, so every area is exact.
+even = [(F(0), F(1, 4)), (F(4), F(1, 4))]
+heap = [(F(0), F(0)), (F(2), F(1, 2)), (F(4), F(0))]
+narrow = [(F(0), F(2)), (F(1, 2), F(2))]
+lopsided = [(F(0), F(0)), (F(1), F(1, 2)), (F(4), F(0))]
+shapes = {"Even sand": even, "Sand heap": heap, "Narrow sand": narrow, "Lopsided heap": lopsided}
+for shape in shapes.values():
+    assert all(isinstance(value, F) for knot in shape for value in knot)
+
+
+def simpson(f, left, right):
+    """Exact for polynomials up to degree 3, which is all this page needs."""
+    middle = (left + right) / 2
+    return (right - left) / 6 * (f(left) + 4 * f(middle) + f(right))
+
+
+def integrate(shape, a, b, power=0):
+    """The area under x**power * p(x) from a to b, one straight piece at a time."""
+    total = F(0)
+    for (x0, h0), (x1, h1) in zip(shape, shape[1:]):
+        left, right = max(a, x0), min(b, x1)
+        if left >= right:
+            continue
+        def piece(x):
+            return x**power * (h0 + (h1 - h0) * (x - x0) / (x1 - x0))
+        total += simpson(piece, left, right)
+    return total
+
+
+def area(shape, a, b):
+    return integrate(shape, a, b)
+
+
+def bars(shape, width):
+    edges = [k * width for k in range(int(4 / width) + 1)]
+    return [area(shape, left, right) for left, right in zip(edges, edges[1:])]
+
+
+def spread(values):
+    # The variance of a list of floats, dividing by n: subtract the mean, then average the squares.
+    center = sum(values) / len(values)
+    return sum((v - center) ** 2 for v in values) / len(values)
+
+
+def mean_and_variance(shape):
+    mu = integrate(shape, F(-1), F(5), 1)
+    return mu, integrate(shape, F(-1), F(5), 2) - mu**2
+
+
+# Every shape holds the whole bag: total area 1.
+for name, shape in shapes.items():
+    assert area(shape, F(0), F(4)) == 1, name
+
+# Board 1: a bar's height is its share divided by its width.
+assert bars(even, F(1)) == [F(1, 4)] * 4
+assert bars(heap, F(1)) == [F(1, 8), F(3, 8), F(3, 8), F(1, 8)]
+assert bars(heap, F(1, 2)) == [F(k, 32) for k in (1, 3, 5, 7, 7, 5, 3, 1)]
+assert [share / F(1, 2) for share in bars(heap, F(1, 2))] == [F(k, 16) for k in (1, 3, 5, 7, 7, 5, 3, 1)]
+assert bars(heap, F(1, 4))[7:9] == [F(15, 128), F(15, 128)]
+assert bars(narrow, F(1)) == [1, 0, 0, 0] and bars(narrow, F(1))[0] / 1 == 1
+assert bars(narrow, F(1, 2))[0] == 1 and 1 / F(1, 2) == 2 and 1 * F(1, 2) * 2 == 1
+assert bars(narrow, F(1, 4))[:2] == [F(1, 2), F(1, 2)] and F(1, 2) / F(1, 4) == 2
+
+# The tallest heap bar ends at 2 cm; its height is 1/2 - width/8, closing in on 1/2.
+tallest = []
+for width in (F(2), F(1), F(1, 2), F(1, 4)):
+    height = area(heap, 2 - width, F(2)) / width
+    assert height == F(1, 2) - width / 8
+    tallest.append(height)
+assert tallest == [F(1, 4), F(3, 8), F(7, 16), F(15, 32)]
+print("tallest heap bar:", [str(h) for h in tallest], "toward 1/2 per cm")
+
+# Board 2: shaded stretches.
+assert area(even, F(1), F(2)) == F(1, 4)
+assert area(lopsided, F(0), F(1)) == F(1, 4) and area(lopsided, F(1), F(4)) == F(3, 4)
+assert F(1, 2) * 1 * F(1, 2) == F(1, 4) and F(1, 2) * 3 * F(1, 2) == F(3, 4)
+assert area(lopsided, F(1), F(1)) == 0 and area(heap, F(2), F(2)) == 0
+assert area(heap, F(1), F(3)) == F(3, 4) and area(heap, F(0), F(1)) == F(1, 8)
+assert area(heap, F(7, 4), F(2)) == F(15, 128) < F(16, 128) == area(heap, F(0), F(1))
+# Board 2's rounded readouts: 1/8 shows as 0.13 and 15/128 as 0.12 (rounding half up).
+assert abs(F(1, 8) - F(13, 100)) <= F(1, 200) and abs(F(15, 128) - F(12, 100)) < F(1, 200)
+
+# The running total of the sand on the heap.
+assert [area(heap, F(0), F(x)) for x in (1, 2, 3, 4)] == [F(1, 8), F(1, 2), F(7, 8), 1]
+
+# Balance points and spreads: the numbers board 2's switch shows.
+assert mean_and_variance(even) == (2, F(4, 3))
+assert mean_and_variance(heap) == (2, F(2, 3))
+assert mean_and_variance(narrow) == (F(1, 4), F(1, 48))
+assert mean_and_variance(lopsided) == (F(5, 3), F(13, 18))
+for shape, a, b in ((even, F(0), F(4)), (narrow, F(0), F(1, 2))):
+    assert mean_and_variance(shape) == ((a + b) / 2, (b - a) ** 2 / 12)
+assert 1 / (F(4) - 0) == F(1, 4) and 1 / (F(1, 2) - 0) == 2
+for value, shown in ((F(4, 3), 1.15), (F(2, 3), 0.82), (F(13, 18), 0.85)):
+    assert abs(math.sqrt(value) - shown) < 0.005
+assert abs(5 / 3 - 1.67) < 0.005 and abs(13 / 18 - 0.72) < 0.005
+# Deisenroth and coauthors' uniform on 0.9 to 1.6 stands 1/0.7 tall.
+assert 1 / (F(16, 10) - F(9, 10)) == F(10, 7) and abs(10 / 7 - 1.43) < 0.005
+
+# The variance of U(0, 1) by halving: v = v/4 + 1/16.
+between = F(1, 2) * F(1, 4) ** 2 + F(1, 2) * F(1, 4) ** 2
+assert between == F(1, 16)
+v = between / (1 - F(1, 4))
+assert v == F(1, 12) and v == v / 4 + F(1, 16)
+assert F(4) ** 2 * v == F(4, 3) and F(1, 2) ** 2 * v == F(1, 48)
+
+# The spinner: density 1 on [0, 1).
+assert F(1, 2) * 1 == F(1, 2) and (F(45, 100) - F(20, 100)) * 1 == F(1, 4)
+
+# The sum of two spinners: a triangle on [0, 2], top 1 at 1.
+spinners = [(F(0), F(0)), (F(1), F(1)), (F(2), F(0))]
+assert area(spinners, F(0), F(2)) == 1
+assert area(spinners, F(0), F(1, 2)) == F(1, 8) == F(1, 2) * F(1, 2) * F(1, 2)
+assert area(spinners, F(1, 2), F(3, 2)) == F(3, 4) == 1 - 2 * F(1, 8)
+quarters = [F(k, 4) for k in range(9)]
+for a in quarters:
+    for b in quarters:
+        if a <= b:
+            assert area(heap, 2 * a, 2 * b) == area(spinners, a, b)
+
+# Check yourself: p(x) = c(2 - x) on [0, 2], Narrow sand near 0.3 cm, and a sensor.
+c = 1 / (F(1, 2) * 2 * 2)
+assert c == F(1, 2)
+check = [(F(0), 2 * c), (F(2), F(0))]
+assert area(check, F(0), F(2)) == 1 and area(check, F(0), F(1)) == F(3, 4) == 1 - F(1, 2) * 1 * F(1, 2)
+assert area(narrow, F(25, 100), F(35, 100)) == F(1, 10) * 2 == F(1, 5)
+assert 1 / (F(102, 10) - 10) == 5 and abs(math.log(5) - 1.609) < 5e-4 and math.log(5) > 1.6
+
+# Glorot and Bengio's normalized initialization for 64 inputs and 32 outputs.
+a_squared = F(6, 64 + 32)
+assert a_squared == F(1, 16)
+a = F(1, 4)
+assert a * a == a_squared
+weights = [(-a, 1 / (2 * a)), (a, 1 / (2 * a))]
+assert 1 / (2 * a) == 2 and area(weights, -a, a) == 1
+assert area(weights, -F(1, 8), F(1, 8)) == F(1, 2)
+assert mean_and_variance(weights) == (0, F(1, 48)) == (0, (2 * a) ** 2 / 12)
+assert F(1, 48) == F(2, 64 + 32)
+assert abs(math.sqrt(1 / 48) - 0.144) < 5e-4
+# The common heuristic U[-1/sqrt(n), 1/sqrt(n)]: n Var[W] = n (2/sqrt(n))^2 / 12 = 4/12 = 1/3.
+assert F(4, 12) == F(1, 3)
+for n in (16, 100, 784):
+    assert math.isclose(n * (2 / math.sqrt(n)) ** 2 / 12, 1 / 3)
+
+# Ten data points under U(0, 1/2): each has density 2, so the log-likelihood is 10 log 2.
+assert math.isclose(10 * math.log(2), 6.931471805599453) and abs(10 * math.log(2) - 6.93) < 0.005
+
+# Simulation: pour 200,000 grains as the heap (the sum of two uniform positions on 0 to 2 cm).
+rng = random.Random(0)
+N = 200_000
+grains = [rng.uniform(0, 2) + rng.uniform(0, 2) for _ in range(N)]
+counts = [0] * 8
+for x in grains:
+    counts[min(int(x / 0.5), 7)] += 1
+sampled = [count / (N * 0.5) for count in counts]
+exact = [k / 16 for k in (1, 3, 5, 7, 7, 5, 3, 1)]
+assert all(abs(s - e) < 0.01 for s, e in zip(sampled, exact))
+share_top = sum(1.75 <= x <= 2 for x in grains) / N
+share_first = sum(0 <= x <= 1 for x in grains) / N
+assert abs(share_top - 15 / 128) < 0.005 and abs(share_first - 1 / 8) < 0.005
+print("exact heights at 0.5 cm:", exact)
+print("sampled heights:        ", [round(s, 4) for s in sampled])
+print(f"share 1.75 to 2 cm: {share_top:.4f} (exact 15/128 = {15 / 128:.4f})")
+print(f"share 0 to 1 cm:    {share_first:.4f} (exact 1/8 = {1 / 8:.4f})")
+print("grains at exactly 2 cm:", sum(x == 2.0 for x in grains))
+
+# The halving argument by sampling: U(0, 1), and its left half stretched back to [0, 1).
+u = [rng.random() for _ in range(N)]
+assert abs(spread(u) - 1 / 12) < 0.002
+left = [2 * x for x in u if x < 0.5]
+assert abs(spread(left) - 1 / 12) < 0.002
+
+# Glorot weights by sampling.
+w = [rng.uniform(-0.25, 0.25) for _ in range(N)]
+weight_variance = spread(w)
+assert abs(weight_variance - 1 / 48) < 0.001
+assert abs(sum(abs(x) <= 0.125 for x in w) / N - 0.5) < 0.005
+print(f"weights: variance {weight_variance:.5f} (exact 1/48 = {1 / 48:.5f})")
+`}
+/>
+
+The sampled bars land within 0.01 of the exact heights, and no grain lands at exactly 2 cm, the top of the heap.
+
+## Research frontier
+
+<ResearchFrontier reviewed="2026-11-25">
+
+**High density is not the same as typical.** Nalisnick and coauthors trained Glow, a model with exact densities, on CIFAR-10 photos of objects and measured bits per dimension, where lower means higher density: 3.386 on its training set, 3.464 on its test set, and 2.389 on SVHN photos of house numbers it never saw (§3, Figure 1) <Cite id="nalisnick2018" />. A constant image scored 0.589 under the CIFAR-10 model, the NVP-Glow variant (Figure 8) <Cite id="nalisnick2018" />. A density's tallest region is where probability is most crowded, which in many dimensions need not be where real samples fall: this page's point that height is not probability, at scale.
+
+**What explains it.** For flows whose volume change is the same everywhere, the authors trace the gap to the data's variance and the model's curvature (§5), and conclude that comparing likelihoods alone cannot identify the training set or inputs like it (§7) <Cite id="nalisnick2018" />.
+
+**What is open.** They leave open whether the fault lies with these models or with high-dimensional likelihoods as such (§7) <Cite id="nalisnick2018" />. For exact densities through invertible maps, see the [random variables page's frontier](/probability/random-variables-and-distributions/#research-frontier).
+
+</ResearchFrontier>
+
+## Check yourself
+
+<CheckYourself level="proof" question="Show that P(a ≤ X ≤ b) = P(a < X < b) for any X with a density bounded by M.">
+For any point $x$ and any $\delta > 0$, $P(X = x) \le P(x - \delta \le X \le x + \delta) \le 2\delta M$, the width of the stretch times the largest height. A number between 0 and $2\delta M$ for every $\delta > 0$ is 0. So the two endpoints add nothing: $P(a \le X \le b) = P(a < X < b) + P(X = a) + P(X = b) = P(a < X < b)$.
+</CheckYourself>
+
+<CheckYourself level="standard" question="A model of a sensor reading says X ∼ 𝒰(10, 10.2). What is its density there, and is a log-likelihood of 1.6 for one reading possible?">
+The block is 0.2 wide, so its height is $1/0.2 = 5$. A reading inside it has log-likelihood $\log 5 \approx 1.609$, so yes: a positive log-likelihood just says the density is taller than 1.
+</CheckYourself>
+
+## Common mistakes
+
+<CommonMistakes>
+  <Mistake wrong="p(x) is the probability that X equals x.">
+    $p(x)$ is probability per unit length. $P(X = x) = 0$ for every $x$, and probabilities are areas: the second board's 1-to-1 stretch has no width and holds no sand.
+  </Mistake>
+  <Mistake wrong="A density can't be more than 1.">
+    Only areas are capped at 1. Narrow sand stands 2 per cm tall, and the 64-by-32 layer's initial weights have density 2.
+  </Mistake>
+  <Mistake wrong="The value under the peak is the most likely result.">
+    Every single value has probability 0, and width matters as much as height: on the heap, the thin first centimeter holds 1/8, more than the 15/128 in the quarter centimeter beside the top.
+  </Mistake>
+  <Mistake wrong="Stretching the values keeps the heights.">
+    Spread the same sand twice as wide and it stands half as tall. Goodfellow and coauthors show the error with $y = x/2$ for $x \sim U(0, 1)$: keeping the height 1 on $[0, 1/2]$ gives a total area of $1/2$ (§3.12, equation (3.43)) <Cite id="goodfellow2016prob" />. The right height is 2, like Narrow sand.
+  </Mistake>
+  <Mistake wrong="Probability 0 means it can't happen.">
+    Every exact position has probability 0, and the grain still lands somewhere. See the common mistakes on the [probability axioms](/probability/probability-axioms/) page.
+  </Mistake>
+</CommonMistakes>
+
+## Key takeaways
+
+<Takeaways />
+
+## How this connects
+
+<ConceptMap />
+
+## References
+
+<References />
