@@ -3,6 +3,7 @@ import { Mafs, Polygon, Text } from "mafs";
 import type { vec } from "mafs";
 import Board from "./Board";
 import TraySlider from "./TraySlider";
+import PresetButtons from "./guided/PresetButtons.tsx";
 import { formatNumber, plotColors } from "./plotColors";
 import { BAYES_SCENARIOS, DEFAULT_SCENARIO, computePosterior, type BayesScenarioId, type BayesValues } from "./bayesTheorem/scenarios.ts";
 
@@ -10,6 +11,7 @@ const PROBABILITY_RANGE: vec.Vector2 = [0.01, 0.99];
 const PROBABILITY_STEP = 0.01;
 const BOARD_HEIGHT = 340;
 const SCENARIO_IDS = Object.keys(BAYES_SCENARIOS) as BayesScenarioId[];
+const SCENARIO_PRESETS = SCENARIO_IDS.map((id) => ({ id, label: BAYES_SCENARIOS[id].label }));
 /** Below this prior, A's column is too thin to hold its labels (the medical test's is 0.01), so they sit beside it. */
 const NARROW_COLUMN = 0.15;
 const LABEL_GAP = 0.01;
@@ -20,6 +22,12 @@ const rectangle = (x0: number, x1: number, y0: number, y1: number): vec.Vector2[
   [x1, y1],
   [x0, y1],
 ];
+
+function toScenarioId(id: string): BayesScenarioId {
+  const known = SCENARIO_IDS.find((scenarioId) => scenarioId === id);
+  if (!known) throw new Error(`BayesTheorem: no example scenario "${id}".`);
+  return known;
+}
 
 /** "0.083", or the reason there is no posterior when P(B) is 0. */
 const posteriorText = (posterior: number | null) => (posterior === null ? "undefined, because P(B) = 0" : formatNumber(posterior, 3));
@@ -80,14 +88,13 @@ export default function BayesTheorem() {
 
   const tray = (
     <>
-      <div className="ms-event-presets" role="group" aria-label="Example scenarios">
-        <span className="ms-event-presets-label">Example:</span>
-        {SCENARIO_IDS.map((id) => (
-          <button key={id} type="button" className="ms-board-button" aria-pressed={id === scenarioId} onClick={() => loadScenario(id)}>
-            {BAYES_SCENARIOS[id].label}
-          </button>
-        ))}
-      </div>
+      <PresetButtons
+        label="Example scenarios"
+        caption="Example"
+        presets={SCENARIO_PRESETS}
+        activeId={scenarioId}
+        onPick={(id) => loadScenario(toScenarioId(id))}
+      />
       <p className="ms-event-note-line">{BAYES_SCENARIOS[scenarioId].meaning}</p>
       {probabilitySlider("P(A)", prior, setPrior, (value) => announce({ prior: value, likelihood, falsePositive }))}
       {probabilitySlider("P(B | A)", likelihood, setLikelihood, (value) => announce({ prior, likelihood: value, falsePositive }))}
