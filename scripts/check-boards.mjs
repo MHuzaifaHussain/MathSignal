@@ -217,6 +217,7 @@ assert.equal(reducer(tossedTwice, { type: 'reset' }).tossCount, 0);
 const setsView = reducer(passed, { type: 'stage', stage: 'sets' });
 assert.equal(describe.setsLine(setsView), 'Ω = {HH, HT, TH, TT}. A = {HH, HT, TH}. P(A) = |A| / |Ω| = 3/4');
 assert.equal(describe.setsLine(passed), null); // only in the Sets view
+assert.equal(describe.announcementFor(setsView, { type: 'stage', stage: 'sets' }), 'omega = {HH, HT, TH, TT}. A = {HH, HT, TH}. P of A = the size of A over the size of omega = 3/4');
 const lockedSets = reducer(fresh, { type: 'stage', stage: 'sets' });
 assert.equal(lockedSets.stage, 'sets'); // the view can be chosen before Check…
 assert.equal(describe.setsLine(lockedSets), null); // …but the symbolic line waits for Check

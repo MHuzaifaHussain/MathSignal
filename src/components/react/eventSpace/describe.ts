@@ -393,6 +393,9 @@ const SPOKEN_SYMBOLS: readonly (readonly [RegExp, string])[] = [
 	[/P\(([AB]) and ([AB])\)/g, 'P of $1 and $2'],
 	[/P\(([AB])\)/g, 'P of $1'],
 	[/ × /g, ' times '],
+	[/\|([AΩ])\|/g, 'the size of $1'],
+	[/ \/ /g, ' over '],
+	[/Ω/g, 'omega'],
 ];
 
 export function spokenSymbols(line: string): string {
