@@ -7,7 +7,7 @@
 // - A min–max score reads unreduced, reduced, then rounded: "15/18 = 5/6 ≈ 0.83".
 // "≈" appears only when the decimal is rounded.
 import { compareFractions, formatFraction, fraction, multiplyFractions, toNumber, type Fraction } from '../boardMath.ts';
-import { capitalize, joinWords, plural } from '../boardText.ts';
+import { capitalize, groupThousands, joinWords, plural } from '../boardText.ts';
 import { CHECKS_BEFORE_ANSWER } from '../guided/guided.ts';
 import { tableFoldAnnouncement } from '../guided/tableFold.ts';
 import { formatNumber } from '../plotColors.ts';
@@ -76,12 +76,7 @@ const PERCENT = 100;
 
 // ---- Numbers ----
 
-/** "1,206", "−12", "48". Whole numbers only. */
-export function groupThousands(value: number): string {
-	if (!Number.isInteger(value)) throw new Error(`DescriptiveStats: groupThousands takes whole numbers, got ${value}.`);
-	const digits = String(Math.abs(value)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-	return value < 0 ? `−${digits}` : digits;
-}
+export { groupThousands };
 
 /** Two decimals show the value exactly. */
 const isTwoDecimals = (value: Fraction) => (value.numerator * PERCENT) % value.denominator === 0;

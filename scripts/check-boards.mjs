@@ -2275,6 +2275,11 @@ const assertTableFoldSays = (where, announce) => {
 	assert.equal(dsay.groupThousands(1206), '1,206');
 	assert.equal(dsay.groupThousands(-1000), '−1,000');
 	assert.equal(dsay.groupThousands(48), '48');
+	// One thousands formatter for every board: DescriptiveStats re-exports boardText's, which refuses a non-integer.
+	const sharedText = await import('../src/components/react/boardText.ts');
+	assert.equal(dsay.groupThousands, sharedText.groupThousands);
+	assert.equal(sharedText.groupThousands(1024), '1,024');
+	assert.throws(() => sharedText.groupThousands(1.5), /boardText.groupThousands: takes whole numbers, got 1.5/);
 	assert.equal(dsay.amount(fraction(518, 5)), '103.6');
 	assert.equal(dsay.amount(fraction(76, 9)), '≈ 8.44');
 	assert.equal(dsay.equalsAmount(fraction(134, 1)), '= 134');

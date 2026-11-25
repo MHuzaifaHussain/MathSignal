@@ -13,6 +13,13 @@ export const approx = (numerator: number, denominator: number) => `${isRounded(n
 /** "= 0.75", or "≈ 0.17" when rounded, for the end of an equation. */
 export const equalsDecimal = (numerator: number, denominator: number) => `${isRounded(numerator, denominator) ? '≈' : '='} ${decimal(numerator, denominator)}`;
 
+/** "1,206", "−12", "48": a count with thousands separators. Whole numbers only; a fraction is never grouped. */
+export function groupThousands(value: number): string {
+	if (!Number.isInteger(value)) throw new Error(`boardText.groupThousands: takes whole numbers, got ${value}.`);
+	const digits = String(Math.abs(value)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+	return value < 0 ? `−${digits}` : digits;
+}
+
 export function joinWords(words: readonly string[]): string {
 	if (words.length <= 1) return words.join('');
 	return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
