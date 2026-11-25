@@ -817,9 +817,15 @@ function pairLabels(a: Vec2, b: Vec2, aSide: 1 | -1): PlaneLabel[] {
 	return [arrowLabel('a', 'a', ORIGIN, a, aSide), arrowLabel('b', 'b', ORIGIN, b, bSide)];
 }
 
-function spanLabel(end: Vec2): PlaneLabel {
-	const away = labelAway(ORIGIN, end, -1);
-	return { id: 'span', text: 'span', at: add(scale(SPAN_LABEL_AT, end), scale(LABEL_OFFSET, away)), away };
+/**
+ * The span label, on side −1 at 0.8 of one half of the line: the half whose spot is farther from every tip and handle
+ * the plane draws (`marks`), so the label never sits on a handle. The positive half wins a tie.
+ */
+function spanLabel(end: Vec2, marks: readonly Vec2[]): PlaneLabel {
+	const clearance = (spot: Vec2) => Math.min(...marks.map((mark) => lengthSquared(subtract(spot, mark))));
+	const half = clearance(scale(-SPAN_LABEL_AT, end)) > clearance(scale(SPAN_LABEL_AT, end)) ? scale(-1, end) : end;
+	const away = labelAway(ORIGIN, half, -1);
+	return { id: 'span', text: 'span', at: add(scale(SPAN_LABEL_AT, half), scale(LABEL_OFFSET, away)), away };
 }
 
 /** The flag's label sits left of the ring, or right of it when the flag is at x ≤ 0. */
@@ -835,16 +841,17 @@ function combineLabels(state: VectorState): PlaneLabel[] {
 		if (pieceLength(piece) < MIN_LABELED_PIECE) continue;
 		labels.push(piece.id === 'scaled' ? arrowLabel('scaled', 'c a', piece.from, piece.to, 1) : arrowLabel('scaledB', 'd b', piece.from, piece.to, -1));
 	}
-	labels.push(flagLabel(requireFlag(setupOf(state)).target));
+	const target = requireFlag(setupOf(state)).target;
+	labels.push(flagLabel(target));
 	const line = spanLine(state);
-	if (line) labels.push(spanLabel(line[1]));
+	if (line) labels.push(spanLabel(line[1], [state.a, state.b, scale(state.scalar, state.a), sumOf(state), target]));
 	return labels;
 }
 
 function spanChoiceLabels(state: VectorState): PlaneLabel[] {
 	const labels = pairLabels(state.a, state.b, 1);
 	const line = spanLine(state);
-	if (line) labels.push(spanLabel(line[1]));
+	if (line) labels.push(spanLabel(line[1], [state.a, state.b]));
 	return labels;
 }
 

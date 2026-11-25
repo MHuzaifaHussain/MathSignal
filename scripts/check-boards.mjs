@@ -4478,6 +4478,9 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	assert.deepEqual(labelTexts(reachOpen), ['a', 'b', 'c a', 'd b', 'flag']);
 	assert.deepEqual(labelTexts({ ...reachDone, a: [0, 0], b: [0, 0] }).filter((text) => text.includes('zero')), ['a and b: zero vectors']);
 	assert.ok(labelTexts(reachPreset('same-line')).includes('span'));
+	// The span label takes the half of the line away from the handles: on Same line b's tip sits at 0.8 of the positive
+	// end, (4, 2), so the label goes to the negative half.
+	assert.ok(labelAt(vd.planeLabels(reachPreset('same-line')), 'span')[0] < 0);
 	assert.ok(!labelTexts(reachDone).includes('span'));
 	assert.deepEqual(vd.spanLine(reachPreset('same-line')), [[-5, -2.5], [5, 2.5]]);
 	assert.equal(vd.spanLine(reachOpen), null);
@@ -4631,6 +4634,7 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	assert.deepEqual(vd.spanLine(shapeDone), [[-5, -2.5], [5, 2.5]]);
 	assert.deepEqual(vd.chalkNote(shapeDone), { long: 'one direction: a line', short: 'just a line' });
 	assert.deepEqual(vd.planeLabels(shapeDone).map((label) => label.text), ['a', 'b', 'span']);
+	assert.ok(labelAt(vd.planeLabels(shapeDone), 'span')[0] > 0, 'b = (−4, −2) holds the negative half, so the span label takes the positive one');
 	// b runs back along a, so their labels sit on the same physical side's opposite: never on top of each other.
 	const shapeLabels = vd.planeLabels(shapeDone);
 	assert.ok(vm.cross([2, 1], labelAt(shapeLabels, 'a')) * vm.cross([2, 1], labelAt(shapeLabels, 'b')) < 0);
