@@ -2,7 +2,10 @@
 // Pages list ids in frontmatter `references`; <Cite id> links to the entry; <References /> renders the list.
 // Years are the first public version (arXiv v1 for preprints). Venues are recorded only when the source states them.
 
-/** @typedef {{ id: string, authors: string[], year: number, title: string, venue?: string, url: string, note?: string, checked: string }} Reference */
+// `surnames` lists every author's surname, in order, when one has a particle ("de Amorim", "von Hippel"); without it the
+// surname is the last word of the name. check-content.mjs requires it whenever a name has a lowercase particle.
+
+/** @typedef {{ id: string, authors: string[], surnames?: string[], year: number, title: string, venue?: string, url: string, note?: string, checked: string }} Reference */
 
 /** @type {Reference[]} */
 export const REFERENCES = [
@@ -463,6 +466,7 @@ export const REFERENCES = [
 	{
 		id: 'nissim2019',
 		authors: ['Malvina Nissim', 'Rik van Noord', 'Rob van der Goot'],
+		surnames: ['Nissim', 'van Noord', 'van der Goot'],
 		year: 2019,
 		title: 'Fair is better than sensational: man is to doctor as woman is to doctor',
 		venue: 'Computational Linguistics 46(2), 2020',
@@ -846,6 +850,7 @@ export const REFERENCES = [
 	{
 		id: 'theis2015',
 		authors: ['Lucas Theis', 'Aäron van den Oord', 'Matthias Bethge'],
+		surnames: ['Theis', 'van den Oord', 'Bethge'],
 		year: 2015,
 		title: 'A note on the evaluation of generative models',
 		venue: 'ICLR 2016',
@@ -1225,6 +1230,7 @@ export const REFERENCES = [
 	{
 		id: 'deamorim2022',
 		authors: ['Lucas B. V. de Amorim', 'George D. C. Cavalcanti', 'Rafael M. O. Cruz'],
+		surnames: ['de Amorim', 'Cavalcanti', 'Cruz'],
 		year: 2022,
 		title: 'The choice of scaling technique matters for classification performance',
 		venue: 'Applied Soft Computing 133 (2023) 109924',
@@ -1272,6 +1278,7 @@ export const REFERENCES = [
 	{
 		id: 'vonhippel2005',
 		authors: ['Paul T. von Hippel'],
+		surnames: ['von Hippel'],
 		year: 2005,
 		title: 'Mean, median, and skew: correcting a textbook rule',
 		venue: 'Journal of Statistics Education 13(2)',
@@ -1299,10 +1306,14 @@ export function getReference(id) {
 	return reference;
 }
 
-/** "He et al. 2015", "Glorot and Bengio 2010" */
+/** An author's surname: from `surnames` when the entry lists them, otherwise the last word of the name. */
+function surnameOf(reference, index) {
+	return reference.surnames?.[index] ?? reference.authors[index].split(' ').at(-1);
+}
+
+/** "He et al. 2015", "Glorot and Bengio 2010", "de Amorim et al. 2022", "von Hippel 2005" */
 export function shortCitation(reference) {
-	const surname = (name) => name.split(' ').at(-1);
-	const [first, second] = reference.authors;
-	const names = reference.authors.length === 1 ? surname(first) : reference.authors.length === 2 ? `${surname(first)} and ${surname(second)}` : `${surname(first)} et al.`;
+	const count = reference.authors.length;
+	const names = count === 1 ? surnameOf(reference, 0) : count === 2 ? `${surnameOf(reference, 0)} and ${surnameOf(reference, 1)}` : `${surnameOf(reference, 0)} et al.`;
 	return `${names} ${reference.year}`;
 }

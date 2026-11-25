@@ -2,7 +2,8 @@
 //   - topics: unique ids, every prerequisite / leadsTo id exists, no prerequisite cycles,
 //     prerequisites and leadsTo agree in both directions, and a topic's status matches its page:
 //     published = a page that isn't a draft, planned = no page yet or a draft
-//   - notation and references: unique ids; every reference has an https URL and a `checked` date
+//   - notation and references: unique ids; every reference has an https URL and a `checked` date, and lists
+//     `surnames` when an author's name has a particle ("de Amorim"), so short citations keep it
 //   - pages: every topic, reference, <Cite id> and <NotationKey symbols> id they use exists
 //   - SEO: descriptions 120-160 characters; titles, descriptions and primary queries unique (docs/seo/README.md);
 //     searchIntent matches the page type
@@ -10,13 +11,14 @@
 // Frontmatter is parsed the way Astro parses it (the `yaml` package, core schema), so `draft: True`, comments,
 // quoting and multi-line values mean the same here as in the build.
 // Required frontmatter on concept pages is enforced during the build by src/routeData.ts.
+import assert from 'node:assert/strict';
 import { readdir, readFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseDocument } from 'yaml';
 import { TOPICS } from '../src/data/topics.mjs';
 import { NOTATION } from '../src/data/notation.mjs';
-import { REFERENCES } from '../src/data/references.mjs';
+import { REFERENCES, shortCitation } from '../src/data/references.mjs';
 import { SITE_NAME } from '../src/seo/site.mjs';
 
 const DOCS_DIR = fileURLToPath(new URL('../src/content/docs/', import.meta.url));
@@ -103,8 +105,41 @@ function referenceProblems() {
 		if (!reference.url?.startsWith('https://')) problems.push(`references.mjs: "${reference.id}" needs an https URL`);
 		if (!ISO_DATE.test(reference.checked ?? '')) problems.push(`references.mjs: "${reference.id}" needs a \`checked\` date (YYYY-MM-DD), set when the source was opened`);
 		if (!reference.authors?.length || !reference.title || !reference.year) problems.push(`references.mjs: "${reference.id}" needs authors, title and year`);
+		else problems.push(...surnameProblems(reference));
 	}
 	return problems;
+}
+
+/** A lowercase word before the last one is a surname particle: "Lucas B. V. de Amorim", "Rob van der Goot". */
+const hasParticle = (name) => name.split(' ').slice(0, -1).some((word) => /^\p{Ll}/u.test(word));
+
+/** `surnames` must name every author's surname, in order, and is required when a name has a particle. */
+function surnameProblems(reference) {
+	const { id, authors, surnames } = reference;
+	if (surnames === undefined) {
+		const unmarked = authors.filter(hasParticle);
+		if (unmarked.length === 0) return [];
+		return [`references.mjs: "${id}" needs \`surnames\`, because ${unmarked.map((name) => `"${name}"`).join(', ')} has a particle`];
+	}
+	if (!Array.isArray(surnames) || surnames.length !== authors.length) return [`references.mjs: "${id}" needs one surname per author in \`surnames\``];
+	return authors.flatMap((name, index) => (name === surnames[index] || name.endsWith(` ${surnames[index]}`) ? [] : [`references.mjs: "${id}": "${surnames[index]}" is not the end of "${name}"`]));
+}
+
+/** Short citations keep surname particles, and the surname rule catches a particle with no `surnames`. */
+function checkCitationRules() {
+	const base = { id: 'example', year: 2005, title: 'A title', url: 'https://example.org', checked: '2026-11-25' };
+	const vonHippel = { ...base, authors: ['Paul T. von Hippel'], surnames: ['von Hippel'] };
+	const deAmorim = { ...base, year: 2022, authors: ['Lucas B. V. de Amorim', 'George D. C. Cavalcanti', 'Rafael M. O. Cruz'], surnames: ['de Amorim', 'Cavalcanti', 'Cruz'] };
+	assert.equal(shortCitation(vonHippel), 'von Hippel 2005');
+	assert.equal(shortCitation(deAmorim), 'de Amorim et al. 2022');
+	assert.equal(shortCitation({ ...base, authors: ['Rik van Noord', 'Rob van der Goot'], surnames: ['van Noord', 'van der Goot'] }), 'van Noord and van der Goot 2005');
+	assert.equal(shortCitation({ ...base, year: 2010, authors: ['Xavier Glorot', 'Yoshua Bengio'] }), 'Glorot and Bengio 2010');
+	assert.equal(shortCitation({ ...base, authors: ['scikit-learn'] }), 'scikit-learn 2005');
+	assert.deepEqual(surnameProblems(vonHippel), []);
+	assert.deepEqual(surnameProblems(deAmorim), []);
+	assert.equal(surnameProblems({ ...vonHippel, surnames: undefined }).length, 1);
+	assert.equal(surnameProblems({ ...vonHippel, surnames: ['Hippel von'] }).length, 1);
+	assert.equal(surnameProblems({ ...deAmorim, surnames: ['de Amorim'] }).length, 1);
 }
 
 async function pageFiles(directory) {
@@ -234,6 +269,7 @@ function intentProblems(pages) {
 }
 
 async function main() {
+	checkCitationRules();
 	const pages = await readPages();
 	const pagesById = new Map(pages.map((page) => [page.id, page]));
 	const seo = seoProblems(pages);
