@@ -73,7 +73,7 @@ A pile of sand looks like "how much is here", which tempts you to read its heigh
 </Analogy>
 
 <WhyThisMatters>
-Most quantities a model sees are continuous: scaled pixel intensities, sensor readings, weights, the noise fed to a generator. A model of such data gives density values, not probabilities, and training maximizes the sum of their logarithms. A model that gives a point a high density is not saying that the point is likely, and the research frontier below shows image models that give higher densities to pictures they never saw than to the kind they were trained on.
+Most quantities a model sees are continuous, or are treated as continuous: sensor readings, weights, the noise fed to a generator, even pixel values once noise is added. A model of such data gives density values, not probabilities, and training maximizes the sum of their logarithms. A model that gives a point a high density is not saying that the point is likely, and the research frontier below shows image models that give higher densities to pictures they never saw than to the kind they were trained on.
 </WhyThisMatters>
 
 ## Pour the sand into bars
@@ -84,7 +84,7 @@ A histogram turns sand into bars whose areas are shares of the sand; this board 
 Can a probability density ever be taller than 1? If you think not, say which rule of probability it would break.
 </GoDeeper>
 
-Show as switches between Bars and Curve; in the Bars view, Bar width picks 1 cm, 0.5 cm or 0.25 cm. The presets Even sand, Sand heap and Narrow sand pour the same bag three ways, and Table view lists every bar. A bar's height is its share of the sand divided by its width, measured "per cm"; the solid gridline marks 1 per cm.
+The Show as control switches between Bars and Curve; in the Bars view, Bar width picks 1 cm, 0.5 cm or 0.25 cm. The presets Even sand, Sand heap and Narrow sand pour the same bag three ways, and Table view lists every bar. Heights are measured in sand per cm; the solid gridline marks 1 per cm.
 
 Your task: press Narrow sand, then make the bars thinner and watch the first bar.
 
@@ -94,21 +94,21 @@ Your task: press Narrow sand, then make the bars thinner and watch the first bar
 
 More than 1: the bar stands 2 per cm tall. With bars 0.5 cm wide the board says "The tallest bar, 0 to 0.5 cm, holds all the sand. Height = 1 ÷ 0.5 = 2 per cm, taller than 1." All the sand, a share of 1, sits on a bar 0.5 cm wide, and height is share divided by width. Thinner bars don't change it. At 0.25 cm the board says "The tallest bars, 0 to 0.25 cm and 0.25 to 0.5 cm, hold 1/2 of the sand each. Height = 1/2 ÷ 0.25 = 2 per cm, taller than 1." Nothing is broken: the bar's area, 0.5 × 2 = 1, is the probability, and areas never pass 1. The height is a rate, sand per centimeter, and a rate can be as large as the crowding makes it.
 
-Now press Sand heap and thin the bars again. The tallest bars grow: 3/8 per cm at 1 cm wide, 7/16 at 0.5 cm, 15/32 at 0.25 cm. The Curve view shows where they are heading: "The curve is the pile's height at each point: it rises from 0 at 0 cm to 1/2 per cm at 2 cm and falls back to 0 at 4 cm."
+Now press Sand heap, set Bar width back to 1 cm, and thin the bars again. The tallest bars grow: 3/8 per cm at 1 cm wide, 7/16 at 0.5 cm, 15/32 at 0.25 cm. Switch Show as to Curve to see where they are heading: "The curve is the pile's height at each point: it rises from 0 at 0 cm to 1/2 per cm at 2 cm and falls back to 0 at 4 cm."
 
 ## A continuous random variable gets its probabilities from areas
 
-A probability density function, or density, is a curve p(x) whose area between a and b is the probability that X lands between a and b. A random variable that is described this way is called continuous. Its density plays the part that the bar chart of a [discrete random variable](/probability/random-variables-and-distributions/) plays, with one change: the chance sits in areas, not in heights.
+Write X for where the grain lands. A probability density function, or density, is a curve p(x) whose area between a and b is the probability that X lands between a and b. On this page, a random variable described this way is called continuous. Its density plays the part that the bar chart of a [discrete random variable](/probability/random-variables-and-distributions/) plays, with one change: the chance sits in areas, not in heights.
 
 ### Height is share per unit, area is share
 
 Turn the board's rule around: height = share ÷ width means share = height × width, so a bar's share of the sand is its area. A density is what the bars become as they get as thin as you like, and the rule survives: the probability of any stretch is the area under the curve over it.
 
-Deisenroth and coauthors define a probability density function as any function that is never negative and has total area 1, and tie it to a random variable by P(a ≤ X ≤ b) = the area under p from a to b (§6.2.2, Definition 6.1, equations (6.15) and (6.16)) <Cite id="deisenroth2020" />. Grinstead and Snell make that equation the definition of a density function for X (§2.2, Definition 2.1, p. 59) <Cite id="grinstead2003" />. Goodfellow and coauthors list the same requirements and add, "Note that we do not require p(x) ≤ 1" (§3.3.2) <Cite id="goodfellow2016prob" />. So a density needs no negative heights, since a negative area would be a negative chance, and total area 1, since the grain is somewhere.
+A density needs two things: no negative heights, since a negative area would be a negative chance, and total area 1, since the grain is somewhere. Deisenroth and coauthors define a probability density function as any function that is never negative and has total area 1, and tie it to a random variable by P(a ≤ X ≤ b) = the area under p from a to b (§6.2.2, Definition 6.1, equations (6.15) and (6.16)) <Cite id="deisenroth2020" />. Goodfellow and coauthors list the same requirements and add, "Note that we do not require p(x) ≤ 1" (§3.3.2) <Cite id="goodfellow2016prob" />.
 
 <Simpler label="the same idea with a spinner">
 
-Grinstead and Snell's spinner is a pointer on a circle whose edge is labeled from 0 up to 1. Its density is 1 everywhere from 0 to 1, so the area over any arc is the arc's length times 1. The chance that the pointer stops in the upper half, from 0 to 1/2, is the area 1/2 × 1 = 1/2 (Example 2.10, p. 59) <Cite id="grinstead2003" />. A circle instead of a ruler, and the same rule: chance is area.
+Grinstead and Snell's spinner is a pointer on a circle whose edge is labeled from 0 up to 1. Its density is 1 everywhere from 0 to 1, so the area over any arc is the arc's length times 1. The chance that the pointer stops in the half of the circle labeled 0 to 1/2 is the area 1/2 × 1 = 1/2 (Example 2.10, p. 59) <Cite id="grinstead2003" />. A circle instead of a ruler, and the same rule: chance is area.
 
 </Simpler>
 
@@ -140,11 +140,11 @@ Your task: press Lopsided heap and shade from 0 to 1 cm. Then move To up to 4 cm
   <DistributionBoard client:visible setup="sand-interval" />
 </div>
 
-No: the grain is three times as likely to lie right of the top. The board says "From 0 to 1 cm: the shaded area is 1/4 of the sand, so P(0 ≤ X ≤ 1) = 1/4 = 0.25." and then "From 1 to 4 cm: the shaded area is 3/4 of the sand, so P(1 ≤ X ≤ 4) = 3/4 = 0.75." Both sides are triangles of the same height, 1/2 per cm, but the left one is 1 cm wide and the right one 3 cm wide, so their areas are 1/2 × 1 × 1/2 = 1/4 and 1/2 × 3 × 1/2 = 3/4.
+No: the grain is three times as likely to lie right of the top. The board says "From 0 to 1 cm: the shaded area is 1/4 of the sand, so P(0 ≤ X ≤ 1) = 1/4 = 0.25." and then "From 1 to 4 cm: the shaded area is 3/4 of the sand, so P(1 ≤ X ≤ 4) = 3/4 = 0.75." Both sides are triangles of the same height, 1/2 per cm, but the left one is 1 cm wide and the right one 3 cm wide, so their areas, half the base times the height, are 1/2 × 1 × 1/2 = 1/4 and 1/2 × 3 × 1/2 = 3/4.
 
 And exactly at 1 cm the chance is 0: "From 1 to 1 cm: no width, so no area. P(X = 1) = 0, although the curve is 1/2 per cm tall there." However tall the pile, a stretch with no width holds no sand. The top of a density marks where the sand is most crowded, not a value with a large chance.
 
-Width matters as much as height. On the Sand heap, the quarter centimeter beside the top holds 15/128 of the sand (board 1 at 0.25 cm), while the thin first centimeter holds 1/8 = 16/128 (board 1 at 1 cm), although the curve there never passes 1/4 per cm.
+Width matters as much as height. On the Sand heap, the quarter centimeter beside the top holds 15/128 of the sand (the first board at 0.25 cm), while the sparse first centimeter holds 1/8 = 16/128 (Sand heap on this board, from 0 to 1 cm), although the curve there never passes 1/4 per cm.
 
 ## One point holds no sand
 
@@ -154,11 +154,11 @@ For a variable with a density, every single value has probability 0, so includin
 Grinstead and Snell say that p(x) is not the probability of the outcome x, adding that with infinitesimals you can read p(x) dx as one (p. 56) <Cite id="grinstead2003" />. Goodfellow and coauthors put it the same way: a tiny region of width δx around x holds probability p(x)δx (§3.3.2) <Cite id="goodfellow2016prob" />. On Narrow sand, the strip from 0.25 to 0.35 cm is 0.1 wide and 2 tall, so it holds 1/5 of the sand.
 </GoDeeper>
 
-Probability 0 does not mean impossible. Every exact position has probability 0, and the grain still lies somewhere. A die is different: it gives each face 1/6, so a discrete variable has no density. Not every continuous-valued random variable has one either, Grinstead and Snell note; like this page, their book treats only those that do (p. 59) <Cite id="grinstead2003" />.
+Probability 0 does not mean impossible. Every exact position has probability 0, and the grain still lies somewhere. A die is different: each face has chance 1/6, not 0, so a discrete variable has no density. Some random variables that take every value in a range still have no density, Grinstead and Snell note; like this page, their book treats only those that do (p. 59) <Cite id="grinstead2003" />.
 
 ### Why single values can't carry the probability
 
-A ruler has more points than any list can hold, so giving every point the same positive share, however small, would push the total past 1. Grinstead and Snell reach the same dead end with a spinner on a circle of circumference 1: every outcome must get probability 0, and then the outcomes add up to 0, not 1 (Example 2.1, p. 41) <Cite id="grinstead2003" />. So the model is built from arcs instead, an arc of length p getting probability p <Cite id="grinstead2003" />. The third axiom adds probabilities over [countably many events](/probability/probability-axioms/#countable-additivity) only, so it never asks you to add up a ruler's worth of zeros.
+A ruler has more points than any list can hold, so giving every point the same positive share, however small, would push the total past 1. Grinstead and Snell reach the same dead end with a spinner on a circle of circumference 1: every outcome must get probability 0, and then the outcomes add up to 0, not 1 (Example 2.1, p. 41) <Cite id="grinstead2003" />. So the model is built from arcs instead: an arc of length L gets probability L <Cite id="grinstead2003" />. The third axiom adds probabilities over [countably many events](/probability/probability-axioms/#countable-additivity) only, so it never asks you to add up a ruler's worth of zeros.
 
 <CheckYourself level="intuition" question="On Narrow sand the curve is 2 per cm tall at 0.3 cm. Is the chance that the grain lies at exactly 0.3 cm equal to 2?">
 No. 2 is sand per centimeter, not a chance. The grain lies in the strip from 0.25 to 0.35 cm with chance $0.1 \times 2 = 1/5$, and a strip of width 0 holds 0.
@@ -176,15 +176,15 @@ The cumulative distribution function F(x) = P(X ≤ x) is the sand left of x. On
 
 ## The uniform distribution: sand poured evenly
 
-The uniform distribution on [a, b] spreads probability evenly: its density is 1/(b − a) between a and b and 0 elsewhere, so the chance of any stretch inside is its width divided by b − a. Goodfellow and coauthors write this density as u(x; a, b) and the variable as x ∼ U(a, b) (§3.3.2) <Cite id="goodfellow2016prob" />. Even sand is 𝒰(0, 4), with height 1/4. Narrow sand is 𝒰(0, 1/2), with height 2. The narrower the block, the taller it stands, because the area stays 1. Deisenroth and coauthors' uniform density on 0.9 ≤ X ≤ 1.6 stands 1/0.7 ≈ 1.43 tall for the same reason (Example 6.3) <Cite id="deisenroth2020" />.
+The uniform distribution on [a, b] spreads probability evenly: its density is 1/(b − a) between a and b and 0 elsewhere, so the chance of any stretch inside is its width divided by b − a. We write X ∼ 𝒰(a, b), read "X is uniform from a to b"; Goodfellow and coauthors write the density as u(x; a, b) (§3.3.2) <Cite id="goodfellow2016prob" />. Even sand is 𝒰(0, 4), with height 1/4. Narrow sand is 𝒰(0, 1/2), with height 2. The narrower the block, the taller it stands, because the area stays 1. Deisenroth and coauthors' uniform density on 0.9 ≤ X ≤ 1.6 stands 1/0.7 ≈ 1.43 tall for the same reason (Example 6.3) <Cite id="deisenroth2020" />.
 
 ### Where the block balances, and how far it spreads
 
-The expected value of a variable with a density is the area-weighted average of its values, 𝔼[X] = ∫ x p(x) dx, each position weighted by how much sand sits there (§3.8) <Cite id="goodfellow2016prob" />. On this page the integral sign is only notation: read ∫ as "the area under". It is the point where the pile balances, as the bars balanced on a pencil on the [expected value page](/probability/expectation-and-variance/#why-it-is-the-balance-point). A uniform block balances at its middle, so the mean of 𝒰(a, b) is (a + b)/2, and its variance is (b − a)²/12. For Even sand that is 16/12 = 4/3 cm², and Show the mean and spread confirms it: "Variance: 4/3 ≈ 1.33 cm². Standard deviation: σ = √(4/3) ≈ 1.15 cm."
+Read ∫ … dx as "the area under …"; on this page it is only notation. The expected value of a variable with a density is 𝔼[X] = ∫ x p(x) dx, the area under x times p(x): each position weighted by how much sand sits there (§3.8) <Cite id="goodfellow2016prob" />. It is the point where the pile balances, as the bars balanced on a pencil on the [expected value page](/probability/expectation-and-variance/#why-it-is-the-balance-point). A uniform block balances at its middle, so the mean of 𝒰(a, b) is (a + b)/2, and its variance is (b − a)²/12. For Even sand that is 16/12 = 4/3 cm²: on the second board, press Even sand and turn on Show the mean and spread, and it says "Variance: 4/3 ≈ 1.33 cm². Standard deviation: σ = √(4/3) ≈ 1.15 cm."
 
-With the switch on, Sand heap has the same mean, 2 cm, and a smaller variance, "Variance: 2/3 ≈ 0.67 cm²", because its sand is piled toward the middle. The Lopsided heap is tallest at 1 cm, but the board says "The mean is μ = 5/3 ≈ 1.67 cm: the pile balances there." The long right side pulls the balance point past the top, just as the tallest bar of a die game was not its balance point.
+With the switch on, Sand heap has the same mean, 2 cm, and a smaller variance, "Variance: 2/3 ≈ 0.67 cm²", because its sand is piled toward the middle. The Lopsided heap is tallest at 1 cm, but the board says "The mean is μ = 5/3 ≈ 1.67 cm: the pile balances there." The long right side pulls the balance point past the top, just as the tallest bar of the candy game on the expected value page was not its balance point.
 
-Every number on this page comes from rectangles, triangles or symmetry; nothing needs calculus.
+Every probability here is an area of rectangles, triangles and trapezoids; the board and the code below supply the heaps' means and variances.
 
 <GoDeeper label="why the variance is (b − a)²/12, without calculus" id="uniform-variance">
 The Formal definition fold below finds the variance of 𝒰(0, 1) by cutting the block in half: each half is a smaller copy of the whole, and that is enough to pin down 1/12.
@@ -250,7 +250,7 @@ Grinstead and Snell's spinner has density 1 from 0 to 1 (Example 2.10, p. 59) <C
 
 <WorkedExample number={2} title="The sum of two spinners">
 
-Spin two spinners and add the results: $Z = X + Y$. Grinstead and Snell derive its density: $z$ from 0 to 1, and $2 - z$ from 1 to 2 (Example 2.14, pp. 63–64) <Cite id="grinstead2003" />. (a) It is a density: a triangle with base 2 and height 1, so its area is 1. (b) $P(Z \le 1/2)$ is a small triangle with base $1/2$ and height $1/2$, area $\tfrac{1}{2} \times \tfrac{1}{2} \times \tfrac{1}{2} = 1/8$. (c) By symmetry $P(Z \ge 3/2) = 1/8$ too, so $P(1/2 \le Z \le 3/2) = 1 - 2 \times 1/8 = 3/4$. (d) The Sand heap is this triangle with every position doubled, twice as wide and half as tall, and shading it from 1 to 3 cm on the second board gives the same 3/4.
+Pick two numbers uniformly from $[0, 1]$, like two spins of the spinner, and add them: $Z = X + Y$. Grinstead and Snell derive its density: $z$ from 0 to 1, and $2 - z$ from 1 to 2 (Example 2.14, pp. 63–64) <Cite id="grinstead2003" />. (a) It is a density: a triangle with base 2 and height 1, so its area is 1. (b) $P(Z \le 1/2)$ is a small triangle with base $1/2$ and height $1/2$, area $\tfrac{1}{2} \times \tfrac{1}{2} \times \tfrac{1}{2} = 1/8$. (c) By symmetry $P(Z \ge 3/2) = 1/8$ too, so $P(1/2 \le Z \le 3/2) = 1 - 2 \times 1/8 = 3/4$. (d) The Sand heap is this triangle with every position doubled, twice as wide and half as tall, and shading it from 1 to 3 cm on the second board gives the same 3/4.
 
 </WorkedExample>
 
@@ -270,7 +270,7 @@ Glorot and Bengio's normalized initialization draws each weight uniformly from $
 
 ### Likelihoods of continuous data are density values
 
-A model of continuous data gives each data point a density value, and training maximizes the sum of their logarithms, the log-likelihood. Nalisnick and coauthors stress that a density value $p(x_n; \theta)$ alone has no interpretation as a probability; to get a probability, integrate the density over a region (§2.1) <Cite id="nalisnick2018" />. Ten data points modeled by 𝒰(0, 1/2) each get density 2, so the log-likelihood is $10 \log 2 \approx 6.93$: positive, which no model of discrete data could give, since the log of a probability is never above 0. [Gaussian naive Bayes](/probability/naive-bayes-classifier/#worked-examples) multiplies density values the same way.
+A model of continuous data gives each data point a density value, and training maximizes the sum of their logarithms, the log-likelihood. Nalisnick and coauthors stress that a density value $p(x)$ alone has no interpretation as a probability; to get a probability, integrate the density over a region (§2.1) <Cite id="nalisnick2018" />. Ten data points modeled by 𝒰(0, 1/2) each get density 2, so the log-likelihood is $10 \log 2 \approx 6.93$: positive, which no model of discrete data could give, since the log of a probability is never above 0. [Gaussian naive Bayes](/probability/naive-bayes-classifier/#worked-examples) multiplies density values the same way.
 
 ### Uniform weight initialization
 
@@ -278,7 +278,7 @@ Glorot and Bengio compare a common heuristic, weights drawn uniformly from $[-1/
 
 ### Image models add noise to make pixels continuous
 
-Pixel values are stored as whole numbers from 0 to 255, but image models often use densities. Theis and coauthors point out that a density fitted to such discrete data can reach arbitrarily high likelihoods, even on test data <Cite id="theis2015" />: Narrow sand pushed to its limit. The usual fix adds uniform noise from $[0, 1)$ to each pixel value, dequantizing it <Cite id="theis2015" />. Then the area of the model's density over each pixel's cell of width 1 is a genuine probability, and by Jensen's inequality the log-likelihood on the noisy data is at most the log-likelihood of those probabilities (§3.1, equations (3)–(6)) <Cite id="theis2015" />. Spread each pixel's sand over a cell of width 1, and the heights become comparable to probabilities again. Models that turn simple noise into samples through an invertible map, and get exact densities that way, are on the [random variables page](/probability/random-variables-and-distributions/#generators-turn-noise-into-samples).
+Pixel values are stored as whole numbers from 0 to 255, but image models often use densities. Theis and coauthors point out that a density fitted to such discrete data can reach arbitrarily high likelihoods, even on test data <Cite id="theis2015" />: Narrow sand pushed to its limit, since piling each whole number's sand on ever thinner slivers makes the likelihood grow without bound. The usual fix adds uniform noise from $[0, 1)$ to each pixel value, dequantizing it <Cite id="theis2015" />. Then the area of the model's density over each pixel's cell of width 1 is a genuine probability, and a standard inequality (Jensen's) shows that the log-likelihood on the noisy data is at most the log-likelihood of those probabilities (§3.1, equations (3)–(6)) <Cite id="theis2015" />. Models that turn simple noise into samples through an invertible map, and get exact densities that way, are on the [random variables page](/probability/random-variables-and-distributions/#generators-turn-noise-into-samples).
 
 ## Measure the sand in code
 
@@ -456,7 +456,9 @@ print("exact heights at 0.5 cm:", exact)
 print("sampled heights:        ", [round(s, 4) for s in sampled])
 print(f"share 1.75 to 2 cm: {share_top:.4f} (exact 15/128 = {15 / 128:.4f})")
 print(f"share 0 to 1 cm:    {share_first:.4f} (exact 1/8 = {1 / 8:.4f})")
-print("grains at exactly 2 cm:", sum(x == 2.0 for x in grains))
+at_top = sum(x == 2.0 for x in grains)
+assert at_top == 0
+print("grains at exactly 2 cm:", at_top)
 
 # The halving argument by sampling: U(0, 1), and its left half stretched back to [0, 1).
 u = [rng.random() for _ in range(N)]
@@ -479,9 +481,9 @@ The sampled bars land within 0.01 of the exact heights, and no grain lands at ex
 
 <ResearchFrontier reviewed="2026-11-25">
 
-**High density is not the same as typical.** Nalisnick and coauthors trained Glow, a model with exact densities, on CIFAR-10 photos of objects and measured bits per dimension, where lower means higher density: 3.386 on its training set, 3.464 on its test set, and 2.389 on SVHN photos of house numbers it never saw (§3, Figure 1) <Cite id="nalisnick2018" />. A constant image scored 0.589 under the CIFAR-10 model, the NVP-Glow variant (Figure 8) <Cite id="nalisnick2018" />. A density's tallest region is where probability is most crowded, which in many dimensions need not be where real samples fall: this page's point that height is not probability, at scale.
+**High density is not the same as typical.** Nalisnick and coauthors trained Glow, a model with exact densities, on CIFAR-10 photos of objects and measured bits per dimension, where lower means higher density: 3.386 on its training set, 3.464 on its test set, and 2.389 on SVHN photos of house numbers it never saw (§3, Figure 1) <Cite id="nalisnick2018" />. A constant image scored 0.589 under a CIFAR-10 model (Figure 8) <Cite id="nalisnick2018" />. A density's tallest region is where probability is most crowded, which in many dimensions need not be where real samples fall: this page's point that height is not probability, at scale.
 
-**What explains it.** For flows whose volume change is the same everywhere, the authors trace the gap to the data's variance and the model's curvature (§5), and conclude that comparing likelihoods alone cannot identify the training set or inputs like it (§7) <Cite id="nalisnick2018" />.
+**What explains it.** For these models, called flows, when the map stretches space equally everywhere, the authors trace the gap to the data's variance and the model's curvature (§5), and conclude that comparing likelihoods alone cannot identify the training set or inputs like it (§7) <Cite id="nalisnick2018" />.
 
 **What is open.** They leave open whether the fault lies with these models or with high-dimensional likelihoods as such (§7) <Cite id="nalisnick2018" />. For exact densities through invertible maps, see the [random variables page's frontier](/probability/random-variables-and-distributions/#research-frontier).
 
@@ -493,7 +495,7 @@ The sampled bars land within 0.01 of the exact heights, and no grain lands at ex
 For any point $x$ and any $\delta > 0$, $P(X = x) \le P(x - \delta \le X \le x + \delta) \le 2\delta M$, the width of the stretch times the largest height. A number between 0 and $2\delta M$ for every $\delta > 0$ is 0. So the two endpoints add nothing: $P(a \le X \le b) = P(a < X < b) + P(X = a) + P(X = b) = P(a < X < b)$.
 </CheckYourself>
 
-<CheckYourself level="standard" question="A model of a sensor reading says X ∼ 𝒰(10, 10.2). What is its density there, and is a log-likelihood of 1.6 for one reading possible?">
+<CheckYourself level="standard" question="A model of a sensor reading says X ∼ 𝒰(10, 10.2). What is its density there, and can one reading have a positive log-likelihood?">
 The block is 0.2 wide, so its height is $1/0.2 = 5$. A reading inside it has log-likelihood $\log 5 \approx 1.609$, so yes: a positive log-likelihood just says the density is taller than 1.
 </CheckYourself>
 
@@ -507,10 +509,10 @@ The block is 0.2 wide, so its height is $1/0.2 = 5$. A reading inside it has log
     Only areas are capped at 1. Narrow sand stands 2 per cm tall, and the 64-by-32 layer's initial weights have density 2.
   </Mistake>
   <Mistake wrong="The value under the peak is the most likely result.">
-    Every single value has probability 0, and width matters as much as height: on the heap, the thin first centimeter holds 1/8, more than the 15/128 in the quarter centimeter beside the top.
+    Every single value has probability 0, so no value is "most likely". The peak marks where the sand is most crowded: of all short stretches of the same width, one around the peak holds the most.
   </Mistake>
   <Mistake wrong="Stretching the values keeps the heights.">
-    Spread the same sand twice as wide and it stands half as tall. Goodfellow and coauthors show the error with $y = x/2$ for $x \sim U(0, 1)$: keeping the height 1 on $[0, 1/2]$ gives a total area of $1/2$ (§3.12, equation (3.43)) <Cite id="goodfellow2016prob" />. The right height is 2, like Narrow sand.
+    Spread the same sand twice as wide and it stands half as tall. Goodfellow and coauthors show the error with $Y = X/2$ for $X \sim \mathcal{U}(0, 1)$: keeping the height 1 on $[0, 1/2]$ gives a total area of $1/2$ (§3.12, equation (3.43)) <Cite id="goodfellow2016prob" />. The right height is 2, like Narrow sand.
   </Mistake>
   <Mistake wrong="Probability 0 means it can't happen.">
     Every exact position has probability 0, and the grain still lands somewhere. See the common mistakes on the [probability axioms](/probability/probability-axioms/) page.
