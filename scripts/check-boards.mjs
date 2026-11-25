@@ -4831,6 +4831,8 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	assert.deepEqual(vd.handlesFor(open).map((handle) => handle.label), ['Your pin. It also moves with the buttons under the plane']);
 	assert.deepEqual(nd.SHAPE_OPTIONS.map((option) => option.label), ['Circle', 'Diamond: tips on the streets', 'Square: sides along the streets']);
 	assert.equal(nd.NORMS_LABELS.shapeLegend, "Corners 4 blocks' walk from home make a");
+	assert.deepEqual([nd.NORMS_LABELS.measureLegend, nd.NORMS_LABELS.radius], ['Shape for', 'Length r']);
+	assert.deepEqual(nd.NORM_TABLE_HEADERS, { caption: 'Your pin measured three ways', measure: 'Measure', how: 'How', length: 'Length' });
 	assert.equal(vd.checkRefusal(open), 'Pick a shape first.');
 	assert.equal(vd.ochreElement(open), 'route');
 	assert.equal(vd.ochreElement(walk(pinAt([0, 0]))), null);
