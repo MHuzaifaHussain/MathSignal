@@ -1,6 +1,6 @@
 // Small wording helpers shared by the boards' sentences. Their decimals always go through formatNumber, so a
 // value is never written as an exact equation when it has been rounded.
-import { formatFraction, type Fraction } from './boardMath.ts';
+import { fraction, formatFraction, toNumber, type Fraction } from './boardMath.ts';
 import { formatNumber } from './plotColors.ts';
 
 export const capitalize = (text: string) => text.charAt(0).toUpperCase() + text.slice(1);
@@ -25,4 +25,76 @@ export function joinWords(words: readonly string[]): string {
 export function fractionText(value: Fraction): string {
 	const text = formatFraction(value);
 	return value.numerator < 0 ? `−${text.slice(1)}` : text;
+}
+
+/** The most decimal places an amount is written with before it falls back to a fraction and a rounded value. */
+const AMOUNT_DECIMAL_PLACES = 3;
+/** Decimal places of the rounded value after "≈" in an amount that doesn't terminate. */
+const APPROXIMATE_DECIMAL_PLACES = 2;
+
+/** The value reduced, after checking it holds safe integers, so a hand-built object literal can't slip through. */
+function reduced(value: Fraction, caller: string): Fraction {
+	const { numerator, denominator } = value;
+	if (!Number.isSafeInteger(numerator) || !Number.isSafeInteger(denominator)) {
+		throw new Error(`boardText.${caller}: ${numerator}/${denominator} is not a fraction of safe integers`);
+	}
+	return fraction(numerator, denominator);
+}
+
+function assertDigits(digits: number, caller: string): void {
+	if (!Number.isInteger(digits) || digits < 0) throw new Error(`boardText.${caller}: digits must be a whole number from 0 up, got ${digits}`);
+}
+
+/** How many times `factor` divides `n`, and what is left. */
+function stripFactor(n: number, factor: number): { count: number; rest: number } {
+	let count = 0;
+	let rest = n;
+	while (rest % factor === 0) {
+		rest /= factor;
+		count += 1;
+	}
+	return { count, rest };
+}
+
+/** True when the value has an exact decimal of at most `digits` places: its reduced denominator divides 10^digits. */
+export function terminatesWithin(value: Fraction, digits: number): boolean {
+	assertDigits(digits, 'terminatesWithin');
+	const twos = stripFactor(reduced(value, 'terminatesWithin').denominator, 2);
+	const fives = stripFactor(twos.rest, 5);
+	return fives.rest === 1 && Math.max(twos.count, fives.count) <= digits;
+}
+
+/**
+ * The exact decimal of a value that terminates within `digits` places: "0.875", "−1.5", "3", "0". Every digit comes
+ * from integer long division (in BigInt, so no remainder overflows), never from float rounding; trailing zeros are
+ * dropped and a negative value takes a real minus sign. Throws, naming the fraction, when it doesn't terminate.
+ */
+export function decimalText(value: Fraction, digits: number): string {
+	assertDigits(digits, 'decimalText');
+	const exact = reduced(value, 'decimalText');
+	if (!terminatesWithin(exact, digits)) {
+		throw new Error(`boardText.decimalText: ${formatFraction(exact)} has no exact decimal within ${digits} places`);
+	}
+	const denominator = BigInt(exact.denominator);
+	const magnitude = BigInt(Math.abs(exact.numerator));
+	let remainder = magnitude % denominator;
+	let fractionDigits = '';
+	while (remainder !== 0n) {
+		remainder *= 10n;
+		fractionDigits += String(remainder / denominator);
+		remainder %= denominator;
+	}
+	const sign = exact.numerator < 0 ? '−' : '';
+	const whole = String(magnitude / denominator);
+	return fractionDigits === '' ? `${sign}${whole}` : `${sign}${whole}.${fractionDigits}`;
+}
+
+/**
+ * An amount as reader text: a whole number ("5"), else its exact decimal of up to 3 places ("2.275"), else the
+ * reduced fraction and its value to 2 places ("19/400 ≈ 0.05"), so a rounded amount never reads as exact.
+ */
+export function amountText(value: Fraction): string {
+	const exact = reduced(value, 'amountText');
+	if (terminatesWithin(exact, AMOUNT_DECIMAL_PLACES)) return decimalText(exact, AMOUNT_DECIMAL_PLACES);
+	return `${fractionText(exact)} ≈ ${formatNumber(toNumber(exact), APPROXIMATE_DECIMAL_PLACES)}`;
 }

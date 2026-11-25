@@ -3,7 +3,7 @@
 // Each section names the behavior it pins; the exact values come from the board's design doc.
 import assert from 'node:assert/strict';
 import { fraction, formatFraction, addFractions, subtractFractions, divideFractions, multiplyFractions, compareFractions, toNumber, isPerfectSquare, squareRoot } from '../src/components/react/boardMath.ts';
-import { joinWords, plural, equalsDecimal, fractionText } from '../src/components/react/boardText.ts';
+import { joinWords, plural, equalsDecimal, fractionText, terminatesWithin, decimalText, amountText } from '../src/components/react/boardText.ts';
 import { probability, checkGoal, pour, intersect, union, complement, WEIGHT_TOTAL } from '../src/components/react/eventSpace/model.ts';
 import { SCENARIOS, hasWordedRowHeaders } from '../src/components/react/eventSpace/scenarios.ts';
 import { getSetup } from '../src/components/react/eventSpace/setups.ts';
@@ -98,6 +98,42 @@ assert.equal(fractionText(fraction(-3, 4)), '−3/4');
 assert.equal(fractionText(fraction(-6, 2)), '−3');
 assert.equal(fractionText(divideFractions(fraction(3, 4), fraction(-1, 1000))), '−750');
 assert.equal(fractionText(subtractFractions(fraction(1, 8), fraction(1, 2))), '−3/8');
+// Exact decimals: one predicate on the reduced denominator, digits from integer long division.
+assert.equal(terminatesWithin(fraction(7, 12), 3), false);
+assert.equal(terminatesWithin(fraction(1, 8), 3), true);
+assert.equal(terminatesWithin(fraction(1, 16), 3), false, '1/16 = 0.0625 needs 4 places');
+assert.equal(terminatesWithin(fraction(1, 16), 4), true);
+assert.equal(terminatesWithin(fraction(3, 1), 0), true);
+assert.equal(terminatesWithin({ numerator: 6, denominator: 12 }, 1), true, 'an unreduced literal is reduced first');
+assert.throws(() => terminatesWithin(fraction(1, 2), -1), /digits must be a whole number/);
+assert.throws(() => terminatesWithin({ numerator: 0.5, denominator: 1 }, 3), /not a fraction of safe integers/);
+assert.equal(decimalText(fraction(7, 8), 3), '0.875');
+assert.equal(decimalText(fraction(-3, 2), 3), '−1.5');
+assert.equal(decimalText(fraction(1, 2), 3), '0.5');
+assert.equal(decimalText(fraction(0, 1), 3), '0');
+assert.equal(decimalText(fraction(9, 16), 9), '0.5625');
+assert.equal(decimalText(fraction(2001, 1000), 9), '2.001');
+assert.equal(decimalText(fraction(2001, 1000000), 9), '0.002001');
+assert.equal(decimalText(fraction(-6754501, 10 ** 9), 9), '−0.006754501');
+assert.equal(decimalText(fraction(3, 1), 9), '3');
+assert.equal(decimalText(fraction(-1, 1), 9), '−1');
+assert.equal(decimalText(fraction(3381754501, 10 ** 9), 9), '3.381754501');
+assert.equal(decimalText({ numerator: 10, denominator: 4 }, 1), '2.5');
+assert.throws(() => decimalText(fraction(1, 3), 9), (error) => error.message === 'boardText.decimalText: 1/3 has no exact decimal within 9 places');
+assert.throws(() => decimalText(fraction(1, 16), 3), /1\/16 has no exact decimal within 3 places/);
+// Amounts: whole, else up to 3 exact decimals, else the fraction and a rounded value, never a false equation.
+assert.equal(amountText(fraction(5, 1)), '5');
+assert.equal(amountText(fraction(1, 2)), '0.5');
+assert.equal(amountText(fraction(91, 40)), '2.275');
+assert.equal(amountText(fraction(19, 400)), '19/400 ≈ 0.05');
+assert.equal(amountText(fraction(9, 16)), '9/16 ≈ 0.56');
+assert.equal(amountText(fraction(5, 3)), '5/3 ≈ 1.67');
+assert.equal(amountText(fraction(13, 18)), '13/18 ≈ 0.72');
+assert.equal(amountText(fraction(4, 3)), '4/3 ≈ 1.33');
+assert.equal(amountText(fraction(-5, 3)), '−5/3 ≈ −1.67');
+assert.equal(amountText(fraction(-3, 4)), '−0.75');
+assert.equal(amountText(fraction(0, 1)), '0');
+assert.equal(amountText({ numerator: 10, denominator: 6 }), '5/3 ≈ 1.67');
 
 const coins = SCENARIOS['two-coins'];
 const dice = SCENARIOS['two-dice'];
