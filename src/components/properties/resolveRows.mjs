@@ -9,6 +9,8 @@ import { renderTex } from '../../design/renderTex.mjs';
 const HTML_ESCAPES = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 /** A row link is a site path, so check:links can follow it. */
 const INTERNAL_PATH = /^\/[^\s]*$/;
+/** The first column's heading, the same on every table. */
+export const PROPERTY_HEADING = 'Property';
 
 const escapeHtml = (text) => text.replace(/[&<>"']/g, (character) => HTML_ESCAPES[character]);
 
@@ -90,6 +92,7 @@ export function resolveRows(familyId, { rows, examples, examplesHeading, rowLink
 	}
 	return {
 		caption: `Properties of the ${family.name} distribution`,
+		propertyHeading: PROPERTY_HEADING,
 		statementHeading: family.statementHeading,
 		examplesHeading: hasExampleColumn ? examplesHeading : undefined,
 		rows: order.map((id) => {

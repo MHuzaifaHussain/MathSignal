@@ -33,7 +33,7 @@ const html = (text: string, part: string) => proseHtml(text, `${where}, ${part}`
 		<caption id={captionId}>{table.caption}</caption>
 		<thead>
 			<tr>
-				<th scope="col">Property</th>
+				<th scope="col">{table.propertyHeading}</th>
 				<th scope="col" set:html={html(table.statementHeading, 'heading')} />
 				{hasExampleColumn && <th scope="col" set:html={html(table.examplesHeading as string, 'examples heading')} />}
 			</tr>

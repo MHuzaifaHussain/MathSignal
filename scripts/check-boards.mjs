@@ -6413,10 +6413,11 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	// Every reader-facing string, pinned.
 	const pinned = (familyId, options) => {
 		const table = resolveRows(familyId, options);
-		return [table.caption, table.statementHeading, table.examplesHeading, ...table.rows.map((row) => `${row.label} | ${row.statement}${row.example === undefined ? '' : ` | ${row.example}`}`)];
+		return [table.caption, table.propertyHeading, table.statementHeading, table.examplesHeading, ...table.rows.map((row) => `${row.label} | ${row.statement}${row.example === undefined ? '' : ` | ${row.example}`}`)];
 	};
 	assert.deepEqual(pinned('normal'), [
 		'Properties of the normal distribution',
+		'Property',
 		'Value',
 		undefined,
 		'Mean, median, mode | $\\vmu$',
@@ -6428,6 +6429,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	]);
 	assert.deepEqual(pinned('binomial'), [
 		'Properties of the binomial distribution',
+		'Property',
 		'Statement',
 		undefined,
 		'Bernoulli | With $n = 1$: values 0 and 1, mean $p$, variance $p(1 - p)$',
@@ -6444,6 +6446,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	const sandHeap = { height: '$1/2$ at 2 cm', mean: '2 cm', variance: '$2/3$ cm²', point: '0' };
 	assert.deepEqual(pinned('uniform', { examples: sandHeap, examplesHeading: 'Sand heap (triangle on 0 to 4 cm, top at 2 cm)' }), [
 		'Properties of the uniform distribution',
+		'Property',
 		'Uniform $\\mathcal{U}(a, b)$',
 		'Sand heap (triangle on 0 to 4 cm, top at 2 cm)',
 		'Height | $1/(b - a)$ | $1/2$ at 2 cm',
