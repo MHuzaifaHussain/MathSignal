@@ -4809,6 +4809,48 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	assert.ok(/sliderWeights\(setup\)\.map/.test(boardSource) && !/CONTROL_LABELS\.scale/.test(boardSource), 'VectorBoard2D renders its sliders outside sliderWeights');
 }
 
+// ---- vectorBoard: norms (decision 0021) ----
+// The shared norm geometry for city-walk and NormBall: exact lengths, ball sides against brute force, lattice counts
+// and the nesting ‖v‖∞ ≤ ‖v‖₂ ≤ ‖v‖₁, all compared without a square root.
+{
+	const norms = await import('../src/components/react/vectorBoard/norms.ts');
+	const whole = (n) => fraction(n, 1);
+	assert.deepEqual(norms.normParts(norms.exactPoint([3, 4])), { l1: whole(7), l2Squared: whole(25), linf: whole(4) });
+	assert.deepEqual(norms.normParts(norms.exactPoint([-1, -3])), { l1: whole(4), l2Squared: whole(10), linf: whole(3) });
+	assert.deepEqual(norms.normParts([fraction(1, 1), fraction(2, 5)]), { l1: fraction(7, 5), l2Squared: fraction(29, 25), linf: whole(1) });
+	assert.throws(() => norms.exactPoint([0.5, 1]), /not a whole-number point/);
+	// Every grid point in ±5 and every whole r from 1 to 5, against the plain integer tests.
+	const brute = (x, y, measure, r) => {
+		const value = measure === 'l1' ? Math.abs(x) + Math.abs(y) : measure === 'l2' ? x * x + y * y : Math.max(Math.abs(x), Math.abs(y));
+		const bound = measure === 'l2' ? r * r : r;
+		return value < bound ? 'inside' : value === bound ? 'on' : 'outside';
+	};
+	for (let r = 1; r <= 5; r += 1) {
+		for (let x = -5; x <= 5; x += 1) {
+			for (let y = -5; y <= 5; y += 1) {
+				for (const measure of norms.MEASURES) assert.equal(norms.ballSide(norms.exactPoint([x, y]), measure, whole(r)), brute(x, y, measure, r), `${measure} r = ${r} at (${x}, ${y})`);
+			}
+		}
+	}
+	assert.equal(norms.ballSide([fraction(1, 1), fraction(2, 5)], 'l2', fraction(1, 1)), 'outside');
+	assert.throws(() => norms.ballSide(norms.exactPoint([0, 0]), 'l1', fraction(-1, 1)), /at least 0/);
+	assert.equal(norms.latticeOnBall('l1', 4, 5).length, 16);
+	assert.equal(norms.latticeOnBall('l2', 5, 5).length, 12);
+	assert.equal(norms.latticeOnBall('linf', 4, 5).length, 32);
+	assert.deepEqual(norms.latticeOnBall('l2', 4, 5), [[0, 4], [-4, 0], [4, 0], [0, -4]]);
+	assert.deepEqual(norms.ballOutline('l1', 4), { kind: 'polygon', points: [[4, 0], [0, 4], [-4, 0], [0, -4]] });
+	assert.deepEqual(norms.ballOutline('linf', 2), { kind: 'polygon', points: [[2, 2], [-2, 2], [-2, -2], [2, -2]] });
+	assert.deepEqual(norms.ballOutline('l2', 3), { kind: 'circle', radius: 3 });
+	// The nesting, squared so it stays exact: ‖v‖∞² ≤ ‖v‖₂² ≤ ‖v‖₁² on every grid point.
+	for (let x = -5; x <= 5; x += 1) {
+		for (let y = -5; y <= 5; y += 1) {
+			const parts = norms.normParts(norms.exactPoint([x, y]));
+			assert.ok(compareFractions(multiplyFractions(parts.linf, parts.linf), parts.l2Squared) <= 0, `‖v‖∞ ≤ ‖v‖₂ at (${x}, ${y})`);
+			assert.ok(compareFractions(parts.l2Squared, multiplyFractions(parts.l1, parts.l1)) <= 0, `‖v‖₂ ≤ ‖v‖₁ at (${x}, ${y})`);
+		}
+	}
+}
+
 // ---- NormalDistribution: bell untouched, z mode (decision 0019) ----
 // The published bell is pinned first, so moving its code into a mode can't change its words or numbers.
 {
