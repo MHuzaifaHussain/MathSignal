@@ -3,7 +3,7 @@
 // spot. Pure, so scripts/check-boards.mjs checks the positions.
 import { fraction, toNumber } from '../boardMath.ts';
 import { columnHeight } from './columnAxis.ts';
-import type { ChartColumn, ChartGridline, ChartMarks, ChartTick } from './ColumnChart.tsx';
+import type { ChartColumn, ChartGridline, ChartMarks, ChartTick } from './chartTypes.ts';
 import { bins, curvePoints, meanOf, QUARTERS_PER_CM, RULER_CM, rulerPercent, shadedPoints, varianceOf, type Knot } from './density.ts';
 import { chartLabels } from './densityDescribe.ts';
 import { binWidthOf, densitySetupOf, quartersToCm, shapeNow, type DensityState } from './densityState.ts';

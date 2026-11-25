@@ -4,7 +4,7 @@ import { toNumber } from '../boardMath.ts';
 import { across, columnHeight, tickEvery } from './columnAxis.ts';
 import { chartLabels } from './familyDescribe.ts';
 import { familyDistribution, familyMoments, familySetupOf, visibleGhost, type FamilyState } from './familyState.ts';
-import type { ChartColumn, ChartGridline, ChartMarks, ChartTick } from './ColumnChart.tsx';
+import type { ChartColumn, ChartGridline, ChartMarks, ChartTick } from './chartTypes.ts';
 
 export interface FamilyChart {
 	columns: ChartColumn[];

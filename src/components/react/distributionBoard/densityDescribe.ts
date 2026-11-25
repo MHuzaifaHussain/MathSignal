@@ -8,7 +8,7 @@ import { areaBetween, bins, heightAt, meanOf, RULER_CM, supportOf, varianceOf, t
 import { CURVE_BINS_PER_CM, type BinsPerCm, type DensityStage } from './densitySetups.ts';
 import { binWidthOf, densitySetupOf, quartersToCm, sandOf, shapeNow, type DensityAction, type DensityState } from './densityState.ts';
 import { fractionChance, rootText, SENTENCE_PLACES, sigmaValue, underText, underThreshold } from './numberFormat.ts';
-import type { SpokenLine } from './SpokenText.tsx';
+import type { SpokenLine } from './chartTypes.ts';
 
 const ONE = fraction(1, 1);
 /** Positions on the quarter grid need at most two decimals ("1.75"). */

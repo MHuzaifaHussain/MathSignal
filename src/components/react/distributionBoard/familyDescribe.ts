@@ -14,7 +14,7 @@ import { activePreset, familyDistribution, familyMoments, familySetupOf, isCover
 import type { Bar } from './model.ts';
 import { chanceChain, powerText, rootText, SENTENCE_PLACES, sigmaValue, TABLE_PLACES, underText, underThreshold } from './numberFormat.ts';
 import { coinSequences, MAX_LISTED_COINS, type CoinSequence } from './sources.ts';
-import type { SpokenLine } from './SpokenText.tsx';
+import type { SpokenLine } from './chartTypes.ts';
 
 interface WordPair {
 	one: string;
