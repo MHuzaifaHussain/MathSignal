@@ -116,21 +116,6 @@ To train naive Bayes, count each class's share of the training set and how often
 
 One count of 0 vetoes a class: the apple's "long" rate of 0 makes its product 0 whatever else is seen. Add-one (Laplace) smoothing adds 1 to every count and adds the number of possible values to the total, here 2 (yes or no). The apple's "long" rate becomes (0 + 1)/(20 + 2) = 1/22 instead of 0, and the banana's "yellow" rate becomes (40 + 1)/(50 + 2) = 41/52. The 1 is called α. With α = 1 the bowl gives banana ≈ 0.909, lemon ≈ 0.086, apple ≈ 0.005 <Cite id="mitchell2020" />.
 
-<GoDeeper label="why the best fit is the relative frequency" id="mle-is-counting">
-
-<StepThrough title="Maximum likelihood gives the relative frequency" rigor="sketch">
-
-1. Fix a class y with at least one training word, and let $N_{y,w}$ be word w's count in it. Maximize $\sum_w N_{y,w} \log P(w \mid y)$ over the words, subject to Σ P(w | y) = 1.
-2. A Lagrange multiplier λ gives $N_{y,w} / P(w \mid y) = \lambda$ for every word with $N_{y,w} > 0$.
-3. Summing fixes λ as the class's word total, so $P(w \mid y) = N_{y,w}$ / (all words in class y).
-4. A count of 0 gives probability 0: the veto smoothing removes.
-
-</StepThrough>
-
-Mitchell's equation 7 adds l to the count of each of a feature's J possible values: lJ imagined examples spread evenly. It is a MAP estimate under a Dirichlet prior, and l = 1 is Laplace smoothing; this page writes α for l <Cite id="mitchell2020" />.
-
-</GoDeeper>
-
 ## Add logs instead of multiplying
 
 Real classifiers add log probabilities, because a product of many small numbers rounds to zero: the product of 1,000 factors of 0.001 is exactly 0.0 in 64-bit floating point, while 1000 × log 0.001 = −6907.755 (natural log, as everywhere on this page; any base picks the same winner). Log is increasing, so the winner is unchanged: pick the y with the largest log P(y) + Σₖ log P(xₖ | y). For two classes this is the [odds form](/probability/bayes-theorem/#odds-form) of Bayes' theorem, one log likelihood ratio per feature.
@@ -210,6 +195,21 @@ $$
 | Zero factor | The class can never win | Apple, with a "long" rate of 0 |
 
 </FormalDefinition>
+
+<GoDeeper label="why the best fit is the relative frequency" id="mle-is-counting">
+
+<StepThrough title="Maximum likelihood gives the relative frequency" rigor="sketch">
+
+1. Fix a class y with at least one training word, and let $N_{y,w}$ be word w's count in it. Maximize $\sum_w N_{y,w} \log P(w \mid y)$ over the words, subject to Σ P(w | y) = 1.
+2. A Lagrange multiplier λ gives $N_{y,w} / P(w \mid y) = \lambda$ for every word with $N_{y,w} > 0$.
+3. Summing fixes λ as the class's word total, so $P(w \mid y) = N_{y,w}$ / (all words in class y).
+4. A count of 0 gives probability 0: the veto smoothing removes.
+
+</StepThrough>
+
+Mitchell's equation 7 adds l to the count of each of a feature's J possible values: lJ imagined examples spread evenly. It is a MAP estimate under a Dirichlet prior, and l = 1 is Laplace smoothing; this page writes α for l <Cite id="mitchell2020" />.
+
+</GoDeeper>
 
 ## Worked examples
 
