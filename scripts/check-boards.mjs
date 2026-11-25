@@ -1752,10 +1752,14 @@ const assertTableFoldSays = (where, announce) => {
 	const wrapped = new Set();
 	for (const file of filesUnder('src/components/react').filter((name) => name.endsWith('.tsx'))) {
 		const source = readFileSync(file, 'utf8');
-		for (const [, inner] of source.matchAll(/<TableFold\b[^>]*>([\s\S]*?)<\/TableFold>/g)) {
-			const children = [...inner.matchAll(/<([A-Z]\w*)\b/g)].map((match) => match[1]);
-			assert.equal(children.length, 1, `${file}: a <TableFold> wraps exactly one table component, found ${children.join(', ') || 'none'}`);
-			const importLine = source.match(new RegExp(`import ${children[0]} from "(\.[^"]+)"`));
+		// The opening tag may hold arrow functions (onToggle={(open) => ...}), so "=>" does not end it.
+		for (const [, inner] of source.matchAll(/<TableFold\b(?:=>|[^>])*>([\s\S]*?)<\/TableFold>/g)) {
+			// Nothing but one self-closing element between the tags; a prop holding JSX would leave "}>" here instead.
+			const body = inner.trim();
+			assert.match(body, /^<[A-Z]\w*\b[\s\S]*\/>$/, `${file}: a <TableFold> holds one self-closing table component and nothing else, found "${body}"`);
+			const children = [...body.matchAll(/<([A-Z]\w*)\b/g)].map((match) => match[1]);
+			assert.equal(children.length, 1, `${file}: a <TableFold> wraps exactly one table component, found ${children.join(', ')}`);
+			const importLine = source.match(new RegExp(String.raw`import ${children[0]} from "(\.[^"]+)"`));
 			assert.ok(importLine, `${file}: <TableFold> child ${children[0]} is not a default import from a relative path`);
 			const resolved = path.posix.relative('src/components/react', path.posix.join(path.posix.dirname(file), importLine[1]));
 			assert.ok(TABLE_FOLD_CHILDREN.includes(resolved), `${file}: <TableFold> child ${children[0]} (${resolved}) is not in TABLE_FOLD_CHILDREN`);
@@ -1767,8 +1771,14 @@ const assertTableFoldSays = (where, announce) => {
 		const source = readFileSync(`src/components/react/${child}`, 'utf8');
 		for (const token of CONTROL_TOKENS) assert.ok(!source.includes(token), `${child} is folded behind Table view but contains ${token}`);
 	}
-	// The shared piece is the only place the switch's name is written.
+	// The shared piece is the only place the switch's name is written: TableFold.tsx shows TABLE_FOLD_LABEL, and no
+	// board code outside guided/ spells the name as a string or JSX text (comments may still mention it).
 	assert.ok(readFileSync('src/components/react/guided/TableFold.tsx', 'utf8').includes('{TABLE_FOLD_LABEL}'));
+	const withoutComments = (source) => source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+	const spelledName = new RegExp(String.raw`(['"\x60])${tableFold.TABLE_FOLD_LABEL}\1|>\s*${tableFold.TABLE_FOLD_LABEL}\s*<`);
+	for (const file of filesUnder('src/components/react').filter((name) => /\.tsx?$/.test(name) && !name.startsWith('src/components/react/guided/'))) {
+		assert.ok(!spelledName.test(withoutComments(readFileSync(file, 'utf8'))), `${file} writes "${tableFold.TABLE_FOLD_LABEL}" itself; use the shared TableFold`);
+	}
 }
 
 // ---- DistributionBoard: Table view (decision 0017) ----
