@@ -11,7 +11,7 @@ import useAnnouncer from "../guided/useAnnouncer.ts";
 import useCommittedSlider from "../guided/useCommittedSlider.ts";
 import ColumnChart from "./ColumnChart.tsx";
 import ReadPair from "./ReadPair.tsx";
-import SpokenText from "./SpokenText.tsx";
+import SpokenText from "../guided/SpokenText.tsx";
 import ValueTable from "./ValueTable.tsx";
 import { familyChart } from "./familyChart.ts";
 import {

@@ -3,7 +3,7 @@
 // decimalText; a rounded number always says "≈" or "about". Gated lines read only `revealed`. Pure, for check-boards.
 import { compareFractions, fraction, toNumber, type Fraction } from '../boardMath.ts';
 import { decimalText, fractionText, terminatesWithin } from '../boardText.ts';
-import type { SpokenLine } from '../distributionBoard/chartTypes.ts';
+import type { SpokenLine } from '../guided/spokenLine.ts';
 import { tableFoldAnnouncement } from '../guided/tableFold.ts';
 import { formatNumber } from '../plotColors.ts';
 import { distanceAt, indexFromSlider, standardNormalCdf, valueAt, zAt } from './model.ts';

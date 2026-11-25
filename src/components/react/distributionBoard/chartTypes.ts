@@ -1,11 +1,5 @@
-// The plain data the family and density modes hand to ColumnChart and SpokenText (decision 0018). Types only, so
-// the pure modules never import a React component.
-
-/** A line whose spoken form can differ from what the screen shows ("2¹⁰", "HHT", "≤"). */
-export interface SpokenLine {
-	visible: string;
-	spoken: string;
-}
+// The plain data the family and density modes hand to ColumnChart (decision 0018). Types only, so the pure modules
+// never import a React component.
 
 /** One drawn column. Positions are percents of the column area, worked out by the mode (columnAxis or the ruler). */
 export interface ChartColumn {
