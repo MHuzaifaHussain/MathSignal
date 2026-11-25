@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useReducer, useRef } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useReducer, useRef } from "react";
 import Board from "./Board";
 import TrayChoice from "./TrayChoice";
 import TraySlider from "./TraySlider";
@@ -74,6 +74,11 @@ export default function DescriptiveStats({ setup: setupId }: DescriptiveStatsPro
   /** True while the latest change is a slider or drag move, so a late commit can't talk over a button pressed since. */
   const sliding = useRef(false);
   const stateRef = useRef(state);
+  // A layout effect, so a commit that ends a drag (pointerup) reads the state of the drag's last move, whose passive
+  // effects may still be pending.
+  useLayoutEffect(() => {
+    stateRef.current = state;
+  });
   const feedbackRef = useRef<HTMLParagraphElement>(null);
 
   const send = useCallback((action: Action) => {
@@ -107,7 +112,6 @@ export default function DescriptiveStats({ setup: setupId }: DescriptiveStatsPro
 
   // Buttons, radios and switches speak at once, with the sentence that answers them.
   useEffect(() => {
-    stateRef.current = state;
     const action = lastAction.current;
     if (!action) return;
     announce(announcementFor(state, action));

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useReducer, useRef, useState } from "react";
 import Board, { type InteractionSource } from "./Board";
 import ChalkNote from "./ChalkNote";
 import TrayChoice from "./TrayChoice";
@@ -68,6 +68,11 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
   /** True while the latest change is a slider move, so a late slider commit can't talk over a button or handle moved since. */
   const scalarMoving = useRef(false);
   const stateRef = useRef(state);
+  // A layout effect, so a commit that ends a drag (pointerup) reads the state of the drag's last move, whose passive
+  // effects may still be pending.
+  useLayoutEffect(() => {
+    stateRef.current = state;
+  });
   const feedbackRef = useRef<HTMLParagraphElement>(null);
   const planeRef = useRef<HTMLDivElement>(null);
   const planeSize = useSquarePlane(planeRef);
@@ -118,7 +123,6 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
 
   // Announce when a button or stepper interaction ends: at once for buttons, after a pause for a burst of presses.
   useEffect(() => {
-    stateRef.current = state;
     const action = lastAction.current;
     if (!action) return;
     const burst = action.type === "step" && !state.refusal;

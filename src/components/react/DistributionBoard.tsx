@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useReducer, useRef, useState } from "react";
 import Board from "./Board";
 import TraySlider from "./TraySlider";
 import { KEYBOARD_COMMIT_DELAY_MS } from "./boardTiming";
@@ -56,6 +56,11 @@ export default function DistributionBoard({ setup: setupId }: DistributionBoardP
   /** True while the latest change is a pencil move, so a late slider commit can't talk over a button pressed since. */
   const pencilMoving = useRef(false);
   const stateRef = useRef(state);
+  // A layout effect, so a commit that ends a drag (pointerup) reads the state of the drag's last move, whose passive
+  // effects may still be pending.
+  useLayoutEffect(() => {
+    stateRef.current = state;
+  });
   const feedbackRef = useRef<HTMLParagraphElement>(null);
   const goalRef = useRef<HTMLParagraphElement>(null);
 
@@ -87,7 +92,6 @@ export default function DistributionBoard({ setup: setupId }: DistributionBoardP
 
   // Announce when an interaction ends: at once for buttons, after a pause for a burst of − / + presses.
   useEffect(() => {
-    stateRef.current = state;
     const action = lastAction.current;
     if (!action) return;
     const burst = action.type === "step" && !state.refusal;
