@@ -1,0 +1,68 @@
+---
+title: PropertiesTable lab
+description: A draft page for checking PropertiesTable during development, with the binomial, normal and uniform families. Drafts are never built for the live site.
+draft: true
+---
+
+import FormalDefinition from "../../../components/FormalDefinition.astro";
+import PropertiesTable from "../../../components/PropertiesTable.astro";
+
+Development only. Every table comes from `src/data/distributions.mjs`; the pages pass only the third column. Open each fold, then check at 320 and 375 px that the page never scrolls sideways (at most a table region does), that Tab stops on each region with the ink-and-yellow focus ring, and that a screen reader names each region by its caption and reads the row header before each cell. Print the page with the folds open to check that the regions don't clip. Lab pages have no `topic`, so the footer's "How this page was made" and "Cite this page" show on concept pages only, for example the Normal distribution page.
+
+## Normal: the swap on the Normal page
+
+The first fold holds the markdown table the Normal page used before the swap; the second holds `<PropertiesTable family="normal" />`. Apart from the caption they must look the same.
+
+<FormalDefinition>
+
+| Property | Value |
+| --- | --- |
+| Mean, median, mode | $\vmu$ |
+| Variance | $\vsigma^2$ |
+| Skewness | 0 |
+| Excess kurtosis | 0 |
+| Entropy | $\tfrac{1}{2}\ln(2\pi e \vsigma^2)$ |
+| Moment generating function | $\exp(\vmu t + \vsigma^2 t^2 / 2)$ |
+
+</FormalDefinition>
+
+<FormalDefinition>
+
+<PropertiesTable family="normal" id="normal-properties" />
+
+</FormalDefinition>
+
+## Binomial, with the binomial page's example column
+
+<FormalDefinition>
+
+<PropertiesTable family="binomial" id="binomial-properties" examplesHeading="On the boards" examples={{
+  bernoulli: "One flip: $\\vmu = 1/2$, $\\vsigma = 1/2$",
+  pmf: "10 coins, 6 heads: $210/1024$",
+  total: "The bars add up to 1,024/1,024 = 1.",
+  mean: "Fair coin $\\vmu = 5$; Right 9 in 10 $\\vmu = 9$",
+  variance: "Fair coin $\\vsigma^2 = 2.5$; Right 9 in 10 $\\vsigma^2 = 0.9$",
+  tallest: "9 coins: 4 and 5",
+  mirror: "Rare: 1 in 10 against Right 9 in 10",
+  sums: "Checked in the code below",
+  needs: "Without replacement: $1/15$, not $0.09$",
+}} />
+
+</FormalDefinition>
+
+## Uniform, with the PDF page's Sand heap column
+
+<FormalDefinition>
+
+<PropertiesTable family="uniform" id="uniform-properties" examplesHeading="Sand heap (triangle on 0 to 4 cm, top at 2 cm)" examples={{
+  height: "$1/2$ at 2 cm",
+  mean: "2 cm",
+  variance: "$2/3$ cm²",
+  point: "0",
+}} />
+
+</FormalDefinition>
+
+## A subset with a row link
+
+<PropertiesTable family="binomial" id="binomial-subset" rows={["variance", "mean"]} rowLinks={{ mean: "/statistics/normal-distribution/" }} />
