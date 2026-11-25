@@ -48,7 +48,6 @@ import NotationKey from "../../../components/NotationKey.astro";
 import PreciseStatement from "../../../components/PreciseStatement.astro";
 import PyRunner from "../../../components/PyRunner.astro";
 import References from "../../../components/References.astro";
-import SideNote from "../../../components/SideNote.astro";
 import Simpler from "../../../components/Simpler.astro";
 import StepThrough from "../../../components/StepThrough.astro";
 import Takeaways from "../../../components/Takeaways.astro";
@@ -63,33 +62,33 @@ import DescriptiveStats from "../../../components/react/DescriptiveStats.tsx";
 
 ## In everyday terms
 
-<Analogy breaks="Four equal stretches are not four equal groups: the children at the cuts each sit on a boundary and belong to two stretches. With 10 children a cut can fall between two children, so a quartile can be a height nobody has. And tools cut the line in slightly different places.">
+<Analogy breaks="Four equal stretches are not four equal groups: the children at the cuts each sit on a boundary and belong to two stretches. With 10 children a cut can fall between two children, so a quartile can be a height nobody has.">
 
-Line up our 9 children from shortest to tallest. From the first child to the last there are 8 steps between neighbors. Now cut those 8 steps into four equal stretches. The children standing at the three cuts mark the quartiles: one a quarter of the way along, one halfway, one three quarters of the way. The middle two stretches hold the middle half of the class, and that part of the line is the box of a box plot.
+Line up our class of 9 children from shortest (122 cm) to tallest (148 cm). From the first child to the last there are 8 steps between neighbors. Now cut those 8 steps into four equal stretches. The children standing at the three cuts mark the quartiles: one a quarter of the way along, one halfway, one three quarters of the way. The middle two stretches hold the middle half of the class, and that part of the line is the box of a box plot.
 
 </Analogy>
 
 <WhyThisMatters>
-Model servers are judged by latency percentiles such as the median and the 99th percentile, because a few very slow requests make the average misleading. Feature scaling can use the median and the interquartile range (IQR) in place of the mean and the standard deviation. Box plots compare results across seeds, folds or groups at a glance. And tools compute quartiles differently, so knowing the method keeps two reports comparable.
+Model servers are judged by latency percentiles such as the median and the 99th percentile, because a few very slow requests make the average misleading. Feature scaling can use the median and the interquartile range (IQR) in place of the mean and the standard deviation. Box plots compare results across seeds, folds or groups at a glance.
 </WhyThisMatters>
 
 ## Cut the line into quarters
 
-To find the quartiles, line the values up from smallest to largest and cut the steps between them into four equal stretches. Before you press Quartiles, decide: does the 2nd, the 3rd or the 4th shortest child mark the first quarter? Going further: suppose the tallest child were 162 cm instead of 148 cm. Which of Q1, the median, Q3 and the IQR would change, and what would the box plot draw differently?
+To find the quartiles, line the values up from smallest to largest and cut the steps between them into four equal stretches. Before you press Quartiles, decide: does the 2nd, the 3rd or the 4th shortest child mark the first quarter? Going further: suppose the tallest child were 162 cm instead of 148 cm. Which of Q1, the median, Q3 and the IQR (Q3 − Q1, the width of the box) would change, and would the tallest child still sit at the end of a whisker?
 
 The board opens on the Line-up step, with each child's place in line on their dot. Then choose Quartiles, then Box plot, under Step. The presets Our class and One very tall child sit under Try; answer the deeper question before you press the second. Table view lists every child's height and place in line.
 
-Your task: name the three children who mark the quartiles, then read the box plot's five numbers: the shortest, Q1, the median, Q3 and the tallest.
+Your task: say which places in line (1st to 9th) mark the three quartiles, then read the box plot's five numbers: the shortest, Q1, the median, Q3 and the tallest.
 
 <div class="not-content">
   <DescriptiveStats client:visible setup="class-box" />
 </div>
 
-**The first quarter.** The 3rd shortest child. On Quartiles the board says "Each quarter is 2 steps: Q1 is the 3rd in line (128 cm), the median the 5th (133 cm), Q3 the 7th (140 cm)." The 8 steps split into four stretches of 2, so the cuts sit 2, 4 and 6 steps in. In Table view those are child 4, child 1 and child 3.
+**The first quarter.** The 3rd shortest child. On Quartiles the board says "Each quarter is 2 steps: Q1 is the 3rd in line (128 cm), the median the 5th (133 cm), Q3 the 7th (140 cm)." The 8 steps split into four stretches of 2, so the cuts sit 2, 4 and 6 steps in. In Table view those are Child 4, Child 1 and Child 3.
 
 **The five numbers.** On Box plot: "IQR = 140 − 128 = 12 cm. The fences sit 1.5 × 12 = 18 cm beyond the box, at 110 cm and 158 cm. Every child is inside them, so the whiskers reach the shortest (122 cm) and the tallest (148 cm)." So the five numbers are 122, 128, 133, 140 and 148 cm.
 
-**The tall child.** Stay on Box plot and press One very tall child. The fences stay at 110 cm and 158 cm, and the board adds "162 cm is above the upper fence (158 cm), so it is drawn as its own dot and the whisker stops at 142 cm." None of Q1, the median, Q3 or the IQR moved. The quartiles ignore how far the extremes reach, so the IQR resists one wild value; the [variance page's research frontier](/statistics/variance-and-standard-deviation/#research-frontier) measures how much.
+**The tall child.** Stay on Box plot and press One very tall child. The fences stay at 110 cm and 158 cm, and the board adds "162 cm is above the upper fence (158 cm), so it is drawn as its own dot and the whisker stops at 142 cm." None of Q1, the median, Q3 or the IQR moved. The quartiles depend only on the children at places 3, 5 and 7, so making the tallest child taller cannot move the IQR. The [variance page's research frontier](/statistics/variance-and-standard-deviation/#research-frontier) compares how far wild values can push each spread measure.
 
 ## Notation
 
@@ -107,41 +106,41 @@ read as $Q(p) = x_{(j+1)}$ when $g = 0$. The quartiles are $Q_1 = Q(1/4)$, $\ope
 
 A box plot draws a box from $Q_1$ to $Q_3$ with a line at the median, fences at $Q_1 - 1.5\,\operatorname{IQR}$ and $Q_3 + 1.5\,\operatorname{IQR}$, whiskers to the smallest and largest values on or inside the fences, and every value strictly past a fence as a dot.
 
-Convention: NumPy's default linear method, Hyndman and Fan's type 7. Boundary cases: for $n = 1$, $Q_1 = Q_3 = x_1$ and the IQR is 0; if $Q_1 = Q_3$, both fences sit on $Q_1$ and every other value is a dot; a value exactly on a fence is not a dot.
+Convention: NumPy's default linear method, Hyndman and Fan's type 7. Boundary cases: for $n = 1$, $Q_1 = Q_3 = x_1$ and the IQR is 0; if $Q_1 = Q_3$, both fences sit on $Q_1$ and every value different from $Q_1$ is a dot; a value exactly on a fence is not a dot.
 
 </PreciseStatement>
 
-## Five steps from a list to its quartiles
+## Five steps from a list to its box plot
 
-Sort the list, find the quartiles by counting steps, subtract to get the IQR, put the fences 1.5 IQRs beyond the box, then draw the whiskers to the last values inside the fences. On our class:
+Sort, find the quartiles, take the IQR, set the fences, then draw the whiskers. On our class:
 
 1. **Sort.** 122, 125, 128, 131, 133, 137, 140, 142, 148.
-2. **Quartiles.** 9 values have $n - 1 = 8$ steps, so $h = 2$, 4 and 6 for $p = 1/4$, $1/2$ and $3/4$. Q1 = 128, the median is 133 and Q3 = 140.
+2. **Quartiles.** 9 values have 8 steps, so the cuts are $h = (n-1)p$ = 2, 4 and 6 steps past the first value: the 3rd, 5th and 7th values. Q1 = 128, the median is 133 and Q3 = 140.
 3. **IQR.** 140 − 128 = 12 cm.
 4. **Fences.** 1.5 × 12 = 18, so 128 − 18 = 110 cm and 140 + 18 = 158 cm.
 5. **Whiskers.** Every value lies inside the fences, so the whiskers reach 122 and 148 cm and there are no dots.
 
-The median is the middle value once the list is sorted. NIST's handbook builds the box plot the same way: a box over the middle 50% of the data, fences 1.5 IQRs beyond it, and points past them drawn on their own <Cite id="nist-boxplot" />.
+NIST's handbook describes the same parts: a box over the middle 50% of the data, fences 1.5 IQRs beyond it, and points past them drawn on their own <Cite id="nist-boxplot" />.
 
 ### When the cut falls between two values
 
-When $(n - 1)p$ is not a whole number, go to the value just below the cut and add the same fraction of the gap to the next value. The 90th percentile of our class has $h = 8 \times 0.9 = 7.2$: start at the 8th value, 142, and add 0.2 of the 6 cm gap, giving 143.2 cm. The 10th percentile has $h = 0.8$, so it is 122 + 0.8 × 3 = 124.4 cm.
+When $(n - 1)p$ is not a whole number, go to the value just below the cut and add the same fraction of the gap to the next value. The 90th percentile is the value 90% of the way along the line. For our class $h = 8 \times 0.9 = 7.2$: 7 whole steps past the first value is the 8th value, 142; then add 0.2 of the 6 cm gap to 148, giving 143.2 cm. The 10th percentile has $h = 0.8$, so it is 122 + 0.8 × 3 = 124.4 cm.
 
 <Simpler label="the same idea on a ruler" id="between-two-values">
 
-Lay 142 and 148 on a ruler: a cut 0.2 of the way along sits at 143.2. A cut exactly halfway is the plain average, which is how an even-sized list gets its median: our class plus a 136 cm child has median 134.5 cm.
+Lay 142 and 148 on a ruler: they are 6 cm apart, and 0.2 of 6 cm is 1.2 cm, so a cut 0.2 of the way along sits at 143.2. A cut exactly halfway is the plain average, which is how an even-sized list gets its median: our class plus a 136 cm child has median 134.5 cm.
 
 </Simpler>
 
 ### Reading a box plot you didn't draw
 
-Each of the four parts, whisker, half-box, half-box, whisker, holds about a quarter of the values, so a longer part means more spread, not more values. In our class the median sits 5 cm above Q1 and 7 cm below Q3, so the upper middle quarter is more spread out. Counting a boundary child in both neighbors, each part holds 3 children and the box 5 of the 9.
+Each of the four parts, whisker, half-box, half-box, whisker, holds about a quarter of the values, so a longer part means more spread, not more values. In our class the median sits 5 cm above Q1 and 7 cm below Q3, so the upper half of the box is more spread out. With only 9 children the quarters are rough: the children at Q1, the median and Q3 each sit on a boundary, so counting them on both sides each part holds 3 and the box 5.
 
 A dot is a value past a fence: drawn, not deleted, and not proven wrong. Wickham and Stryjewski trace the plot to Tukey and note that it suits comparing distributions across groups <Cite id="wickham2011" />.
 
 ### Which quartile? Tools disagree
 
-There is no single agreed formula for quartiles, so two tools can report different values for the same list; this page uses NumPy's default. NIST's handbook says no interpolation is universally accepted, and its own default differs from NumPy's <Cite id="nist-percentiles" />. Hyndman and Fan found packages using one definition for a quantile and another for the box plot <Cite id="hyndman1996" />.
+There is no single agreed formula for quartiles, so two tools can report different values for the same list; this page uses NumPy's default. NIST's handbook says no interpolation is universally accepted, and its own default differs from NumPy's <Cite id="nist-percentiles" />. Hyndman and Fan found packages using one definition for a quantile and another for the box plot <Cite id="hyndman1996" />. NumPy offers nine methods numbered as Hyndman and Fan number them, type 1 to type 9, and its default, `linear`, is type 7 <Cite id="numpy-quantile" />. Tukey's hinges take Q1 and Q3 as the medians of the lower and upper halves of the sorted list, each half including the middle value when n is odd.
 
 | Method | Q1 | Q3 | IQR | Upper fence | 162 cm drawn as a dot? |
 | --- | --- | --- | --- | --- | --- |
@@ -149,15 +148,11 @@ There is no single agreed formula for quartiles, so two tools can report differe
 | Tukey's hinges | 128 | 140 | 12 | 158 | yes |
 | NIST default, `weibull` (type 6) | 126.5 | 141 | 14.5 | 162.75 | no |
 
-The same child is a dot under one method and not under another, so write the method down with the number. NumPy numbers its methods as Hyndman and Fan do, `linear` 7 and `weibull` 6 <Cite id="numpy-quantile" />, and type 7 is also R's default <Cite id="nist-percentiles" />. pandas' `describe()` matches it on its documented example, a column 1, 2, 3 with 25% at 1.5 and 75% at 2.5, without naming a method <Cite id="pandas-describe" />.
-
-<SideNote>
-Hyndman and Fan recommend a different estimator, the median-unbiased one <Cite id="hyndman1996" />, which NumPy lists as method 8, `median_unbiased` <Cite id="numpy-quantile" />. NumPy and R still default to type 7.
-</SideNote>
+The same child is a dot under one method and not under another, so write the method down with the number. Type 7 is also R's default <Cite id="nist-percentiles" />. pandas' `describe()` does not name its method, but its documented example, a column 1, 2, 3 with 25% at 1.5 and 75% at 2.5, matches NumPy's default <Cite id="pandas-describe" />.
 
 <GoDeeper label="when Tukey's hinges and NumPy agree" id="hinges-vs-linear">
 
-Tukey's hinges are the medians of the lower and upper halves of the sorted list, each half including the middle value when n is odd. R's documentation says the hinges equal the quartiles for odd n and can differ for even n <Cite id="r-boxplot-stats" />. Our class plus a 136 cm child has linear quartiles 128.75 and 139.25 (worked example 3) but hinges 128 and 140. The second proof below covers odd n.
+R's documentation says the hinges equal the quartiles for odd n and can differ for even n <Cite id="r-boxplot-stats" />. The second proof below covers odd n.
 
 </GoDeeper>
 
@@ -183,30 +178,24 @@ Tukey's hinges are the medians of the lower and upper halves of the sorted list,
 | Property | Statement | Our class |
 | --- | --- | --- |
 | Ordered | $Q_1 \le \operatorname{median} \le Q_3$ and $\operatorname{IQR} \ge 0$ | 128 ≤ 133 ≤ 140 |
-| Shift | Adding $a$ to every value adds $a$ to every quartile; the IQR stays | +10 cm: Q1 138, IQR 12 |
+| Shift | Adding the same number to every value adds it to every quartile; the IQR stays | +10 cm: Q1 138, IQR 12 |
 | Scale | Multiplying by $c$ multiplies the IQR by $\lvert c \rvert$; for $c < 0$, $Q_1$ and $Q_3$ swap roles | × (−1): quartiles −140 and −128, IQR 12 |
-| Resistant | Moving the largest value further out leaves $Q_1$, $Q_3$ and the fences unchanged | 148 → 162: still 128 and 140 |
+| Resistant | If $n \ge 5$, moving the largest value further out leaves $Q_1$, $Q_3$ and the fences unchanged | 148 → 162: still 128 and 140 |
 | Lands on values | If $n = 4k + 1$, every quartile is a value in the list | 3rd, 5th, 7th |
 
 </FormalDefinition>
 
 ## Worked examples
 
-<WorkedExample number={1} title="Our class, start to finish">
-
-The five steps above give quartiles 128, 133 and 140 cm, IQR 12 cm, fences 110 and 158 cm, and whiskers 122 and 148 cm with no dots. The 90th percentile, at $h = 7.2$, is $142 + 0.2 \times 6 = 143.2$ cm.
-
-</WorkedExample>
-
-<WorkedExample number={2} title="Read a box plot of homework times">
+<WorkedExample number={1} title="Read a box plot of homework times">
 
 13 students' homework times, in minutes: 5, 10, 12, 15, 18, 20, 22, 28, 30, 35, 40, 45 and 90. Their box plot has whiskers at 5 and 45, a box from 15 to 35, a median at 22 and a dot at 90.
 
-IQR 20, fences −15 and 65, so 90 is a dot and the whisker stops at 45. The median sits 7 above Q1 and 13 below Q3: the upper middle quarter is more spread out. The mean, 370/13 ≈ 28.46, is pulled above the median by the 90.
+IQR 20, fences −15 and 65 (a fence is only a cutoff, so it can sit below any possible time), so 90 is a dot and the whisker stops at 45. The median sits 7 above Q1 and 13 below Q3: the upper half of the box is more spread out. The mean, 370/13 ≈ 28.46, is pulled above the median by the 90.
 
 </WorkedExample>
 
-<WorkedExample number={3} title="Ten children: the cut falls between two" faded>
+<WorkedExample number={2} title="Ten children: the cut falls between two" faded>
 
 Sorted: 122, 125, 128, 131, 133, 136, 137, 140, 142, 148, with $n - 1 = 9$ steps. Q1: $h = 2.25$, so $128 + 0.25 \times 3 = 128.75$. Median: $h = 4.5$, so 134.5. Q3: $h = 6.75$, so $137 + 0.75 \times 3 = 139.25$. Your turn: the IQR, the fences, the whiskers and any dots.
 
@@ -218,9 +207,9 @@ IQR = 10.5 cm, so the fences sit 15.75 cm beyond the box, at 113 and 155 cm. The
 
 </WorkedExample>
 
-<WorkedExample number={4} title="Find the slip" faded>
+<WorkedExample number={3} title="Find the slip" faded>
 
-(a) A student takes the 3rd and 7th children in arrival order, 140 and 137 cm, as Q1 and Q3: an IQR of −3 cm.
+(a) A student takes Child 3 and Child 7 in the order Table view lists them, the order they arrived, 140 and 137 cm, as Q1 and Q3: an IQR of −3 cm.
 
 (b) For One very tall child, a student draws the upper whisker to 162 cm.
 
@@ -236,21 +225,21 @@ What went wrong in each?
 
 </WorkedExample>
 
-<WorkedExample number={5} title="p99 latency of a model server" faded>
+<WorkedExample number={4} title="p99 latency of a model server" faded>
 
-A model server answers 13 requests in 40, 42, 45, 47, 50, 52, 55, 58, 60, 64, 70, 95 and 400 ms. Find the box plot, the 90th and 99th percentiles and the mean.
+A model server answers 13 requests in 40, 42, 45, 47, 50, 52, 55, 58, 60, 64, 70, 95 and 400 ms. Find the box plot, the 90th and 99th percentiles (p90 and p99) and the mean.
 
 <div slot="solution">
 
-$13 = 4 \times 3 + 1$, so Q1 is the 4th value, 47, the median the 7th, 55, and Q3 the 10th, 64. IQR 17, fences 21.5 and 89.5: 95 and 400 are dots, and the upper whisker stops at 70. The 90th percentile is $70 + 0.8 \times 25 = 90$ ms ($h = 10.8$), the 99th $95 + 0.88 \times 305 = 363.4$ ms ($h = 11.88$). One slow request lifts the mean, 1,078/13 ≈ 82.92 ms, above Q3. With 13 values the "p99" mostly slides toward the slowest request.
+13 values have 12 steps, so each quarter is 3 steps: Q1 is 3 steps past the first value, the 4th, 47, the median the 7th, 55, and Q3 the 10th, 64. IQR 17, fences 21.5 and 89.5: 95 and 400 are dots, and the upper whisker stops at 70. The 90th percentile is $70 + 0.8 \times 25 = 90$ ms ($h = 10.8$), the 99th $95 + 0.88 \times 305 = 363.4$ ms ($h = 11.88$). One slow request lifts the mean, 1,078/13 ≈ 82.92 ms, above Q3. With only 13 values, p99 sits 88% of the way from the 2nd-slowest request to the slowest, so it mostly reports that one request.
 
 </div>
 
 </WorkedExample>
 
-<WorkedExample number={6} title="Robust scaling of one feature" faded>
+<WorkedExample number={5} title="Robust scaling of one feature" faded>
 
-A feature takes the values 1, 2, 3, 4 and 100. Scale it by the median and the IQR, then compare with z-scores (the standard deviation dividing by n).
+A feature takes the values 1, 2, 3, 4 and 100. Scale it robustly, (value − median) / IQR, then compare with z-scores, (value − mean) / standard deviation, dividing by n.
 
 <div slot="solution">
 
@@ -264,11 +253,11 @@ The median is 3 and the IQR is 4 − 2 = 2, so robust scaling gives −1, −0.5
 
 ### Latency percentiles for model servers
 
-Model servers are monitored by percentiles such as p50 and p99 rather than by the average. Masson, Rim and Lee describe web latencies as heavily skewed: in their example the average sits closer to the 75th percentile than to the median. Exact quantiles over a stream need every value, so monitors keep a small sketch. A sketch accurate in rank can be far off in value: for their 2 million requests, a rank accuracy of 0.005 lets a p99 answer land anywhere from the 98.5th to the 99.5th percentile, from 2 to 20 seconds. So their DDSketch bounds the relative error of the value instead <Cite id="masson2019" />. Their q-quantile, rank $\lfloor 1 + q(n-1) \rfloor$, takes NumPy's $(n-1)q$ steps but rounds down.
+Model servers are monitored by percentiles such as p50 and p99 rather than by the average. Masson, Rim and Lee describe web latencies as heavily skewed: in their example the average sits closer to the 75th percentile than to the median <Cite id="masson2019" />. Exact quantiles over a stream need every value, so monitors keep a sketch, a small summary that answers quantile questions approximately. A sketch accurate in rank can be far off in value: for their 2 million requests, a rank accuracy of 0.005 lets a p99 answer land anywhere from the 98.5th to the 99.5th percentile, from 2 to 20 seconds <Cite id="masson2019" />. So their DDSketch bounds the relative error of the value instead <Cite id="masson2019" />.
 
 ### Robust feature scaling with the IQR
 
-scikit-learn's `RobustScaler` subtracts the median and divides by a quantile range, by default from the 25th to the 75th percentile, the IQR. Its documentation gives the reason: outliers can often influence the sample mean and variance in a negative way <Cite id="sklearn-robustscaler" />. The linear quartiles reproduce its documented example exactly, and NIST's type 6 would not, as the code below checks. Comparing scalers gets its own page.
+scikit-learn's `RobustScaler` subtracts the median and divides by a quantile range, by default from the 25th to the 75th percentile, the IQR. Its documentation gives the reason: outliers can often influence the sample mean and variance in a negative way <Cite id="sklearn-robustscaler" />. The linear quartiles reproduce its documented example exactly, and NIST's type 6 would not, as the code below checks. Comparing scalers gets [its own page](/statistics/standardization-vs-min-max-scaling/).
 
 ## Check every quartile in code
 
@@ -310,15 +299,6 @@ def quantile_type6(values, p):
     return xs[k - 1] + d * (xs[k] - xs[k - 1])
 
 
-def quantile_type8(values, p):
-    """The median-unbiased method (type 8): position p(n + 1/3) + 1/3."""
-    xs = sorted(Fraction(v) for v in values)
-    position = Fraction(p) * (len(xs) + Fraction(1, 3)) + Fraction(1, 3)
-    k = math.floor(position)
-    d = position - k
-    return xs[k - 1] + d * (xs[k] - xs[k - 1])
-
-
 def median_of(xs):
     xs = sorted(xs)
     middle = len(xs) // 2
@@ -355,6 +335,7 @@ assert (box["low_whisker"], box["high_whisker"], box["dots"]) == (122, 148, [])
 assert (in_line[2], in_line[4], in_line[6]) == (128, 133, 140)
 assert [heights.index(v) + 1 for v in (128, 133, 140)] == [4, 1, 3]
 assert 133 - 128 == 5 and 140 - 133 == 7
+assert (heights[2], heights[6], heights[6] - heights[2]) == (140, 137, -3)
 print("our class: Q1", box["q1"], " median", box["median"], " Q3", box["q3"], " IQR", box["iqr"],
       " fences", box["low_fence"], "and", box["high_fence"], " whiskers", box["low_whisker"], "and", box["high_whisker"])
 
@@ -369,13 +350,21 @@ for key in ("q1", "median", "q3", "iqr", "low_fence", "high_fence"):
     assert tall_box[key] == box[key]
 assert tall_box["dots"] == [162] and tall_box["high_whisker"] == 142
 
+# Resistant only from n = 5: for n = 2 to 4, Q3 interpolates toward the largest value.
+assert quantile([1, 2, 3, 4], Fraction(3, 4)) == Fraction(13, 4)
+assert quantile([1, 2, 3, 100], Fraction(3, 4)) == Fraction(109, 4)
+for n in range(5, 30):
+    xs = [k * k for k in range(n)]
+    pushed = xs[:-1] + [xs[-1] + 1000]
+    for p in (Fraction(1, 4), Fraction(3, 4)):
+        assert quantile(pushed, p) == quantile(xs, p), n
+
 # Three methods on our class.
 assert hinges(heights) == (128, 140)
 nist = box_plot(heights, quantile_type6)
 assert nist["q1"] == Fraction(253, 2) and nist["q3"] == 141 and nist["iqr"] == Fraction(29, 2)
 assert nist["high_fence"] == Fraction(651, 4) and 162 < nist["high_fence"]
 assert box_plot(tall, quantile_type6)["dots"] == []
-assert quantile_type8(heights, Fraction(1, 4)) == 127 and quantile_type8(heights, Fraction(3, 4)) == Fraction(422, 3)
 
 # Ten children: our class plus a 136 cm child.
 ten = heights + [136]
@@ -399,7 +388,7 @@ for k in range(1, 11):
     for p in (Fraction(1, 4), Fraction(1, 2), Fraction(3, 4)):
         assert quantile(xs, p) in xs
 
-# Worked example 2: homework times.
+# Worked example 1: homework times.
 homework = [5, 10, 12, 15, 18, 20, 22, 28, 30, 35, 40, 45, 90]
 hw = box_plot(homework)
 assert (hw["q1"], hw["median"], hw["q3"], hw["iqr"]) == (15, 22, 35, 20)
@@ -411,7 +400,7 @@ assert hw_mean == Fraction(370, 13) and abs(float(hw_mean) - 28.46) < 0.005
 assert sum(v <= hw["q1"] for v in homework) == 4
 assert sum(hw["q1"] <= v <= hw["q3"] for v in homework) == 7
 
-# Worked example 5: 13 response times in ms.
+# Worked example 4: 13 response times in ms.
 latency = [40, 42, 45, 47, 50, 52, 55, 58, 60, 64, 70, 95, 400]
 lat = box_plot(latency)
 assert (lat["q1"], lat["median"], lat["q3"], lat["iqr"]) == (47, 55, 64, 17)
@@ -419,10 +408,12 @@ assert (lat["low_fence"], lat["high_fence"]) == (Fraction(43, 2), Fraction(179, 
 assert lat["dots"] == [95, 400] and lat["high_whisker"] == 70
 assert quantile(latency, Fraction(9, 10)) == 90
 assert quantile(latency, Fraction(99, 100)) == Fraction(1817, 5)
+assert (len(latency) - 1) * Fraction(99, 100) == 11 + Fraction(88, 100)
+assert Fraction(1817, 5) == 95 + Fraction(88, 100) * (400 - 95)
 lat_mean = Fraction(sum(latency), len(latency))
 assert lat_mean == Fraction(1078, 13) and abs(float(lat_mean) - 82.92) < 0.005 and lat_mean > 64
 
-# Worked example 6: robust scaling against z-scores (sigma divides by n).
+# Worked example 5: robust scaling against z-scores (sigma divides by n).
 feature = [1, 2, 3, 4, 100]
 f_median, f_iqr = quantile(feature, Fraction(1, 2)), box_plot(feature)["iqr"]
 assert f_median == 3 and f_iqr == 2
@@ -557,9 +548,6 @@ Multiplying by $c < 0$ reverses the sorted order, so the value $(n-1)/4$ steps f
   </Mistake>
   <Mistake wrong="The whiskers always reach the smallest and largest values.">
     They stop at the last values on or inside the fences <Cite id="r-boxplot-stats" />. With the tall child the whisker stops at 142 cm and 162 cm is a dot.
-  </Mistake>
-  <Mistake wrong="Quartiles have one correct value.">
-    Methods differ. NumPy's default gives our class an IQR of 12 cm, NIST's 14.5 cm, and only the first draws 162 cm as a dot.
   </Mistake>
   <Mistake wrong="A dot on a box plot is a mistake to delete.">
     It is a value past a fence. Calling it an error needs a reason from outside the plot, such as a typo.
