@@ -134,7 +134,7 @@ assert.equal(shown.checked, true);
 assert.deepEqual([...shown.events.A], ['HH', 'HT', 'TH']);
 // A shown answer isn't praised with "Yes".
 assert.equal(describe.feedbackLine(shown), 'The answer: HH, HT and TH. 3 of 4 squares, so P(A) = 3/4 = 0.75.');
-assert.equal(describe.announcementFor(shown, { type: 'show-answer' }), 'The answer: HH, HT and TH. 3 of 4 squares, so P(A) = 3/4 = 0.75.');
+assert.equal(describe.announcementFor(shown, { type: 'show-answer' }), 'The answer: HH, HT and TH. 3 of 4 squares, so P of A = 3/4 = 0.75.');
 
 // editing B leaves A alone.
 const operations = initialState('dice-operations');
@@ -268,9 +268,9 @@ assert.deepEqual(describe.readoutLines(shrunk), [shrunkLine]);
 assert.equal(describe.statusLine(shrunk), '36 equally likely outcomes. Editing A. Shrunk to B: 6 outcomes left.');
 // Speech matches the screen while shrunk: a change to A or B is announced as the new P(A | B).
 const shrunkToggle = reducer(shrunk, { type: 'toggle', id: '4-4' });
-assert.equal(describe.announcementFor(shrunkToggle, { type: 'toggle', id: '4-4' }), 'Inside B: 6 outcomes, 3 of them also in A, {(4,4), (5,5), (6,6)}. P(A | B) = 3/6 = 1/2 = 0.50, while P(A) = 7/36 ≈ 0.19.');
+assert.equal(describe.announcementFor(shrunkToggle, { type: 'toggle', id: '4-4' }), 'Inside B: 6 outcomes, 3 of them also in A, {(4,4), (5,5), (6,6)}. P of A given B = 3/6 = 1/2 = 0.50, while P of A = 7/36 ≈ 0.19.');
 const shrunkPreset = reducer(shrunk, { type: 'preset', event: 'A', preset: 'clear' });
-assert.equal(describe.announcementFor(shrunkPreset, { type: 'preset', event: 'A', preset: 'clear' }), 'Inside B: 6 outcomes, none of them also in A. P(A | B) = 0/6 = 0, while P(A) = 0/36 = 0.');
+assert.equal(describe.announcementFor(shrunkPreset, { type: 'preset', event: 'A', preset: 'clear' }), 'Inside B: 6 outcomes, none of them also in A. P of A given B = 0/6 = 0, while P of A = 0/36 = 0.');
 // A setup that would need unbuilt conditioning features fails loudly.
 const conditionSetup = getSetup('dice-condition');
 assert.throws(() => validateSetup({ ...conditionSetup, events: { A: conditionSetup.events.A } }), /needs an event B/);
@@ -410,25 +410,29 @@ const coinDieVerdict = [
 	'P(A and B) = 1/12, and P(A) × P(B) = 1/6 × 1/2 = 1/12: equal.',
 ];
 assert.deepEqual(describe.compareLines(coinDieCompared), [...coinDieVerdict, 'P(A | B) = 1/6 and P(A) = 1/6: learning that B happened leaves the chance of A unchanged.']);
-assert.equal(describe.announcementFor(coinDieCompared, { type: 'compare', on: true }), coinDieVerdict.join(' '));
+// Spoken, the symbols become words: "P of A and B", not "P left paren A and B".
+assert.equal(
+	describe.announcementFor(coinDieCompared, { type: 'compare', on: true }),
+	'Independent: yes. Mutually exclusive: no, A and B share 1 outcome, {H6}. P of A and B = 1/12, and P of A times P of B = 1/6 times 1/2 = 1/12: equal.',
+);
 
 // Shrink, once Compare is on: "Inside B" replaces the readouts, and the conditional line is left out as repeated.
 const coinDieShrunk = reducer(coinDieCompared, { type: 'shrink', on: true });
 assert.equal(coinDieShrunk.shrink, true);
 assert.deepEqual(describe.readoutLines(coinDieShrunk), ['Inside B: 6 outcomes, 1 of them also in A, {H6}. P(A | B) = 1/6 ≈ 0.17, while P(A) = 2/12 = 1/6 ≈ 0.17.']);
 assert.deepEqual(describe.compareLines(coinDieShrunk), coinDieVerdict);
-assert.equal(describe.announcementFor(coinDieShrunk, { type: 'shrink', on: true }), 'Inside B: 6 outcomes, 1 of them also in A, {H6}. P(A | B) = 1/6 ≈ 0.17, while P(A) = 2/12 = 1/6 ≈ 0.17.');
+assert.equal(describe.announcementFor(coinDieShrunk, { type: 'shrink', on: true }), 'Inside B: 6 outcomes, 1 of them also in A, {H6}. P of A given B = 1/6 ≈ 0.17, while P of A = 2/12 = 1/6 ≈ 0.17.');
 
 // Precedence with Compare and Shrink both on: the new P(A | B), then the verdict in short.
 const evenShrunk = reducer(coinDieShrunk, { type: 'preset', event: 'A', preset: 'die-even' });
 assert.equal(
 	describe.announcementFor(evenShrunk, { type: 'preset', event: 'A', preset: 'die-even' }),
-	'Inside B: 6 outcomes, 3 of them also in A, {H2, H4, H6}. P(A | B) = 3/6 = 1/2 = 0.50, while P(A) = 6/12 = 1/2 = 0.50. Independent: yes. Mutually exclusive: no.',
+	'Inside B: 6 outcomes, 3 of them also in A, {H2, H4, H6}. P of A given B = 3/6 = 1/2 = 0.50, while P of A = 6/12 = 1/2 = 0.50. Independent: yes. Mutually exclusive: no.',
 );
 const toggledShrunk = reducer(coinDieShrunk, { type: 'toggle', id: 'H1' });
 assert.equal(
 	describe.announcementFor(toggledShrunk, { type: 'toggle', id: 'H1' }),
-	'Inside B: 6 outcomes, 2 of them also in A, {H1, H6}. P(A | B) = 2/6 = 1/3 ≈ 0.33, while P(A) = 3/12 = 1/4 = 0.25. Independent: no. Mutually exclusive: no.',
+	'Inside B: 6 outcomes, 2 of them also in A, {H1, H6}. P of A given B = 2/6 = 1/3 ≈ 0.33, while P of A = 3/12 = 1/4 = 0.25. Independent: no. Mutually exclusive: no.',
 );
 // Emptying B while shrunk un-shrinks, says why, and still gives the verdict.
 const emptiedB = reducer(coinDieShrunk, { type: 'preset', event: 'B', preset: 'clear' });
@@ -574,7 +578,7 @@ assert.deepEqual(describe.compareLines(dieCompared), [
 ]);
 assert.equal(
 	describe.announcementFor(dieCompared, { type: 'compare', on: true }),
-	'Independent: no. Mutually exclusive: yes, A and B share no outcome. P(A and B) = 0, but P(A) × P(B) = 1/3 × 1/3 = 1/9 (≈ 0.11): not equal.',
+	'Independent: no. Mutually exclusive: yes, A and B share no outcome. P of A and B = 0, but P of A times P of B = 1/3 times 1/3 = 1/9 (≈ 0.11): not equal.',
 );
 const dieWith = (...actions) => describe.compareLines(run('die-compare', { type: 'compare', on: true }, ...actions));
 const loaded = { type: 'weight-preset', name: 'Loaded toward six' };

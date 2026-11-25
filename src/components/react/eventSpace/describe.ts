@@ -384,8 +384,27 @@ export function refusalText(reason: Refusal['reason']): string {
 /** Turning Compare on speaks the verdict, exclusivity and the product; the conditional line stays on screen only. */
 const VERDICT_LINES_SPOKEN = 3;
 
+/**
+ * The on-screen probability symbols as words, so a screen reader says "P of A given B" rather than
+ * "P left paren A vertical line B". The visible lines keep the symbols, as the toggle's "P of A" already does.
+ */
+const SPOKEN_SYMBOLS: readonly (readonly [RegExp, string])[] = [
+	[/P\(([AB]) \| ([AB])\)/g, 'P of $1 given $2'],
+	[/P\(([AB]) and ([AB])\)/g, 'P of $1 and $2'],
+	[/P\(([AB])\)/g, 'P of $1'],
+	[/ × /g, ' times '],
+];
+
+export function spokenSymbols(line: string): string {
+	return SPOKEN_SYMBOLS.reduce((text, [symbol, words]) => text.replace(symbol, words), line);
+}
+
 /** What the live region says after an action ends (toggles are debounced by the component). */
 export function announcementFor(state: EventSpaceState, action: Action): string {
+	return spokenSymbols(announcementText(state, action));
+}
+
+function announcementText(state: EventSpaceState, action: Action): string {
 	const scenario = scenarioOf(state);
 	switch (action.type) {
 		case 'toggle': {
