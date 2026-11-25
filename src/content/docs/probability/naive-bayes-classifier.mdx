@@ -24,7 +24,7 @@ references:
   - ng2001
   - niculescu2005
 author: Muhammad Huzaifa Hussain
-reviewedAt: 2026-11-24
+reviewedAt: 2026-11-25
 aiAssisted: true
 primaryQuery: naive bayes classifier
 searchIntent: apply
@@ -85,7 +85,7 @@ Arrow keys move the sliders in steps of 0.01.
 3. Read P(A | B).
 
 <div class="not-content">
-  <BayesTheorem client:visible />
+  <BayesTheorem client:visible scenarios={["any-events", "wet-lawn"]} />
 </div>
 
 Naive Bayes says yes: "P(A | B) = 0.694   P(B) = 0.558". The odds of rain triple. Computed exactly: 3/7 is odds of 3:4, the second clue multiplies them by the likelihood ratio 0.9/0.3 = 3 to give 9:4, and odds of 9:4 are a probability of 9/13 ≈ 0.692. The board shows 0.694 because 0.43 is a little above 3/7. The truth is still 3/7 ≈ 0.429, yet counting the clue twice crossed 0.5. Tests whose errors really are independent given the condition do multiply, as in [updating twice](/probability/bayes-theorem/#updating-twice).
