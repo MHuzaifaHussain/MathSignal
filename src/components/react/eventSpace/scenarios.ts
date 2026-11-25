@@ -10,7 +10,7 @@ export interface EventDefinition {
 	outsideReason?: string;
 }
 
-export type ScenarioId = 'two-coins' | 'one-die' | 'two-dice' | 'coin-die' | 'kids' | 'weather-days';
+export type ScenarioId = 'two-coins' | 'one-die' | 'two-dice' | 'coin-die' | 'kids' | 'weather-days' | 'monty-hall';
 
 export interface Scenario {
 	id: ScenarioId;
@@ -293,6 +293,58 @@ function weatherDays(): Scenario {
 	});
 }
 
+/** The doors the car can be behind; you always pick door 1, so the host opens door 2 or door 3. */
+const MONTY_CAR_DOORS = [1, 2, 3] as const;
+const MONTY_COIN = COIN_FACES.map((face) => ({ ...face, opensOnTie: face.value === 'H' ? 2 : 3 }));
+
+/**
+ * The door the host opens: never your door 1 and never the car's door. Only with the car behind door 1 does he
+ * have a choice, and then the coin decides (heads door 2, tails door 3): his 50/50 tie-break.
+ */
+function montyOpens(car: number, coin: (typeof MONTY_COIN)[number]): number {
+	if (car === 1) return coin.opensOnTie;
+	return car === 2 ? 3 : 2;
+}
+
+/**
+ * The Monty Hall game as six equally likely cells, (car's door) × (host's coin), each 1/3 × 1/2 = 1/6. The coin
+ * column turns the host's 50/50 tie-break into equally likely outcomes, so conditioning stays a count.
+ */
+function montyHall(): Scenario {
+	const opensById = new Map<OutcomeId, number>();
+	const outcomes = MONTY_CAR_DOORS.flatMap((car, row) =>
+		MONTY_COIN.map((coin, col) => {
+			const id = `${car}-${coin.value}`;
+			const opens = montyOpens(car, coin);
+			opensById.set(id, opens);
+			return { id, row, col, label: `opens ${opens}`, spoken: `car behind door ${car}, coin ${coin.word}`, setLabel: `car ${car}, ${coin.word}` };
+		}),
+	);
+	const carOf = (outcome: Outcome) => Number(outcome.id.split('-')[0]);
+	const opensOf = (outcome: Outcome) => {
+		const door = opensById.get(outcome.id);
+		if (door === undefined) throw new Error(`EventSpace: "${outcome.id}" is not a Monty Hall game.`);
+		return door;
+	};
+	return {
+		id: 'monty-hall',
+		describeSpace: 'the Monty Hall game, where you pick door 1',
+		rowLabel: 'Car behind',
+		colLabel: "Host's coin",
+		rowValues: MONTY_CAR_DOORS.map((car) => `door ${car}`),
+		colValues: MONTY_COIN.map((coin) => coin.word),
+		outcomes,
+		events: {
+			'car-1': { label: 'car behind door 1', members: (outcome) => carOf(outcome) === 1 },
+			'car-2': { label: 'car behind door 2', members: (outcome) => carOf(outcome) === 2 },
+			'car-3': { label: 'car behind door 3', members: (outcome) => carOf(outcome) === 3 },
+			'opens-3': { label: 'host opens door 3', members: (outcome) => opensOf(outcome) === 3 },
+			'opens-2': { label: 'host opens door 2', members: (outcome) => opensOf(outcome) === 2 },
+		},
+		mirrorOf: () => undefined,
+	};
+}
+
 function checked(scenario: Scenario): Scenario {
 	if (scenario.outcomes.length > MAX_OUTCOMES) {
 		throw new Error(`EventSpace: scenario "${scenario.id}" has ${scenario.outcomes.length} outcomes; the most a board can show is ${MAX_OUTCOMES}.`);
@@ -307,6 +359,7 @@ export const SCENARIOS: Record<ScenarioId, Scenario> = {
 	'coin-die': checked(coinDie()),
 	kids: checked(kids()),
 	'weather-days': checked(weatherDays()),
+	'monty-hall': checked(montyHall()),
 };
 
 /** The ids of a scenario's named event, in outcome order. */

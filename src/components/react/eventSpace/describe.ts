@@ -20,7 +20,9 @@ function outcomesIn(scenario: Scenario, members: ReadonlySet<OutcomeId>): Outcom
 
 /** "{HH, HT, TH}" or "{(6,1), (5,2)}": labels with a comma get brackets so the list stays readable. */
 function setText(scenario: Scenario, members: ReadonlySet<OutcomeId>): string {
-	const labels = outcomesIn(scenario, members).map((outcome) => (outcome.label.includes(',') ? `(${outcome.label})` : outcome.label));
+	const labels = outcomesIn(scenario, members)
+		.map((outcome) => outcome.setLabel ?? outcome.label)
+		.map((label) => (label.includes(',') ? `(${label})` : label));
 	const shown = labels.slice(0, MAX_LISTED).join(', ');
 	return labels.length > MAX_LISTED ? `{${shown} and ${labels.length - MAX_LISTED} more}` : `{${shown}}`;
 }
@@ -146,8 +148,10 @@ export function readoutLines(state: EventSpaceState): string[] {
 	if (setup.mode === 'condition' || setup.mode === 'compare') {
 		if (state.shrink) return [conditionalLine(state)];
 		const lines = [eventLine(state, 'A'), eventLine(state, 'B')];
-		// A compare setup holds the A ∩ B line until Compare is on, so it can't answer the page's question first.
-		return setup.mode === 'compare' && !state.compare ? lines : [...lines, bothLine(state)];
+		// A compare setup holds the A ∩ B line until Compare is on, and a holdOverlap setup until the world is
+		// shrunk: beside B's count it would answer the page's question first.
+		const held = (setup.mode === 'compare' && !state.compare) || setup.holdOverlap;
+		return held ? lines : [...lines, bothLine(state)];
 	}
 	if (!setup.events.B) {
 		const share = probability(A, scenario.outcomes);

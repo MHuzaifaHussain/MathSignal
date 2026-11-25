@@ -13,7 +13,8 @@ export type SetupId =
 	| 'coin-die-independence'
 	| 'dice-independence'
 	| 'weather-exclusive'
-	| 'die-compare';
+	| 'die-compare'
+	| 'monty-condition';
 
 /** The built-in preset that empties an event. */
 export const CLEAR_PRESET = 'clear';
@@ -57,6 +58,13 @@ export interface Setup {
 	stages: boolean;
 	toss: boolean;
 	wrongModel: boolean;
+	/**
+	 * Condition mode: hold the "A and B" line until the world is shrunk to B. Set where |A ∩ B| beside |B| would
+	 * already be the answer the page asks the reader to find by shrinking.
+	 */
+	holdOverlap?: boolean;
+	/** A handwritten note beside the grid (ChalkNote): qualitative only, never a number. */
+	chalkNote?: { long: string; short: string };
 }
 
 const COUNT_DEFAULTS = { mode: 'count', lookAt: false, shrinkSwitch: false, stages: false, toss: false, wrongModel: false } as const;
@@ -174,6 +182,20 @@ const SETUPS: Record<SetupId, Setup> = {
 		weightPresets: DIE_WEIGHT_PRESETS,
 		initialWeights: 'Fair die',
 	},
+	'monty-condition': {
+		...COUNT_DEFAULTS,
+		id: 'monty-condition',
+		scenario: 'monty-hall',
+		mode: 'condition',
+		shrinkSwitch: true,
+		holdOverlap: true,
+		label: "Six equally likely games: where the car is and the host's coin. A: where the car is. B: the door the host opens.",
+		events: {
+			A: { editable: false, initial: 'car-1', presets: ['car-1', 'car-2', 'car-3'] },
+			B: { editable: false, initial: 'opens-3', presets: ['opens-3', 'opens-2'] },
+		},
+		chalkNote: { long: "the coin is the host's tie-break", short: 'coin = tie-break' },
+	},
 };
 
 /** Whether the setup offers "Shrink the world to B". */
@@ -218,6 +240,12 @@ export function validateSetup(setup: Setup): Setup {
 	// The "missed" outline after Check and the strike on cells outside "Look at" or B are drawn by the same pseudo-element.
 	if (setup.goal && (setup.lookAt || hasB)) {
 		throw new Error(`EventSpace: goal setup "${setup.id}" can't use "Look at" or conditioning; a missed square would lose its outline.`);
+	}
+	if (setup.holdOverlap && setup.mode !== 'condition') {
+		throw new Error(`EventSpace: ${setup.mode} setup "${setup.id}" can't hold the "A and B" line; only condition setups show it before shrinking.`);
+	}
+	if (setup.chalkNote && /\d/.test(`${setup.chalkNote.long} ${setup.chalkNote.short}`)) {
+		throw new Error(`EventSpace: setup "${setup.id}" has a number in its chalk note; notes are qualitative only.`);
 	}
 	if (setup.mode === 'compare') validateCompare(setup);
 	for (const [name, fills] of Object.entries(setup.weightPresets ?? {})) {

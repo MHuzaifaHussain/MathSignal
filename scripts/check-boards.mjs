@@ -307,6 +307,73 @@ assert.deepEqual(describe.readoutLines(reducer(kidsFresh, { type: 'shrink', on: 
 ]);
 assert.equal(describe.cellName(kidsFresh, kids.outcomes[1]), '2. Hat and scarf. In A and B.');
 
+// ---- Monty Hall: six equally likely games, shrunk to the door the host opens ----
+const monty = SCENARIOS['monty-hall'];
+const montyIds = (event) => ids(monty, event);
+// Rows are the car's door, columns the host's coin; each cell names the door he opens.
+assert.equal(monty.outcomes.length, 6);
+assert.deepEqual(monty.outcomes.map((outcome) => outcome.label), ['opens 2', 'opens 3', 'opens 3', 'opens 3', 'opens 2', 'opens 2']);
+assert.deepEqual(monty.rowValues, ['door 1', 'door 2', 'door 3']);
+assert.deepEqual(monty.colValues, ['heads', 'tails']);
+assert.equal(monty.outcomes[2].spoken, 'car behind door 2, coin heads');
+assert.equal(monty.mirrorOf('1-H'), undefined);
+// Every cell is one game of 1/3 × 1/2 = 1/6: the coin turns the host's 50/50 tie-break into equal cells.
+assert.deepEqual(multiplyFractions(fraction(1, 3), fraction(1, 2)), probability(new Set(['1-H']), monty.outcomes));
+for (const outcome of monty.outcomes) assert.deepEqual(probability(new Set([outcome.id]), monty.outcomes), fraction(1, 6));
+assert.deepEqual([...montyIds('opens-3')], ['1-T', '2-H', '2-T']);
+assert.deepEqual([...montyIds('opens-2')], ['1-H', '3-H', '3-T']);
+for (const car of ['car-1', 'car-2', 'car-3']) assert.deepEqual(probability(montyIds(car), monty.outcomes), fraction(1, 3));
+assert.deepEqual(probability(montyIds('opens-3'), monty.outcomes), fraction(1, 2));
+// The rows read as likelihoods: P(opens 3 | car behind door 1, 2, 3) = 1/2, 1, 0.
+assert.deepEqual(['car-1', 'car-2', 'car-3'].map((car) => model.conditionalProbability(montyIds('opens-3'), montyIds(car))), [fraction(1, 2), fraction(1, 1), fraction(0, 1)]);
+// The posteriors the page quotes.
+const montyGiven = (car, opened) => model.conditionalProbability(montyIds(car), montyIds(opened));
+assert.deepEqual(['car-1', 'car-2', 'car-3'].map((car) => montyGiven(car, 'opens-3')), [fraction(1, 3), fraction(2, 3), fraction(0, 1)]);
+assert.deepEqual(['car-1', 'car-2', 'car-3'].map((car) => montyGiven(car, 'opens-2')), [fraction(1, 3), fraction(0, 1), fraction(2, 3)]);
+assert.deepEqual([intersect(montyIds('car-1'), montyIds('opens-3')).size, intersect(montyIds('car-2'), montyIds('opens-3')).size, intersect(montyIds('car-3'), montyIds('opens-3')).size], [1, 2, 0]);
+
+// Fixed data, opening on A = car behind door 1 and B = host opens door 3, not yet shrunk. The "A and B" line is held,
+// because 1 of 6 beside 3 of 6 would answer the page's question before the reader shrinks.
+const montySetup = getSetup('monty-condition');
+assert.equal(montySetup.mode, 'condition');
+assert.equal(montySetup.holdOverlap, true);
+assert.deepEqual(montySetup.chalkNote, { long: "the coin is the host's tie-break", short: 'coin = tie-break' });
+const montyFresh = initialState('monty-condition');
+const montyRun = (...actions) => actions.reduce(reducer, montyFresh);
+const shrinkOn = { type: 'shrink', on: true };
+const montyA = (preset) => ({ type: 'preset', event: 'A', preset });
+const montyB = (preset) => ({ type: 'preset', event: 'B', preset });
+assert.equal(montyFresh.shrink, false);
+assert.equal(describe.statusLine(montyFresh), '6 equally likely outcomes. A: car behind door 1. B: host opens door 3.');
+assert.deepEqual(describe.readoutLines(montyFresh), ['A = car behind door 1: 2 of 6 = 1/3 (≈ 0.33)', 'B = host opens door 3: 3 of 6 = 1/2 (0.50)']);
+assert.deepEqual(describe.readoutLines(montyRun(montyA('car-2'))), ['A = car behind door 2: 2 of 6 = 1/3 (≈ 0.33)', 'B = host opens door 3: 3 of 6 = 1/2 (0.50)']);
+assert.equal(describe.announcementFor(montyRun(montyA('car-2')), montyA('car-2')), 'A set to car behind door 2: 2 of 6 outcomes.');
+assert.equal(reducer(montyFresh, { type: 'toggle', id: '1-H' }), montyFresh);
+assert.deepEqual(['car-1', 'car-2', 'car-3'].map((preset) => describe.presetLabel(monty, preset)), ['Car behind door 1', 'Car behind door 2', 'Car behind door 3']);
+assert.deepEqual(['opens-3', 'opens-2'].map((preset) => describe.presetLabel(monty, preset)), ['Host opens door 3', 'Host opens door 2']);
+// Shrunk to "host opens door 3": the share of B that is A, read from the board.
+const montyShrunk = montyRun(shrinkOn);
+assert.equal(describe.statusLine(montyShrunk), '6 equally likely outcomes. A: car behind door 1. B: host opens door 3. Shrunk to B: 3 outcomes left.');
+assert.deepEqual(describe.readoutLines(montyShrunk), ['Inside B: 3 outcomes, 1 of them also in A, {(car 1, tails)}. P(A | B) = 1/3 ≈ 0.33, while P(A) = 2/6 = 1/3 ≈ 0.33.']);
+assert.deepEqual(describe.readoutLines(montyRun(shrinkOn, montyA('car-2'))), ['Inside B: 3 outcomes, 2 of them also in A, {(car 2, heads), (car 2, tails)}. P(A | B) = 2/3 ≈ 0.67, while P(A) = 2/6 = 1/3 ≈ 0.33.']);
+assert.deepEqual(describe.readoutLines(montyRun(shrinkOn, montyA('car-3'))), ['Inside B: 3 outcomes, none of them also in A. P(A | B) = 0/3 = 0, while P(A) = 2/6 = 1/3 ≈ 0.33.']);
+assert.equal(describe.announcementFor(montyRun(shrinkOn, montyA('car-2')), montyA('car-2')), 'Inside B: 3 outcomes, 2 of them also in A, {(car 2, heads), (car 2, tails)}. P of A given B = 2/3 ≈ 0.67, while P of A = 2/6 = 1/3 ≈ 0.33.');
+// The second preset for B: the host opens door 2.
+assert.deepEqual(describe.readoutLines(montyRun(montyB('opens-2'), shrinkOn)), ['Inside B: 3 outcomes, 1 of them also in A, {(car 1, heads)}. P(A | B) = 1/3 ≈ 0.33, while P(A) = 2/6 = 1/3 ≈ 0.33.']);
+assert.deepEqual(describe.readoutLines(montyRun(montyB('opens-2'), shrinkOn, montyA('car-3'))), ['Inside B: 3 outcomes, 2 of them also in A, {(car 3, heads), (car 3, tails)}. P(A | B) = 2/3 ≈ 0.67, while P(A) = 2/6 = 1/3 ≈ 0.33.']);
+// Cells say the game, then membership; the visible "opens 3" is the label.
+assert.equal(describe.cellName(montyShrunk, monty.outcomes[1]), 'opens 3. Car behind door 1, coin tails. In A and B.');
+assert.equal(describe.cellName(montyShrunk, monty.outcomes[0]), 'opens 2. Car behind door 1, coin heads. In A. Ruled out.');
+assert.equal(describe.cellName(montyShrunk, monty.outcomes[4]), 'opens 2. Car behind door 3, coin heads. Ruled out.');
+// Un-shrinking holds the line again, and Reset returns to the opening.
+assert.deepEqual(describe.readoutLines(reducer(montyShrunk, { type: 'shrink', on: false })), describe.readoutLines(montyFresh));
+assert.deepEqual(reducer(montyRun(shrinkOn, montyA('car-2')), { type: 'reset' }), montyFresh);
+// Only condition setups can hold the line, and a chalk note never carries a number.
+assert.throws(() => validateSetup({ ...getSetup('dice-operations'), holdOverlap: true }), /count setup "dice-operations" can't hold the "A and B" line/);
+assert.throws(() => validateSetup({ ...montySetup, chalkNote: { long: 'switch wins 2/3', short: 'switch' } }), /setup "monty-condition" has a number in its chalk note/);
+// Setups without holdOverlap keep the line before shrinking (pinned above for dice-condition and kids-condition).
+assert.equal(getSetup('dice-condition').holdOverlap, undefined);
+
 // ---- Compare mode: independence and mutual exclusivity (v1.3) ----
 const setupsModule = await import('../src/components/react/eventSpace/setups.ts');
 const stateModule = await import('../src/components/react/eventSpace/state.ts');

@@ -529,6 +529,21 @@
 	font-weight: 600;
 }
 
+/* A narrow grid with its chalk note beside it, or below it when the board is too narrow. In flow, never
+ * over the status line or a cell. */
+.ms-event-with-note {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.5rem 2rem;
+}
+
+.ms-event-with-note .ms-chalk-note {
+	position: static;
+	max-inline-size: 22rem;
+	text-wrap: balance;
+}
+
 .ms-event-grid {
 	--ms-event-gap: 6px;
 	--ms-event-header: 2rem;
@@ -554,6 +569,12 @@
 	text-align: center;
 }
 
+/* A worded row header ("door 1") widens its column rather than breaking over two lines. */
+.ms-event-grid th[scope='row'] {
+	padding-inline-end: 4px;
+	white-space: nowrap;
+}
+
 .ms-event-grid td {
 	padding: 0;
 }
@@ -573,6 +594,13 @@
 	font: 500 0.875rem var(--ms-font-mono);
 	cursor: pointer;
 	print-color-adjust: exact;
+}
+
+/* A worded label ("opens 3") breaks at its spaces, one word a line, clear of the corner tags and B's frame. */
+.ms-event-label {
+	inline-size: min-content;
+	line-height: 1.15;
+	text-align: center;
 }
 
 .ms-event-cell:hover {

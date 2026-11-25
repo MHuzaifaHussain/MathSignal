@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useId, useReducer, useRef } from "react";
+import { useCallback, useEffect, useId, useReducer, useRef, type ReactNode } from "react";
 import Board from "./Board";
+import ChalkNote from "./ChalkNote";
 import TrayChoice from "./TrayChoice";
 import { KEYBOARD_COMMIT_DELAY_MS } from "./boardTiming";
 import CheckButtons from "./guided/CheckButtons.tsx";
@@ -13,7 +14,7 @@ import WrongModelTiles from "./eventSpace/WrongModelTiles.tsx";
 import { simulate } from "./eventSpace/model.ts";
 import { COMPARE_COVERED_NOTE, COMPARE_LABEL, STAGE_LABELS, additivityLine, announcementFor, compareLines, feedbackLine, jugLine, markedLine, presetLabel, readoutLines, setsLine, shrinkRefusalText, statusLine, tossLine, totalLine } from "./eventSpace/describe.ts";
 import { SCENARIOS } from "./eventSpace/scenarios.ts";
-import { canShrink, getSetup, type SetupId } from "./eventSpace/setups.ts";
+import { canShrink, getSetup, type Setup, type SetupId } from "./eventSpace/setups.ts";
 import { activeWeightPreset, initialState, isLocked, reducer, shrinkBlocked, stageAllowed, type Action, type EventKey, type LookAt, type Stage } from "./eventSpace/state.ts";
 
 const LOCKED_REASON = "Check your answer first";
@@ -27,6 +28,20 @@ const LOOK_AT_OPTIONS: readonly { value: LookAt; label: string }[] = [
   { value: "A or B", label: "A or B" },
   { value: "not A", label: "Not A" },
 ];
+
+/**
+ * The grid with the setup's handwritten note beside it, in normal flow so it never covers a cell, or the grid
+ * alone when the setup has no note.
+ */
+function WithChalkNote({ note, children }: { note: Setup["chalkNote"]; children: ReactNode }) {
+  if (!note) return <>{children}</>;
+  return (
+    <div className="ms-event-with-note">
+      <div>{children}</div>
+      <ChalkNote long={note.long} short={note.short} />
+    </div>
+  );
+}
 
 interface EventSpaceProps {
   /** Which configuration to show; see src/components/react/eventSpace/setups.ts. */
@@ -236,13 +251,15 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
             {showWrongModel ? (
               <WrongModelTiles state={state} scenario={scenario} />
             ) : (
-              <OutcomeGrid
-                state={state}
-                scenario={scenario}
-                describedBy={statusId}
-                editable={Boolean(setup.events[state.editing]?.editable)}
-                onToggle={(id) => send({ type: "toggle", id })}
-              />
+              <WithChalkNote note={setup.chalkNote}>
+                <OutcomeGrid
+                  state={state}
+                  scenario={scenario}
+                  describedBy={statusId}
+                  editable={Boolean(setup.events[state.editing]?.editable)}
+                  onToggle={(id) => send({ type: "toggle", id })}
+                />
+              </WithChalkNote>
             )}
           </>
         )}

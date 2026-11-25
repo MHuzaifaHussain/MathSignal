@@ -12,6 +12,11 @@ export interface Outcome {
 	label: string;
 	/** Lower-case words for screen readers, e.g. "first coin heads, second coin tails". */
 	spoken: string;
+	/**
+	 * The outcome's name in set lists, when cells share a visible label: three Monty Hall cells read "opens 3",
+	 * so the shrunk readout lists them as "(car 2, heads)". Absent when the label is already unique.
+	 */
+	setLabel?: string;
 }
 
 /** Weights mode pours a jug of 12 units, so halves, thirds, quarters and sixths stay exact. */
