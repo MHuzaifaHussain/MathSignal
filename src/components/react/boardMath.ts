@@ -72,6 +72,21 @@ export function compareFractions(a: Fraction, b: Fraction): -1 | 0 | 1 {
 	return left < right ? -1 : left > right ? 1 : 0;
 }
 
+/** |value|: the same fraction with a nonnegative numerator. */
+export function absoluteFraction(value: Fraction): Fraction {
+	return fraction(Math.abs(value.numerator), value.denominator);
+}
+
+/** −1, 0 or 1, the sign of the value. */
+export function fractionSign(value: Fraction): -1 | 0 | 1 {
+	return value.numerator < 0 ? -1 : value.numerator > 0 ? 1 : 0;
+}
+
+/** The larger of two fractions, compared exactly (either one when they are equal). */
+export function maxFraction(a: Fraction, b: Fraction): Fraction {
+	return compareFractions(a, b) >= 0 ? a : b;
+}
+
 export function toNumber(value: Fraction): number {
 	return value.numerator / value.denominator;
 }

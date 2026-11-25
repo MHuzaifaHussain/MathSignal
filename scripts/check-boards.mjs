@@ -6,7 +6,7 @@
 // `astro check` type unrelated .mjs imports across src/ as any (629 false errors). Size alone didn't cause it (padding
 // the file didn't), and the exact trigger is unknown.
 import assert from 'node:assert/strict';
-import { fraction, formatFraction, addFractions, subtractFractions, divideFractions, multiplyFractions, compareFractions, toNumber, isPerfectSquare, squareRoot } from '../src/components/react/boardMath.ts';
+import { fraction, formatFraction, addFractions, subtractFractions, divideFractions, multiplyFractions, compareFractions, toNumber, isPerfectSquare, squareRoot, absoluteFraction, fractionSign, maxFraction } from '../src/components/react/boardMath.ts';
 import { joinWords, plural, equalsDecimal, fractionText, terminatesWithin, decimalText, amountText } from '../src/components/react/boardText.ts';
 import { probability, checkGoal, pour, intersect, union, complement, WEIGHT_TOTAL } from '../src/components/react/eventSpace/model.ts';
 import { SCENARIOS, hasWordedRowHeaders } from '../src/components/react/eventSpace/scenarios.ts';
@@ -36,6 +36,15 @@ assert.deepEqual(divideFractions(fraction(3, 1000), fraction(-1, 1000)), fractio
 assert.deepEqual(divideFractions(fraction(0, 1), fraction(-5, 7)), fraction(0, 1));
 assert.deepEqual(divideFractions(fraction(5, 6), fraction(5, 3)), fraction(1, 2));
 assert.throws(() => divideFractions(fraction(3, 4), fraction(0, 1)), (error) => error.message === 'boardMath: divide by zero (3/4 ÷ 0)');
+
+// Absolute value, sign and max, exact, for the norm and lasso math (decision 0021).
+assert.deepEqual(absoluteFraction(fraction(-3, 4)), fraction(3, 4));
+assert.deepEqual(absoluteFraction(fraction(5, 2)), fraction(5, 2));
+assert.deepEqual(absoluteFraction(fraction(0, 1)), fraction(0, 1));
+assert.deepEqual([fraction(-1, 2), fraction(0, 1), fraction(7, 3)].map(fractionSign), [-1, 0, 1]);
+assert.deepEqual(maxFraction(fraction(-1, 2), fraction(0, 1)), fraction(0, 1));
+assert.deepEqual(maxFraction(fraction(5, 2), fraction(7, 3)), fraction(5, 2));
+assert.deepEqual(maxFraction(fraction(2, 4), fraction(1, 2)), fraction(1, 2));
 
 // Sweep: 3,000 seeded pairs with numerators up to ±10,000 and denominators up to 120. No call may throw, and every
 // result matches a reference computed from scratch with BigInt.
