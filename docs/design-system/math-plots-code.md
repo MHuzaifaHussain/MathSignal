@@ -105,8 +105,12 @@ Several vectors share one plane ([decision 0014](../decisions/0014-vector-board.
 | Muted ink dashed arrows | The other route, b then a ("Show b first too") |
 | Muted dotted lines | Component legs of the table row the reader points at, the length-5 circle, "into the rails" |
 | Muted arc labeled θ, or a muted square corner | The angle between a and b, or a right angle |
-| Ochre, 3px | The one element being taught: the guess ring, then a + b; c a; the shadow after Check |
-| Ink ring labeled "zero vector" | A zero vector, never an arrowhead |
+| Ochre, 3px | The one element being taught: the guess ring, then a + b; c a; the shadow after Check; the flag ring on `span-reach`; the span line, or a ring at the origin, after Check on `span-shape` |
+| Ink ring labeled "zero vector" | A zero vector, never an arrowhead; "a and b: zero vectors" when both are |
+| Muted 1.5px arrows "a" (solid) and "b" (dashed) | On `span-reach`, the vectors the ink arrows "c a" and "d b" scale |
+| Ink line with no head, ending at the edge | An arrow cut where it leaves the board; a head there would claim the vector ends at the edge |
+| Small ink dot, no label | c a + d b on `span-reach`, whenever it is on the board |
+| Muted dotted line edge to edge, labeled "span" | The span on `span-reach` after Check, when a and b line up |
 
 Pink and blue never appear on this board: a vector is not μ or σ. Ochre marks exactly one element at a time (`ochreElement` in `describe.ts`); the handles are ink dots, and Mafs' focus ring is the site's focus color beside it. Board strings follow the notation registry in plain Unicode: ‖a‖ for a vector's length, |c| only for a number, "a · b" for the dot product and "c a" or "2 × a" for a multiple, never "c·a". A negative factor gets parentheses ("4 × (−1)"), lengths are exact or "√13 ≈ 3.61", and angles are "exactly 45°" or "about 94.4°". The plane stays square at Mafs' default aspect ratio; don't copy `preserveAspectRatio={false}` from the Normal board to a vector board.
 
