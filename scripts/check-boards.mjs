@@ -5074,6 +5074,116 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	}
 }
 
+// ---- NormBall: the pure model (decision 0021) ----
+// Every number the week-9 setups will show, exact. The UI follows once those page specs exist.
+{
+	const nb = await import('../src/components/react/normBall/model.ts');
+	const { readFileSync, readdirSync } = await import('node:fs');
+	const f = (numerator, denominator = 1) => fraction(numerator, denominator);
+	const w = (a, b) => [a, b];
+	const { FENCE_LOSS, TOUCH_LOSS } = nb;
+	assert.deepEqual(nb.lossAt(FENCE_LOSS, FENCE_LOSS.center), f(0));
+	// The fence presets, lasso and ridge, with their losses and fence sizes.
+	assert.deepEqual(nb.lasso(FENCE_LOSS, f(0)), w(f(4), f(1)));
+	assert.deepEqual(nb.ridge(FENCE_LOSS, f(0)), w(f(4), f(1)));
+	assert.deepEqual(nb.lasso(FENCE_LOSS, f(1)), w(f(3), f(1, 2)));
+	assert.deepEqual(nb.lossAt(FENCE_LOSS, nb.lasso(FENCE_LOSS, f(1))), f(3, 4));
+	assert.deepEqual(nb.fenceSize(nb.lasso(FENCE_LOSS, f(1)), 'l1'), { measure: 'l1', size: f(7, 2) });
+	assert.deepEqual(nb.ridge(FENCE_LOSS, f(1)), w(f(2), f(2, 3)));
+	assert.deepEqual(nb.lossAt(FENCE_LOSS, nb.ridge(FENCE_LOSS, f(1))), f(19, 9));
+	assert.deepEqual(nb.lasso(FENCE_LOSS, f(3)), w(f(1), f(0)));
+	assert.deepEqual(nb.lossAt(FENCE_LOSS, nb.lasso(FENCE_LOSS, f(3))), f(11, 2));
+	assert.deepEqual(nb.fenceSize(nb.lasso(FENCE_LOSS, f(3)), 'l1'), { measure: 'l1', size: f(1) });
+	assert.deepEqual(nb.ridge(FENCE_LOSS, f(3)), w(f(1), f(2, 5)));
+	assert.deepEqual(nb.lossAt(FENCE_LOSS, nb.ridge(FENCE_LOSS, f(3))), f(243, 50));
+	const ridgeThree = nb.fenceSize(nb.ridge(FENCE_LOSS, f(3)), 'l2');
+	assert.deepEqual([ridgeThree.squared, ridgeThree.root.exact, ridgeThree.root.value.toFixed(2)], [f(29, 25), false, '1.08']);
+	assert.deepEqual(nb.lasso(FENCE_LOSS, f(7, 2)), w(f(1, 2), f(0)));
+	assert.deepEqual(nb.lasso(FENCE_LOSS, f(4)), w(f(0), f(0)));
+	assert.deepEqual(nb.lossAt(FENCE_LOSS, nb.lasso(FENCE_LOSS, f(4))), f(9));
+	assert.deepEqual(nb.ridge(FENCE_LOSS, f(4)), w(f(4, 5), f(1, 3)));
+	assert.deepEqual(nb.lossAt(FENCE_LOSS, nb.ridge(FENCE_LOSS, f(4))), f(1252, 225));
+	assert.deepEqual(nb.fenceSize(nb.ridge(FENCE_LOSS, f(4)), 'l2'), { measure: 'l2', squared: f(169, 225), root: { exact: true, value: f(13, 15) } });
+	// Every α on the grid, 0 to 6 in steps of 0.5, against the closed forms for w* = (4, 1), h = (1, 2).
+	assert.equal(nb.alphaGrid().length, 13);
+	for (const alpha of nb.alphaGrid()) {
+		const a = toNumber(alpha);
+		assert.ok(nb.isOnAlphaGrid(alpha));
+		assert.deepEqual(nb.lasso(FENCE_LOSS, alpha), w(f(Math.max(4 * 2 - 2 * a, 0), 2), f(Math.max(4 - 2 * a, 0), 4)), `lasso at α = ${a}`);
+		assert.deepEqual(nb.ridge(FENCE_LOSS, alpha), w(divideFractions(f(4), addFractions(f(1), alpha)), divideFractions(f(2), addFractions(f(2), alpha))), `ridge at α = ${a}`);
+	}
+	assert.equal(nb.isOnAlphaGrid(f(1, 4)), false);
+	assert.equal(nb.isOnAlphaGrid(f(13, 2)), false);
+	assert.throws(() => nb.ridge(FENCE_LOSS, f(-1)), /at least 0/);
+	// The decay shares: α = 2 keeps 1/3 and 1/2 (4 → 4/3, 1 → 0.5); α = 1 keeps 1/2 and 2/3; α = 6 keeps 1/7 and 1/4.
+	assert.deepEqual(nb.keepShare(FENCE_LOSS, f(2)), w(f(1, 3), f(1, 2)));
+	assert.deepEqual(nb.ridge(FENCE_LOSS, f(2)), w(f(4, 3), f(1, 2)));
+	assert.deepEqual(nb.keepShare(FENCE_LOSS, f(1)), w(f(1, 2), f(2, 3)));
+	assert.deepEqual(nb.keepShare(FENCE_LOSS, f(6)), w(f(1, 7), f(1, 4)));
+	assert.deepEqual(nb.ridge(FENCE_LOSS, f(6)), w(f(4, 7), f(1, 4)));
+	assert.deepEqual(nb.keepShare(FENCE_LOSS, f(0)), w(f(1), f(1)));
+	// Lasso keeps the sign of a negative weight and stops at 0.
+	const negative = { center: w(f(-3), f(1, 2)), curvature: w(f(1), f(1)) };
+	assert.deepEqual(nb.lasso(negative, f(1)), w(f(-2), f(0)));
+	assert.deepEqual(nb.ridge(negative, f(1)), w(f(-3, 2), f(1, 4)));
+	// At the lasso corner (1, 0), α = 3, the downhill arrow (3, 2) lies in the corner's normal cone (a ≥ |b|): KKT holds.
+	const corner = nb.downhillAt(FENCE_LOSS, nb.lasso(FENCE_LOSS, f(3)));
+	assert.deepEqual(corner, w(f(3), f(2)));
+	assert.ok(compareFractions(corner[0], absoluteFraction(corner[1])) >= 0);
+	// Contour radii are the only floats: √(2 level ÷ hᵢ).
+	assert.deepEqual(nb.contourRadii(FENCE_LOSS, f(4)).map((radius) => radius.toFixed(4)), ['2.8284', '2.0000']);
+	// The rings: none is a solution's level, and none on touch shows the answer.
+	assert.deepEqual(nb.FENCE_RINGS, [f(1), f(2), f(4)]);
+	for (const level of nb.FENCE_RINGS) {
+		for (const solution of [f(11, 2), f(243, 50)]) assert.notDeepEqual(level, solution);
+	}
+	assert.deepEqual(nb.TOUCH_RINGS, [f(1), f(2), f(8)]);
+	assert.deepEqual(nb.lowestOnPath(TOUCH_LOSS), { at: w(f(2), f(1)), loss: f(3) });
+	assert.deepEqual([1, 2, 3, 4, 9 / 2, 5, 8].map((level) => nb.ringGivesAway(TOUCH_LOSS, fraction(level * 2, 2))), [false, false, true, true, true, false, false]);
+
+	// The touch path: 13 points from (0, 3) to (3, 0), stored as step indexes.
+	assert.deepEqual([nb.PATH_SUM, nb.PATH_STEPS_PER_UNIT, nb.PATH_LAST_INDEX], [3, 4, 12]);
+	assert.deepEqual(nb.pathPoint(0), w(f(0), f(3)));
+	assert.deepEqual(nb.pathPoint(7), w(f(7, 4), f(5, 4)));
+	assert.deepEqual(nb.pathPoint(12), w(f(3), f(0)));
+	assert.throws(() => nb.pathPoint(3.5), /whole number from 0 to 12/);
+	assert.throws(() => nb.pathPoint(13), /whole number from 0 to 12/);
+	assert.deepEqual(
+		nb.pathPoints().map((point) => nb.lossAt(TOUCH_LOSS, point)),
+		[f(9), f(243, 32), f(51, 8), f(171, 32), f(9, 2), f(123, 32), f(27, 8), f(99, 32), f(3), f(99, 32), f(27, 8), f(123, 32), f(9, 2)],
+	);
+	// Along the path the loss is 3 + 1.5 (w₁ − 2)², with its single minimum 3 at (2, 1).
+	nb.pathPoints().forEach((point) => {
+		const gap = subtractFractions(point[0], f(2));
+		assert.deepEqual(nb.lossAt(TOUCH_LOSS, point), addFractions(f(3), multiplyFractions(f(3, 2), multiplyFractions(gap, gap))));
+	});
+	assert.deepEqual(
+		nb.pathPoints().map((_, index) => nb.slideHint(TOUCH_LOSS, index)),
+		[...Array(8).fill('toward-east-corner'), 'flat', ...Array(4).fill('toward-north-corner')],
+	);
+	assert.deepEqual(nb.pathPoints().map((_, index) => nb.lagrangeMultiplier(TOUCH_LOSS, index)), [...Array(8).fill(null), f(2), ...Array(4).fill(null)]);
+	assert.deepEqual(nb.pathPoints().map((point) => nb.isParallel(nb.downhillAt(TOUCH_LOSS, point), nb.PATH_NORMAL)), [...Array(8).fill(false), true, ...Array(4).fill(false)]);
+	// The four presets' downhill arrows.
+	assert.deepEqual(nb.downhillAt(TOUCH_LOSS, nb.pathPoint(12)), w(f(1), f(4)));
+	assert.deepEqual(nb.downhillAt(TOUCH_LOSS, nb.pathPoint(7)), w(f(9, 4), f(3, 2)));
+	assert.deepEqual(nb.downhillAt(TOUCH_LOSS, nb.pathPoint(8)), w(f(2), f(2)));
+	assert.deepEqual(nb.downhillAt(TOUCH_LOSS, nb.pathPoint(0)), w(f(4), f(-2)));
+	// The other side of the full diamond would have a second tangency at (−2, −1), loss 27: why touch uses one side.
+	const southWest = w(f(-2), f(-1));
+	assert.deepEqual([nb.gradientAt(TOUCH_LOSS, southWest), nb.lossAt(TOUCH_LOSS, southWest)], [w(f(-6), f(-6)), f(27)]);
+	assert.ok(nb.isParallel(nb.gradientAt(TOUCH_LOSS, southWest), nb.PATH_NORMAL));
+	// Steps and drags along the path.
+	assert.deepEqual([nb.nextOnPath(0, -1), nb.nextOnPath(0, 1), nb.nextOnPath(12, 1), nb.nextOnPath(12, -1)], [null, 1, null, 11]);
+	assert.deepEqual([[2.1, 0.9], [-1, 5], [5, -5], [1.75, 1.25], [0.3, 2.9]].map(nb.nearestPathIndex), [8, 0, 12, 7, 1]);
+	// The checks at import throw on a broken model.
+	assert.doesNotThrow(() => nb.validateModel());
+	// No μ or σ colors and no KaTeX in NormBall's files.
+	for (const name of readdirSync('src/components/react/normBall')) {
+		const source = readFileSync(`src/components/react/normBall/${name}`, 'utf8');
+		assert.ok(!/\bmu\b|sigma|--ms-mu|--ms-sigma|<LaTeX/.test(source), `normBall/${name} uses a μ or σ color or KaTeX`);
+	}
+}
+
 // ---- NormalDistribution: bell untouched, z mode (decision 0019) ----
 // The published bell is pinned first, so moving its code into a mode can't change its words or numbers.
 {
