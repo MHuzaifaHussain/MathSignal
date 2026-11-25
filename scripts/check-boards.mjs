@@ -1791,7 +1791,7 @@ const assertTableFoldSays = (where, announce) => {
 	assert.ok(printRule > screenRule, 'a later @media print block shows .ms-board-table-fold.is-folded, so print wins');
 	// Every component a board wraps in <TableFold>, as a path under src/components/react/. A file joins in the commit
 	// that wraps it, and must stay read-only: folding a control would hide a keyboard path.
-	const TABLE_FOLD_CHILDREN = ['bayesTheorem/CountTable.tsx', 'descriptiveStats/StatsTables.tsx', 'distributionBoard/DistributionTable.tsx', 'distributionBoard/ValueTable.tsx', 'normalDistribution/ZTable.tsx', 'vectorBoard/CoordinateTable.tsx'];
+	const TABLE_FOLD_CHILDREN = ['bayesTheorem/CountTable.tsx', 'descriptiveStats/StatsTables.tsx', 'distributionBoard/DistributionTable.tsx', 'distributionBoard/ValueTable.tsx', 'functionCurve/CurveTables.tsx', 'normalDistribution/ZTable.tsx', 'vectorBoard/CoordinateTable.tsx'];
 	const CONTROL_TOKENS = ['<button', '<input', '<select', '<textarea', 'tabIndex', 'onFocus', 'onKeyDown', 'onClick'];
 	const wrapped = new Set();
 	for (const file of filesUnder('src/components/react').filter((name) => name.endsWith('.tsx'))) {
@@ -6186,6 +6186,43 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		fcSay.announcementFor(fcAfter(R2T, { stage: 'tangent', xIndex: 3 }), { type: 'point', xIndex: 3 }),
 		"Point: x equals 1.5, y equals 2.25. Ruler to x equals 2.5: rise 4 over run 1, slope 4. The ruler's other end, at x equals 2.5, y equals 6.25, is off the board. Tangent at x equals 1.5: slope 3. This ruler's slope, 4, is 1 above it.",
 	);
+}
+
+// FunctionCurve file scans: no pink or blue, no KaTeX, no tangent defined by "staying under", no em dash, every
+// straight segment from the shared helper, and every color decision in marks.ts.
+{
+	const { readFileSync, readdirSync } = await import('node:fs');
+	const dir = 'src/components/react/functionCurve';
+	const files = [...readdirSync(dir).map((name) => `${dir}/${name}`), 'src/components/react/FunctionCurve.tsx'];
+	const sources = Object.fromEntries(files.map((file) => [file, readFileSync(file, 'utf8')]));
+	const banned = new RegExp(['pro', 'mpt|swe', 'et'].join(''), 'i');
+	for (const [file, source] of Object.entries(sources)) {
+		for (const token of ['plotColors.mu', 'plotColors.sigma', '--ms-mu', '--ms-sigma', '<LaTeX', 'σ(', 'sigma(', 'stays under', 'under it on both sides', '—', 'Line.Segment', 'Theme.']) {
+			assert.ok(!source.includes(token), `${file} contains "${token}"`);
+		}
+		assert.ok(!banned.test(source), `${file} uses a banned word`);
+		assert.ok(!/#[0-9a-fA-F]{3,8}\b/.test(source), `${file} has a hex color`);
+		if (file.endsWith('.tsx')) {
+			assert.ok(!/function Segment[\s({<]|const DOTTED\s|strokeDasharray/.test(source), `${file} defines its own dotted or dashed line`);
+			if (source.includes('<Segment')) assert.ok(source.includes('import { Segment } from "../planeLines";'), `${file} draws segments with the shared helper`);
+		}
+	}
+	// Colors appear only in CurvePlane's MARK_COLORS map; every other .tsx takes them from it.
+	for (const [file, source] of Object.entries(sources).filter(([name]) => name.endsWith('.tsx'))) {
+		const uses = source.split('plotColors.').length - 1;
+		assert.equal(uses, file.endsWith('CurvePlane.tsx') ? 3 : 0, `${file} picks plot colors itself`);
+	}
+	assert.ok(sources[`${dir}/CurvePlane.tsx`].includes('<Segment'), 'the legs and the ruler are drawn with Segment');
+	const board = sources['src/components/react/FunctionCurve.tsx'];
+	assert.ok(!board.includes('handleLabels'), "the point's handle stays out of the tab order: the Point slider is the keyboard path");
+	assert.ok(/const send = useCallback\(\s*\(action: Action\) => \{\s*sliderGuard\.interrupt\(\);/.test(board), 'every non-slider action interrupts the shared slider guard first');
+	const css = readFileSync('src/styles/components.css', 'utf8');
+	const forced = css.slice(css.lastIndexOf('@media (forced-colors: active)'));
+	const block = forced.match(/\.ms-fncurve,\s*\.ms-fncurve-table-wrap\s*\{([^}]*)\}/);
+	assert.ok(block, 'components.css maps .ms-fncurve in forced colors');
+	for (const declaration of ['--ms-board-ink: CanvasText', '--ms-board-ink-muted: GrayText', '--ms-attention: Highlight', '--ms-board: Canvas']) {
+		assert.ok(block[1].includes(`${declaration};`), `the .ms-fncurve forced-colors block sets ${declaration}`);
+	}
 }
 
 console.log('Board check passed.');

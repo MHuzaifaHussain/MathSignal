@@ -2427,3 +2427,115 @@
 		outline-color: Highlight;
 	}
 }
+
+/* ── FunctionCurve: rulers that shrink toward the tangent, and corners (decision 0020) ──
+ * The curve and the point are ink, the rise and run legs muted and dotted, the ruler dashed. Exactly one element is
+ * ochre at a time (the ruler, the tangent or the corner line), decided in functionCurve/marks.ts; pink and blue never
+ * appear. Not .ms-curve: that prefix is DistributionBoard's density curve. */
+.ms-fncurve {
+	padding: 0.75rem 8px 1rem;
+}
+
+.ms-fncurve-status,
+.ms-fncurve-feedback {
+	margin: 0 0 0.75rem;
+	font-size: 0.9375rem;
+	line-height: 1.5;
+	color: var(--ms-board-ink);
+}
+
+.ms-fncurve-feedback {
+	font-weight: 600;
+}
+
+/* Square, so the equal-scale views draw one unit across as long as one unit up; the CSS reserves the height before
+ * hydration. One column on every width, as on VectorBoard2D. */
+.ms-fncurve-plane {
+	position: relative;
+	inline-size: 100%;
+	max-inline-size: 400px;
+	aspect-ratio: 1;
+}
+
+.ms-fncurve-strip {
+	inline-size: 100%;
+	max-inline-size: 400px;
+	margin-block-start: 0.5rem;
+}
+
+.ms-fncurve-readouts {
+	margin-block-start: 0.75rem;
+}
+
+.ms-fncurve-readouts .ms-board-readout {
+	margin: 0.15rem 0;
+	overflow-wrap: anywhere;
+}
+
+.ms-fncurve-note {
+	flex-basis: 100%;
+	margin: -0.25rem 0 0;
+	font-size: 0.875rem;
+	line-height: 1.4;
+	color: var(--ms-board-ink-muted);
+}
+
+/* Three columns with the row header holding only h, so the widest rows (−0.001 | −0.006754501 | 6.754501 and
+ * −0.001 | 6.754501 | 0.004501 above) fit the tray's 255px inner width at 320px without scrolling sideways: the row
+ * header wraps " (shown)" under h, the gaps are 0.75rem, and the last column has none. */
+.ms-fncurve-table {
+	margin: 0;
+	border-collapse: collapse;
+	font-size: 0.875rem;
+	font-variant-numeric: tabular-nums;
+	color: var(--ms-board-ink);
+}
+
+.ms-fncurve-table caption {
+	padding-block-end: 0.25rem;
+	font-weight: 600;
+	text-align: start;
+}
+
+.ms-fncurve-table th,
+.ms-fncurve-table td {
+	padding: 0.2rem 0.75rem 0.2rem 0;
+	border-block-end: 1px solid var(--ms-board-axis);
+	text-align: start;
+	white-space: nowrap;
+}
+
+.ms-fncurve-table tbody th {
+	font-weight: 400;
+	white-space: normal;
+}
+
+.ms-fncurve-table th:last-child,
+.ms-fncurve-table td:last-child {
+	padding-inline-end: 0;
+}
+
+@media print {
+	.ms-fncurve-note {
+		display: none;
+	}
+}
+
+@media (forced-colors: active) {
+	/* SVG strokes aren't forced, so the plane maps its tokens to system colors and Mafs' variables follow. The lines
+	 * stay apart by style: curve solid 2.5px, ruler dashed, tangent and corner line solid 3px, legs dotted. The table
+	 * sits in the tray's fold, outside .ms-fncurve, so it takes the same mapping. */
+	.ms-fncurve,
+	.ms-fncurve-table-wrap {
+		--ms-board-ink: CanvasText;
+		--ms-board-ink-muted: GrayText;
+		--ms-attention: Highlight;
+		--ms-board: Canvas;
+		--ms-board-grid: GrayText;
+		--ms-board-axis: CanvasText;
+	}
+
+	.ms-fncurve-feedback:focus-visible {
+		outline-color: Highlight;
+	}
+}
