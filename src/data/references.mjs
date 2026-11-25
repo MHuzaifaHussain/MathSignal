@@ -649,7 +649,7 @@ export const REFERENCES = [
 		title: 'Deep learning',
 		venue: 'MIT Press',
 		url: 'https://www.deeplearningbook.org/contents/numerical.html',
-		note: 'Chapter 4, numerical computation. Section 4.2, equation (4.2): the condition number. Section 4.3, pp. 80–82: the derivative f′(x) or dy/dx as the slope of f at x, f(x + ε) ≈ f(x) + εf′(x), moving against the sign of the derivative as gradient descent (Cauchy, 1847), Figures 4.1–4.2 (critical points, minima, maxima and saddle points), and equation (4.5), steepest descent with learning rate ε. Section 4.3.1 and Figure 4.6: a poor condition number makes gradient descent perform poorly, the long canyon.',
+		note: 'Chapter 4, numerical computation. Section 4.2, equation (4.2): the condition number. Section 4.3, pp. 80–83: the derivative f′(x) or dy/dx as the slope of f at x, f(x + ε) ≈ f(x) + εf′(x), moving against the sign of the derivative as gradient descent (Cauchy, 1847), Figures 4.1–4.2 (critical points, minima, maxima and saddle points), and equation (4.5), steepest descent with learning rate ε. Section 4.3.1 and Figure 4.6: a poor condition number makes gradient descent perform poorly, the long canyon.',
 		checked: '2026-11-25',
 	},
 	{
@@ -659,7 +659,7 @@ export const REFERENCES = [
 		title: 'Deep learning',
 		venue: 'MIT Press',
 		url: 'https://www.deeplearningbook.org/contents/guidelines.html',
-		note: 'Chapter 11, practical methodology. Section 11.5, "Compare back-propagated derivatives to numerical derivatives", p. 432, equations (11.5)–(11.7): the one-sided finite difference, the more accurate centered difference, and a perturbation large enough not to be rounded away.',
+		note: 'Chapter 11, practical methodology. Section 11.5, "Compare back-propagated derivatives to numerical derivatives", p. 433, equations (11.5)–(11.7): the one-sided finite difference, the more accurate centered difference, and a perturbation large enough not to be rounded away.',
 		checked: '2026-11-25',
 	},
 	{
