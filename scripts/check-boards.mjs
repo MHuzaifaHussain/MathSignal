@@ -5184,6 +5184,221 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	}
 }
 
+// ---- Regression board: the pure model and data sets (decision 0022) ----
+// Every number the regression pages will show, exact, plus a sweep that no reachable data set overflows. The UI
+// follows once the week-3 and week-4 page specs exist.
+{
+	const rm = await import('../src/components/react/linearRegression/model.ts');
+	const rd = await import('../src/components/react/linearRegression/datasets.ts');
+	const { CLASS_HEIGHTS } = await import('../src/components/react/descriptiveStats/datasets.ts');
+	const { readFileSync } = await import('node:fs');
+	const f = (numerator, denominator = 1) => fraction(numerator, denominator);
+	const lineOf = (points) => {
+		const fit = rm.leastSquares(points);
+		assert.equal(fit.kind, 'line');
+		return fit.line;
+	};
+	const readerLine = (left, right) => rm.lineThrough([f(125), f(left)], [f(145), f(right)]);
+	const rounded = (correlation, places = 2) => {
+		assert.equal(correlation.kind, 'rounded');
+		return correlation.value.toFixed(places);
+	};
+
+	// Our class: the heights are DescriptiveStats' nine, in arrival order; the arm spans are added.
+	assert.equal(rd.OUR_CLASS.map((point) => point[0].numerator).join(), CLASS_HEIGHTS.join());
+	assert.deepEqual(rm.summarize(rd.OUR_CLASS), { n: 9, meanX: f(134), meanY: f(132), sxx: f(576), syy: f(900), sxy: f(576) });
+	assert.deepEqual(lineOf(rd.OUR_CLASS), { slope: f(1), intercept: f(-2) });
+	assert.deepEqual(rm.residuals(rd.OUR_CLASS, lineOf(rd.OUR_CLASS)), [-8, 4, 1, 6, 3, -7, -9, 8, 2].map((value) => f(value)));
+	assert.deepEqual(rm.leastSquaresError(rd.OUR_CLASS), f(324));
+	assert.deepEqual(rm.correlation(rd.OUR_CLASS), { kind: 'exact', value: f(4, 5) });
+	assert.deepEqual(rm.rSquared(rd.OUR_CLASS), f(16, 25));
+	assert.deepEqual(rm.spearman(rd.OUR_CLASS), { kind: 'exact', value: f(47, 60) });
+	// The presets of the correlation page.
+	assert.deepEqual(rm.correlation(rd.PERFECT_LINE), { kind: 'exact', value: f(1) });
+	assert.deepEqual(rm.summarize(rd.SHUFFLED_ARMS).sxy, f(0));
+	assert.deepEqual(rm.correlation(rd.SHUFFLED_ARMS), { kind: 'exact', value: f(0) });
+	assert.deepEqual(rm.summarize(rd.ONE_TYPO), { n: 9, meanX: f(134), meanY: f(136), sxx: f(576), syy: f(1476), sxy: f(144) });
+	assert.deepEqual(rm.correlationSquared(rd.ONE_TYPO), f(1, 41));
+	assert.equal(rounded(rm.correlation(rd.ONE_TYPO)), '0.16');
+	assert.deepEqual(lineOf(rd.ONE_TYPO), { slope: f(1, 4), intercept: f(205, 2) });
+	assert.deepEqual(rm.leastSquaresError(rd.ONE_TYPO), f(1440));
+	assert.deepEqual(rm.rSquared(rd.ONE_TYPO), f(1, 41));
+	// Child 4's arm span moved to 135: mean 397/3, sums 576, 908 and 558, r² = 8,649/14,528, r ≈ 0.77.
+	const childFour = rm.wholePoints(CLASS_HEIGHTS, rd.CLASS_ARM_SPANS.map((span, i) => (i === 3 ? 135 : span)));
+	assert.deepEqual(rm.summarize(childFour), { n: 9, meanX: f(134), meanY: f(397, 3), sxx: f(576), syy: f(908), sxy: f(558) });
+	assert.deepEqual(rm.correlationSquared(childFour), f(8649, 14528));
+	assert.equal(rounded(rm.correlation(childFour)), '0.77');
+
+	// The reader's line through its handles at 125 cm and 145 cm, and its total squared miss.
+	for (const [left, right, miss] of [[132, 132, f(900)], [125, 145, f(360)], [124, 144, f(333)], [122, 142, f(333)], [126, 141, f(5841, 16)], [123, 143, f(324)]]) {
+		assert.deepEqual(rm.squaredMissOfLine(rd.OUR_CLASS, readerLine(left, right)), miss, `your line (${left}, ${right})`);
+	}
+	assert.deepEqual(readerLine(126, 141).slope, f(3, 4));
+	assert.deepEqual(readerLine(123, 143), lineOf(rd.OUR_CLASS));
+	assert.deepEqual(rm.squaredMissOfLine(rd.ONE_TYPO, readerLine(123, 143)), f(1908));
+	assert.throws(() => rm.lineThrough([f(125), f(1)], [f(125), f(2)]), /two different x values/);
+	// One typo: child 2 misses the old line by 40 cm, which counts 1,600 times a 1 cm miss when squared and 40 times
+	// unsquared; the refit squared-miss line misses it by 27 cm.
+	assert.deepEqual(rm.residuals(rd.ONE_TYPO, lineOf(rd.OUR_CLASS))[rd.TYPO_CHILD - 1], f(40));
+	assert.deepEqual(multiplyFractions(f(40), f(40)), f(1600));
+	assert.deepEqual(rm.residuals(rd.ONE_TYPO, lineOf(rd.ONE_TYPO))[rd.TYPO_CHILD - 1], f(27));
+
+	// Least absolute misses (outlier-pull): unique best lines, and the squared line's total absolute miss.
+	assert.deepEqual(rm.leastAbsolute(rd.OUR_CLASS), { kind: 'line', line: { slope: f(9, 10), intercept: f(71, 5) }, sumAbs: f(217, 5), tied: false });
+	assert.deepEqual(rm.sumOfAbsolutes(rm.residuals(rd.OUR_CLASS, lineOf(rd.OUR_CLASS))), f(48));
+	const typoAbsolute = rm.leastAbsolute(rd.ONE_TYPO);
+	assert.deepEqual([typoAbsolute.line, typoAbsolute.tied], [{ slope: f(5, 7), intercept: f(284, 7) }, false]);
+	// A constructed tie: (0, 0), (1, 1), (2, 1), (3, 0) has several best lines, each missing by 2 in all (y = 0, y = 1,
+	// y = x ÷ 2). Collinear points give one line, not a tie.
+	const tiedAbsolute = rm.leastAbsolute(rm.wholePoints([0, 1, 2, 3], [0, 1, 1, 0]));
+	assert.deepEqual([tiedAbsolute.sumAbs, tiedAbsolute.tied], [f(2), true]);
+	assert.equal(rm.leastAbsolute(rm.wholePoints([0, 1, 2, 3], [0, 1, 2, 3])).tied, false);
+	assert.deepEqual(rm.leastAbsolute(rm.wholePoints([4, 4, 4], [1, 2, 3])), { kind: 'undefined', reason: 'same-x' });
+
+	// Runners: ρ on average ranks, the 6Σd² shortcut only without ties.
+	assert.deepEqual(rm.correlationSquared(rd.RUNNERS_CURVE), f(7776, 9305));
+	assert.equal(rounded(rm.correlation(rd.RUNNERS_CURVE)), '-0.91');
+	assert.deepEqual(rm.spearman(rd.RUNNERS_CURVE), { kind: 'exact', value: f(-1) });
+	assert.deepEqual(rm.spearmanShortcut(rd.RUNNERS_CURVE), { sumSquaredDifferences: f(240), rho: f(-1) });
+	assert.deepEqual(rm.correlationSquared(rd.RUNNERS_SLOW_START), f(55296, 122405));
+	assert.equal(rounded(rm.correlation(rd.RUNNERS_SLOW_START)), '-0.67');
+	assert.deepEqual(rm.spearman(rd.RUNNERS_SLOW_START), { kind: 'exact', value: f(-1) });
+	assert.deepEqual([rm.summarize(rd.RUNNERS_STRAIGHT).sxx, rm.summarize(rd.RUNNERS_STRAIGHT).syy, rm.summarize(rd.RUNNERS_STRAIGHT).sxy], [f(60), f(240), f(-120)]);
+	assert.deepEqual([rm.correlation(rd.RUNNERS_STRAIGHT), rm.spearman(rd.RUNNERS_STRAIGHT)], [{ kind: 'exact', value: f(-1) }, { kind: 'exact', value: f(-1) }]);
+	assert.equal(rounded(rm.correlation(rd.RUNNERS_FALL)), '-0.07');
+	assert.deepEqual(rm.spearmanShortcut(rd.RUNNERS_FALL), { sumSquaredDifferences: f(168), rho: f(-2, 5) });
+	assert.deepEqual(rm.spearman(rd.RUNNERS_FALL), { kind: 'exact', value: f(-2, 5) });
+	// Curve's lap gains shrink to 1 s a week: 8, 5, 3, 2, 1, 1, 1, 1.
+	assert.deepEqual(rd.CURVE_TIMES.slice(1).map((time, i) => rd.CURVE_TIMES[i] - time), [8, 5, 3, 2, 1, 1, 1, 1]);
+	// The shortcut and r on ranks agree on every runners preset without ties.
+	for (const points of [rd.RUNNERS_CURVE, rd.RUNNERS_SLOW_START, rd.RUNNERS_STRAIGHT, rd.RUNNERS_FALL, rd.OUR_CLASS]) {
+		assert.deepEqual(rm.spearman(points), { kind: 'exact', value: rm.spearmanShortcut(points).rho });
+	}
+	// A tie: runners 5 and 6 at 42 s share rank 4.5; ρ² = 119/120, ρ ≈ −0.996, and the shortcut refuses.
+	const tie = rm.wholePoints(rd.RUNNER_WEEKS, rd.CURVE_TIMES.map((time, i) => (i === 5 ? 42 : time)));
+	assert.deepEqual(rm.averageRanks(tie.map((point) => point[1])).slice(4, 6), [f(9, 2), f(9, 2)]);
+	assert.equal(rm.hasTies(tie.map((point) => point[1])), true);
+	assert.equal(rounded(rm.spearman(tie), 3), '-0.996');
+	const tieRanks = tie.map((point, i) => [rm.averageRanks(tie.map((p) => p[0]))[i], rm.averageRanks(tie.map((p) => p[1]))[i]]);
+	assert.deepEqual(rm.correlationSquared(tieRanks), f(119, 120));
+	assert.throws(() => rm.spearmanShortcut(tie), /wrong with ties/);
+	assert.deepEqual(rm.averageRanks([f(5), f(5), f(5)]), [f(2), f(2), f(2)]);
+
+	// Grouped setups: the pooled line and the flat (or rising) line within each group.
+	assert.deepEqual(lineOf(rd.SHOE_READING), { slope: f(3, 5), intercept: f(-23, 3) });
+	assert.deepEqual(rm.correlationSquared(rd.SHOE_READING), f(54, 65));
+	assert.equal(rounded(rm.correlation(rd.SHOE_READING)), '0.91');
+	assert.deepEqual([...rm.groupFits(rd.SHOE_READING, rd.SHOE_AGES)], [
+		['6', { kind: 'line', line: { slope: f(0), intercept: f(7, 3) } }],
+		['8', { kind: 'line', line: { slope: f(0), intercept: f(13, 3) } }],
+		['10', { kind: 'line', line: { slope: f(0), intercept: f(19, 3) } }],
+	]);
+	assert.deepEqual([lineOf(rd.SAME_FEET).slope, rm.correlation(rd.SAME_FEET)], [f(0), { kind: 'exact', value: f(0) }]);
+	assert.deepEqual(lineOf(rd.TEAM_PRACTICE), { slope: f(-4, 5), intercept: f(10) });
+	assert.deepEqual([rm.summarize(rd.TEAM_PRACTICE).sxx, rm.summarize(rd.TEAM_PRACTICE).syy, rm.summarize(rd.TEAM_PRACTICE).sxy], [f(60), f(60), f(-48)]);
+	assert.deepEqual(rm.correlation(rd.TEAM_PRACTICE), { kind: 'exact', value: f(-4, 5) });
+	assert.deepEqual([...rm.groupFits(rd.TEAM_PRACTICE, rd.TEAMS)].map(([team, fit]) => [team, fit.line.slope, fit.line.intercept]), [
+		['Seniors', f(1), f(7)],
+		['Middles', f(1), f(1)],
+		['Juniors', f(1), f(-5)],
+	]);
+	assert.deepEqual([lineOf(rd.PRACTICE_ALIKE).slope, rm.correlationSquared(rd.PRACTICE_ALIKE)], [f(1), f(1, 10)]);
+	assert.equal(rounded(rm.correlation(rd.PRACTICE_ALIKE)), '0.32');
+	assert.throws(() => rm.groupFits(rd.TEAM_PRACTICE, ['Seniors']), /group labels/);
+
+	// Anscombe: four sets whose summaries differ as fractions but agree to two decimals; r to three decimals is
+	// 0.816, 0.816, 0.816 and 0.817, so the board never claims three-decimal agreement.
+	const meansY = [f(8251, 1100), f(8251, 1100), f(15, 2), f(8251, 1100)];
+	const slopes = [f(5501, 11000), f(1, 2), f(5497, 11000), f(5499, 11000)];
+	rd.ANSCOMBE.forEach((set, i) => {
+		const summary = rm.summarize(set);
+		const line = lineOf(set);
+		assert.equal(set.length, 11);
+		assert.deepEqual([summary.meanX, summary.meanY, line.slope], [f(9), meansY[i], slopes[i]], `Anscombe set ${i + 1}`);
+		assert.deepEqual(
+			[toNumber(summary.meanY).toFixed(2), toNumber(line.intercept).toFixed(2), toNumber(line.slope).toFixed(2), rounded(rm.correlation(set)), toNumber(rm.rSquared(set)).toFixed(2)],
+			['7.50', '3.00', '0.50', '0.82', '0.67'],
+			`Anscombe set ${i + 1} to two decimals`,
+		);
+		assert.equal(rounded(rm.correlation(set), 3), ['0.816', '0.816', '0.816', '0.817'][i]);
+	});
+	// Set IV's lone point at x = 19 sets the slope alone: its residual is 0.
+	assert.deepEqual(rm.residuals(rd.ANSCOMBE[3], lineOf(rd.ANSCOMBE[3]))[7], f(0));
+	assert.ok(rm.residuals(rd.ANSCOMBE[1], lineOf(rd.ANSCOMBE[1])).every((residual) => Math.abs(toNumber(residual)) <= 4), 'Anscombe residuals fit a ±4 axis');
+
+	// Undefined cases never become "R² = 1".
+	const flat = rm.wholePoints(CLASS_HEIGHTS, CLASS_HEIGHTS.map(() => 140));
+	assert.deepEqual([rm.correlation(flat), rm.rSquared(flat)], [{ kind: 'undefined', reason: 'same-y' }, { kind: 'undefined', reason: 'same-y' }]);
+	assert.deepEqual([lineOf(flat), rm.leastSquaresError(flat)], [{ slope: f(0), intercept: f(140) }, f(0)]);
+	const sameHeight = rm.wholePoints(CLASS_HEIGHTS.map(() => 130), rd.CLASS_ARM_SPANS);
+	assert.deepEqual([rm.leastSquares(sameHeight), rm.correlation(sameHeight), rm.rSquared(sameHeight), rm.leastSquaresError(sameHeight)], [
+		{ kind: 'undefined', reason: 'same-x' },
+		{ kind: 'undefined', reason: 'same-x' },
+		{ kind: 'undefined', reason: 'same-x' },
+		{ kind: 'undefined', reason: 'same-x' },
+	]);
+	const onePoint = rm.wholePoints(CLASS_HEIGHTS.map(() => 130), CLASS_HEIGHTS.map(() => 130));
+	assert.deepEqual([rm.correlation(onePoint), rm.rSquared(onePoint), rm.leastSquaresError(onePoint)], [{ kind: 'undefined', reason: 'both' }, { kind: 'undefined', reason: 'both' }, { kind: 'undefined', reason: 'both' }]);
+	assert.deepEqual(rm.spearman(rm.wholePoints(rd.RUNNER_WEEKS, rd.RUNNER_WEEKS.map(() => 40))), { kind: 'undefined', reason: 'same-y' });
+	assert.throws(() => rm.wholePoints([1, 2], [3]), /2 x values but 1 y values/);
+	assert.throws(() => rm.wholePoints([1.5], [3]), /is not whole/);
+
+	// Sweep: extreme and 3,000 seeded random grid states on every movable setup. Nothing may throw, and every
+	// least-squares fit keeps the identities: residuals add to 0, Σ residual × (x − x̄) = 0, the closed-form SSE equals
+	// the residual-by-residual sum, and r² = R².
+	const nextRandom = (() => {
+		let seed = 20261126;
+		return () => {
+			seed = (seed + 0x6d2b79f5) | 0;
+			let t = Math.imul(seed ^ (seed >>> 15), seed | 1);
+			t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+			return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+		};
+	})();
+	const between = (low, high) => low + Math.floor(nextRandom() * (high - low + 1));
+	const checkIdentities = (points, where) => {
+		const summary = rm.summarize(points);
+		rm.correlation(points);
+		rm.spearman(points);
+		const squared = rm.correlationSquared(points);
+		const fitted = rm.rSquared(points);
+		const fit = rm.leastSquares(points);
+		if (fit.kind !== 'line') {
+			assert.equal(fitted.kind, 'undefined', where);
+			return;
+		}
+		const misses = rm.residuals(points, fit.line);
+		assert.deepEqual(misses.reduce(addFractions, f(0)), f(0), `${where}: residuals add to 0`);
+		const weighted = misses.map((miss, i) => multiplyFractions(miss, subtractFractions(points[i][0], summary.meanX))).reduce(addFractions, f(0));
+		assert.deepEqual(weighted, f(0), `${where}: Σ residual × (x − x̄) = 0`);
+		assert.deepEqual(rm.sumOfSquares(misses), rm.leastSquaresError(points), `${where}: SSE`);
+		if (squared.kind === undefined) assert.deepEqual(fitted, squared, `${where}: r² = R²`);
+		else assert.equal(fitted.kind, 'undefined', where);
+	};
+	const classStates = [
+		[CLASS_HEIGHTS.map(() => 110), CLASS_HEIGHTS.map(() => 165)],
+		[CLASS_HEIGHTS.map((_, i) => (i % 2 ? 110 : 165)), CLASS_HEIGHTS.map((_, i) => (i % 3 ? 165 : 110))],
+		[CLASS_HEIGHTS.map((_, i) => (i === 0 ? 165 : 110)), CLASS_HEIGHTS.map((_, i) => (i === 8 ? 110 : 165))],
+		[CLASS_HEIGHTS, rd.CLASS_ARM_SPANS],
+	];
+	for (let drag = 0; drag < 3000; drag += 1) classStates.push([CLASS_HEIGHTS.map(() => between(110, 165)), CLASS_HEIGHTS.map(() => between(110, 165))]);
+	classStates.forEach(([heights, spans], i) => checkIdentities(rm.wholePoints(heights, spans), `class state ${i}`));
+	const lapStates = [rd.RUNNER_WEEKS.map(() => 30), rd.RUNNER_WEEKS.map(() => 130), rd.RUNNER_WEEKS.map((_, i) => (i % 2 ? 30 : 130))];
+	for (let drag = 0; drag < 1000; drag += 1) lapStates.push(rd.RUNNER_WEEKS.map(() => between(30, 130)));
+	lapStates.forEach((times, i) => checkIdentities(rm.wholePoints(rd.RUNNER_WEEKS, times), `runners state ${i}`));
+	for (let span = 110; span <= 165; span += 1) {
+		const points = rm.wholePoints(CLASS_HEIGHTS, rd.CLASS_ARM_SPANS.map((value, i) => (i === rd.TYPO_CHILD - 1 ? span : value)));
+		checkIdentities(points, `child 2 at ${span}`);
+		assert.equal(rm.leastAbsolute(points).kind, 'line');
+	}
+	rd.ANSCOMBE.forEach((set, i) => checkIdentities(set, `Anscombe set ${i + 1}`));
+	// The model file has no μ or σ colors and no KaTeX.
+	for (const name of ['model.ts', 'datasets.ts']) {
+		const source = readFileSync(`src/components/react/linearRegression/${name}`, 'utf8');
+		assert.ok(!/\bmu\b|sigma|--ms-mu|--ms-sigma|<LaTeX/.test(source), `linearRegression/${name} uses a μ or σ color or KaTeX`);
+	}
+}
+
 // ---- NormalDistribution: bell untouched, z mode (decision 0019) ----
 // The published bell is pinned first, so moving its code into a mode can't change its words or numbers.
 {
