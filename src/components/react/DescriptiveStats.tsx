@@ -16,6 +16,7 @@ import {
   CONTROL_LABELS,
   CUTOFF_OPTIONS,
   SCALE_LABELS,
+  alreadyShowingLine,
   announcementFor,
   boardLabel,
   checkRefusal,
@@ -81,11 +82,20 @@ export default function DescriptiveStats({ setup: setupId }: DescriptiveStatsPro
   });
   const feedbackRef = useRef<HTMLParagraphElement>(null);
 
-  const send = useCallback((action: Action) => {
-    sliding.current = false;
-    lastAction.current = action;
-    dispatch(action);
-  }, []);
+  const send = useCallback(
+    (action: Action) => {
+      sliding.current = false;
+      const repeat = action.type === "preset" ? alreadyShowingLine(stateRef.current, action.id) : null;
+      if (repeat) {
+        lastAction.current = null;
+        announce(repeat);
+        return;
+      }
+      lastAction.current = action;
+      dispatch(action);
+    },
+    [announce],
+  );
 
   /** Slider and drag moves update the board silently; the commit below speaks once. */
   const slide = useCallback((value: number) => {

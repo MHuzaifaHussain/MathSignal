@@ -870,6 +870,17 @@ function checkAnnouncement(state: DescriptiveState): string {
 	return state.feedback?.kind === 'wrong' && state.failedChecks === CHECKS_BEFORE_ANSWER ? `${line} You can now show the answer.` : line;
 }
 
+/**
+ * "Already showing Our class.": pressing the preset in view changes nothing (on a line-up the reducer returns the same
+ * state, so no effect would speak), and the board says this instead, so the press is heard. Null for any other preset.
+ */
+export function alreadyShowingLine(state: DescriptiveState, presetId: string): string | null {
+	if (state.activePreset !== presetId) return null;
+	const preset = presetById(setupOf(state), presetId);
+	if (!preset) throw new Error(`DescriptiveStats: setup "${state.setupId}" has no preset "${presetId}".`);
+	return `Already showing ${preset.label}.`;
+}
+
 /** What the live region says when an interaction ends: the sentence that answers it. */
 export function announcementFor(state: DescriptiveState, action: Action): string {
 	const setup = setupOf(state);

@@ -2013,6 +2013,12 @@ const announcerRun = () => {
 	const ten = run('class-lineup', { type: 'preset', id: 'ten-children' });
 	assert.equal(dsay.statusLine(ten), '10 children, in the order they arrived. Heights from 122 cm to 148 cm.');
 	assert.equal(dsay.announcementFor(ten, { type: 'preset', id: 'ten-children' }), 'Ten children. 10 children, in the order they arrived. Heights from 122 cm to 148 cm.');
+	// Pressing the class in view changes nothing, so the board speaks a line of its own, naming the preset.
+	assert.equal(dsay.alreadyShowingLine(open, 'our-class'), 'Already showing Our class.');
+	assert.equal(dsay.alreadyShowingLine(ten, 'ten-children'), 'Already showing Ten children.');
+	assert.equal(dsay.alreadyShowingLine(ten, 'our-class'), null, 'a different class loads as usual');
+	assert.equal(dsay.alreadyShowingLine(run('cafe-millionaire', { type: 'newcomer', on: true }), 'nobody'), null, 'the newcomer switch steps away from Nobody new');
+	assert.throws(() => dsay.alreadyShowingLine({ ...ten, activePreset: 'no-such-class' }, 'no-such-class'), /"class-lineup" has no preset "no-such-class"/);
 	assert.equal(
 		dsay.feedbackLine(dst.reducer(dst.reducer(ten, { type: 'pick', child: 4 }), { type: 'check' })),
 		'Child 5 is one of the two in the middle of the arrival line, but 9 children are shorter and none is taller. Line them up first.',
