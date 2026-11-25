@@ -47,6 +47,7 @@ import GoDeeper from "../../../components/GoDeeper.astro";
 import Mistake from "../../../components/Mistake.astro";
 import NotationKey from "../../../components/NotationKey.astro";
 import PreciseStatement from "../../../components/PreciseStatement.astro";
+import PropertiesTable from "../../../components/PropertiesTable.astro";
 import PyRunner from "../../../components/PyRunner.astro";
 import References from "../../../components/References.astro";
 import ResearchFrontier from "../../../components/ResearchFrontier.astro";
@@ -178,14 +179,7 @@ This is the **z-score**. It lets one reference table, or `scipy.stats.norm`, ser
 
 </StepThrough>
 
-| Property | Value |
-| --- | --- |
-| Mean, median, mode | $\vmu$ |
-| Variance | $\vsigma^2$ |
-| Skewness | 0 |
-| Excess kurtosis | 0 |
-| Entropy | $\tfrac{1}{2}\ln(2\pi e \vsigma^2)$ |
-| Moment generating function | $\exp(\vmu t + \vsigma^2 t^2 / 2)$ |
+<PropertiesTable family="normal" />
 
 </FormalDefinition>
 

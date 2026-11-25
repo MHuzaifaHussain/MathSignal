@@ -5,6 +5,8 @@
 //   - notation and references: unique ids; every reference has an https URL and a `checked` date, and lists
 //     `surnames` when an author's name has a particle ("de Amorim"), so short citations keep it
 //   - pages: every topic, reference, <Cite id> and <NotationKey symbols> id they use exists
+//   - distributions: a family's owner page, once it exists, shows <PropertiesTable family="…">; every table names a
+//     known family; a page with several tables gives all but one an `id` (decision 0023)
 //   - SEO: descriptions 120-160 characters; titles, descriptions and primary queries unique (docs/seo/README.md);
 //     searchIntent matches the page type
 //   - spelling: page prose uses American English (decision 0010)
@@ -20,6 +22,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseDocument } from 'yaml';
 import { TOPICS } from '../src/data/topics.mjs';
 import { NOTATION } from '../src/data/notation.mjs';
+import { DISTRIBUTIONS } from '../src/data/distributions.mjs';
 import { REFERENCES, shortCitation } from '../src/data/references.mjs';
 import { SITE_NAME } from '../src/seo/site.mjs';
 
@@ -259,6 +262,51 @@ function spellingProblems(pages) {
 		const found = [...new Set([...proseOf(source).matchAll(BRITISH_SPELLING)].map((match) => match[0]))];
 		return found.length > 0 ? [`${name}: British spelling ${found.map((word) => `"${word}"`).join(', ')}; the site uses American English (decision 0010)`] : [];
 	});
+}
+
+/** The PropertiesTable elements on a page, with their string attributes. */
+function propertiesTablesOf(source) {
+	return [...source.matchAll(/<PropertiesTable\b/g)].map((match) => Object.fromEntries(readTag(source, match.index).attributes));
+}
+
+/** Owner pages show their family's table; table ids never collide; every family id exists (decision 0023). */
+function propertiesTableProblems(pages) {
+	const familyIds = new Set(DISTRIBUTIONS.map((family) => family.id));
+	const problems = [];
+	const byId = new Map(pages.map((page) => [page.id, page]));
+	for (const family of DISTRIBUTIONS) {
+		const owner = byId.get(family.ownerTopic);
+		if (!owner) continue;
+		if (!propertiesTablesOf(owner.source).some((table) => table.family === family.id)) {
+			problems.push(`${owner.name}: owns the ${family.id} family, so it must show <PropertiesTable family="${family.id}" /> (src/data/distributions.mjs)`);
+		}
+	}
+	for (const { name, source } of pages) {
+		const tables = propertiesTablesOf(source);
+		for (const table of tables) {
+			if (!familyIds.has(table.family)) problems.push(`${name}: <PropertiesTable family="${table.family}"> names no family in src/data/distributions.mjs (family must be a quoted id)`);
+		}
+		if (tables.filter((table) => table.id === undefined).length > 1) problems.push(`${name}: ${tables.length} PropertiesTables share the default id "properties"; give all but one their own id`);
+	}
+	return problems;
+}
+
+/** Pins the PropertiesTable rules on made-up pages, so a change to them fails loudly. */
+function checkPropertiesTableRules() {
+	const page = (id, source) => ({ name: `${id}.mdx`, id, source });
+	const owner = 'probability/binomial-distribution';
+	const examples = '<PropertiesTable family="binomial" examplesHeading="On the boards" examples={{ needs: "Without replacement: $1/15$, not $0 < p$" }} rows={["needs"]} />';
+	assert.deepEqual(propertiesTableProblems([page(owner, `Text.\n\n${examples}\n`)]), []);
+	assert.deepEqual(propertiesTableProblems([page(owner, 'A hand-written table instead.\n')]), [
+		`${owner}.mdx: owns the binomial family, so it must show <PropertiesTable family="binomial" /> (src/data/distributions.mjs)`,
+	]);
+	assert.deepEqual(propertiesTableProblems([page('a/b', '<PropertiesTable family="gamma" />')]), [
+		'a/b.mdx: <PropertiesTable family="gamma"> names no family in src/data/distributions.mjs (family must be a quoted id)',
+	]);
+	assert.deepEqual(propertiesTableProblems([page('a/b', '<PropertiesTable family="normal" />\n\n<PropertiesTable family="uniform" />')]), [
+		'a/b.mdx: 2 PropertiesTables share the default id "properties"; give all but one their own id',
+	]);
+	assert.deepEqual(propertiesTableProblems([page('a/b', '<PropertiesTable family="normal" />\n\n<PropertiesTable family="uniform" id="uniform-properties" />')]), []);
 }
 
 function intentProblems(pages) {
@@ -542,6 +590,7 @@ function wordCountProblems(pages) {
 async function main() {
 	checkCitationRules();
 	checkWordCounter();
+	checkPropertiesTableRules();
 	const pages = await readPages();
 	const pagesById = new Map(pages.map((page) => [page.id, page]));
 	const seo = seoProblems(pages);
@@ -554,6 +603,7 @@ async function main() {
 		...pageProblems(pages),
 		...seo.problems,
 		...intentProblems(pages),
+		...propertiesTableProblems(pages),
 		...spellingProblems(pages),
 		...wordCounts.problems,
 	];

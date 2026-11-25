@@ -1,0 +1,147 @@
+---
+// A distribution family's properties from src/data/distributions.mjs (decision 0023). The page passes only its own
+// example column; rows, wording and order live in the registry, and every bad id fails the build. Labels, statements
+// and examples are prose with $…$ math. Goes inside FormalDefinition, after the page's board and prediction.
+import { proseHtml, resolveRows } from './properties/resolveRows.mjs';
+import { PROPERTIES_ID } from './sectionAnchors';
+
+interface Props {
+	/** A family id in src/data/distributions.mjs. */
+	family: string;
+	/** Third-column text by row id: prose with $…$ math, for every shown row or none. */
+	examples?: Record<string, string>;
+	/** The third column's heading; required with `examples`. */
+	examplesHeading?: string;
+	/** Row ids: a subset and its order. Default: every row. */
+	rows?: string[];
+	/** A site path per row id, linking that row's label. */
+	rowLinks?: Record<string, string>;
+	/** The region's id; a second table on one page must pass its own. */
+	id?: string;
+}
+
+const { family, examples, examplesHeading, rows, rowLinks, id = PROPERTIES_ID } = Astro.props;
+const table = resolveRows(family, { rows, examples, examplesHeading, rowLinks });
+const where = `PropertiesTable (${family})`;
+const captionId = `${id}-caption`;
+const hasExampleColumn = table.examplesHeading !== undefined;
+const html = (text: string, part: string) => proseHtml(text, `${where}, ${part}`);
+---
+
+<div class:list={['ms-properties', 'not-content', { 'ms-properties-examples': hasExampleColumn }]} role="region" tabindex="0" aria-labelledby={captionId} id={id}>
+	<table>
+		<caption id={captionId}>{table.caption}</caption>
+		<thead>
+			<tr>
+				<th scope="col">Property</th>
+				<th scope="col" set:html={html(table.statementHeading, 'heading')} />
+				{hasExampleColumn && <th scope="col" set:html={html(table.examplesHeading as string, 'examples heading')} />}
+			</tr>
+		</thead>
+		<tbody>
+			{
+				table.rows.map((row) => (
+					<tr>
+						<th scope="row">{row.link ? <a href={row.link} set:html={html(row.label, `row "${row.id}" label`)} /> : <Fragment set:html={html(row.label, `row "${row.id}" label`)} />}</th>
+						<td set:html={html(row.statement, `row "${row.id}"`)} />
+						{hasExampleColumn && <td set:html={html(row.example as string, `example for row "${row.id}"`)} />}
+					</tr>
+				))
+			}
+		</tbody>
+	</table>
+</div>
+
+<style>
+	/* The same look as the page's markdown tables (Starlight's table rules), but a real table: `not-content` keeps
+	 * Starlight's `display: block` off it, and the region scrolls instead when a formula is wider than the column. */
+	.ms-properties {
+		overflow-x: auto;
+		container-type: inline-size;
+	}
+
+	table {
+		border-spacing: 0;
+	}
+
+	caption {
+		padding-block-end: 0.25rem;
+		font-family: var(--ms-font-ui);
+		font-size: 0.875rem;
+		color: var(--ms-ink-muted);
+		text-align: start;
+	}
+
+	th,
+	td {
+		padding: 0.5rem 1rem;
+		border-block-end: 1px solid var(--ms-rule);
+		vertical-align: baseline;
+		text-align: start;
+	}
+
+	:is(th, td):first-child {
+		padding-inline-start: 0;
+	}
+
+	:is(th, td):last-child {
+		padding-inline-end: 0;
+	}
+
+	thead th {
+		color: var(--ms-ink);
+		font-weight: 600;
+	}
+
+	/* Row headers name the row for screen readers; on screen they look like the markdown tables' first column. */
+	tbody th {
+		font-weight: 400;
+	}
+
+	a {
+		color: var(--ms-ink);
+		text-decoration: underline;
+		text-decoration-color: var(--ms-ink-muted);
+		text-underline-offset: 0.18em;
+	}
+
+	a:hover {
+		text-decoration-color: var(--ms-ink);
+		text-decoration-thickness: 2px;
+	}
+
+	/* Three columns on a phone: tighter gaps and a smaller size, so prose wraps instead of the region scrolling. */
+	@container (max-width: 30rem) {
+		.ms-properties-examples table {
+			font-size: 0.9375rem;
+			line-height: 1.5;
+			hyphens: auto;
+		}
+
+		.ms-properties-examples :is(th, td) {
+			padding-inline: 0.375rem;
+		}
+
+		.ms-properties-examples :is(th, td):first-child {
+			padding-inline-start: 0;
+		}
+
+		.ms-properties-examples :is(th, td):last-child {
+			padding-inline-end: 0;
+		}
+	}
+
+	@media print {
+		.ms-properties {
+			overflow: visible;
+		}
+
+		table {
+			inline-size: 100%;
+		}
+
+		tr {
+			break-inside: avoid;
+		}
+	}
+</style>
