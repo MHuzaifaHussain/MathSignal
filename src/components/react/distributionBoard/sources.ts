@@ -17,8 +17,15 @@ const SOURCES: Readonly<Record<SourceId, readonly WeightedOutcome[]>> = {
 	'two-coins': equallyLikely('two-coins'),
 };
 
+/** An outcome that can't happen would draw a tile with no chance behind it, so every weight is at least 1. */
+export function assertPossible(source: string, outcomes: readonly WeightedOutcome[]): readonly WeightedOutcome[] {
+	const impossible = outcomes.find((outcome) => !Number.isSafeInteger(outcome.weight) || outcome.weight < 1);
+	if (impossible) throw new Error(`DistributionBoard: source "${source}" gives outcome "${impossible.id}" weight ${impossible.weight}; every weight must be a whole number of at least 1.`);
+	return outcomes;
+}
+
 export function outcomesOf(source: SourceId): readonly WeightedOutcome[] {
 	const outcomes = SOURCES[source];
 	if (!outcomes) throw new Error(`DistributionBoard: unknown source "${source}". Known sources: ${Object.keys(SOURCES).join(', ')}.`);
-	return outcomes;
+	return assertPossible(source, outcomes);
 }

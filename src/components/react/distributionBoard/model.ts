@@ -71,9 +71,13 @@ export function distributionOf(outcomes: readonly WeightedOutcome[], mapping: Re
 	);
 }
 
-/** Layer 2 entry point for pages that state a distribution directly, with no outcome list behind it. */
+/**
+ * Layer 2 entry point for pages that state a distribution directly, with no outcome list behind it. A value with
+ * weight 0 gets no bar, so the first and last bars are always values that can happen; a negative weight still throws.
+ */
 export function distributionFromPmf(entries: readonly { value: number; weight: number }[]): Distribution {
-	return buildDistribution(entries.map(({ value, weight }) => ({ value, members: [], weight })));
+	for (const { weight } of entries) assertWholeNumber('a weight', weight, 0);
+	return buildDistribution(entries.filter(({ weight }) => weight > 0).map(({ value, weight }) => ({ value, members: [], weight })));
 }
 
 /** Σ weight·value and Σ weight·value², as integers, because the exact variance needs no fractions until the end. */

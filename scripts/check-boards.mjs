@@ -999,6 +999,23 @@ assert.deepEqual(mean(entered), fraction(1, 1));
 assert.deepEqual(variance(entered), fraction(1, 2));
 assert.deepEqual(entered.bars.map((bar) => bar.members), [[], [], []]);
 assert.throws(() => distributionFromPmf([]), /no weight/);
+// Zero weights get no bar (decision 0018, hardening): the first and last bars are values that can happen, so the
+// midrange is 3/2 here, not 1.
+{
+	const skipped = distributionFromPmf([{ value: 0, weight: 0 }, { value: 1, weight: 1 }, { value: 2, weight: 3 }]);
+	assert.deepEqual(skipped.bars.map((bar) => bar.value), [1, 2]);
+	assert.equal(skipped.totalWeight, 4);
+	assert.equal(classifyGuess(skipped, 3, 2), 'midrange');
+	assert.equal(classifyGuess(skipped, 2, 2), 'other');
+	assert.throws(() => distributionFromPmf([{ value: 0, weight: -1 }, { value: 1, weight: 2 }]), /a weight must be a whole number of at least 0, got -1/);
+	assert.throws(() => distributionFromPmf([{ value: 0, weight: 0 }, { value: 1, weight: 0 }]), /no weight/);
+	const distSources = await import('../src/components/react/distributionBoard/sources.ts');
+	assert.throws(
+		() => distSources.assertPossible('test', [{ id: 'H', label: 'H', spoken: 'heads', weight: 0 }]),
+		/source "test" gives outcome "H" weight 0; every weight must be a whole number of at least 1/,
+	);
+	for (const source of ['one-die', 'two-coins']) assert.ok(distSources.outcomesOf(source).every((outcome) => outcome.weight >= 1), source);
+}
 
 // Torque: positive when the balance point is right of the pencil, so the plank tips down on the right.
 const oneBigPrize = dieDistribution([0, 0, 0, 0, 0, 6]);
