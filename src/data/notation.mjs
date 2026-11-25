@@ -659,7 +659,7 @@ export const NOTATION = [
 		tex: 'd',
 		say: '"d"',
 		meaning: 'How many equally likely values each item can land on: 365 birthdays, 12 months, 6 dice faces, or the buckets of a hash table',
-		note: 'Not the key dimension d_k or the shift d. Grinstead and Snell call it n in Example 3.3.',
+		note: 'Not the key dimension d_k or the shift d. Grinstead and Snell call it n in Exercise 19, where d is the number of lifeforms.',
 	},
 	{
 		key: 'group-size',
