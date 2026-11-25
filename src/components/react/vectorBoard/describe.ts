@@ -3,42 +3,51 @@
 // that nothing names an answer before Check. Plain Unicode only, never KaTeX (decision 0007). Notation follows
 // src/data/notation.mjs: ‖a‖ for a vector's length, |c| only for a number, · only for the dot product.
 // Design and reasoning: decision 0014.
-import { isPerfectSquare } from '../boardMath.ts';
-import { capitalize, joinWords, plural } from '../boardText.ts';
+import { isPerfectSquare, toNumber, type Fraction } from '../boardMath.ts';
+import { capitalize, fractionText, joinWords, plural } from '../boardText.ts';
 import { canShowAnswer } from '../guided/guided.ts';
 import { tableFoldAnnouncement } from '../guided/tableFold.ts';
 import { formatNumber } from '../plotColors.ts';
 import {
+	LABEL_OFFSET,
 	VIEW_LIMIT,
 	add,
 	angleOf,
+	clipSegment,
 	clipToView,
+	combine,
 	cross,
 	decimalText,
 	dot,
 	equals,
+	flagWeights,
 	isZero,
 	labelAnchor,
 	labelAway,
 	lengthSquared,
 	lengthText,
+	lineMultiple,
 	numberText,
 	rootSymbol,
 	rootText,
 	scale,
 	shadowTip,
+	spanKind,
+	spanLineEnds,
 	subtract,
 	withinView,
 	type Angle,
+	type SpanKind,
 	type Vec2,
 } from './model.ts';
-import type { Stage } from './setups.ts';
+import { isOnScale, type ScaleRange, type Setup, type SetupKind, type Stage } from './setups.ts';
 import {
 	AXES,
 	DIRECTIONS,
 	handleIds,
 	handlePoint,
 	handleRefusals,
+	requireFlag,
 	setupOf,
 	signOf,
 	stepRefusal,
@@ -51,6 +60,7 @@ import {
 	type Sign,
 	type VectorId,
 	type VectorState,
+	type Weight,
 } from './state.ts';
 
 export const STAGE_LABELS: Readonly<Record<Stage, string>> = { trips: 'Trips', arrows: 'Arrows', lists: 'Lists' };
@@ -63,7 +73,9 @@ export const CONTROL_LABELS = {
 	presetsCaption: 'Try',
 	otherOrder: 'Show b first too',
 	scale: 'Scale c',
+	scaleD: 'Scale d',
 	signLegend: 'Your guess: a · b is',
+	spanLegend: 'Your guess: the span of a and b is',
 } as const;
 
 export const SIGN_OPTIONS: readonly { value: Sign; label: string }[] = [
@@ -72,8 +84,19 @@ export const SIGN_OPTIONS: readonly { value: Sign; label: string }[] = [
 	{ value: 'negative', label: 'Negative' },
 ];
 
+export const SPAN_OPTIONS: readonly { value: SpanKind; label: string }[] = [
+	{ value: 'origin', label: 'Only the origin' },
+	{ value: 'line', label: 'A line' },
+	{ value: 'plane', label: 'The whole plane' },
+];
+
+const SPAN_GUESS_WORDS: Readonly<Record<SpanKind, string>> = { origin: 'only the origin', line: 'a line', plane: 'the whole plane' };
+
 const LOCKED_TEXT = 'a and b are the question. Press Check first.';
 const NO_SIGN_TEXT = 'Pick positive, zero or negative first.';
+const NO_SPAN_TEXT = 'Pick only the origin, a line or the whole plane first.';
+/** The status line once a and b are free to move, on align and span-choice. */
+const DRAG_OR_PRESET = 'Drag the tips of a and b, or try a preset.';
 
 // ---- Numbers and positions ----
 
@@ -141,6 +164,10 @@ export function boardLabel(state: VectorState): string {
 			return 'A cart on a track and your push. Drag the tip of your push, or use the step buttons under the plane, then press Check.';
 		case 'align':
 			return 'Two vectors a and b. Pick whether a · b is positive, zero or negative, then press Check.';
+		case 'combine':
+			return 'Two vectors a and b, scaled by c and d and added tip to tail. Set c and d with the sliders so c a + d b lands on the flag, then press Check.';
+		case 'span-choice':
+			return 'Two vectors a and b. Pick whether their span is only the origin, a line or the whole plane, then press Check.';
 	}
 }
 
@@ -162,7 +189,11 @@ export function statusLine(state: VectorState): string {
 			return `Goal: keep your push at length ${rootSymbol(goal.targetLengthSquared)}, and tilt it so the cart gets only ${numberText(goal.targetForward)} of it. Then press Check.`;
 		}
 		case 'align':
-			return state.checked ? 'Drag the tips of a and b, or try a preset.' : 'Is a · b positive, zero or negative? Pick your guess, then press Check.';
+			return state.checked ? DRAG_OR_PRESET : 'Is a · b positive, zero or negative? Pick your guess, then press Check.';
+		case 'combine':
+			return state.checked ? 'Change c or d, drag the tips of a and b, or try a preset.' : 'Goal: set c and d so that c a + d b lands on the flag. Then press Check.';
+		case 'span-choice':
+			return state.checked ? DRAG_OR_PRESET : 'What can c a + d b reach: only the origin, a line or the whole plane? Pick your guess, then press Check.';
 	}
 }
 
@@ -298,14 +329,117 @@ function beforeLine(state: VectorState): string | null {
 	return `${opening} Same angle, b ${stretch} times as long, so a · b is ${stretch} times as big.`;
 }
 
+const pairsLine = (state: VectorState) => `a = ${pairText(state.a)}, b = ${pairText(state.b)}.`;
+
 function alignReadouts(state: VectorState): string[] {
-	if (!state.checked) return [`a = ${pairText(state.a)}, b = ${pairText(state.b)}.`];
+	if (!state.checked) return [pairsLine(state)];
 	const zero = zeroVectorSentence(state.a, state.b);
 	if (zero) return [zero];
 	const angle = angleOf(state.a, state.b);
 	if (!angle) throw new Error('VectorBoard2D: two nonzero vectors must have an angle.');
 	const before = beforeLine(state);
 	return [`a · b = ${dotExpression(state.a, state.b)}.`, angleLine(angle), shadowLine(state.a, state.b), ...(before ? [before] : [])];
+}
+
+// ---- Linear combinations and span ----
+
+/** A weight as text: the slider's own form when it has one ("−3.5", "2"), else the exact fraction ("7/8"). */
+export function weightText(value: Fraction): string {
+	return value.denominator <= 2 ? numberText(toNumber(value)) : fractionText(value);
+}
+
+/** "1 × a + (−1) × b": the second weight gets parentheses when negative, as a factor does. */
+const combinationText = (c: string, d: string) => `${c} × a + ${d.startsWith('−') ? `(${d})` : d} × b`;
+
+const sumOf = (state: VectorState): Vec2 => combine(state.scalar, state.a, state.scalarD, state.b);
+
+function requireRange(setup: Setup): ScaleRange {
+	if (!setup.scaleRange) throw new Error(`VectorBoard2D: setup "${setup.id}" has no slider range.`);
+	return setup.scaleRange;
+}
+
+/** "b = −2 × a" when the multiple is whole or half, as the slider writes it, and "b = a" for 1; null otherwise. */
+function multipleWords(name: 'a' | 'b', other: 'a' | 'b', multiple: Fraction | null): string | null {
+	if (!multiple || multiple.denominator > 2) return null;
+	if (multiple.numerator === 1 && multiple.denominator === 1) return `${name} = ${other}`;
+	return `${name} = ${weightText(multiple)} × ${other}`;
+}
+
+/**
+ * What every c a + d b can reach, the same on both span setups. One switch on spanKind, then the line cases in a
+ * fixed order: a zero vector first, so a multiple is never written "b = 0 × a".
+ */
+export function spanSentence(a: Vec2, b: Vec2): string {
+	switch (spanKind(a, b)) {
+		case 'origin':
+			return 'a and b are both the zero vector, so every c a + d b is (0, 0). The span is just the origin.';
+		case 'plane':
+			return 'a and b point along different lines, so their span is the whole plane.';
+		case 'line': {
+			if (isZero(a)) return 'a is the zero vector, so it adds nothing: the span is the line through b.';
+			if (isZero(b)) return 'b is the zero vector, so it adds nothing: the span is the line through a.';
+			const named = multipleWords('b', 'a', lineMultiple(a, b)) ?? multipleWords('a', 'b', lineMultiple(b, a));
+			if (named) return `${named}, so a and b lie on one line through the origin, and every c a + d b stays on it. The span is that line.`;
+			return 'a and b lie on one line through the origin, so every c a + d b stays on it. The span is that line.';
+		}
+	}
+}
+
+/**
+ * Whether the flag can be reached, and with which weights. When the slider can't set them it says so, so a reader who
+ * drags a and b doesn't read the slider's steps as "unreachable".
+ */
+export function flagSentence(state: VectorState): string {
+	const setup = setupOf(state);
+	const { target } = requireFlag(setup);
+	const { a, b } = state;
+	switch (spanKind(a, b)) {
+		case 'origin':
+			return 'The flag is not at the origin, so no c and d reach it.';
+		case 'line': {
+			const direction = isZero(a) ? b : a;
+			return cross(direction, target) === 0 ? 'The flag is on that line, so some c and d reach it.' : 'The flag is off that line, so no c and d reach it.';
+		}
+		case 'plane': {
+			const weights = flagWeights(target, a, b);
+			if (!weights) throw new Error('VectorBoard2D: a and b span the plane, so the flag must have weights.');
+			const sentence = `The flag is ${combinationText(weightText(weights[0]), weightText(weights[1]))}`;
+			const range = requireRange(setup);
+			if (weights.every((weight) => isOnScale(range, toNumber(weight)))) return `${sentence}.`;
+			return `${sentence}, which the slider can't set: it moves in steps of ${numberText(range.step)} from ${numberText(range.min)} to ${numberText(range.max)}.`;
+		}
+	}
+}
+
+/** What the slider sent past ±5, or null when everything is on the board. Only combine setups can send anything off. */
+export function edgeSentence(state: VectorState): string | null {
+	if (setupOf(state).kind !== 'combine') return null;
+	const scaled = scale(state.scalar, state.a);
+	const sum = sumOf(state);
+	const off = [...(withinView(scaled) ? [] : [`c a = ${pairText(scaled)}`]), ...(withinView(sum) ? [] : [`c a + d b = ${pairText(sum)}`])];
+	if (off.length === 0) return null;
+	return `${joinWords(off)} ${off.length === 1 ? 'is' : 'are'} past the edge of the board, so the drawing stops at the edge.`;
+}
+
+/** The reader's own c, d and sum, and anything past the edge: all a slider commit says. */
+function combineSliderLines(state: VectorState): string[] {
+	const { target } = requireFlag(setupOf(state));
+	const edge = edgeSentence(state);
+	const first = `c = ${numberText(state.scalar)}, d = ${numberText(state.scalarD)}. c a + d b = ${pairText(sumOf(state))}. The flag is at ${pairText(target)}.`;
+	return edge ? [first, edge] : [first];
+}
+
+/** After Check the span, and the flag's weights while no verdict is showing (the verdict already says them). */
+function combineReadouts(state: VectorState): string[] {
+	const lines = combineSliderLines(state);
+	if (!state.checked) return lines;
+	return [...lines, spanSentence(state.a, state.b), ...(state.feedback === null ? [flagSentence(state)] : [])];
+}
+
+/** The span sentence waits for Check, and stays out while the verdict, which already says it, is showing. */
+function spanChoiceReadouts(state: VectorState): string[] {
+	if (!state.checked || state.feedback !== null) return [pairsLine(state)];
+	return [pairsLine(state), spanSentence(state.a, state.b)];
 }
 
 /** The readout sentences under the plane. Before Check they name only what the reader set, never the answer. */
@@ -319,6 +453,10 @@ export function readoutLines(state: VectorState): string[] {
 			return cartReadouts(state);
 		case 'align':
 			return alignReadouts(state);
+		case 'combine':
+			return combineReadouts(state);
+		case 'span-choice':
+			return spanChoiceReadouts(state);
 	}
 }
 
@@ -405,6 +543,35 @@ function signVerdict(state: VectorState, guess: Sign, correct: boolean): string 
 	return `Not quite. a · b = ${expression}. It is ${actual} because the angle, ${angleText}, is ${value < 0 ? 'over' : 'under'} 90°.`;
 }
 
+const combineTerms = (state: VectorState) => combinationText(numberText(state.scalar), numberText(state.scalarD));
+
+/** "1 × a + 2 × b = (2, 1) + (2, 4) = (4, 5), the flag." */
+function combineMatch(state: VectorState): string {
+	return `${combineTerms(state)} = ${pairText(scale(state.scalar, state.a))} + ${pairText(scale(state.scalarD, state.b))} = ${pairText(sumOf(state))}, the flag.`;
+}
+
+function combineMiss(state: VectorState, result: 'swapped' | 'other'): string {
+	const reached = `${combineTerms(state)} = ${pairText(sumOf(state))}`;
+	if (result === 'swapped') return `Not quite. ${reached}, the flag with east and north swapped. Look again at which weight scales a.`;
+	return `Not quite. ${reached}, and the flag is at ${pairText(requireFlag(setupOf(state)).target)}.`;
+}
+
+/** The one-shot span verdict. validateSetup keeps the question to b = k a with k whole and |k| at least 2. */
+function spanVerdict(state: VectorState, guess: SpanKind, correct: boolean): string {
+	const { a, b } = state;
+	if (correct) return `Yes. ${spanSentence(a, b)}`;
+	const multiple = lineMultiple(a, b);
+	if (isZero(a) || !multiple || multiple.denominator !== 1) {
+		throw new Error(`VectorBoard2D: the span verdicts are written for b = k a with k whole, not a = ${pairText(a)}, b = ${pairText(b)}.`);
+	}
+	const k = multiple.numerator;
+	if (guess === 'plane') {
+		const way = k < 0 ? 'points exactly opposite a' : 'points the same way as a';
+		return `Not quite. b = ${numberText(k)} × a ${way}, so every c a + d b = (c ${k < 0 ? '−' : '+'} ${Math.abs(k)}d) × a stays on the line through a. The span is that line.`;
+	}
+	return `Not quite. c a alone already reaches every point of the line through a, such as 1 × a = ${pairText(a)} and −1 × a = ${pairText(scale(-1, a))}. The span is that line.`;
+}
+
 function shownAnswer(state: VectorState): string {
 	switch (setupOf(state).kind) {
 		case 'add':
@@ -413,8 +580,11 @@ function shownAnswer(state: VectorState): string {
 			return `Here it is. ${turnedAround(state)}`;
 		case 'cart':
 			return `Here it is. ${cartLengthClaim(state)}`;
+		case 'combine':
+			return `Here it is. ${combineMatch(state)}`;
 		case 'align':
-			throw new Error('VectorBoard2D: the align setup reveals on any answer, so it never shows one.');
+		case 'span-choice':
+			throw new Error(`VectorBoard2D: the ${state.setupId} setup reveals on any answer, so it never shows one.`);
 	}
 }
 
@@ -437,13 +607,35 @@ export function feedbackLine(state: VectorState): string | null {
 			break;
 		case 'sign':
 			return signVerdict(state, feedback.guess, feedback.correct);
+		case 'combine':
+			line = feedback.result === 'match' ? `Yes. ${combineMatch(state)}` : combineMiss(state, feedback.result);
+			break;
+		case 'span':
+			return spanVerdict(state, feedback.guess, feedback.correct);
 	}
 	return canShowAnswer(state) ? `${line} You can now show the answer.` : line;
 }
 
+/** Why Check needs a guess first, by kind: the sign on align, the span on span-choice. */
+function noGuessText(kind: SetupKind): string {
+	return kind === 'span-choice' ? NO_SPAN_TEXT : NO_SIGN_TEXT;
+}
+
 /** The visible reason Check is refused, or null. */
 export function checkRefusal(state: VectorState): string | null {
-	return setupOf(state).kind === 'align' && !state.checked && state.signGuess === null ? NO_SIGN_TEXT : null;
+	if (state.checked) return null;
+	const kind = setupOf(state).kind;
+	switch (kind) {
+		case 'align':
+			return state.signGuess === null ? noGuessText(kind) : null;
+		case 'span-choice':
+			return state.spanGuess === null ? noGuessText(kind) : null;
+		case 'add':
+		case 'scale':
+		case 'cart':
+		case 'combine':
+			return null;
+	}
 }
 
 export function presetsFor(state: VectorState): readonly { id: string; label: string }[] {
@@ -452,8 +644,14 @@ export function presetsFor(state: VectorState): readonly { id: string; label: st
 
 // ---- The plane ----
 
-/** The one element drawn in ochre ("look here"), or null when there is nothing to point at. */
-export function ochreElement(state: VectorState): 'guess' | 'sum' | 'scaled' | 'shadow' | null {
+export type OchreElement = 'guess' | 'sum' | 'scaled' | 'shadow' | 'flag' | 'span' | null;
+
+/**
+ * The one element drawn in ochre ("look here"), or null when there is nothing to point at. On span-reach it is always
+ * the flag, the referent of the flag sentence and of every preset. On span-shape it is the span after Check: the line,
+ * or a ring at the origin; the whole plane is said in words, never tinted.
+ */
+export function ochreElement(state: VectorState): OchreElement {
 	switch (setupOf(state).kind) {
 		case 'add':
 			if (!state.checked) return 'guess';
@@ -464,17 +662,34 @@ export function ochreElement(state: VectorState): 'guess' | 'sum' | 'scaled' | '
 			return state.checked && !isZero(state.a) && dot(state.a, state.b) !== 0 ? 'shadow' : null;
 		case 'align':
 			return state.checked && !isZero(state.a) && dot(state.a, state.b) !== 0 ? 'shadow' : null;
+		case 'combine':
+			return 'flag';
+		case 'span-choice':
+			return state.checked && spanKind(state.a, state.b) !== 'plane' ? 'span' : null;
 	}
 }
 
 const HANDLE_TAIL = '. It also moves with the buttons under the plane';
 
+function aHandleName(kind: SetupKind): string {
+	switch (kind) {
+		case 'add':
+			return 'Tip of trip a';
+		case 'cart':
+			return 'Tip of your push';
+		case 'scale':
+		case 'align':
+		case 'combine':
+		case 'span-choice':
+			return 'Tip of vector a';
+	}
+}
+
 /** The Mafs handles in render order, with their names: the single source for the plane and Board's handleLabels. */
 export function handlesFor(state: VectorState): readonly { id: HandleId; point: Vec2; label: string }[] {
-	const kind = setupOf(state).kind;
 	const names: Readonly<Record<HandleId, string>> = {
 		guess: 'Your guess for where the two trips end',
-		a: kind === 'add' ? 'Tip of trip a' : kind === 'cart' ? 'Tip of your push' : 'Tip of vector a',
+		a: aHandleName(setupOf(state).kind),
 		b: 'Tip of vector b',
 		sum: 'End of trip b, where both trips end',
 	};
@@ -536,6 +751,103 @@ export function cartShadow(state: VectorState): { tip: Vec2; onBoard: boolean } 
 /** The rails label is placed on the first two thirds of its line, so it sits a third of the way up. */
 const RAILS_LABEL_SPAN = 2 / 3;
 
+/** A clipped arrow of span-reach: c a from the origin, d b from the tip of c a. Dashed for d b, as b is. */
+export interface CombinePiece {
+	id: 'scaled' | 'scaledB';
+	from: Vec2;
+	to: Vec2;
+	/** False when the tip is past the edge (a head there would claim the arrow ends there) or the piece is too short. */
+	head: boolean;
+}
+
+/** A tipped piece shorter than this, in grid units, is drawn without a head; the sum dot marks where it ends. */
+const MIN_HEADED_PIECE = 0.6;
+/** A clipped piece shorter than this, in grid units, is too short to carry a label. */
+const MIN_LABELED_PIECE = 1;
+
+const pieceLength = (piece: { from: Vec2; to: Vec2 }) => Math.sqrt(lengthSquared(subtract(piece.to, piece.from)));
+
+/**
+ * The scaled arrows as drawn: each clipped to the board, and left out when it has no length (c = 0, d = 0 or a zero
+ * vector, never a zero ring) or no part on the board.
+ */
+export function combinePieces(state: VectorState): readonly CombinePiece[] {
+	if (setupOf(state).kind !== 'combine') return [];
+	const scaled = scale(state.scalar, state.a);
+	const ends: readonly (readonly [CombinePiece['id'], Vec2, Vec2])[] = [
+		['scaled', ORIGIN, scaled],
+		['scaledB', scaled, sumOf(state)],
+	];
+	return ends.flatMap(([id, from, to]) => {
+		if (equals(from, to)) return [];
+		const clipped = clipSegment(from, to);
+		if (!clipped) return [];
+		return [{ id, from: clipped.from, to: clipped.to, head: clipped.tipShown && pieceLength(clipped) >= MIN_HEADED_PIECE }];
+	});
+}
+
+/** Where the small ink dot marks c a + d b on span-reach: whenever the sum is on the board, even when d b isn't drawn. */
+export function sumDot(state: VectorState): Vec2 | null {
+	if (setupOf(state).kind !== 'combine') return null;
+	const sum = sumOf(state);
+	return withinView(sum) ? sum : null;
+}
+
+/** The span line's two ends after Check, when a and b line up; null otherwise. Never the grid points the slider reaches. */
+export function spanLine(state: VectorState): readonly [Vec2, Vec2] | null {
+	const kind = setupOf(state).kind;
+	if (!state.checked || (kind !== 'combine' && kind !== 'span-choice')) return null;
+	if (spanKind(state.a, state.b) !== 'line') return null;
+	return spanLineEnds(isZero(state.a) ? state.b : state.a);
+}
+
+/** How far the flag's label sits from the ring's center, in grid units: clear of the ring at every plane size. */
+const FLAG_LABEL_GAP = 1.2;
+/** Where along the span line its label sits, as a share of the positive half. */
+const SPAN_LABEL_AT = 0.8;
+
+/**
+ * a and b from the origin, labeled on opposite sides; when b runs back along a its direction is reversed, so the same
+ * physical side needs the other sign. Two zero vectors share one label.
+ */
+function pairLabels(a: Vec2, b: Vec2, aSide: 1 | -1): PlaneLabel[] {
+	if (isZero(a) && isZero(b)) return [{ id: 'zero', text: 'a and b: zero vectors', at: labelAnchor(ORIGIN, ORIGIN, 1), away: labelAway(ORIGIN, ORIGIN, 1) }];
+	const reversed = cross(a, b) === 0 && dot(a, b) < 0;
+	const bSide = reversed ? aSide : aSide === 1 ? -1 : 1;
+	return [arrowLabel('a', 'a', ORIGIN, a, aSide), arrowLabel('b', 'b', ORIGIN, b, bSide)];
+}
+
+function spanLabel(end: Vec2): PlaneLabel {
+	const away = labelAway(ORIGIN, end, -1);
+	return { id: 'span', text: 'span', at: add(scale(SPAN_LABEL_AT, end), scale(LABEL_OFFSET, away)), away };
+}
+
+/** The flag's label sits left of the ring, or right of it when the flag is at x ≤ 0. */
+function flagLabel(target: Vec2): PlaneLabel {
+	const side = target[0] > 0 ? -1 : 1;
+	return { id: 'flag', text: 'flag', at: [target[0] + side * FLAG_LABEL_GAP, target[1]], away: null };
+}
+
+function combineLabels(state: VectorState): PlaneLabel[] {
+	// a and b are muted references here: a's label goes on its right, so c a (on top of a when c = 1) can take the left.
+	const labels = pairLabels(state.a, state.b, -1);
+	for (const piece of combinePieces(state)) {
+		if (pieceLength(piece) < MIN_LABELED_PIECE) continue;
+		labels.push(piece.id === 'scaled' ? arrowLabel('scaled', 'c a', piece.from, piece.to, 1) : arrowLabel('scaledB', 'd b', piece.from, piece.to, -1));
+	}
+	labels.push(flagLabel(requireFlag(setupOf(state)).target));
+	const line = spanLine(state);
+	if (line) labels.push(spanLabel(line[1]));
+	return labels;
+}
+
+function spanChoiceLabels(state: VectorState): PlaneLabel[] {
+	const labels = pairLabels(state.a, state.b, 1);
+	const line = spanLine(state);
+	if (line) labels.push(spanLabel(line[1]));
+	return labels;
+}
+
 /** Every text label drawn on the plane, in board ink. Before Check none of them names the answer. */
 export function planeLabels(state: VectorState): readonly PlaneLabel[] {
 	const setup = setupOf(state);
@@ -592,6 +904,12 @@ export function planeLabels(state: VectorState): readonly PlaneLabel[] {
 			if (showsArc(state)) labels.push({ id: 'theta', text: 'θ', at: bisectorPoint(a, b, THETA_RADIUS), away: null });
 			break;
 		}
+		case 'combine':
+			labels.push(...combineLabels(state));
+			break;
+		case 'span-choice':
+			labels.push(...spanChoiceLabels(state));
+			break;
 	}
 	return labels;
 }
@@ -622,10 +940,22 @@ function addNote(a: Vec2, b: Vec2): ChalkText | null {
 	return cross(a, b) === 0 && dot(a, b) > 0 ? ADD_NOTES.sameDirection : ADD_NOTES.lengthsDont;
 }
 
+/** The span note follows the current a and b, like the align note. */
+const SPAN_NOTES: Readonly<Record<SpanKind, ChalkText>> = {
+	origin: { long: 'no direction: just the origin', short: 'just the origin' },
+	line: { long: 'one direction: a line', short: 'just a line' },
+	plane: { long: 'two directions: every point', short: 'every point' },
+};
+
 /** Notes drawn on the board after Check. Qualitative only, never a number (ChalkNote). */
 export function chalkNote(state: VectorState): ChalkText | null {
 	if (!state.checked) return null;
 	switch (setupOf(state).kind) {
+		case 'span-choice':
+			return SPAN_NOTES[spanKind(state.a, state.b)];
+		case 'combine':
+			// span-reach's plane is already busy with four arrows, the flag and the span line.
+			return null;
 		case 'add':
 			return addNote(state.a, state.b);
 		case 'cart':
@@ -641,7 +971,7 @@ export function chalkNote(state: VectorState): ChalkText | null {
 // ---- The coordinate table ----
 
 export interface TableRow {
-	id: VectorId | 'sum' | 'scaled' | 'track';
+	id: VectorId | 'sum' | 'scaled' | 'track' | 'scaledB' | 'combo';
 	name: string;
 	x: string;
 	y: string;
@@ -681,7 +1011,19 @@ export function tableRows(state: VectorState): readonly TableRow[] {
 		case 'cart':
 			return [row(state, 'a', 'a', state.a, 'a'), row(state, 'track', trackName(state), state.b, null)];
 		case 'align':
-			return [row(state, 'a', 'a', state.a, 'a'), row(state, 'b', 'b', state.b, 'b')];
+		case 'span-choice':
+			return [row(state, 'a', 'a', state.a, can('a')), row(state, 'b', 'b', state.b, can('b'))];
+		case 'combine': {
+			const scaled = scale(state.scalar, state.a);
+			const scaledB = scale(state.scalarD, state.b);
+			return [
+				row(state, 'a', 'a', state.a, can('a')),
+				row(state, 'b', 'b', state.b, can('b')),
+				row(state, 'scaled', 'c a', scaled, null),
+				row(state, 'scaledB', 'd b', scaledB, null),
+				row(state, 'combo', 'c a + d b', add(scaled, scaledB), null),
+			];
+		}
 	}
 }
 
@@ -709,27 +1051,51 @@ export function tableFoldSentence(state: VectorState): string {
 	return spoken(`It has a row each for ${rows}, with ${columns}.`);
 }
 
+/** Which table rows the Lists stage writes as columns: every row but the guess, and on combine only a, b and the sum. */
+function listsColumn(kind: SetupKind, id: TableRow['id']): boolean {
+	switch (kind) {
+		case 'combine':
+			return id === 'a' || id === 'b' || id === 'combo';
+		case 'add':
+		case 'scale':
+		case 'cart':
+		case 'align':
+		case 'span-choice':
+			return id !== 'guess';
+	}
+}
+
 /** The column vectors of the Lists stage, as an empty list in other stages. */
 export function columnVectors(state: VectorState): readonly { name: string; x: string; y: string; spoken: string }[] {
 	if (state.stage !== 'lists') return [];
+	const kind = setupOf(state).kind;
 	return tableRows(state)
-		.filter((tableRow) => tableRow.id !== 'guess')
+		.filter((tableRow) => listsColumn(kind, tableRow.id))
 		.map((tableRow) => ({ name: tableRow.name, x: tableRow.x, y: tableRow.y, spoken: `${tableRow.name} is the column ${tableRow.x}, ${tableRow.y}` }));
 }
 
 /** The Lists stage's sum or scaling, component by component. */
 export function listsLine(state: VectorState): string | null {
 	if (state.stage !== 'lists') return null;
-	const kind = setupOf(state).kind;
-	if (kind === 'add' && state.checked) {
-		const { a, b } = state;
-		return `a + b = (${numberText(a[0])} + ${factor(b[0])}, ${numberText(a[1])} + ${factor(b[1])}) = ${pairText(add(a, b))}`;
+	const { a, b } = state;
+	switch (setupOf(state).kind) {
+		case 'add':
+			return state.checked ? `a + b = (${numberText(a[0])} + ${factor(b[0])}, ${numberText(a[1])} + ${factor(b[1])}) = ${pairText(add(a, b))}` : null;
+		case 'scale': {
+			const c = factor(state.scalar);
+			return `c a = (${c} × ${factor(a[0])}, ${c} × ${factor(a[1])}) = ${pairText(scale(state.scalar, a))}`;
+		}
+		case 'combine': {
+			// Only the reader's own c and d, so it needs no Check.
+			const c = factor(state.scalar);
+			const d = factor(state.scalarD);
+			return `c a + d b = (${c} × ${factor(a[0])} + ${d} × ${factor(b[0])}, ${c} × ${factor(a[1])} + ${d} × ${factor(b[1])}) = ${pairText(sumOf(state))}`;
+		}
+		case 'cart':
+		case 'align':
+		case 'span-choice':
+			return null;
 	}
-	if (kind === 'scale') {
-		const c = factor(state.scalar);
-		return `c a = (${c} × ${factor(state.a[0])}, ${c} × ${factor(state.a[1])}) = ${pairText(scale(state.scalar, state.a))}`;
-	}
-	return null;
 }
 
 // ---- Steppers and refusals ----
@@ -745,7 +1111,7 @@ export function stepperGroupName(state: VectorState, id: VectorId, axis: Axis): 
 
 export function refusalText(state: VectorState, refusal: Refusal): string {
 	if (refusal.kind === 'locked') return LOCKED_TEXT;
-	if (refusal.kind === 'no-guess') return NO_SIGN_TEXT;
+	if (refusal.kind === 'no-guess') return noGuessText(setupOf(state).kind);
 	const name = sentenceName(state, refusal.id);
 	const way = DIRECTION_WORDS[refusal.axis][refusal.direction];
 	if (refusal.kind === 'edge') return `${name} can't go further ${way}: the board ends at ${numberText(refusal.direction * VIEW_LIMIT)}.`;
@@ -821,18 +1187,33 @@ function alignShort(state: VectorState): string {
 	return `Exactly ${angle.exact}°.`;
 }
 
+/** Where a and b are now on combine: the sum, anything past the edge, and after Check the span. */
+function combinePosition(state: VectorState): string {
+	const edge = edgeSentence(state);
+	const parts = [`${pairsLine(state)} c a + d b = ${pairText(sumOf(state))}.`, ...(edge ? [edge] : []), ...(state.checked ? [spanSentence(state.a, state.b)] : [])];
+	return parts.join(' ');
+}
+
 function positionSentence(state: VectorState, handle: HandleId): string {
-	const kind = setupOf(state).kind;
 	const { a, b } = state;
 	if (handle === 'guess') return `Your guess: ${isTrips(state) ? stepsWords(state.guess) : pairText(state.guess)}.`;
-	if (kind === 'add') {
-		const sum = add(a, b);
-		if (isTrips(state)) return handle === 'a' ? `Trip a: ${stepsWords(a)}. Both trips: ${stepsWords(sum)}.` : `Trip b: ${stepsWords(b)}. Both trips: ${stepsWords(sum)}.`;
-		return handle === 'a' ? `a = ${pairText(a)}. a + b = ${pairText(sum)}.` : `b = ${pairText(b)}. a + b = ${pairText(sum)}.`;
+	switch (setupOf(state).kind) {
+		case 'add': {
+			const sum = add(a, b);
+			if (isTrips(state)) return handle === 'a' ? `Trip a: ${stepsWords(a)}. Both trips: ${stepsWords(sum)}.` : `Trip b: ${stepsWords(b)}. Both trips: ${stepsWords(sum)}.`;
+			return handle === 'a' ? `a = ${pairText(a)}. a + b = ${pairText(sum)}.` : `b = ${pairText(b)}. a + b = ${pairText(sum)}.`;
+		}
+		case 'scale':
+			return `a = ${pairText(a)}. ${state.checked ? scaleSentence(state.scalar, a) : `c a = ${pairText(scale(state.scalar, a))}.`}`;
+		case 'cart':
+			return `Your push: ${pairText(a)}, length ${lengthText(a)}.${state.checked && !isZero(a) ? ` ${cartShort(state)}` : ''}`;
+		case 'align':
+			return `a = ${pairText(a)}, b = ${pairText(b)}. a · b = ${numberText(dot(a, b))}. ${alignShort(state)}`;
+		case 'combine':
+			return combinePosition(state);
+		case 'span-choice':
+			return state.checked ? `${pairsLine(state)} ${spanSentence(a, b)}` : pairsLine(state);
 	}
-	if (kind === 'scale') return `a = ${pairText(a)}. ${state.checked ? scaleSentence(state.scalar, a) : `c a = ${pairText(scale(state.scalar, a))}.`}`;
-	if (kind === 'cart') return `Your push: ${pairText(a)}, length ${lengthText(a)}.${state.checked && !isZero(a) ? ` ${cartShort(state)}` : ''}`;
-	return `a = ${pairText(a)}, b = ${pairText(b)}. a · b = ${numberText(dot(a, b))}. ${alignShort(state)}`;
 }
 
 /**
@@ -871,6 +1252,8 @@ function announcementText(state: VectorState, action: Action): string {
 			return state.refusal ? refusalText(state, state.refusal) : handleAnnouncement(state, HANDLE_OF_VECTOR(state, action.id));
 		case 'sign':
 			return `Your guess: a · b is ${action.sign}.`;
+		case 'span-guess':
+			return `Your guess: the span is ${SPAN_GUESS_WORDS[action.guess]}.`;
 		case 'check':
 		case 'show-answer':
 			return state.refusal ? refusalText(state, state.refusal) : (feedbackLine(state) ?? '');
@@ -879,7 +1262,8 @@ function announcementText(state: VectorState, action: Action): string {
 		case 'stage':
 			return `Showing ${STAGE_LABELS[action.stage].toLowerCase()}.`;
 		case 'scalar':
-			return readoutLines(state).join(' ');
+			// On combine the span and flag sentences don't change with c or d, so a commit says only the reader's values.
+			return (setupOf(state).kind === 'combine' ? combineSliderLines(state) : readoutLines(state)).join(' ');
 		case 'other-order':
 			return action.on ? 'Showing b first too: walking b, then a, ends at the same spot.' : 'Showing one route: a, then b.';
 		case 'table':
@@ -889,6 +1273,10 @@ function announcementText(state: VectorState, action: Action): string {
 	}
 }
 
+/** A weight slider's spoken value: "scale c, 1", "scale d, −0.5". */
+export const weightDescription = (weight: Weight) => (value: number) => `scale ${weight}, ${numberText(value)}`;
 /** The slider's spoken value and readout. */
-export const scalarDescription = (c: number) => `scale c, ${numberText(c)}`;
+export const scalarDescription = weightDescription('c');
 export const scalarFormat = (c: number) => numberText(c);
+/** Each weight slider's visible label: the c slider keeps the scale setup's "Scale c". */
+export const WEIGHT_LABELS: Readonly<Record<Weight, string>> = { c: CONTROL_LABELS.scale, d: CONTROL_LABELS.scaleD };

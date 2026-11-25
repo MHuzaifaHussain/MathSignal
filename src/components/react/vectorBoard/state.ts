@@ -6,6 +6,7 @@ import {
 	VIEW_LIMIT,
 	add,
 	classifyCartPush,
+	classifyCombine,
 	classifyScale,
 	classifyTripGuess,
 	dot,
@@ -14,12 +15,15 @@ import {
 	intersectBoxes,
 	shiftBox,
 	snapInto,
+	spanKind,
 	subtract,
 	symmetricBox,
 	withinView,
 	type Box,
 	type CartPush,
+	type CombineGuess,
 	type ScaleGuess,
+	type SpanKind,
 	type TripGuess,
 	type Vec2,
 } from './model.ts';
@@ -41,12 +45,14 @@ export type Feedback =
 	| { kind: 'scale'; result: ScaleGuess }
 	| { kind: 'cart'; result: CartPush }
 	| { kind: 'sign'; guess: Sign; correct: boolean }
+	| { kind: 'combine'; result: CombineGuess }
+	| { kind: 'span'; guess: SpanKind; correct: boolean }
 	| { kind: 'shown' };
 
 /**
  * Why a press did nothing. `edge`: the thing would leave the board. `limit`: the setup keeps its entries smaller
  * than the board. `sum-edge`: a + b would leave the board. `locked`: a and b are the question until Check.
- * `no-guess`: Check needs a guess picked first (the sign on align).
+ * `no-guess`: Check needs a guess picked first (the sign on align, the span on span-choice).
  */
 export type Refusal =
 	| { kind: 'locked' }
@@ -65,9 +71,13 @@ export interface VectorState extends guided.CheckProgress {
 	/** On cart setups a is the push and b the track direction. */
 	a: Vec2;
 	b: Vec2;
+	/** The weight c of a (the scale setup's c). */
 	scalar: number;
+	/** The weight d of b, on combine setups. */
+	scalarD: number;
 	guess: Vec2;
 	signGuess: Sign | null;
+	spanGuess: SpanKind | null;
 	feedback: Feedback | null;
 	stage: Stage;
 	/** The preset the values came from, or null once the reader has moved away from it. */
@@ -84,6 +94,7 @@ export type Action =
 	| { type: 'move'; id: HandleId; to: Vec2 }
 	| { type: 'step'; id: VectorId; axis: Axis; direction: Direction }
 	| { type: 'sign'; sign: Sign }
+	| { type: 'span-guess'; guess: SpanKind }
 	| { type: 'check' }
 	| { type: 'show-answer' }
 	| { type: 'preset'; id: string }
@@ -101,9 +112,13 @@ export function setupOf(state: VectorState): Setup {
 	return getSetup(state.setupId);
 }
 
+/** The opening's d: only combine setups have one (validateSetup requires it there). */
+const openingD = (setup: Setup) => setup.opening.scalarD ?? 0;
+
 function openingPreset(setup: Setup): string | null {
 	const { a, b, scalar } = setup.opening;
-	return setup.presets.find((preset) => equals(preset.a, a) && equals(preset.b, b) && (preset.scalar ?? scalar) === scalar)?.id ?? null;
+	const d = openingD(setup);
+	return setup.presets.find((preset) => equals(preset.a, a) && equals(preset.b, b) && (preset.scalar ?? scalar) === scalar && (preset.scalarD ?? d) === d)?.id ?? null;
 }
 
 export function initialState(setupId: SetupId): VectorState {
@@ -113,8 +128,10 @@ export function initialState(setupId: SetupId): VectorState {
 		a: setup.opening.a,
 		b: setup.opening.b,
 		scalar: setup.opening.scalar,
+		scalarD: openingD(setup),
 		guess: setup.opening.guess,
 		signGuess: null,
+		spanGuess: null,
 		checked: false,
 		failedChecks: 0,
 		feedback: null,
@@ -139,10 +156,17 @@ export function stageAllowed(state: VectorState, stage: Stage): boolean {
 
 /** The vectors with − / + steppers right now, in table order. */
 export function steppableVectors(state: VectorState): readonly VectorId[] {
-	const kind = setupOf(state).kind;
-	if (kind === 'add') return state.checked ? ['a', 'b'] : ['guess', 'a', 'b'];
-	if (kind === 'align') return ['a', 'b'];
-	return ['a'];
+	switch (setupOf(state).kind) {
+		case 'add':
+			return state.checked ? ['a', 'b'] : ['guess', 'a', 'b'];
+		case 'align':
+		case 'combine':
+		case 'span-choice':
+			return ['a', 'b'];
+		case 'scale':
+		case 'cart':
+			return ['a'];
+	}
 }
 
 /** Shared, frozen lists, so the same handles keep the same array and the plane's handlers survive a move. */
@@ -156,17 +180,33 @@ const HANDLE_LISTS = {
 
 /** The Mafs handles right now, in render order. Locked vectors get no handle at all, so a pointer can't drag them. */
 export function handleIds(state: VectorState): readonly HandleId[] {
-	const kind = setupOf(state).kind;
-	if (kind === 'add') return state.checked ? HANDLE_LISTS.addChecked : HANDLE_LISTS.guessOnly;
-	if (kind === 'align') return state.checked ? HANDLE_LISTS.both : HANDLE_LISTS.none;
-	return HANDLE_LISTS.aOnly;
+	switch (setupOf(state).kind) {
+		case 'add':
+			return state.checked ? HANDLE_LISTS.addChecked : HANDLE_LISTS.guessOnly;
+		case 'align':
+		case 'combine':
+		case 'span-choice':
+			return state.checked ? HANDLE_LISTS.both : HANDLE_LISTS.none;
+		case 'scale':
+		case 'cart':
+			return HANDLE_LISTS.aOnly;
+	}
 }
 
-/** a and b are the question on the add and align setups, so they wait for Check. */
+/** a and b are the question on every setup except scale and cart, so they wait for Check there. */
 export function isLocked(state: VectorState, id: VectorId): boolean {
 	const kind = setupOf(state).kind;
 	if (id === 'guess') return kind !== 'add' || state.checked;
-	return (kind === 'add' || kind === 'align') && !state.checked;
+	switch (kind) {
+		case 'add':
+		case 'align':
+		case 'combine':
+		case 'span-choice':
+			return !state.checked;
+		case 'scale':
+		case 'cart':
+			return false;
+	}
 }
 
 function ownLimit(setup: Setup, id: VectorId): number {
@@ -229,8 +269,8 @@ export function handleRefusals(state: VectorState, handle: HandleId): readonly R
  * judge), so it is cleared. A change to a, b or c also leaves the preset and the before-and-after comparison; moving
  * the guess doesn't.
  */
-function withValues(state: VectorState, values: Partial<Pick<VectorState, 'a' | 'b' | 'scalar' | 'guess'>>): VectorState {
-	const leavesPreset = 'a' in values || 'b' in values || 'scalar' in values;
+function withValues(state: VectorState, values: Partial<Pick<VectorState, 'a' | 'b' | 'scalar' | 'scalarD' | 'guess'>>): VectorState {
+	const leavesPreset = 'a' in values || 'b' in values || 'scalar' in values || 'scalarD' in values;
 	const preset = leavesPreset ? { activePreset: null, before: null } : {};
 	return { ...state, ...values, feedback: null, refusal: null, ...preset };
 }
@@ -276,7 +316,22 @@ function check(setup: Setup, state: VectorState): VectorState {
 			const correct = state.signGuess === signOf(dot(state.a, state.b));
 			return { ...state, ...guided.recordCheck(state, correct, 'once'), feedback: { kind: 'sign', guess: state.signGuess, correct }, refusal: null };
 		}
+		case 'combine': {
+			const result = classifyCombine(state.a, state.b, state.scalar, state.scalarD, requireFlag(setup).target);
+			return { ...state, ...guided.recordCheck(state, result === 'match', 'retry'), feedback: { kind: 'combine', result }, refusal: null };
+		}
+		case 'span-choice': {
+			if (state.spanGuess === null) return { ...state, refusal: { kind: 'no-guess' } };
+			const correct = state.spanGuess === spanKind(state.a, state.b);
+			return { ...state, ...guided.recordCheck(state, correct, 'once'), feedback: { kind: 'span', guess: state.spanGuess, correct }, refusal: null };
+		}
 	}
+}
+
+/** The flag and the weights that reach it, on a combine setup. */
+export function requireFlag(setup: Setup): { target: Vec2; weights: readonly [number, number] } {
+	if (!setup.target || !setup.targetWeights) throw new Error(`VectorBoard2D: setup "${setup.id}" has no flag.`);
+	return { target: setup.target, weights: setup.targetWeights };
 }
 
 function requireTarget(setup: Setup): number {
@@ -293,14 +348,24 @@ function requireGoal(setup: Setup) {
 function showAnswer(setup: Setup, state: VectorState): VectorState {
 	if (!guided.canShowAnswer(state)) return state;
 	const shown = { checked: true, feedback: { kind: 'shown' } as const };
-	if (setup.kind === 'add') return { ...withValues(state, { guess: add(state.a, state.b) }), ...shown };
-	if (setup.kind === 'scale') return { ...withValues(state, { scalar: requireTarget(setup) }), ...shown };
-	if (setup.kind === 'cart') {
-		const solution = cartSolution(setup);
-		if (!solution) throw new Error(`VectorBoard2D: setup "${setup.id}" has no answer to show.`);
-		return { ...withValues(state, { a: solution }), ...shown };
+	switch (setup.kind) {
+		case 'add':
+			return { ...withValues(state, { guess: add(state.a, state.b) }), ...shown };
+		case 'scale':
+			return { ...withValues(state, { scalar: requireTarget(setup) }), ...shown };
+		case 'cart': {
+			const solution = cartSolution(setup);
+			if (!solution) throw new Error(`VectorBoard2D: setup "${setup.id}" has no answer to show.`);
+			return { ...withValues(state, { a: solution }), ...shown };
+		}
+		case 'combine': {
+			const [c, d] = requireFlag(setup).weights;
+			return { ...withValues(state, { scalar: c, scalarD: d }), ...shown };
+		}
+		case 'align':
+		case 'span-choice':
+			return state;
 	}
-	return state;
 }
 
 function applyPreset(setup: Setup, state: VectorState, id: string): VectorState {
@@ -308,20 +373,41 @@ function applyPreset(setup: Setup, state: VectorState, id: string): VectorState 
 	const preset = setup.presets.find((candidate) => candidate.id === id);
 	if (!preset) return state;
 	const before = setup.kind === 'align' && state.activePreset !== null && state.activePreset !== id ? { presetId: state.activePreset, a: state.a, b: state.b } : null;
-	return { ...withValues(state, { a: preset.a, b: preset.b, scalar: preset.scalar ?? state.scalar }), activePreset: id, before };
+	const values = { a: preset.a, b: preset.b, scalar: preset.scalar ?? state.scalar, scalarD: preset.scalarD ?? state.scalarD };
+	return { ...withValues(state, values), activePreset: id, before };
 }
 
-/** The weights a setup's sliders set: c on scale, nothing elsewhere. */
-function settableWeights(setup: Setup): readonly Weight[] {
-	return setup.kind === 'scale' ? ['c'] : [];
+const WEIGHT_LISTS = {
+	none: Object.freeze([]),
+	c: Object.freeze(['c']),
+	both: Object.freeze(['c', 'd']),
+} as const satisfies Record<string, readonly Weight[]>;
+
+/** The weights the tray has a slider for, in tray order: c on scale, c and d on combine, none elsewhere. */
+export function sliderWeights(setup: Setup): readonly Weight[] {
+	switch (setup.kind) {
+		case 'scale':
+			return WEIGHT_LISTS.c;
+		case 'combine':
+			return WEIGHT_LISTS.both;
+		case 'add':
+		case 'cart':
+		case 'align':
+		case 'span-choice':
+			return WEIGHT_LISTS.none;
+	}
 }
+
+/** The current value of a weight: c is `scalar`, d is `scalarD`. */
+export const weightValue = (state: VectorState, weight: Weight) => (weight === 'c' ? state.scalar : state.scalarD);
 
 function setScalar(setup: Setup, state: VectorState, weight: Weight, value: number): VectorState {
 	const range = setup.scaleRange;
-	if (!range || !settableWeights(setup).includes(weight)) return state;
+	if (!range || !sliderWeights(setup).includes(weight)) return state;
 	if (value < range.min || value > range.max) throw new Error(`VectorBoard2D: ${weight} = ${value} is outside ${range.min < 0 ? '−' : ''}${Math.abs(range.min)} to ${range.max}.`);
 	if (!isOnScale(range, value)) throw new Error(`VectorBoard2D: ${weight} = ${value} isn't a step of ${range.step}.`);
-	return value === state.scalar ? state : withValues(state, { scalar: value });
+	if (value === weightValue(state, weight)) return state;
+	return withValues(state, weight === 'c' ? { scalar: value } : { scalarD: value });
 }
 
 export function reducer(state: VectorState, action: Action): VectorState {
@@ -334,6 +420,9 @@ export function reducer(state: VectorState, action: Action): VectorState {
 		case 'sign':
 			if (setup.kind !== 'align' || state.checked) return state;
 			return { ...state, signGuess: action.sign, refusal: null };
+		case 'span-guess':
+			if (setup.kind !== 'span-choice' || state.checked) return state;
+			return { ...state, spanGuess: action.guess, refusal: null };
 		case 'check':
 			return check(setup, state);
 		case 'show-answer':

@@ -1,24 +1,34 @@
 // The board configurations pages pick with <VectorBoard2D setup="…" />. Each one fixes the opening vectors, how far
 // each vector may go, the presets and the stages. validateSetup runs at import, so a setup the board can't draw or
 // answer fails the build. Design and reasoning: decision 0014.
-import { isPerfectSquare } from '../boardMath.ts';
+import { isPerfectSquare, toNumber } from '../boardMath.ts';
+import { fractionText } from '../boardText.ts';
 import {
 	VIEW_LIMIT,
 	add,
 	classifyCartPush,
+	combine,
+	cross,
+	equals,
+	flagWeights,
 	inBox,
 	isZero,
 	lengthSquared,
+	lineMultiple,
 	numberText,
+	scale,
 	shadowTip,
 	symmetricBox,
 	withinView,
 	type Vec2,
 } from './model.ts';
 
-export type SetupId = 'trips-add' | 'trips-scale' | 'cart-push' | 'align';
-/** add: two trips and their sum. scale: c a. cart: a push and its part along a track. align: a · b and the angle. */
-export type SetupKind = 'add' | 'scale' | 'cart' | 'align';
+export type SetupId = 'trips-add' | 'trips-scale' | 'cart-push' | 'align' | 'span-reach' | 'span-shape';
+/**
+ * add: two trips and their sum. scale: c a. cart: a push and its part along a track. align: a · b and the angle.
+ * combine: c a + d b onto a flag. span-choice: a one-shot guess of what every c a + d b can reach.
+ */
+export type SetupKind = 'add' | 'scale' | 'cart' | 'align' | 'combine' | 'span-choice';
 /** Trips: steps east and north, in words. Arrows: numbered axes and coordinates. Lists: column vectors. */
 export type Stage = 'trips' | 'arrows' | 'lists';
 
@@ -28,8 +38,10 @@ export interface Preset {
 	label: string;
 	a: Vec2;
 	b: Vec2;
-	/** The scale c, on scale setups. */
+	/** The weight c of a, on scale and combine setups. */
 	scalar?: number;
+	/** The weight d of b, on combine setups. */
+	scalarD?: number;
 }
 
 export interface ScaleRange {
@@ -50,7 +62,11 @@ export interface Setup {
 	/** Each component of a stays within ±limitA, and of b within ±limitB. */
 	limitA: number;
 	limitB: number;
-	opening: { a: Vec2; b: Vec2; scalar: number; guess: Vec2 };
+	/**
+	 * `scalarD` is the weight d of b. Only combine setups have a d, so it is optional here and checkCombine requires it
+	 * there; initialState reads 0 for the other kinds, which never show or use it.
+	 */
+	opening: { a: Vec2; b: Vec2; scalar: number; scalarD?: number; guess: Vec2 };
 	/** Shown only after Check. */
 	presets: readonly Preset[];
 	/** The stages the "Show as" choice offers, in order; empty when the setup has no choice. */
@@ -58,10 +74,15 @@ export interface Setup {
 	openingStage: Stage;
 	/** Stages that would give the answer away, so they wait for Check. */
 	waitsForCheck: readonly Stage[];
+	/** The slider range: c on scale setups, and both c and d on combine setups. */
 	scaleRange?: ScaleRange;
 	/** The c that Check accepts on a scale setup. */
 	targetScalar?: number;
 	goal?: CartGoal;
+	/** The flag c a + d b must land on, on combine setups. */
+	target?: Vec2;
+	/** The c and d that land on the flag with the opening a and b ("Show the answer" sets them). */
+	targetWeights?: readonly [number, number];
 }
 
 export const MAX_PRESETS = 4;
@@ -136,6 +157,41 @@ const SETUP_LIST: readonly Setup[] = [
 		openingStage: 'arrows',
 		waitsForCheck: [],
 	},
+	{
+		id: 'span-reach',
+		kind: 'combine',
+		limitA: VIEW_LIMIT,
+		limitB: VIEW_LIMIT,
+		opening: { a: [2, 1], b: [1, 2], scalar: 1, scalarD: 1, guess: ORIGIN },
+		presets: [
+			{ id: 'east-north', label: 'East and north', a: [1, 0], b: [0, 1], scalar: 4, scalarD: 5 },
+			{ id: 'weights-swapped', label: 'Weights swapped', a: [2, 1], b: [1, 2], scalar: 2, scalarD: 1 },
+			{ id: 'step-back', label: 'A step back', a: [2, 1], b: [1, 2], scalar: -1, scalarD: 1 },
+			{ id: 'same-line', label: 'Same line', a: [2, 1], b: [4, 2], scalar: 1, scalarD: 0.5 },
+		],
+		stages: ['arrows', 'lists'],
+		openingStage: 'arrows',
+		waitsForCheck: [],
+		scaleRange: { min: -5, max: 5, step: 0.5 },
+		target: [4, 5],
+		targetWeights: [1, 2],
+	},
+	{
+		id: 'span-shape',
+		kind: 'span-choice',
+		limitA: VIEW_LIMIT,
+		limitB: VIEW_LIMIT,
+		opening: { a: [2, 1], b: [-4, -2], scalar: 1, guess: ORIGIN },
+		presets: [
+			{ id: 'different-lines', label: 'Different lines', a: [2, 1], b: [1, 2] },
+			{ id: 'nearly-lined-up', label: 'Nearly lined up', a: [4, 2], b: [3, 2] },
+			{ id: 'one-zero', label: 'One zero vector', a: [3, 1], b: ORIGIN },
+			{ id: 'both-zero', label: 'Both zero', a: ORIGIN, b: ORIGIN },
+		],
+		stages: [],
+		openingStage: 'arrows',
+		waitsForCheck: [],
+	},
 ];
 
 const pairText = (v: Vec2) => `(${numberText(v[0])}, ${numberText(v[1])})`;
@@ -151,10 +207,11 @@ function checkVector(setup: Setup, what: string, v: Vec2, limit: number): void {
 }
 
 /** Opening and preset vectors, named for error messages. */
-function namedPairs(setup: Setup): readonly { name: string; a: Vec2; b: Vec2; scalar: number }[] {
+function namedPairs(setup: Setup): readonly { name: string; a: Vec2; b: Vec2; scalar: number; scalarD: number | undefined }[] {
+	const { a, b, scalar, scalarD } = setup.opening;
 	return [
-		{ name: 'opening', ...setup.opening },
-		...setup.presets.map((preset) => ({ name: `preset "${preset.id}"`, a: preset.a, b: preset.b, scalar: preset.scalar ?? setup.opening.scalar })),
+		{ name: 'opening', a, b, scalar, scalarD },
+		...setup.presets.map((preset) => ({ name: `preset "${preset.id}"`, a: preset.a, b: preset.b, scalar: preset.scalar ?? scalar, scalarD: preset.scalarD })),
 	];
 }
 
@@ -240,6 +297,52 @@ function checkAlign(setup: Setup): void {
 	if (worst > VIEW_LIMIT) throw setupError(setup, `the shadow of b can reach ${numberText(worst)}, off the board (±${VIEW_LIMIT}); keep b's entries smaller.`);
 }
 
+function checkFlag(setup: Setup, range: ScaleRange, target: Vec2, targetWeights: readonly [number, number]): void {
+	const { a, b } = setup.opening;
+	if (!target.every(Number.isInteger) || !withinView(target) || isZero(target)) throw setupError(setup, `flag ${pairText(target)} must be a whole-number point on the board, not the origin.`);
+	// On the diagonal the flag with east and north swapped is the flag itself, so the "swapped" verdict would mean nothing.
+	if (target[0] === target[1]) throw setupError(setup, `flag ${pairText(target)} is on the diagonal, so "east and north swapped" would be the flag itself.`);
+	if (cross(a, b) === 0) throw setupError(setup, `opening a = ${pairText(a)} and b = ${pairText(b)} line up, so the flag has no single answer.`);
+	const exact = flagWeights(target, a, b);
+	if (!exact) throw setupError(setup, 'has no weights for its flag.');
+	const [c, d] = exact.map(toNumber);
+	if (!isOnScale(range, c) || !isOnScale(range, d)) {
+		throw setupError(setup, `flag ${pairText(target)} needs c = ${fractionText(exact[0])} and d = ${fractionText(exact[1])}, which the slider can't set.`);
+	}
+	if (targetWeights[0] !== c || targetWeights[1] !== d) {
+		const landed = combine(targetWeights[0], a, targetWeights[1], b);
+		throw setupError(setup, `flag weights c = ${numberText(targetWeights[0])}, d = ${numberText(targetWeights[1])} give ${pairText(landed)}, not the flag ${pairText(target)}.`);
+	}
+}
+
+function checkCombine(setup: Setup): void {
+	const { scaleRange: range, target, targetWeights } = setup;
+	if (!range || !target || !targetWeights || setup.opening.scalarD === undefined) throw setupError(setup, 'is a combine setup with no slider range, flag, flag weights or opening d.');
+	checkFlag(setup, range, target, targetWeights);
+	for (const { name, a, b, scalar, scalarD } of namedPairs(setup)) {
+		if (scalarD === undefined) throw setupError(setup, `${name} has no d.`);
+		for (const [weight, value] of [['c', scalar], ['d', scalarD]] as const) {
+			if (!isOnScale(range, value)) throw setupError(setup, `${name} ${weight} = ${value} isn't on the slider (${range.min} to ${range.max} in steps of ${range.step}).`);
+		}
+		const scaled = scale(scalar, a);
+		const sum = combine(scalar, a, scalarD, b);
+		// The opening and the presets draw whole on the board; only the reader's own slider moves may leave it.
+		if (!withinView(scaled) || !withinView(sum)) throw setupError(setup, `${name}: c a = ${pairText(scaled)} or c a + d b = ${pairText(sum)} leaves the board (±${VIEW_LIMIT}).`);
+	}
+	const { a, b, scalar, scalarD } = setup.opening;
+	if (equals(combine(scalar, a, scalarD, b), target)) throw setupError(setup, 'opens on the flag, so there is nothing to find.');
+}
+
+function checkSpanChoice(setup: Setup): void {
+	if (setup.scaleRange || setup.target || setup.stages.length > 0) throw setupError(setup, 'is a span choice with a slider, a flag or stages, which it never shows.');
+	const { a, b } = setup.opening;
+	const k = lineMultiple(a, b);
+	// The verdicts are written for b = k a with k a whole number and |k| at least 2: lined up, with no zero vector.
+	if (isZero(a) || !k || k.denominator !== 1 || Math.abs(k.numerator) < 2) {
+		throw setupError(setup, `opening b = ${pairText(b)} must be a whole multiple of a = ${pairText(a)}, at least 2 times as long; the verdicts are written for that case only.`);
+	}
+}
+
 /** Throws, naming the setup, if any part of it can't work. */
 export function validateSetup(setup: Setup): Setup {
 	checkShape(setup);
@@ -256,6 +359,12 @@ export function validateSetup(setup: Setup): Setup {
 			break;
 		case 'align':
 			checkAlign(setup);
+			break;
+		case 'combine':
+			checkCombine(setup);
+			break;
+		case 'span-choice':
+			checkSpanChoice(setup);
 			break;
 		default: {
 			const unknownKind: never = setup.kind;

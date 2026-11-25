@@ -3844,7 +3844,7 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 
 	// Setups: a typo fails loudly, and validateSetup refuses what the board can't draw or answer.
 	assert.throws(() => vs.getSetup('trips-ad'), /unknown setup "trips-ad"/);
-	assert.deepEqual(Object.keys(vs.SETUPS), ['trips-add', 'trips-scale', 'cart-push', 'align']);
+	assert.deepEqual(Object.keys(vs.SETUPS), ['trips-add', 'trips-scale', 'cart-push', 'align', 'span-reach', 'span-shape']);
 	const broken = (id, change) => ({ ...vs.getSetup(id), ...change });
 	assert.throws(() => vs.validateSetup(broken('trips-add', { presets: [...vs.getSetup('trips-add').presets, { id: 'x', label: 'X', a: [1, 1], b: [1, 1] }] })), /presets; the most is 4/);
 	assert.throws(() => vs.validateSetup(broken('trips-add', { presets: [{ id: 'far', label: 'Far', a: [4, 4], b: [3, 0] }, { id: 'ok', label: 'Ok', a: [1, 1], b: [1, 1] }] })), /a \+ b = \(7, 4\) leaves the board/);
@@ -4230,6 +4230,22 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 		const setup = vs.getSetup(id);
 		const open = vst.initialState(id);
 		const stages = setup.stages.length > 0 ? setup.stages : [setup.openingStage];
+		// span-reach: the 441 slider states on the opening pair (dragged pairs are sampled in its own section);
+		// span-shape: every pair within ±5. Both before and after Check.
+		if (setup.kind === 'combine' || setup.kind === 'span-choice') {
+			const weights = setup.scaleRange ? Array.from({ length: 21 }, (_, index) => setup.scaleRange.min + index * setup.scaleRange.step) : [open.scalar];
+			for (const stage of stages) {
+				for (const checked of [false, true]) {
+					const base = { ...open, stage, checked };
+					if (setup.kind === 'combine') {
+						for (const scalar of weights) for (const scalarD of weights) yield { ...base, scalar, scalarD };
+						continue;
+					}
+					for (const a of grid(vm.VIEW_LIMIT)) for (const b of grid(vm.VIEW_LIMIT)) yield { ...base, a, b };
+				}
+			}
+			return;
+		}
 		const tracks = setup.kind === 'cart' ? [...new Set([setup.opening.b, ...setup.presets.map((preset) => preset.b)].map(String))].map((text) => text.split(',').map(Number)) : null;
 		const scalars = setup.scaleRange ? Array.from({ length: Math.round((setup.scaleRange.max - setup.scaleRange.min) / setup.scaleRange.step) + 1 }, (_, index) => setup.scaleRange.min + index * setup.scaleRange.step) : [open.scalar];
 		for (const stage of stages) {
@@ -4281,9 +4297,400 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	assert.ok(vm.fitLabel(lowTrip.at, lowTrip.away, lowTrip.text, 440).at[1] > -5);
 	assert.throws(() => vm.fitLabel([0, 0], null, 'a', 0), /wider than 0px/);
 
+	// ---- span-reach and span-shape (0014 amendment) ----
+	const SLIDER_WEIGHTS = Array.from({ length: 21 }, (_, index) => -5 + index * 0.5);
+	const weigh = (c, d) => [{ type: 'scalar', weight: 'c', value: c }, { type: 'scalar', weight: 'd', value: d }];
+	const reachAt = (c, d, ...more) => runVec('span-reach', ...weigh(c, d), ...more);
+	const isFinitePoint = (point) => point.every(Number.isFinite);
+
+	// validateSetup refuses a flag the slider can't reach, a lined-up opening, a preset off the board, a flag on the
+	// diagonal, and a span choice that opens on an independent pair or a short multiple.
+	const reachSetup = vs.getSetup('span-reach');
+	const shapeSetup = vs.getSetup('span-shape');
+	assert.throws(() => vs.validateSetup({ ...reachSetup, target: [1, 0], targetWeights: [1, 0] }), /flag \(1, 0\) needs c = 2\/3 and d = −1\/3, which the slider can't set/);
+	assert.throws(() => vs.validateSetup({ ...reachSetup, targetWeights: [2, 1] }), /flag weights c = 2, d = 1 give \(5, 4\), not the flag \(4, 5\)/);
+	assert.throws(() => vs.validateSetup({ ...reachSetup, opening: { ...reachSetup.opening, b: [4, 2] } }), /line up, so the flag has no single answer/);
+	assert.throws(() => vs.validateSetup({ ...reachSetup, presets: [{ id: 'far', label: 'Far', a: [2, 1], b: [1, 2], scalar: 3, scalarD: 1 }] }), /preset "far": c a = \(6, 3\) or c a \+ d b = \(7, 5\) leaves the board/);
+	assert.throws(() => vs.validateSetup({ ...reachSetup, presets: [{ id: 'no-d', label: 'No d', a: [2, 1], b: [1, 2], scalar: 1 }] }), /preset "no-d" has no d/);
+	assert.throws(() => vs.validateSetup({ ...reachSetup, target: [3, 3], targetWeights: [1, 1] }), /on the diagonal/);
+	assert.throws(() => vs.validateSetup({ ...reachSetup, opening: { ...reachSetup.opening, scalarD: 2 } }), /opens on the flag/);
+	assert.throws(() => vs.validateSetup({ ...reachSetup, opening: { ...reachSetup.opening, scalarD: undefined } }), /no slider range, flag, flag weights or opening d/);
+	assert.throws(() => vs.validateSetup({ ...shapeSetup, opening: { ...shapeSetup.opening, b: [1, 2] } }), /must be a whole multiple of a = \(2, 1\)/);
+	assert.throws(() => vs.validateSetup({ ...shapeSetup, opening: { ...shapeSetup.opening, b: [2, 1] } }), /at least 2 times as long/);
+	assert.throws(() => vs.validateSetup({ ...shapeSetup, opening: { ...shapeSetup.opening, a: [4, 2], b: [2, 1] } }), /at least 2 times as long/);
+	assert.throws(() => vs.validateSetup({ ...shapeSetup, stages: ['arrows'] }), /never shows/);
+
+	// The tray: one slider on trips-scale, two on span-reach, none elsewhere; the c slider keeps "Scale c".
+	assert.deepEqual(Object.fromEntries(Object.keys(vs.SETUPS).map((id) => [id, vst.sliderWeights(vs.getSetup(id))])), {
+		'trips-add': [], 'trips-scale': ['c'], 'cart-push': [], align: [], 'span-reach': ['c', 'd'], 'span-shape': [],
+	});
+	assert.deepEqual(vd.WEIGHT_LABELS, { c: 'Scale c', d: 'Scale d' });
+	assert.equal(vd.weightDescription('c')(1), 'scale c, 1');
+	assert.equal(vd.weightDescription('d')(1), 'scale d, 1');
+	assert.equal(vd.weightDescription('d')(-0.5), 'scale d, −0.5');
+	assert.equal(vd.scalarDescription(1), 'scale c, 1');
+	assert.equal(vd.CONTROL_LABELS.spanLegend, 'Your guess: the span of a and b is');
+	assert.deepEqual(vd.SPAN_OPTIONS.map((option) => [option.value, option.label]), [['origin', 'Only the origin'], ['line', 'A line'], ['plane', 'The whole plane']]);
+
+	// ---- span-reach ----
+	const reachOpen = vst.initialState('span-reach');
+	assert.deepEqual([reachOpen.a, reachOpen.b, reachOpen.scalar, reachOpen.scalarD, reachOpen.stage], [[2, 1], [1, 2], 1, 1, 'arrows']);
+	assert.equal(reachOpen.activePreset, null, 'the opening matches no preset');
+	assert.equal(vd.boardLabel(reachOpen), 'Two vectors a and b, scaled by c and d and added tip to tail. Set c and d with the sliders so c a + d b lands on the flag, then press Check.');
+	assert.equal(vd.statusLine(reachOpen), 'Goal: set c and d so that c a + d b lands on the flag. Then press Check.');
+	assert.deepEqual(vd.readoutLines(reachOpen), ['c = 1, d = 1. c a + d b = (3, 3). The flag is at (4, 5).']);
+	assert.equal(vd.ochreElement(reachOpen), 'flag');
+	assert.deepEqual(vd.presetsFor(reachOpen), []);
+	assert.equal(vd.chalkNote(reachOpen), null);
+	assert.ok(vst.stageAllowed(reachOpen, 'lists') && !vst.stageAllowed(reachOpen, 'trips'));
+	// The three edge sentences.
+	assert.deepEqual(vd.readoutLines(reachAt(5, -5)), ['c = 5, d = −5. c a + d b = (5, −5). The flag is at (4, 5).', 'c a = (10, 5) is past the edge of the board, so the drawing stops at the edge.']);
+	assert.deepEqual(vd.readoutLines(reachAt(2, 2)), ['c = 2, d = 2. c a + d b = (6, 6). The flag is at (4, 5).', 'c a + d b = (6, 6) is past the edge of the board, so the drawing stops at the edge.']);
+	assert.deepEqual(vd.readoutLines(reachAt(5, 5)), [
+		'c = 5, d = 5. c a + d b = (15, 15). The flag is at (4, 5).',
+		'c a = (10, 5) and c a + d b = (15, 15) are past the edge of the board, so the drawing stops at the edge.',
+	]);
+	assert.equal(vd.edgeSentence(reachOpen), null);
+	assert.equal(vd.edgeSentence(vst.initialState('trips-scale')), null);
+	// Weight d sets d on combine only, and its errors name it.
+	assert.equal(reachAt(1, 3).scalarD, 3);
+	assert.equal(reachAt(1, 3).scalar, 1);
+	assert.throws(() => vst.reducer(reachOpen, { type: 'scalar', weight: 'd', value: 5.5 }), (error) => error.message === 'VectorBoard2D: d = 5.5 is outside −5 to 5.');
+	assert.throws(() => vst.reducer(reachOpen, { type: 'scalar', weight: 'd', value: 0.25 }), (error) => error.message === "VectorBoard2D: d = 0.25 isn't a step of 0.5.");
+	assert.equal(vst.reducer(reachOpen, { type: 'scalar', weight: 'd', value: 1 }), reachOpen);
+	// a and b are the question: no handles, every step refused with the visible reason.
+	assert.deepEqual(vst.handleIds(reachOpen), []);
+	assert.deepEqual(vd.handlesFor(reachOpen), []);
+	for (const id of ['a', 'b']) for (const axis of ['x', 'y']) for (const direction of [-1, 1]) assert.equal(vst.stepRefusal(reachOpen, id, axis, direction)?.kind, 'locked');
+	assert.equal(vd.announcementFor(vst.reducer(reachOpen, step('b', 'y', 1)), step('b', 'y', 1)), 'a and b are the question. Press Check first.');
+	assert.equal(vst.reducer(reachOpen, moveTo('a', [3, 3])), reachOpen);
+	assert.equal(vst.reducer(reachOpen, { type: 'preset', id: 'east-north' }), reachOpen);
+	assert.equal(vd.checkRefusal(reachOpen), null);
+	// Check: retry, with "Show the answer" after two misses; the verdicts word for word.
+	const reachMiss = reachAt(1, 1, { type: 'check' });
+	assert.equal(reachMiss.feedback.result, 'other');
+	assert.equal(vd.feedbackLine(reachMiss), 'Not quite. 1 × a + 1 × b = (3, 3), and the flag is at (4, 5).');
+	const reachTwoMisses = vst.reducer(reachMiss, { type: 'check' });
+	assert.equal(vd.feedbackLine(reachTwoMisses), 'Not quite. 1 × a + 1 × b = (3, 3), and the flag is at (4, 5). You can now show the answer.');
+	const reachShown = vst.reducer(reachTwoMisses, { type: 'show-answer' });
+	assert.deepEqual([reachShown.scalar, reachShown.scalarD, reachShown.checked, reachShown.feedback.kind], [1, 2, true, 'shown']);
+	assert.equal(vd.feedbackLine(reachShown), 'Here it is. 1 × a + 2 × b = (2, 1) + (2, 4) = (4, 5), the flag.');
+	assert.equal(reachAt(2, 1, { type: 'check' }).feedback.result, 'swapped');
+	assert.equal(vd.feedbackLine(reachAt(2, 1, { type: 'check' })), 'Not quite. 2 × a + 1 × b = (5, 4), the flag with east and north swapped. Look again at which weight scales a.');
+	assert.equal(vd.feedbackLine(reachAt(1, -1, { type: 'check' })), 'Not quite. 1 × a + (−1) × b = (1, −1), and the flag is at (4, 5).');
+	const reachDone = reachAt(1, 2, { type: 'check' });
+	assert.equal(reachDone.feedback.result, 'match');
+	assert.equal(vd.feedbackLine(reachDone), 'Yes. 1 × a + 2 × b = (2, 1) + (2, 4) = (4, 5), the flag.');
+	// After Check: the span sentence, and the flag sentence only once the verdict has gone.
+	assert.equal(vd.statusLine(reachDone), 'Change c or d, drag the tips of a and b, or try a preset.');
+	assert.deepEqual(vd.readoutLines(reachDone), ['c = 1, d = 2. c a + d b = (4, 5). The flag is at (4, 5).', 'a and b point along different lines, so their span is the whole plane.']);
+	const reachMoved = vst.reducer(reachDone, { type: 'scalar', weight: 'c', value: 1.5 });
+	assert.equal(reachMoved.feedback, null);
+	assert.deepEqual(vd.readoutLines(reachMoved), [
+		'c = 1.5, d = 2. c a + d b = (5, 5.5). The flag is at (4, 5).',
+		'c a + d b = (5, 5.5) is past the edge of the board, so the drawing stops at the edge.',
+		'a and b point along different lines, so their span is the whole plane.',
+		'The flag is 1 × a + 2 × b.',
+	]);
+	// A slider commit says only the reader's values and the edge: the span and flag don't change with c or d.
+	assert.equal(vd.announcementFor(reachMoved, { type: 'scalar', weight: 'c', value: 1.5 }), 'c = 1.5, d = 2. c a + d b = (5, 5.5). The flag is at (4, 5). c a + d b = (5, 5.5) is past the edge of the board, so the drawing stops at the edge.');
+	assert.equal(vd.announcementFor(reachAt(2, 2), { type: 'scalar', weight: 'd', value: 2 }), 'c = 2, d = 2. c a + d b = (6, 6). The flag is at (4, 5). c a + d b = (6, 6) is past the edge of the board, so the drawing stops at the edge.');
+	assert.deepEqual(vd.handlesFor(reachDone).map((handle) => handle.label), ['Tip of vector a. It also moves with the buttons under the plane', 'Tip of vector b. It also moves with the buttons under the plane']);
+	assert.equal(vd.handleAnnouncement(reachDone, 'a'), 'a = (2, 1), b = (1, 2). c a + d b = (4, 5). a and b point along different lines, so their span is the whole plane.');
+	assert.equal(vd.handleAnnouncement(vst.reducer(reachOpen, { type: 'table', open: false }), 'a'), 'a = (2, 1), b = (1, 2). c a + d b = (3, 3).');
+	// Steppers after Check run to ±5 and refuse at the edge with the shared sentence.
+	const reachEast = vst.reducer(reachDone, step('a', 'x', 1));
+	assert.deepEqual(reachEast.a, [3, 1]);
+	const reachWall = [1, 2, 3].reduce((state) => vst.reducer(state, step('a', 'x', 1)), reachEast);
+	assert.deepEqual(reachWall.a, [5, 1]);
+	assert.equal(vd.refusalText(reachWall, reachWall.refusal), "a can't go further east: the board ends at 5.");
+	// The flag sentence: the weights, or why the slider can't set them, or why nothing reaches the flag.
+	const reachWith = (a, b) => vst.reducer(vst.reducer(reachMoved, moveTo('a', a)), moveTo('b', b));
+	assert.equal(vd.flagSentence(reachWith([3, 1], [1, 3])), "The flag is 7/8 × a + 11/8 × b, which the slider can't set: it moves in steps of 0.5 from −5 to 5.");
+	assert.equal(vd.flagSentence(reachWith([4, 2], [3, 2])), "The flag is −3.5 × a + 6 × b, which the slider can't set: it moves in steps of 0.5 from −5 to 5.");
+	assert.equal(vd.flagSentence(reachWith([4, 5], [0, 0])), 'The flag is on that line, so some c and d reach it.');
+	assert.equal(vd.flagSentence(reachWith([0, 0], [0, 0])), 'The flag is not at the origin, so no c and d reach it.');
+	assert.equal(vd.flagSentence({ ...reachDone, a: [1, 2], b: [2, 1] }), 'The flag is 2 × a + 1 × b.');
+	assert.equal(vd.flagSentence({ ...reachDone, a: [1, 0], b: [0, -1] }), 'The flag is 4 × a + (−5) × b.');
+	// spanSentence, case by case, in its pinned order (a zero vector before any multiple).
+	const spanCases = [
+		[[2, 1], [1, 2], 'a and b point along different lines, so their span is the whole plane.'],
+		[[2, 1], [-4, -2], 'b = −2 × a, so a and b lie on one line through the origin, and every c a + d b stays on it. The span is that line.'],
+		[[2, 1], [2, 1], 'b = a, so a and b lie on one line through the origin, and every c a + d b stays on it. The span is that line.'],
+		[[2, 1], [4, 2], 'b = 2 × a, so a and b lie on one line through the origin, and every c a + d b stays on it. The span is that line.'],
+		[[2, 1], [-2, -1], 'b = −1 × a, so a and b lie on one line through the origin, and every c a + d b stays on it. The span is that line.'],
+		[[2, 2], [3, 3], 'b = 1.5 × a, so a and b lie on one line through the origin, and every c a + d b stays on it. The span is that line.'],
+		[[3, 3], [1, 1], 'a = 3 × b, so a and b lie on one line through the origin, and every c a + d b stays on it. The span is that line.'],
+		[[3, 3], [4, 4], 'a and b lie on one line through the origin, so every c a + d b stays on it. The span is that line.'],
+		[[3, 1], [0, 0], 'b is the zero vector, so it adds nothing: the span is the line through a.'],
+		[[0, 0], [3, 1], 'a is the zero vector, so it adds nothing: the span is the line through b.'],
+		[[0, 0], [0, 0], 'a and b are both the zero vector, so every c a + d b is (0, 0). The span is just the origin.'],
+	];
+	for (const [a, b, sentence] of spanCases) assert.equal(vd.spanSentence(a, b), sentence, `span of ${a} and ${b}`);
+	assert.equal(vd.weightText(fraction(-7, 2)), '−3.5');
+	assert.equal(vd.weightText(fraction(7, 8)), '7/8');
+	assert.equal(vd.weightText(fraction(-4, 3)), '−4/3');
+	// Presets, after Check: each sets a, b, c and d, and a slider move leaves it.
+	assert.deepEqual(vd.presetsFor(reachDone).map((preset) => preset.label), ['East and north', 'Weights swapped', 'A step back', 'Same line']);
+	const reachPreset = (id) => vst.reducer(reachDone, { type: 'preset', id });
+	const presetValues = {
+		'east-north': [[1, 0], [0, 1], 4, 5],
+		'weights-swapped': [[2, 1], [1, 2], 2, 1],
+		'step-back': [[2, 1], [1, 2], -1, 1],
+		'same-line': [[2, 1], [4, 2], 1, 0.5],
+	};
+	for (const [id, values] of Object.entries(presetValues)) {
+		const state = reachPreset(id);
+		assert.deepEqual([state.a, state.b, state.scalar, state.scalarD], values, id);
+		assert.equal(state.activePreset, id);
+		assert.equal(vd.ochreElement(state), 'flag', id);
+		assert.equal(vst.reducer(state, { type: 'scalar', weight: 'd', value: -2 }).activePreset, null, id);
+	}
+	assert.deepEqual(vd.readoutLines(reachPreset('east-north')), ['c = 4, d = 5. c a + d b = (4, 5). The flag is at (4, 5).', 'a and b point along different lines, so their span is the whole plane.', 'The flag is 4 × a + 5 × b.']);
+	assert.equal(
+		vd.announcementFor(reachPreset('same-line'), { type: 'preset', id: 'same-line' }),
+		'c = 1, d = 0.5. c a + d b = (4, 2). The flag is at (4, 5). b = 2 × a, so a and b lie on one line through the origin, and every c a + d b stays on it. The span is that line. The flag is off that line, so no c and d reach it.',
+	);
+	assert.equal(vd.ochreElement(reachMiss), 'flag');
+	assert.equal(vd.ochreElement(reachDone), 'flag');
+	assert.equal(vd.chalkNote(reachDone), null);
+	// Lists: a, b and c a + d b as columns, and the reader's own sum, before Check.
+	const reachLists = runVec('span-reach', { type: 'stage', stage: 'lists' });
+	assert.deepEqual(vd.columnVectors(reachLists).map((column) => column.spoken), ['a is the column 2, 1', 'b is the column 1, 2', 'c a + d b is the column 3, 3']);
+	assert.equal(vd.listsLine(reachLists), 'c a + d b = (1 × 2 + 1 × 1, 1 × 1 + 1 × 2) = (3, 3)');
+	assert.equal(vd.listsLine(vst.reducer(reachLists, { type: 'scalar', weight: 'c', value: -1 })), 'c a + d b = ((−1) × 2 + 1 × 1, (−1) × 1 + 1 × 2) = (−1, 1)');
+	assert.equal(vd.listsLine(reachOpen), null);
+	// The table: a, b, c a, d b and c a + d b; only a and b have steppers.
+	assert.deepEqual(vd.tableRows(reachOpen).map((tableRow) => [tableRow.name, tableRow.x, tableRow.y, tableRow.length, tableRow.stepId]), [
+		['a', '2', '1', '√5 ≈ 2.24', 'a'],
+		['b', '1', '2', '√5 ≈ 2.24', 'b'],
+		['c a', '2', '1', '√5 ≈ 2.24', null],
+		['d b', '1', '2', '√5 ≈ 2.24', null],
+		['c a + d b', '3', '3', '√18 ≈ 4.24', null],
+	]);
+	assert.equal(vd.tableFoldSentence(reachOpen), 'It has a row each for a, b, c a, d b and c a + d b, with x, y and length.');
+	// The plane: no c a at c = 0 (not even a zero ring), one label for two zero vectors, and the flag's label clear of
+	// its ring at every plane size.
+	const labelTexts = (state) => vd.planeLabels(state).map((label) => label.text);
+	assert.ok(!labelTexts(reachAt(0, 1)).includes('c a'));
+	assert.ok(!labelTexts(reachAt(0, 1)).includes('zero vector'));
+	assert.deepEqual(vd.combinePieces(reachAt(0, 1)).map((piece) => piece.id), ['scaledB']);
+	assert.deepEqual(labelTexts(reachOpen), ['a', 'b', 'c a', 'd b', 'flag']);
+	assert.deepEqual(labelTexts({ ...reachDone, a: [0, 0], b: [0, 0] }).filter((text) => text.includes('zero')), ['a and b: zero vectors']);
+	assert.ok(labelTexts(reachPreset('same-line')).includes('span'));
+	assert.ok(!labelTexts(reachDone).includes('span'));
+	assert.deepEqual(vd.spanLine(reachPreset('same-line')), [[-5, -2.5], [5, 2.5]]);
+	assert.equal(vd.spanLine(reachOpen), null);
+	{
+		const flag = vd.planeLabels(reachOpen).find((label) => label.id === 'flag');
+		for (const size of PLANE_SIZES) {
+			const [left, right] = vm.fittedLabelSpan(vm.fitLabel(flag.at, flag.away, flag.text, size), flag.text, size);
+			assert.ok(right <= 4 - 0.32 || left >= 4 + 0.32, `the flag label covers its ring on a ${size}px plane`);
+		}
+	}
+	// The 441 slider states on the opening pair, before and after Check: nothing NaN, the edge sentence exactly when c a
+	// or the sum is off the board, and the sum dot exactly when the sum is on it.
+	{
+		const tally = { scaledOnly: 0, sumOnly: 0, both: 0, none: 0 };
+		const unmarked = [];
+		for (const c of SLIDER_WEIGHTS) {
+			for (const d of SLIDER_WEIGHTS) {
+				const scaled = vm.scale(c, [2, 1]);
+				const sum = vm.combine(c, [2, 1], d, [1, 2]);
+				const scaledOff = !vm.withinView(scaled);
+				const sumOff = !vm.withinView(sum);
+				tally[scaledOff && sumOff ? 'both' : scaledOff ? 'scaledOnly' : sumOff ? 'sumOnly' : 'none']++;
+				if (d !== 0 && !sumOff && vm.clipSegment(scaled, sum) === null) unmarked.push([c, d]);
+				for (const checked of [false, true]) {
+					const state = { ...reachOpen, scalar: c, scalarD: d, checked };
+					assert.equal(vd.edgeSentence(state) !== null, scaledOff || sumOff, `edge sentence at c = ${c}, d = ${d}`);
+					assert.equal(vd.readoutLines(state).some((line) => line.includes('past the edge')), scaledOff || sumOff);
+					const dot = vd.sumDot(state);
+					assert.equal(dot !== null, !sumOff, `sum dot at c = ${c}, d = ${d}`);
+					for (const piece of vd.combinePieces(state)) {
+						assert.ok(isFinitePoint(piece.from) && isFinitePoint(piece.to) && vm.withinView(piece.from) && vm.withinView(piece.to), `piece ${piece.id} at c = ${c}, d = ${d}`);
+						if (piece.head) assert.ok(vm.withinView(piece.id === 'scaled' ? scaled : sum));
+					}
+					for (const label of vd.planeLabels(state)) assert.ok(isFinitePoint(label.at), `label "${label.text}" at c = ${c}, d = ${d}`);
+				}
+			}
+		}
+		assert.deepEqual(tally, { scaledOnly: 38, sumOnly: 122, both: 172, none: 109 });
+		// Where d b only touches the board's edge, the plane would leave the sum unmarked without the dot.
+		assert.deepEqual(unmarked, [[-5, 5], [-4.5, 4], [-4, 3], [-3.5, 2], [-3, 1], [3, -1], [3.5, -2], [4, -3], [4.5, -4], [5, -5]]);
+		for (const [c, d] of unmarked) {
+			const state = reachAt(c, d);
+			assert.ok(!vd.combinePieces(state).some((piece) => piece.id === 'scaledB'));
+			assert.deepEqual(vd.sumDot(state), vm.combine(c, [2, 1], d, [1, 2]));
+		}
+		assert.deepEqual(vd.sumDot(reachAt(3, -1)), [5, 1]);
+	}
+	// Dragged a and b after Check (a seeded sample): heads only on tips that are on the board and pieces long enough to
+	// carry one, and every label inside the plane.
+	{
+		let seed = 20261125;
+		const next = () => {
+			seed = (seed * 1103515245 + 12345) % 2147483648;
+			return seed / 2147483648;
+		};
+		const pick = (list) => list[Math.floor(next() * list.length)];
+		const whole = Array.from({ length: 11 }, (_, index) => index - 5);
+		for (let sample = 0; sample < 3000; sample++) {
+			const state = { ...reachDone, feedback: null, a: [pick(whole), pick(whole)], b: [pick(whole), pick(whole)], scalar: pick(SLIDER_WEIGHTS), scalarD: pick(SLIDER_WEIGHTS) };
+			for (const piece of vd.combinePieces(state)) {
+				const length = Math.hypot(piece.to[0] - piece.from[0], piece.to[1] - piece.from[1]);
+				assert.ok(length > 0, `empty piece at ${JSON.stringify(state)}`);
+				if (piece.head) assert.ok(length >= 0.6, `short headed piece at a = ${state.a}, b = ${state.b}, c = ${state.scalar}, d = ${state.scalarD}`);
+			}
+			for (const label of vd.planeLabels(state)) {
+				for (const size of PLANE_SIZES) assert.ok(labelFits(label, size), `span-reach: "${label.text}" leaves a ${size}px plane at a = ${state.a}, b = ${state.b}, c = ${state.scalar}, d = ${state.scalarD}`);
+			}
+			assert.ok(!/[·‖û]/.test([...vd.readoutLines(state), vd.handleAnnouncement(state, 'a')].join(' ')));
+		}
+	}
+	// No spoilers before Check: every slider state, after one and two misses, in the visible text, the verdict and
+	// every announcement a pre-Check action makes.
+	{
+		// A miss echoes the reader's own weights ("−1 × a + 2 × b"), so the answer counts only as a whole term.
+		const reachForbidden = ['c = 1 and d = 2', 'every point', 'span', 'one line', 'The flag is 1'];
+		const reachAnswer = /(?<![−\d.(])1 × a \+ 2 × b/;
+		const assertReachFree = (texts, where) => {
+			assertNone(texts, reachForbidden, where);
+			for (const text of texts) assert.ok(!reachAnswer.test(text), `${where}: "${text}" gives away 1 × a + 2 × b`);
+		};
+		assert.ok(reachAnswer.test('Yes. 1 × a + 2 × b = (4, 5)') && !reachAnswer.test('−1 × a + 2 × b') && !reachAnswer.test('11 × a + 2 × b'));
+		for (const c of SLIDER_WEIGHTS) {
+			for (const d of SLIDER_WEIGHTS) {
+				let state = reachAt(c, d);
+				for (let presses = 0; presses <= 2 && !state.checked; presses++) {
+					const where = `span-reach c = ${c}, d = ${d}, ${presses} Check presses`;
+					assertReachFree([...answerFreeText(state), vd.feedbackLine(state) ?? ''], where);
+					assertReachFree(['c', 'd'].map((weight) => vd.announcementFor(state, { type: 'scalar', weight, value: weight === 'c' ? c : d })), where);
+					if (presses > 0) assertReachFree([vd.announcementFor(state, { type: 'check' })], where);
+					state = vst.reducer(state, { type: 'check' });
+				}
+			}
+		}
+		for (const id of ['a', 'b']) {
+			const refused = vst.reducer(reachOpen, step(id, 'x', 1));
+			assert.equal(refused.refusal?.kind, 'locked');
+			assertReachFree([vd.announcementFor(refused, step(id, 'x', 1))], `span-reach refused step on ${id}`);
+		}
+	}
+
+	// ---- span-shape ----
+	const shapeOpen = vst.initialState('span-shape');
+	assert.equal(vd.boardLabel(shapeOpen), 'Two vectors a and b. Pick whether their span is only the origin, a line or the whole plane, then press Check.');
+	assert.equal(vd.statusLine(shapeOpen), 'What can c a + d b reach: only the origin, a line or the whole plane? Pick your guess, then press Check.');
+	assert.deepEqual(vd.readoutLines(shapeOpen), ['a = (2, 1), b = (−4, −2).']);
+	assert.deepEqual(vd.handlesFor(shapeOpen), []);
+	assert.equal(vd.ochreElement(shapeOpen), null);
+	assert.equal(vd.chalkNote(shapeOpen), null);
+	assert.equal(vd.spanLine(shapeOpen), null);
+	assert.equal(shapeOpen.activePreset, null);
+	assert.deepEqual(vd.columnVectors(shapeOpen), []);
+	assert.equal(vd.listsLine(shapeOpen), null);
+	for (const id of ['a', 'b']) assert.equal(vst.stepRefusal(shapeOpen, id, 'y', -1)?.kind, 'locked');
+	// Picking announces the guess; Check without one is refused with a visible reason (align keeps its own text).
+	const guessWords = { origin: 'Your guess: the span is only the origin.', line: 'Your guess: the span is a line.', plane: 'Your guess: the span is the whole plane.' };
+	for (const [guess, words] of Object.entries(guessWords)) assert.equal(vd.announcementFor(vst.reducer(shapeOpen, { type: 'span-guess', guess }), { type: 'span-guess', guess }), words);
+	const shapeRefused = vst.reducer(shapeOpen, { type: 'check' });
+	assert.deepEqual([shapeRefused.checked, shapeRefused.refusal?.kind, shapeRefused.failedChecks], [false, 'no-guess', 0]);
+	assert.equal(vd.announcementFor(shapeRefused, { type: 'check' }), 'Pick only the origin, a line or the whole plane first.');
+	assert.equal(vd.checkRefusal(shapeOpen), 'Pick only the origin, a line or the whole plane first.');
+	assert.equal(vd.checkRefusal(vst.reducer(shapeOpen, { type: 'span-guess', guess: 'line' })), null);
+	assert.equal(vd.checkRefusal(vst.initialState('align')), 'Pick positive, zero or negative first.');
+	const alignStart = vst.initialState('align');
+	assert.equal(vst.reducer(alignStart, { type: 'span-guess', guess: 'line' }), alignStart);
+	assert.equal(vst.reducer(shapeOpen, { type: 'sign', sign: 'zero' }), shapeOpen);
+	// One shot: every guess reveals, and only "A line" is right.
+	const shapeCheck = (guess) => runVec('span-shape', { type: 'span-guess', guess }, { type: 'check' });
+	const shapeVerdicts = {
+		line: [true, 'Yes. b = −2 × a, so a and b lie on one line through the origin, and every c a + d b stays on it. The span is that line.'],
+		plane: [false, 'Not quite. b = −2 × a points exactly opposite a, so every c a + d b = (c − 2d) × a stays on the line through a. The span is that line.'],
+		origin: [false, 'Not quite. c a alone already reaches every point of the line through a, such as 1 × a = (2, 1) and −1 × a = (−2, −1). The span is that line.'],
+	};
+	for (const [guess, [correct, verdict]] of Object.entries(shapeVerdicts)) {
+		const state = shapeCheck(guess);
+		assert.deepEqual([state.checked, state.feedback.kind, state.feedback.correct], [true, 'span', correct], guess);
+		assert.equal(vd.feedbackLine(state), verdict, guess);
+		assert.equal(vst.reducer(state, { type: 'show-answer' }), state, `${guess}: show-answer`);
+		assert.equal(vst.reducer(state, { type: 'span-guess', guess: 'origin' }).spanGuess, guess, `${guess}: guess after Check`);
+	}
+	// The k > 0 template, on a built state (validateSetup keeps the page's opening at k = −2).
+	assert.equal(
+		vd.feedbackLine({ ...shapeCheck('plane'), b: [6, 3] }),
+		'Not quite. b = 3 × a points the same way as a, so every c a + d b = (c + 3d) × a stays on the line through a. The span is that line.',
+	);
+	const shapeDone = shapeCheck('plane');
+	assert.equal(vd.statusLine(shapeDone), 'Drag the tips of a and b, or try a preset.');
+	assert.equal(vd.statusLine(shapeDone), vd.statusLine(shapeCheck('line')));
+	assert.deepEqual(vd.readoutLines(shapeDone), ['a = (2, 1), b = (−4, −2).'], 'the verdict already says the span');
+	assert.deepEqual(vd.handlesFor(shapeDone).map((handle) => handle.id), ['a', 'b']);
+	assert.equal(vd.ochreElement(shapeDone), 'span');
+	assert.deepEqual(vd.spanLine(shapeDone), [[-5, -2.5], [5, 2.5]]);
+	assert.deepEqual(vd.chalkNote(shapeDone), { long: 'one direction: a line', short: 'just a line' });
+	assert.deepEqual(vd.planeLabels(shapeDone).map((label) => label.text), ['a', 'b', 'span']);
+	// b runs back along a, so their labels sit on the same physical side's opposite: never on top of each other.
+	const shapeLabels = vd.planeLabels(shapeDone);
+	assert.ok(vm.cross([2, 1], labelAt(shapeLabels, 'a')) * vm.cross([2, 1], labelAt(shapeLabels, 'b')) < 0);
+	assert.equal(vd.tableFoldSentence(shapeDone), 'It has a row each for a and b, with x, y and length.');
+	assert.equal(vd.handleAnnouncement(vst.reducer(shapeDone, moveTo('b', [1, 2])), 'b'), 'a = (2, 1), b = (1, 2). a and b point along different lines, so their span is the whole plane.');
+	// Presets, after Check: the same plane sentence for nearly lined up is the lesson.
+	assert.deepEqual(vd.presetsFor(shapeDone).map((preset) => preset.label), ['Different lines', 'Nearly lined up', 'One zero vector', 'Both zero']);
+	const shapePreset = (id) => vst.reducer(shapeDone, { type: 'preset', id });
+	const shapePresetCases = {
+		'different-lines': [[2, 1], [1, 2], 'a and b point along different lines, so their span is the whole plane.', null, { long: 'two directions: every point', short: 'every point' }],
+		'nearly-lined-up': [[4, 2], [3, 2], 'a and b point along different lines, so their span is the whole plane.', null, { long: 'two directions: every point', short: 'every point' }],
+		'one-zero': [[3, 1], [0, 0], 'b is the zero vector, so it adds nothing: the span is the line through a.', 'span', { long: 'one direction: a line', short: 'just a line' }],
+		'both-zero': [[0, 0], [0, 0], 'a and b are both the zero vector, so every c a + d b is (0, 0). The span is just the origin.', 'span', { long: 'no direction: just the origin', short: 'just the origin' }],
+	};
+	for (const [id, [a, b, sentence, ochre, note]] of Object.entries(shapePresetCases)) {
+		const state = shapePreset(id);
+		assert.deepEqual([state.a, state.b, state.activePreset], [a, b, id]);
+		assert.deepEqual(vd.readoutLines(state), [`a = ${vd.pairText(a)}, b = ${vd.pairText(b)}.`, sentence], id);
+		assert.equal(vd.ochreElement(state), ochre, id);
+		assert.deepEqual(vd.chalkNote(state), note, id);
+	}
+	assert.deepEqual(vd.planeLabels(shapePreset('both-zero')).map((label) => label.text), ['a and b: zero vectors']);
+	assert.equal(vd.spanLine(shapePreset('both-zero')), null);
+	assert.deepEqual(vd.spanLine(shapePreset('one-zero')), [[-5, -5 / 3], [5, 5 / 3]]);
+	// Steppers after Check run to ±5 and refuse at the edge with the shared sentence.
+	const shapeWall = [1, 2, 3, 4].reduce((state) => vst.reducer(state, step('a', 'x', 1)), shapeDone);
+	assert.deepEqual(shapeWall.a, [5, 1]);
+	assert.equal(vd.announcementFor(shapeWall, step('a', 'x', 1)), "a can't go further east: the board ends at 5.");
+	// Every pair within ±5 after Check: the sentence, the ochre and the note follow spanKind, and nothing says "·".
+	{
+		const kindWords = { origin: 'just the origin', line: 'The span is that line.', plane: 'whole plane' };
+		for (const a of grid(5)) {
+			for (const b of grid(5)) {
+				const state = { ...shapeDone, a, b, feedback: null };
+				const kind = vm.spanKind(a, b);
+				const sentence = vd.spanSentence(a, b);
+				const matches = kind === 'line' ? sentence.endsWith('line through a.') || sentence.endsWith('line through b.') || sentence.endsWith(kindWords.line) : sentence.includes(kindWords[kind]);
+				assert.ok(matches, `span of ${a} and ${b}: "${sentence}"`);
+				assert.equal(vd.ochreElement(state), kind === 'plane' ? null : 'span');
+				assert.equal(vd.spanLine(state) !== null, kind === 'line');
+				assert.ok(!/= 0 ×/.test(sentence), sentence);
+				assert.ok(![...vd.readoutLines(state), vd.handleAnnouncement(state, 'a'), vd.chalkNote(state).long].some((text) => /[·‖û]/.test(text)), `${a}, ${b}`);
+			}
+		}
+	}
+	// No spoilers before Check: the opening, after each pick, after a refused Check.
+	{
+		const shapeForbidden = ['b = −2 × a', 'lie on one line', 'span is that line', 'stays on it', 'The span is', 'just the origin'];
+		const shapeStates = [shapeOpen, shapeRefused, ...Object.keys(guessWords).map((guess) => vst.reducer(shapeOpen, { type: 'span-guess', guess }))];
+		for (const state of shapeStates) {
+			assertNone([...answerFreeText(state), vd.feedbackLine(state) ?? '', vd.checkRefusal(state) ?? ''], shapeForbidden, `span-shape ${state.spanGuess}`);
+			for (const guess of Object.keys(guessWords)) assertNone([vd.announcementFor(vst.reducer(state, { type: 'span-guess', guess }), { type: 'span-guess', guess })], shapeForbidden, `span-shape pick ${guess}`);
+		}
+		assertNone([vd.announcementFor(shapeRefused, { type: 'check' })], shapeForbidden, 'span-shape refused Check');
+		for (const id of ['a', 'b']) assertNone([vd.announcementFor(vst.reducer(shapeOpen, step(id, 'y', 1)), step(id, 'y', 1))], shapeForbidden, `span-shape refused step on ${id}`);
+	}
+
 	// ---- Table view and the step strip (decision 0017) ----
 	// The − / + buttons live in an always-visible strip; only the read-only coordinate table folds.
-	const revealVec = (id) => runVec(id, { type: 'sign', sign: 'negative' }, { type: 'check' }, { type: 'check' }, { type: 'show-answer' });
+	const revealVec = (id) => runVec(id, { type: 'sign', sign: 'negative' }, { type: 'span-guess', guess: 'plane' }, { type: 'check' }, { type: 'check' }, { type: 'show-answer' });
 	for (const id of Object.keys(vs.SETUPS)) {
 		const setup = vs.getSetup(id);
 		assert.equal(vst.initialState(id).tableOpen, false, id);
@@ -4294,7 +4701,7 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 		assert.equal(vst.reducer(opened, { type: 'reset' }).tableOpen, false, id);
 		const openedAfter = vst.reducer(revealVec(id), { type: 'table', open: true });
 		const keepers = [
-			{ type: 'check' }, { type: 'sign', sign: 'positive' },
+			{ type: 'check' }, { type: 'sign', sign: 'positive' }, { type: 'span-guess', guess: 'line' }, { type: 'scalar', weight: 'c', value: 0.5 },
 			...setup.presets.map((preset) => ({ type: 'preset', id: preset.id })),
 			...['trips', 'arrows', 'lists'].map((stage) => ({ type: 'stage', stage })),
 		];
@@ -4355,12 +4762,12 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	for (const id of Object.keys(vs.SETUPS)) {
 		const open = vst.initialState(id);
 		// Exactly one ochre element at a time, and nothing pink or blue.
-		assert.ok([null, 'guess', 'sum', 'scaled', 'shadow'].includes(vd.ochreElement(open)));
+		assert.ok([null, 'guess', 'sum', 'scaled', 'shadow', 'flag', 'span'].includes(vd.ochreElement(open)));
 		// Handles and steppers agree: every handle's point is in the table, and every label ends without a period.
 		for (const handle of vd.handlesFor(open)) assert.ok(!handle.label.endsWith('.'), handle.label);
 		// No em dash, and never the word the site's style bans for a question put to the reader (spelled in parts
 		// so this file doesn't contain it).
-		const states = [open, runVec(id, { type: 'check' }), runVec(id, { type: 'sign', sign: 'negative' }, { type: 'check' }, { type: 'check' }, { type: 'show-answer' })];
+		const states = [open, runVec(id, { type: 'check' }), runVec(id, { type: 'sign', sign: 'negative' }, { type: 'span-guess', guess: 'plane' }, { type: 'check' }, { type: 'check' }, { type: 'show-answer' })];
 		for (const state of states) {
 			for (const text of allText(state)) {
 				assert.ok(!text.includes('—'), `${id}: em dash in "${text}"`);
@@ -4382,6 +4789,11 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	const planeSource = readFileSync('src/components/react/vectorBoard/VectorPlane.tsx', 'utf8');
 	assert.ok(/import \{[^}]*[\s,]Segment[\s,][^}]*\} from "\.\.\/planeLines"/.test(planeSource), 'VectorPlane imports the shared Segment');
 	assert.ok(!/function Segment[\s({<]|const DOTTED\s|strokeDasharray/.test(planeSource), 'VectorPlane defines its own dotted line');
+	// Headless lines (span-reach's cut arrows, the span line) come only from planeLines' Segment as well.
+	assert.ok(!/Line\.Segment|<Polyline[^>]*points=\{\[\s*\[(?:from|piece|line)/.test(planeSource), 'VectorPlane draws a headless line without the shared Segment');
+	// The tray draws one slider per weight from sliderWeights, so a combine setup never gets a third slider.
+	const boardSource = readFileSync('src/components/react/VectorBoard2D.tsx', 'utf8');
+	assert.ok(/sliderWeights\(setup\)\.map/.test(boardSource) && !/CONTROL_LABELS\.scale/.test(boardSource), 'VectorBoard2D renders its sliders outside sliderWeights');
 }
 
 // ---- NormalDistribution: bell untouched, z mode (decision 0019) ----

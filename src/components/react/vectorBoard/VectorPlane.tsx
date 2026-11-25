@@ -3,9 +3,27 @@ import { Circle, Coordinates, Mafs, MovablePoint, Plot, Polyline, Text, Vector }
 import type { vec } from "mafs";
 import { DOTTED, Segment } from "../planeLines";
 import { plotColors } from "../plotColors";
-import { ARC_RADIUS, cartShadow, handlesFor, ochreElement, planeLabels, showsArc, showsRightAngle, type TableRow } from "./describe.ts";
-import { LABEL_SIZE, VIEW_LIMIT, VIEW_PADDING, add, cross, fitLabel, isZero, lengthSquared, numberText, scale, shadowTip, snapInto, subtract, type Vec2 } from "./model.ts";
-import { handleBox, handleIds, setupOf, type HandleId, type VectorState } from "./state.ts";
+import { ARC_RADIUS, cartShadow, combinePieces, handlesFor, ochreElement, planeLabels, showsArc, showsRightAngle, spanLine, sumDot, type TableRow } from "./describe.ts";
+import {
+  LABEL_SIZE,
+  VIEW_LIMIT,
+  VIEW_PADDING,
+  add,
+  clipSegment,
+  combine,
+  cross,
+  fitLabel,
+  isZero,
+  lengthSquared,
+  numberText,
+  scale,
+  shadowTip,
+  snapInto,
+  spanKind,
+  subtract,
+  type Vec2,
+} from "./model.ts";
+import { handleBox, handleIds, requireFlag, setupOf, type HandleId, type VectorState } from "./state.ts";
 
 const VIEW: vec.Vector2 = [-(VIEW_LIMIT + VIEW_PADDING), VIEW_LIMIT + VIEW_PADDING];
 const ARROW_WEIGHT = 2.5;
@@ -14,6 +32,12 @@ const OCHRE_WEIGHT = 3;
 const ZERO_RING_RADIUS = 0.2;
 const GUESS_RING_RADIUS = 0.32;
 const RIGHT_ANGLE_SIZE = 0.3;
+/** a and b on span-reach: the muted references the scaled arrows are copied from. */
+const MUTED_WEIGHT = 1.5;
+/** The flag on span-reach and the origin ring on span-shape are the size of the guess ring. */
+const TARGET_RING_RADIUS = GUESS_RING_RADIUS;
+/** The small ink dot at c a + d b, which marks the sum even when d b is cut at the edge. */
+const SUM_DOT_RADIUS = 0.12;
 
 interface VectorPlaneProps {
   state: VectorState;
@@ -51,13 +75,19 @@ function RightAngle({ corner, first, second }: { corner: Vec2; first: Vec2; seco
   );
 }
 
+/** One dotted leg, cut at the board's edge (span-reach's arrows can run past it); nothing when no part is on the board. */
+function Leg({ from, to }: { from: Vec2; to: Vec2 }) {
+  const piece = clipSegment(from, to);
+  return piece && <Segment from={piece.from} to={piece.to} color={plotColors.inkMuted} weight={2} lineStyle="dotted" />;
+}
+
 /** Dotted legs from the tail east or west, then north or south, for the row the reader is pointing at. */
 function ComponentLegs({ tail, tip }: { tail: Vec2; tip: Vec2 }) {
   const corner: Vec2 = [tip[0], tail[1]];
   return (
     <>
-      <Segment from={tail} to={corner} color={plotColors.inkMuted} weight={2} lineStyle="dotted" />
-      <Segment from={corner} to={tip} color={plotColors.inkMuted} weight={2} lineStyle="dotted" />
+      <Leg from={tail} to={corner} />
+      <Leg from={corner} to={tip} />
     </>
   );
 }
@@ -77,6 +107,10 @@ function rowArrow(state: VectorState, id: TableRow["id"]): { tail: Vec2; tip: Ve
       return { tail: origin, tip: add(state.a, state.b) };
     case "scaled":
       return { tail: origin, tip: scale(state.scalar, state.a) };
+    case "scaledB":
+      return { tail: scale(state.scalar, state.a), tip: combine(state.scalar, state.a, state.scalarD, state.b) };
+    case "combo":
+      return { tail: origin, tip: combine(state.scalar, state.a, state.scalarD, state.b) };
     case "track":
       return { tail: origin, tip: state.b };
   }
@@ -174,7 +208,52 @@ function AlignScene({ state, ochre }: SceneProps) {
   );
 }
 
-const SCENES = { add: AddScene, scale: ScaleScene, cart: CartScene, align: AlignScene } as const;
+/**
+ * span-reach: muted a and b, then c a and d b in ink, each cut at the board's edge (a cut arrow loses its head, since a
+ * head at the edge would claim the vector ends there), the sum dot, and the ochre flag. After Check, a muted dotted
+ * span line when a and b line up.
+ */
+function CombineScene({ state, ochre }: SceneProps) {
+  const target = requireFlag(setupOf(state)).target;
+  const line = spanLine(state);
+  const dot = sumDot(state);
+  return (
+    <>
+      {line && <Segment from={line[0]} to={line[1]} color={plotColors.inkMuted} weight={2} lineStyle="dotted" />}
+      <Arrow tip={state.a} color={plotColors.inkMuted} weight={MUTED_WEIGHT} />
+      <Arrow tip={state.b} color={plotColors.inkMuted} weight={MUTED_WEIGHT} dashed />
+      {combinePieces(state).map((piece) =>
+        piece.head ? (
+          <Arrow key={piece.id} tail={piece.from} tip={piece.to} dashed={piece.id === "scaledB"} />
+        ) : (
+          <Segment key={piece.id} from={piece.from} to={piece.to} color={plotColors.ink} weight={ARROW_WEIGHT} lineStyle={piece.id === "scaledB" ? "dashed" : "solid"} />
+        ),
+      )}
+      {dot && <Circle center={[dot[0], dot[1]]} radius={SUM_DOT_RADIUS} color={plotColors.ink} fillOpacity={1} weight={1} />}
+      <Circle center={[target[0], target[1]]} radius={TARGET_RING_RADIUS} color={ochreOr(ochre === "flag")} fillOpacity={0} weight={OCHRE_WEIGHT} />
+    </>
+  );
+}
+
+/**
+ * span-shape: a and b as on align. After Check the span is ochre: a solid line edge to edge when it is a line, a ring
+ * at the origin when it is only the origin, and nothing for the whole plane, which is said in words. The line is drawn
+ * first, so b's dashes stay on top of it.
+ */
+function SpanScene({ state, ochre }: SceneProps) {
+  const line = spanLine(state);
+  const originRing = ochre === "span" && spanKind(state.a, state.b) === "origin";
+  return (
+    <>
+      {line && <Segment from={line[0]} to={line[1]} color={ochreOr(ochre === "span")} weight={OCHRE_WEIGHT} />}
+      {originRing && <Circle center={[0, 0]} radius={TARGET_RING_RADIUS} color={plotColors.attention} fillOpacity={0} weight={OCHRE_WEIGHT} />}
+      <Arrow tip={state.a} />
+      <Arrow tip={state.b} dashed />
+    </>
+  );
+}
+
+const SCENES = { add: AddScene, scale: ScaleScene, cart: CartScene, align: AlignScene, combine: CombineScene, "span-choice": SpanScene } as const;
 
 /**
  * The Mafs plane: whole-number grid, ink arrows told apart by label and line style (a solid, b dashed), and one
