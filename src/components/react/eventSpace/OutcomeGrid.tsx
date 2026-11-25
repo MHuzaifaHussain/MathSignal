@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import { cellName, focusSet, missedOutcome, unitsNote } from "./describe.ts";
-import type { Scenario } from "./scenarios.ts";
+import { hasWordedRowHeaders, type Scenario } from "./scenarios.ts";
 import { SMALL_GRID_MAX_CELLS, type EventSpaceState } from "./state.ts";
 import { useRovingGrid } from "./useRovingGrid.ts";
 import type { OutcomeId } from "./model.ts";
@@ -39,7 +39,7 @@ export default function OutcomeGrid({ state, scenario, describedBy, editable, on
       </p>
     )}
     <table
-      className="ms-event-grid"
+      className={hasWordedRowHeaders(scenario) ? "ms-event-grid ms-event-grid--worded-rows" : "ms-event-grid"}
       role="grid"
       aria-label={
         isList

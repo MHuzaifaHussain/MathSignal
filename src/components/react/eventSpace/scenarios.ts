@@ -345,6 +345,11 @@ function montyHall(): Scenario {
 	};
 }
 
+/** Whether any row header is a phrase ("door 1") rather than a single symbol ("H", "3"); such headers must not wrap. */
+export function hasWordedRowHeaders(scenario: Scenario): boolean {
+	return scenario.rowValues.some((value) => value.includes(' '));
+}
+
 function checked(scenario: Scenario): Scenario {
 	if (scenario.outcomes.length > MAX_OUTCOMES) {
 		throw new Error(`EventSpace: scenario "${scenario.id}" has ${scenario.outcomes.length} outcomes; the most a board can show is ${MAX_OUTCOMES}.`);

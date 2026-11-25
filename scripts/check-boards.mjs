@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { fraction, formatFraction, addFractions, multiplyFractions, compareFractions, toNumber, isPerfectSquare, squareRoot } from '../src/components/react/boardMath.ts';
 import { joinWords, plural, equalsDecimal } from '../src/components/react/boardText.ts';
 import { probability, checkGoal, pour, intersect, union, complement, WEIGHT_TOTAL } from '../src/components/react/eventSpace/model.ts';
-import { SCENARIOS } from '../src/components/react/eventSpace/scenarios.ts';
+import { SCENARIOS, hasWordedRowHeaders } from '../src/components/react/eventSpace/scenarios.ts';
 import { getSetup } from '../src/components/react/eventSpace/setups.ts';
 import { distributionOf, distributionFromPmf, mean, variance, standardDeviation, torqueSign, classifyGuess } from '../src/components/react/distributionBoard/model.ts';
 
@@ -314,6 +314,8 @@ const montyIds = (event) => ids(monty, event);
 assert.equal(monty.outcomes.length, 6);
 assert.deepEqual(monty.outcomes.map((outcome) => outcome.label), ['opens 2', 'opens 3', 'opens 3', 'opens 3', 'opens 2', 'opens 2']);
 assert.deepEqual(monty.rowValues, ['door 1', 'door 2', 'door 3']);
+// Only worded row headers get the no-wrap rule; every other scenario keeps its single-symbol header column.
+assert.deepEqual(Object.values(SCENARIOS).filter(hasWordedRowHeaders).map((scenario) => scenario.id), ['monty-hall']);
 assert.deepEqual(monty.colValues, ['heads', 'tails']);
 assert.equal(monty.outcomes[2].spoken, 'car behind door 2, coin heads');
 assert.equal(monty.mirrorOf('1-H'), undefined);

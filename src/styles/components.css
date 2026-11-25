@@ -569,8 +569,9 @@
 	text-align: center;
 }
 
-/* A worded row header ("door 1") widens its column rather than breaking over two lines. */
-.ms-event-grid th[scope='row'] {
+/* A worded row header ("door 1") widens its column rather than breaking over two lines. Scoped to scenarios
+ * with worded headers, so single-symbol grids keep their 2rem header column. */
+.ms-event-grid--worded-rows th[scope='row'] {
 	padding-inline-end: 4px;
 	white-space: nowrap;
 }
@@ -596,7 +597,8 @@
 	print-color-adjust: exact;
 }
 
-/* A worded label ("opens 3") breaks at its spaces, one word a line, clear of the corner tags and B's frame. */
+/* A worded label ("opens 3") breaks at its spaces, one word a line, clear of the corner tags and B's frame.
+ * Applies to every scenario; single-word labels ("HT", "3") are unchanged by it. */
 .ms-event-label {
 	inline-size: min-content;
 	line-height: 1.15;
