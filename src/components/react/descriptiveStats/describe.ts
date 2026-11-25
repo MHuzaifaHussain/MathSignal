@@ -152,14 +152,6 @@ export function childOptions(state: DescriptiveState): { value: string; label: s
 	return state.values.map((_, child) => ({ value: String(child), label: childName(child) }));
 }
 
-/**
- * "Your pick for the middle": each radio names its child and height ("Child 1, 133 cm"), so a screen-reader user can
- * find the middle without opening the table. The heights are drawn on the bars, so naming them gives nothing away.
- */
-export function pickOptions(state: DescriptiveState): { value: string; label: string }[] {
-	return state.values.map((height, child) => ({ value: String(child), label: `${childName(child)}, ${formatHeight(height)}` }));
-}
-
 export const CUTOFF_OPTIONS: readonly { value: '2' | '3'; label: string }[] = [
 	{ value: '2', label: '2' },
 	{ value: '3', label: '3' },

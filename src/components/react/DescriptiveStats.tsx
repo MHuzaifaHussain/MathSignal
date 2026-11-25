@@ -33,7 +33,6 @@ import {
   formatSavings,
   goalLine,
   goalStatus,
-  pickOptions,
   readoutLines,
   stageOptions,
   statusLine,
@@ -166,7 +165,7 @@ export default function DescriptiveStats({ setup: setupId }: DescriptiveStatsPro
       {setup.kind === "lineup" && !state.checked && (
         <TrayChoice
           legend={CONTROL_LABELS.pick}
-          options={pickOptions(state)}
+          options={childOptions(state)}
           value={state.pick === null ? null : String(state.pick)}
           onChange={(child) => send({ type: "pick", child: Number(child) })}
         />

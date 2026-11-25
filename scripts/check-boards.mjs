@@ -2638,15 +2638,12 @@ const assertTableFoldSays = (where, announce) => {
 	// The tables print and read the same: before Check there is no Summary table at all, and Raw shows only its note.
 	assert.deepEqual(dsay.summaryTable(lineupOpen).rows, []);
 	assert.equal(dsay.summaryNote(lineupOpen), null, 'before Check the reason is the covered line in the canvas, not a note in the fold');
-	// Your pick for the middle: each radio names its child and height; Child to move keeps the bare name.
-	const pickLabels = (state) => dsay.pickOptions(state).map((option) => option.label);
-	assert.equal(pickLabels(lineupOpen)[0], 'Child 1, 133 cm');
-	assert.equal(pickLabels(lineupOpen).at(-1), 'Child 9, 142 cm');
-	assert.equal(pickLabels(run('class-lineup', { type: 'preset', id: 'ten-children' })).at(-1), 'Child 10, 136 cm');
-	assert.equal(pickLabels(run('class-lineup', { type: 'preset', id: 'shared-heights' }))[0], 'Child 1, 141 cm');
-	assert.equal(pickLabels(run('class-lineup', { type: 'preset', id: 'shared-heights' })).at(-1), 'Child 9, 141 cm');
-	assert.deepEqual(dsay.pickOptions(lineupOpen).map((option) => option.value), dsay.childOptions(lineupOpen).map((option) => option.value));
-	assert.equal(dsay.childOptions(dst.initialState('class-spread'))[2].label, 'Child 3');
+	// Your pick for the middle keeps bare names: heights in the names grew the tray by 96px at 375px, past the 48px
+	// allowed, so the table behind Table view is the screen-reader path to each height (decision 0017).
+	const pickLabels = (state) => dsay.childOptions(state).map((option) => option.label);
+	assert.deepEqual(pickLabels(lineupOpen), ['Child 1', 'Child 2', 'Child 3', 'Child 4', 'Child 5', 'Child 6', 'Child 7', 'Child 8', 'Child 9']);
+	assert.equal(pickLabels(run('class-lineup', { type: 'preset', id: 'ten-children' })).at(-1), 'Child 10');
+	assert.ok(!('pickOptions' in dsay), 'the pick radios have one source of names, childOptions');
 	// No state may throw from the switch: every setup, opening, after Check, each preset, stage, scale and cutoff.
 	for (const id of ds.SETUP_IDS) {
 		const setup = ds.getSetup(id);
