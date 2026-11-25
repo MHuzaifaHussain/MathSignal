@@ -4467,4 +4467,293 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	assert.ok(tightest > 1.0e-7 && tightest < 1.03e-7, `the tightest rounding margin is about 1.02e−7, got ${tightest}`);
 }
 
+// State and copy: every reader-facing string, commit before reveal, and the late slider commit.
+{
+	const zState = await import('../src/components/react/normalDistribution/state.ts');
+	const zSay = await import('../src/components/react/normalDistribution/describe.ts');
+	const { createSliderGuard } = await import('../src/components/react/guided/sliderGuard.ts');
+	const { Z_PRESETS } = zSetups;
+	const SETUP = 'taller-for-age';
+	const step = (state, action) => zState.zReducer(state, action);
+	const run = (...actions) => actions.reduce(step, zState.initialState(SETUP));
+	const checkedOn = (guess, ...actions) => run({ type: 'guess', guess }, { type: 'check' }, ...actions);
+	const at = (state, index) => step(state, { type: 'value', index });
+	const pair = (line) => [line.visible, line.spoken];
+
+	// The exact decimal helpers the readouts rely on (shared, boardText.ts).
+	assert.equal(decimalText(fraction(7, 8), 3), '0.875');
+	assert.equal(decimalText(fraction(-3, 2), 3), '−1.5');
+	assert.equal(decimalText(fraction(1, 2), 3), '0.5');
+	assert.equal(decimalText(fraction(0, 1), 3), '0');
+	assert.equal(terminatesWithin(fraction(7, 12), 3), false);
+	assert.equal(terminatesWithin(fraction(1, 8), 3), true);
+	assert.equal(zSay.zResultText(fraction(1, 8)), '= 0.125', 'not equalsDecimal, which writes 1/8 as ≈ 0.13');
+	assert.equal(zSay.zResultText(fraction(-7, 12)), '≈ −0.58');
+	assert.equal(zSay.zArgumentText(fraction(7, 12)), '7/12');
+	assert.equal(zSay.zArgumentText(fraction(-7, 12)), '−7/12');
+	assert.equal(zSay.zArgumentText(fraction(3, 4)), '0.75');
+
+	// State.
+	const start = zState.initialState(SETUP);
+	assert.deepEqual(start, { setupId: SETUP, presetId: 'nine-140', index: 6, guess: null, checked: false, failedChecks: 0, shading: false, tableOpen: false });
+	assert.deepEqual(zState.allowedPresets(start), ['nine-140']);
+	assert.throws(() => step(start, { type: 'preset', id: 'eleven-150' }), /preset eleven-150 isn't offered yet/);
+	assert.throws(() => step(start, { type: 'preset', id: 'standard-075' }), /preset standard-075 isn't offered yet/);
+	assert.throws(() => step(start, { type: 'shade', on: true }), /Shade waits for Check/);
+	assert.equal(step(start, { type: 'check' }), start, 'Check with no guess changes nothing');
+	assert.equal(step(start, { type: 'preset', id: 'nine-140' }), start, 'the same preset at its opening value is the same state');
+	const guessed = run({ type: 'guess', guess: 'second' });
+	const checked = step(guessed, { type: 'check' });
+	assert.equal(checked.checked, true, 'a one-shot Check: any answer reveals');
+	assert.equal(checked.failedChecks, 1);
+	assert.equal(step(checked, { type: 'check' }), checked, 'Check after Check is a no-op');
+	assert.equal(step(checked, { type: 'guess', guess: 'first' }), checked, 'a guess after Check is ignored');
+	assert.equal(checkedOn('first').failedChecks, 0);
+	assert.deepEqual(zState.allowedPresets(checked), ['nine-140', 'eleven-150', 'standard-075']);
+	const openShaded = step(step(checked, { type: 'table', open: true }), { type: 'shade', on: true });
+	const moved = step(openShaded, { type: 'preset', id: 'eleven-150' });
+	assert.deepEqual([moved.presetId, moved.index, moved.tableOpen, moved.shading, moved.checked, moved.guess], ['eleven-150', 6, true, true, true, 'second']);
+	assert.equal(zState.activePresetId(moved), 'eleven-150');
+	const off = at(moved, 7);
+	assert.equal(zState.activePresetId(off), null);
+	assert.equal(zState.activePresetId(at(off, 6)), 'eleven-150');
+	assert.notEqual(step(off, { type: 'preset', id: 'eleven-150' }), off, 'after a move, the same preset reloads its value');
+	assert.equal(at(start, 999).index, 24, 'a value from outside is clamped');
+	assert.equal(at(start, 5.6).index, 6);
+	assert.equal(at(start, 6), start);
+	assert.throws(() => at(start, Number.NaN), /is not finite/);
+	assert.deepEqual(step(openShaded, { type: 'reset' }), start);
+	for (const state of [start, checked, moved, off]) assert.equal(zState.ochreElement(state), 'value-marker');
+	assert.equal(zState.revealed(start), false);
+	assert.equal(zState.revealed(checked), true);
+
+	// The three z = 0 states take the exact branch, decided from the fraction.
+	assert.deepEqual(zSay.shareParts(fraction(0, 1)), { exact: true, phi: '0.5', percent: '50' });
+	assert.deepEqual(zSay.shareParts(fraction(3, 4)), { exact: false, phi: '0.7734', percent: '77.3' });
+
+	// Readouts before Check: no z anywhere.
+	assert.deepEqual(zSay.readoutLines(start).map(pair), [
+		['Nine-year-olds: mean μ = 134 cm, standard deviation σ = 8 cm.', 'Nine-year-olds: mean 134 cm, standard deviation 8 cm.'],
+		['140 cm is 6 cm above the mean.', '140 cm is 6 cm above the mean.'],
+	]);
+	assert.deepEqual(pair(zSay.valueLine(at(start, -12))), ['122 cm is 12 cm below the mean.', '122 cm is 12 cm below the mean.']);
+	assert.deepEqual(pair(zSay.valueLine(at(start, 0))), ['134 cm is the mean.', '134 cm is the mean.']);
+
+	// After Check.
+	const nine = checkedOn('first');
+	const eleven = step(nine, { type: 'preset', id: 'eleven-150' });
+	const standard = step(nine, { type: 'preset', id: 'standard-075' });
+	assert.deepEqual(pair(zSay.groupLine(Z_PRESETS['eleven-150'])), ['Eleven-year-olds: mean μ = 144 cm, standard deviation σ = 12 cm.', 'Eleven-year-olds: mean 144 cm, standard deviation 12 cm.']);
+	assert.deepEqual(pair(zSay.groupLine(Z_PRESETS['standard-075'])), ['Standard normal: mean μ = 0, standard deviation σ = 1.', 'Standard normal: mean 0, standard deviation 1.']);
+	const VALUE_LINES = [
+		[nine, '140 cm is 6 cm above the mean: z = 6 / 8 = 0.75.', '140 cm is 6 cm above the mean: z is 6 divided by 8, which is 0.75.'],
+		[eleven, '150 cm is 6 cm above the mean: z = 6 / 12 = 0.5.', '150 cm is 6 cm above the mean: z is 6 divided by 12, which is 0.5.'],
+		[at(nine, -12), '122 cm is 12 cm below the mean: z = −12 / 8 = −1.5.', '122 cm is 12 cm below the mean: z is minus 12 divided by 8, which is minus 1.5.'],
+		[at(nine, 0), '134 cm is the mean: z = 0.', '134 cm is the mean: z is 0.'],
+		[at(nine, 7), '141 cm is 7 cm above the mean: z = 7 / 8 = 0.875.', '141 cm is 7 cm above the mean: z is 7 divided by 8, which is 0.875.'],
+		[at(eleven, 7), '151 cm is 7 cm above the mean: z = 7 / 12 ≈ 0.58.', '151 cm is 7 cm above the mean: z is 7 divided by 12, about 0.58.'],
+		[at(eleven, -7), '137 cm is 7 cm below the mean: z = −7 / 12 ≈ −0.58.', '137 cm is 7 cm below the mean: z is minus 7 divided by 12, about minus 0.58.'],
+		[standard, 'On the standard normal the value is its own z-score: z = 0.75.', 'On the standard normal the value is its own z-score: z is 0.75.'],
+		[at(standard, -25), 'On the standard normal the value is its own z-score: z = −1.25.', 'On the standard normal the value is its own z-score: z is minus 1.25.'],
+	];
+	for (const [state, visible, spoken] of VALUE_LINES) assert.deepEqual(pair(zSay.valueLine(state)), [visible, spoken]);
+
+	const shaded = (state) => step(state, { type: 'shade', on: true });
+	assert.equal(zSay.shareLine(nine), null, 'no share while Shade is off');
+	const SHARE_LINES = [
+		[nine, 'If heights in this group follow a normal curve, about 77.3% are below 140 cm: Φ(0.75) ≈ 0.7734.', 'If heights in this group follow a normal curve, about 77.3% are below 140 cm: Phi of 0.75 is about 0.7734.'],
+		[eleven, 'If heights in this group follow a normal curve, about 69.1% are below 150 cm: Φ(0.5) ≈ 0.6915.', 'If heights in this group follow a normal curve, about 69.1% are below 150 cm: Phi of 0.5 is about 0.6915.'],
+		[at(nine, 0), 'If heights in this group follow a normal curve, exactly 50% are below 134 cm: Φ(0) = 0.5.', 'If heights in this group follow a normal curve, exactly 50% are below 134 cm: Phi of 0 is 0.5.'],
+		[at(eleven, 0), 'If heights in this group follow a normal curve, exactly 50% are below 144 cm: Φ(0) = 0.5.', 'If heights in this group follow a normal curve, exactly 50% are below 144 cm: Phi of 0 is 0.5.'],
+		[at(eleven, 7), 'If heights in this group follow a normal curve, about 72.0% are below 151 cm: Φ(7/12) ≈ 0.7202.', 'If heights in this group follow a normal curve, about 72.0% are below 151 cm: Phi of 7 over 12 is about 0.7202.'],
+		[at(eleven, -7), 'If heights in this group follow a normal curve, about 28.0% are below 137 cm: Φ(−7/12) ≈ 0.2798.', 'If heights in this group follow a normal curve, about 28.0% are below 137 cm: Phi of minus 7 over 12 is about 0.2798.'],
+		[at(nine, -24), 'If heights in this group follow a normal curve, about 0.1% are below 110 cm: Φ(−3) ≈ 0.0013.', 'If heights in this group follow a normal curve, about 0.1% are below 110 cm: Phi of minus 3 is about 0.0013.'],
+		[at(nine, 24), 'If heights in this group follow a normal curve, about 99.9% are below 158 cm: Φ(3) ≈ 0.9987.', 'If heights in this group follow a normal curve, about 99.9% are below 158 cm: Phi of 3 is about 0.9987.'],
+		[standard, 'About 77.3% of a standard normal is below 0.75: Φ(0.75) ≈ 0.7734.', 'About 77.3% of a standard normal is below 0.75: Phi of 0.75 is about 0.7734.'],
+		[at(standard, 0), 'Exactly 50% of a standard normal is below 0: Φ(0) = 0.5.', 'Exactly 50% of a standard normal is below 0: Phi of 0 is 0.5.'],
+		[at(standard, -25), 'About 10.6% of a standard normal is below −1.25: Φ(−1.25) ≈ 0.1056.', 'About 10.6% of a standard normal is below minus 1.25: Phi of minus 1.25 is about 0.1056.'],
+	];
+	for (const [state, visible, spoken] of SHARE_LINES) assert.deepEqual(pair(zSay.shareLine(shaded(state))), [visible, spoken]);
+
+	// Question, Check and the verdicts.
+	const { question } = zSetups.Z_SETUPS[SETUP];
+	assert.equal(question.legend, 'Who is taller for their age: the 140 cm nine-year-old or the 150 cm eleven-year-old?');
+	assert.deepEqual(question.options, [
+		{ value: 'first', label: 'The nine-year-old' },
+		{ value: 'second', label: 'The eleven-year-old' },
+		{ value: 'same', label: 'Both the same' },
+	]);
+	assert.equal(zSay.checkRefusal(start), 'Pick who is taller for their age first.');
+	assert.equal(zSay.checkRefusal(guessed), null);
+	assert.equal(zSay.verdictLine(guessed), null);
+	const NUMBERS = 'z = 6 / 8 = 0.75 for the nine-year-old and only z = 6 / 12 = 0.5 for the eleven-year-old. The nine-year-old is taller for their age.';
+	const NUMBERS_SPOKEN = 'z is 0.75 for the nine-year-old, 6 divided by 8, and only 0.5 for the eleven-year-old, 6 divided by 12. The nine-year-old is taller for their age.';
+	const VERDICTS = {
+		first: "Yes. Both stand 6 cm above their class's mean, but the nine-year-olds are less spread out:",
+		second: "Not quite. The eleven-year-old is taller in centimeters, but both stand 6 cm above their class's mean:",
+		same: "Not quite. Both stand 6 cm above their class's mean, but the eleven-year-olds are more spread out:",
+	};
+	for (const [guess, lead] of Object.entries(VERDICTS)) {
+		assert.deepEqual(pair(zSay.verdictLine(checkedOn(guess))), [`${lead} ${NUMBERS}`, `${lead} ${NUMBERS_SPOKEN}`], guess);
+		// The verdict names the comparison, so it stays the same on every preset and value after Check.
+		assert.deepEqual(zSay.verdictLine(at(step(checkedOn(guess), { type: 'preset', id: 'standard-075' }), 3)), zSay.verdictLine(checkedOn(guess)));
+	}
+
+	// Controls.
+	assert.equal(zSay.BOARD_LABEL, "A normal curve over a ruler in the group's units. Say who is taller for their age and press Check to add a z-score ruler under it. Move the value with the slider below or by dragging the ochre point.");
+	assert.deepEqual(zSay.CONTROL_LABELS, { presets: 'Presets', presetsCaption: 'Preset', sliderMeasured: 'Height', sliderStandard: 'Value z', check: 'Check', showAnswer: 'Show the answer', shade: 'Shade the share below' });
+	const nineP = Z_PRESETS['nine-140'];
+	const standardP = Z_PRESETS['standard-075'];
+	assert.deepEqual([zSay.sliderLabel(nineP), zSay.sliderFormat(nineP, 140), zSay.sliderDescribe(nineP, 140)], ['Height', '140 cm', 'height 140 cm']);
+	assert.deepEqual([zSay.sliderLabel(standardP), zSay.sliderFormat(standardP, 0.5), zSay.sliderDescribe(standardP, 0.5)], ['Value z', '0.5', 'z 0.5']);
+	assert.deepEqual([zSay.sliderFormat(standardP, -1.25), zSay.sliderDescribe(standardP, -1.25)], ['−1.25', 'z minus 1.25']);
+	assert.equal(zSay.sliderFormat(standardP, 0.7500000001), '0.75');
+	assert.equal(zSay.chalkNote(nine), null);
+	assert.deepEqual(zSay.chalkNote(standard), { long: 'same shape, new ruler', short: 'same shape, new ruler' });
+
+	// The table, every cell.
+	const tableOf = (state) => Object.fromEntries(zSay.tableRows(state));
+	assert.equal(zSay.tableCaption(nine), 'The height on the board, step by step');
+	assert.equal(zSay.tableCaption(standard), 'The value on the board, step by step');
+	assert.deepEqual(zSay.tableRows(start), [
+		['Mean μ', '134 cm'],
+		['Standard deviation σ', '8 cm'],
+		['Height x', '140 cm'],
+		['Distance from the mean, x − μ', '6 cm'],
+	]);
+	assert.deepEqual(tableOf(shaded(nine)), {
+		'Mean μ': '134 cm',
+		'Standard deviation σ': '8 cm',
+		'Height x': '140 cm',
+		'Distance from the mean, x − μ': '6 cm',
+		'z-score, (x − μ) / σ': '6 / 8 = 0.75',
+		'Share below, Φ(z)': '≈ 0.7734, about 77.3%',
+	});
+	assert.deepEqual(tableOf(shaded(at(nine, -12))), {
+		'Mean μ': '134 cm',
+		'Standard deviation σ': '8 cm',
+		'Height x': '122 cm',
+		'Distance from the mean, x − μ': '−12 cm',
+		'z-score, (x − μ) / σ': '−12 / 8 = −1.5',
+		'Share below, Φ(z)': '≈ 0.0668, about 6.7%',
+	});
+	assert.deepEqual(tableOf(shaded(at(nine, 0))), {
+		'Mean μ': '134 cm',
+		'Standard deviation σ': '8 cm',
+		'Height x': '134 cm',
+		'Distance from the mean, x − μ': '0 cm',
+		'z-score, (x − μ) / σ': '0 / 8 = 0',
+		'Share below, Φ(z)': '= 0.5, exactly 50%',
+	});
+	assert.deepEqual(tableOf(shaded(standard)), {
+		'Mean μ': '0',
+		'Standard deviation σ': '1',
+		'Value x': '0.75',
+		'Distance from the mean, x − μ': '0.75',
+		'z-score, (x − μ) / σ': '0.75 / 1 = 0.75',
+		'Share below, Φ(z)': '≈ 0.7734, about 77.3%',
+	});
+	assert.equal(tableOf(shaded(at(eleven, 7)))['z-score, (x − μ) / σ'], '7 / 12 ≈ 0.58');
+	assert.equal(tableOf(shaded(at(eleven, 7)))['Share below, Φ(z)'], '≈ 0.7202, about 72.0%');
+	assert.equal(tableOf(nine)['Share below, Φ(z)'], 'Turn on Shade the share below.');
+
+	// Announcements.
+	const says = (state, action) => zSay.announcementFor(state, step(state, action), action);
+	assert.equal(says(nine, { type: 'preset', id: 'eleven-150' }), 'Eleven-year-olds: mean 144 cm, standard deviation 12 cm. 150 cm is 6 cm above the mean: z is 6 divided by 12, which is 0.5.');
+	assert.equal(
+		says(shaded(nine), { type: 'preset', id: 'standard-075' }),
+		'Standard normal: mean 0, standard deviation 1. On the standard normal the value is its own z-score: z is 0.75. About 77.3% of a standard normal is below 0.75: Phi of 0.75 is about 0.7734.',
+	);
+	assert.equal(says(nine, { type: 'preset', id: 'nine-140' }), 'Already showing Nine-year-old, 140 cm.');
+	assert.equal(says(eleven, { type: 'preset', id: 'eleven-150' }), 'Already showing Eleven-year-old, 150 cm.');
+	assert.equal(says(standard, { type: 'preset', id: 'standard-075' }), 'Already showing Standard normal, z = 0.75.');
+	assert.equal(says(start, { type: 'value', index: 7 }), '141 cm is 7 cm above the mean.');
+	assert.equal(says(shaded(nine), { type: 'value', index: 0 }), '134 cm is the mean: z is 0. If heights in this group follow a normal curve, exactly 50% are below 134 cm: Phi of 0 is 0.5.');
+	assert.equal(says(nine, { type: 'shade', on: true }), 'If heights in this group follow a normal curve, about 77.3% are below 140 cm: Phi of 0.75 is about 0.7734.');
+	assert.equal(says(shaded(nine), { type: 'shade', on: false }), 'Shading off.');
+	assert.equal(says(start, { type: 'guess', guess: 'first' }), null, 'the radio speaks for itself');
+	assert.equal(says(start, { type: 'check' }), 'Pick who is taller for their age first.');
+	assert.equal(says(guessed, { type: 'check' }), null, 'the verdict takes focus and is read there, not twice');
+	assert.equal(says(start, { type: 'table', open: true }), 'Table shown under the switch. It lists the mean, the standard deviation, the height and its distance from the mean.');
+	assert.equal(says(nine, { type: 'table', open: true }), 'Table shown under the switch. It lists the mean, the standard deviation, the height, its distance from the mean, its z-score and the share below.');
+	assert.equal(says(standard, { type: 'table', open: true }), 'Table shown under the switch. It lists the mean, the standard deviation, the value, its distance from the mean, its z-score and the share below.');
+	assert.equal(says(standard, { type: 'table', open: false }), 'Table hidden.');
+	assert.equal(says(shaded(standard), { type: 'reset' }), 'Back to the start. Nine-year-olds: mean 134 cm, standard deviation 8 cm. 140 cm is 6 cm above the mean.');
+
+	// Commit before reveal: every pre-Check state (49 values × 4 guesses × table open or not) and every surface it
+	// shows or speaks holds no z, no share and no other group. The board label promises a ruler without giving one.
+	const FORBIDDEN = ['z =', 'z is', 'Φ', 'Phi', '%', '0.75', '0.5', 'Eleven-year-olds', 'standard normal'];
+	let preCommitStates = 0;
+	for (let index = -24; index <= 24; index += 1) {
+		for (const guess of [null, 'first', 'second', 'same']) {
+			for (const tableOpen of [true, false]) {
+				const state = { ...at(start, index), guess, tableOpen };
+				preCommitStates += 1;
+				assert.equal(zState.revealed(state), false);
+				assert.deepEqual(zState.allowedPresets(state), ['nine-140']);
+				const surfaces = [
+					...zSay.readoutLines(state).flatMap(pair),
+					zSay.checkRefusal(state) ?? '',
+					zSay.tableFoldBody(state),
+					zSay.tableCaption(state),
+					...zSay.tableRows(state).flat(),
+					zSay.sliderFormat(Z_PRESETS['nine-140'], 134 + index),
+					zSay.sliderDescribe(Z_PRESETS['nine-140'], 134 + index),
+					question.legend,
+					...question.options.map((option) => option.label),
+				];
+				const actions = [
+					{ type: 'value', index: index === 24 ? 23 : index + 1 },
+					{ type: 'guess', guess: 'same' },
+					{ type: 'table', open: !tableOpen },
+					{ type: 'table', open: tableOpen },
+					{ type: 'reset' },
+					...(guess === null ? [{ type: 'check' }] : []),
+				];
+				for (const action of actions) surfaces.push(zSay.announcementFor(state, step(state, action), action) ?? '');
+				assert.equal(zSay.verdictLine(state), null);
+				assert.equal(zSay.shareLine(state), null);
+				assert.equal(zSay.chalkNote(state), null);
+				for (const text of surfaces) {
+					for (const word of FORBIDDEN) assert.ok(!text.toLowerCase().includes(word.toLowerCase()), `before Check at index ${index}: "${text}" says "${word}"`);
+				}
+				for (const id of ['eleven-150', 'standard-075']) assert.throws(() => step(state, { type: 'preset', id }), /isn't offered yet/);
+			}
+		}
+	}
+	assert.equal(preCommitStates, 49 * 4 * 2);
+
+	// Every reachable state: no ASCII hyphen before a digit, and every readout and verdict ends with a period.
+	for (const guess of ['first', 'second', 'same']) {
+		for (const presetId of ['nine-140', 'eleven-150', 'standard-075']) {
+			const onPreset = step(checkedOn(guess), { type: 'preset', id: presetId });
+			const limit = zModel.maxIndex(Z_PRESETS[presetId]);
+			for (let index = -limit; index <= limit; index += 1) {
+				const state = shaded(at(onPreset, index));
+				const lines = [...zSay.readoutLines(state), zSay.verdictLine(state)];
+				assert.equal(lines.length, 4);
+				for (const text of [...lines.flatMap(pair), ...zSay.tableRows(state).flat(), zSay.sliderFormat(Z_PRESETS[presetId], toNumber(zModel.valueAt(Z_PRESETS[presetId], index)))]) {
+					assert.ok(!/-\d/.test(text), `"${text}" has an ASCII hyphen before a digit`);
+				}
+				for (const text of lines.flatMap(pair)) assert.ok(text.endsWith('.'), `"${text}" ends without a period`);
+			}
+		}
+	}
+
+	// The late slider commit goes through the shared guard: a preset pressed since the key press keeps it silent, and a
+	// fresh key press after the preset speaks again. ZBoard calls moved on a slider change, interrupt on every other action.
+	{
+		const guard = createSliderGuard();
+		guard.moved('value');
+		assert.equal(guard.take('value', true), true, 'commit with no preset since: announces');
+		guard.moved('value');
+		guard.interrupt();
+		assert.equal(guard.take('value', true), false, 'preset pressed between key press and commit: silent');
+		guard.moved('value');
+		guard.interrupt();
+		guard.moved('value');
+		assert.equal(guard.take('value', true), true, 'preset, then a new key press, then commit: announces');
+	}
+}
+
 console.log('Board check passed.');
