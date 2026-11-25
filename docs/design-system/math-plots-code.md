@@ -76,7 +76,7 @@ Mafs 0.21's `vec.lerp` (and `vec.midpoint`) return `[NaN, NaN]` when both points
 - Drags start only on a handle's hitbox (Mafs draws it at a fixed 30px radius). The board sets `touch-action: pan-y` on the plot so touch scrolling still works on empty space; handles keep Mafs' own `touch-action: none`, so touching a handle drags it.
 - Every handle has a keyboard path. Either the tray has a slider for it (with `aria-valuetext` in words) and the handle is hidden from the tab order, or the board passes `handleLabels` so the handle itself is focusable, named and moved with the arrow keys (used by `LinearRegression`, which has nine points).
 - A live region announces the new values when a drag, an arrow-key move or a slider change ends, never on every frame.
-- Handwritten notes (`ChalkNote`) sit at the board's top-left and switch to their `short` text when the board is under 560px wide.
+- Handwritten notes (`ChalkNote`) sit at the board's top-left (beside the grid, in normal flow, on an HTML board) and switch to their `short` text when the board is under 560px wide.
 
 ### Vectors (VectorBoard2D)
 
