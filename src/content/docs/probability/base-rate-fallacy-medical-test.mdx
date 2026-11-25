@@ -73,13 +73,15 @@ A classifier that flags rare events, such as fraud, a rare disease on a scan or 
 
 A screening test catches 95 in 100 people who have a condition and correctly clears 90 in 100 who don't. 2 in 100 people screened have it. You test positive. Write down your estimate of the chance that you have it, to the nearest 10%.
 
-On the board, A is "has the condition" and B is "tests positive". The A column's width is P(A). Inside it, the highlighted block B and A is the true positives; under not A, the shaded strip B and not A is the false positives. P(A | B) is the highlighted block's share of both. Press Medical test, click or tab to the P(A) slider and press the right arrow once (0.01 to 0.02), then press it five times on P(B | A) (0.90 to 0.95). Leave P(B | not A) at 0.10. The note under the buttons describes the preset, not your settings. Your goal: read P(A | B), then raise P(A) one step at a time until it passes 0.500.
+A second, optional guess: how common would the condition have to be for a positive to be an even chance?
+
+On the board, A is "has the condition" and B is "tests positive". The A column's width is P(A). Inside it, the highlighted block B and A is the true positives; under not A, the shaded strip B and not A is the false positives. P(A | B) is the highlighted block's share of both. Press Medical test, click or tab to the P(A) slider and press the right arrow once (0.01 to 0.02), then press it five times on P(B | A) (0.90 to 0.95). Leave P(B | not A) at 0.10. The note under the buttons describes the preset, not your settings. Your goal: read P(A | B), then check your second guess: raise P(A) one step at a time until it passes 0.500.
 
 <div class="not-content">
   <BayesTheorem client:visible />
 </div>
 
-About 16%, which rounds to 20%: far below the 95% the test's accuracy suggests. The readout says "P(A | B) = 0.162   P(B) = 0.117"; P(B) is the share who test positive, 117 in 1,000. Raising P(A), the readout reaches 0.484 at 0.09 and 0.514 at 0.10, so the even-chance point lies between them. Now set P(A) to 0.30, as in a clinic for people with symptoms: "P(A | B) = 0.803   P(B) = 0.355". The test never changed; only who was tested did.
+About 16%, which rounds to 20%: far below the 95% the test's accuracy suggests. The readout says "P(A | B) = 0.162   P(B) = 0.117"; P(B) is the share who test positive, 117 in 1,000. Raising P(A), the readout reaches 0.484 at 0.09 and 0.514 at 0.10, so the even-chance point, your second guess, lies between them: exactly 2/21 ≈ 0.095, as [how common the condition has to be](#how-common-does-the-condition-have-to-be) shows. Now set P(A) to 0.30, as in a clinic for people with symptoms: "P(A | B) = 0.803   P(B) = 0.355". The test never changed; only who was tested did.
 
 ## Count four groups, then read one column
 
@@ -112,7 +114,7 @@ A test's accuracy is the share of everyone it gets right: 19 + 882 = 901 of 1,00
 
 ### How common does the condition have to be?
 
-A positive is an even chance when the true positives equal the false positives: sens × P(D) = (1 − spec) × (1 − P(D)). Multiply out the right side and move every P(D) term to the left: P(D) × (sens + 1 − spec) = 1 − spec. So P(D) = (1 − spec) / (sens + 1 − spec). For the screening test that is 0.10 / (0.95 + 0.10) = 0.10 / 1.05 = 2/21 ≈ 0.095, which matches the board's crossing between 0.09 and 0.10. Count 2,100 people to check: 200 have it, and 190 of them test positive; 1,900 don't, and 190 of them test positive too.
+A positive is an even chance when the true positives equal the false positives: sens × P(D) = (1 − spec) × (1 − P(D)). Multiply out the right side and move every P(D) term to the left: P(D) × (sens + 1 − spec) = 1 − spec. So P(D) = (1 − spec) / (sens + 1 − spec). For the screening test that is 0.10 / (0.95 + 0.10) = 0.10 / 1.05 = 2/21 ≈ 0.095. Count 2,100 people to check: 200 have it, and 190 of them test positive; 1,900 don't, and 190 of them test positive too.
 
 <GoDeeper label="the same answer with odds" id="odds-shortcut">
 
