@@ -13,6 +13,7 @@ import { addFractions, compareFractions, formatFraction, fraction, squareRoot, t
 import { capitalize, equalsDecimal, joinWords, plural } from '../boardText.ts';
 import type { OutcomeId } from '../eventSpace/model.ts';
 import { CHECKS_BEFORE_ANSWER } from '../guided/guided.ts';
+import { tableFoldAnnouncement } from '../guided/tableFold.ts';
 import { formatNumber } from '../plotColors.ts';
 import { classifyGuess, mean, standardDeviation, torqueSign, variance, type Bar, type Distribution } from './model.ts';
 import { ALL_ZERO, presetValues, type Setup } from './setups.ts';
@@ -355,6 +356,13 @@ export function tableRows(state: DistributionState): { value: string; members: s
 	}));
 }
 
+/** The body said after "Table shown under the switch.": how many bars the table lists, and what each row holds. */
+export function tableFoldSentence(state: DistributionState): string {
+	const bars = distributionNow(state).bars.length;
+	const members = `${setupOf(state).wording.outcomeWord}s`;
+	return `It lists ${plural(bars, 'bar', 'bars')}, ${bars === 1 ? '' : 'each '}with its ${members} and its chance.`;
+}
+
 export function tableHeaders(setup: Setup): { caption: string; value: string; members: string; probability: string } {
 	return { caption: 'The bars as a table.', value: 'Value', members: `${capitalize(setup.wording.outcomeWord)}s`, probability: 'P(X = x)' };
 }
@@ -672,6 +680,8 @@ export function announcementFor(state: DistributionState, action: Action): strin
 			return balanceLine(state) ?? '';
 		case 'spread':
 			return action.on ? spreadLines(state).join(' ') : 'Spread hidden.';
+		case 'table':
+			return tableFoldAnnouncement(action.open, tableFoldSentence(state));
 		case 'reset':
 			return 'Board reset.';
 	}

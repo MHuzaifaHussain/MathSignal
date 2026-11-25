@@ -60,7 +60,8 @@ interface BarChartProps {
 
 /**
  * The chart: stacked outcome tiles on a plank, the axis, and on later setups the ochre pencil, the pink μ and the
- * blue σ. It is aria-hidden; the readout sentences and DistributionTable are its accessible equivalent.
+ * blue σ. It is aria-hidden; its equivalent is the readouts, plus the tables behind Table view (the readouts already
+ * give every bar's members and chance).
  */
 export default function BarChart({ setup, state, linkedId, onPencilMove, onPencilCommit }: BarChartProps) {
   const [lowest, highest] = setup.range;

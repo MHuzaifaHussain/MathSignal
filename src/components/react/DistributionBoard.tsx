@@ -24,6 +24,7 @@ import {
   spreadLines,
   statusLine,
   symbolLines,
+  tableRows,
 } from "./distributionBoard/describe.ts";
 import { getSetup, type SetupId } from "./distributionBoard/setups.ts";
 import { initialState, isCovered, parkedPencil, reducer, stageAllowed, type Action, type Stage } from "./distributionBoard/state.ts";
@@ -31,6 +32,7 @@ import CheckButtons from "./guided/CheckButtons.tsx";
 import PresetButtons from "./guided/PresetButtons.tsx";
 import { RefusalNote, refusedBy } from "./guided/refusal.tsx";
 import StageChoice from "./guided/StageChoice.tsx";
+import TableFold from "./guided/TableFold.tsx";
 import useAnnouncer from "./guided/useAnnouncer.ts";
 
 const STAGE_OPTIONS: readonly { value: Stage; label: string }[] = (["pictures", "numbers", "symbols"] as const).map((value) => ({ value, label: STAGE_LABELS[value] }));
@@ -176,6 +178,12 @@ export default function DistributionBoard({ setup: setupId }: DistributionBoardP
           onPick={(name) => send({ type: "preset", name })}
         />
       )}
+      {/* No table while the chart is covered, so no switch either: it arrives with the chart when Check reveals it. */}
+      {tableRows(state).length > 0 && (
+        <TableFold open={state.tableOpen} onToggle={(open) => send({ type: "table", open })}>
+          <DistributionTable state={state} />
+        </TableFold>
+      )}
     </>
   );
 
@@ -225,7 +233,6 @@ export default function DistributionBoard({ setup: setupId }: DistributionBoardP
             ))}
           </div>
         )}
-        <DistributionTable state={state} />
         {verdict && (
           <p ref={feedbackRef} className="ms-dist-feedback" tabIndex={-1}>
             {verdict}

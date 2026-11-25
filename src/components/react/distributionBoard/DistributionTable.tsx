@@ -6,8 +6,8 @@ interface DistributionTableProps {
 }
 
 /**
- * The chart as a native table (Value | Faces | P(X = x)): its accessible and printed equivalent. It renders
- * nothing while the chart is covered, because tableRows is empty then.
+ * The chart as a native table (Value | Faces | P(X = x)), inside the board's TableFold, which always prints it. It
+ * renders nothing while the chart is covered, because tableRows is empty then.
  */
 export default function DistributionTable({ state }: DistributionTableProps) {
   const rows = tableRows(state);

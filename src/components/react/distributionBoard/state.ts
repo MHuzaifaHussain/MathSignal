@@ -41,6 +41,8 @@ export interface DistributionState {
 	/** The previous preset's σ, drawn dashed so the reader can compare. */
 	ghost: { sigma: number; preset: string } | null;
 	refusal: Refusal | null;
+	/** "Table view": the bars table open under the switch. Off at the start and after Reset (decision 0017). */
+	tableOpen: boolean;
 }
 
 export type Action =
@@ -53,6 +55,7 @@ export type Action =
 	| { type: 'pencil'; k: number }
 	| { type: 'balance' }
 	| { type: 'spread'; on: boolean }
+	| { type: 'table'; open: boolean }
 	| { type: 'reset' };
 
 /** Where the parked pencil sits, under no bar: half a step left of 0. Its k is −W/2. */
@@ -93,6 +96,7 @@ export function initialState(setupId: SetupId): DistributionState {
 		activePreset: openingPreset(setup),
 		ghost: null,
 		refusal: null,
+		tableOpen: false,
 	};
 }
 
@@ -218,6 +222,9 @@ export function reducer(state: DistributionState, action: Action): DistributionS
 			if (setup.kind !== 'spread') return state;
 			return action.on ? { ...state, spreadShown: true, refusal: null } : { ...state, spreadShown: false, ghost: null, refusal: null };
 		}
+		case 'table':
+			// A covered board renders no table and so no switch; it never holds the switch on.
+			return isCovered(state) ? state : { ...state, tableOpen: action.open };
 		case 'reset':
 			return initialState(state.setupId);
 	}

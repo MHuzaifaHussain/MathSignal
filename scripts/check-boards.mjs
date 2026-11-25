@@ -1747,7 +1747,7 @@ const assertTableFoldSays = (where, announce) => {
 	assert.ok(printRule > screenRule, 'a later @media print block shows .ms-board-table-fold.is-folded, so print wins');
 	// Every component a board wraps in <TableFold>, as a path under src/components/react/. A file joins in the commit
 	// that wraps it, and must stay read-only: folding a control would hide a keyboard path.
-	const TABLE_FOLD_CHILDREN = ['bayesTheorem/CountTable.tsx', 'descriptiveStats/StatsTables.tsx'];
+	const TABLE_FOLD_CHILDREN = ['bayesTheorem/CountTable.tsx', 'descriptiveStats/StatsTables.tsx', 'distributionBoard/DistributionTable.tsx'];
 	const CONTROL_TOKENS = ['<button', '<input', '<select', '<textarea', 'tabIndex', 'onFocus', 'onKeyDown', 'onClick'];
 	const wrapped = new Set();
 	for (const file of filesUnder('src/components/react').filter((name) => name.endsWith('.tsx'))) {
@@ -1769,6 +1769,76 @@ const assertTableFoldSays = (where, announce) => {
 	}
 	// The shared piece is the only place the switch's name is written.
 	assert.ok(readFileSync('src/components/react/guided/TableFold.tsx', 'utf8').includes('{TABLE_FOLD_LABEL}'));
+}
+
+// ---- DistributionBoard: Table view (decision 0017) ----
+// The switch arrives with the chart: no table and no switch while a goal setup is covered, and a covered board never
+// holds the switch on. Reset closes it; every other control leaves it alone.
+{
+	const DIST_SETUP_IDS = ['candy-build', 'coins-heads', 'candy-balance', 'candy-spread'];
+	for (const id of DIST_SETUP_IDS) assert.equal(distSetups.getSetup(id).id, id);
+	const revealed = (id) => distRun(id, { type: 'check' }, { type: 'check' }, { type: 'show-answer' });
+	for (const id of ['candy-build', 'coins-heads']) {
+		const covered = dist.initialState(id);
+		assert.ok(dist.isCovered(covered), id);
+		assert.deepEqual(distSay.tableRows(covered), [], `${id}: no table, so no fold, while covered`);
+		assert.equal(dist.reducer(covered, { type: 'table', open: true }), covered, `${id}: the switch is ignored while covered`);
+		assert.ok(distSay.tableRows(revealed(id)).length > 0, `${id}: the fold comes with the chart after Check`);
+	}
+	for (const id of DIST_SETUP_IDS) {
+		const start = dist.isCovered(dist.initialState(id)) ? revealed(id) : dist.initialState(id);
+		assert.equal(dist.initialState(id).tableOpen, false, id);
+		const opened = dist.reducer(start, { type: 'table', open: true });
+		assert.equal(opened.tableOpen, true, id);
+		assert.equal(dist.reducer(opened, { type: 'table', open: false }).tableOpen, false, id);
+		assert.equal(dist.reducer(opened, { type: 'reset' }).tableOpen, false, id);
+		const keepers = [
+			...distSetups.getSetup(id).presets.map((name) => ({ type: 'preset', name })),
+			...['pictures', 'numbers', 'symbols'].map((stage) => ({ type: 'stage', stage })),
+			{ type: 'check' }, { type: 'check-goal' }, { type: 'balance' }, { type: 'spread', on: true },
+		];
+		for (const action of keepers) assert.equal(dist.reducer(opened, action).tableOpen, true, `${id}: ${action.type} closed the table`);
+	}
+	// The bodies, word for word: "each" only in the plural.
+	const body = (state) => distSay.tableFoldSentence(state);
+	assert.equal(body(revealed('candy-build')), 'It lists 3 bars, each with its faces and its chance.');
+	assert.equal(body(dist.reducer(revealed('candy-build'), { type: 'preset', name: 'All zero' })), 'It lists 1 bar, with its faces and its chance.');
+	assert.equal(body(revealed('coins-heads')), 'It lists 3 bars, each with its outcomes and its chance.');
+	assert.equal(body(dist.initialState('candy-balance')), 'It lists 6 bars, each with its faces and its chance.');
+	assert.equal(body(distRun('candy-balance', { type: 'preset', name: 'One big prize' })), 'It lists 2 bars, each with its faces and its chance.');
+	assert.equal(body(distRun('candy-balance', { type: 'preset', name: 'All win 1' })), 'It lists 1 bar, with its faces and its chance.');
+	assert.equal(body(dist.initialState('candy-spread')), 'It lists 3 bars, each with its faces and its chance.');
+	assert.equal(body(distRun('candy-spread', { type: 'preset', name: 'Steady' })), 'It lists 1 bar, with its faces and its chance.');
+	assert.equal(
+		distSay.announcementFor(dist.reducer(revealed('candy-build'), { type: 'table', open: true }), { type: 'table', open: true }),
+		'Table shown under the switch. It lists 3 bars, each with its faces and its chance.',
+	);
+	assert.equal(distSay.announcementFor(revealed('candy-build'), { type: 'table', open: false }), 'Table hidden.');
+	// No reachable state throws from the switch. Covered states are skipped because the reducer ignores the switch there
+	// (asserted above), and the skip is counted so it can't swallow every state.
+	let skipped = 0;
+	let said = 0;
+	for (const id of DIST_SETUP_IDS) {
+		const setup = distSetups.getSetup(id);
+		const bases = [dist.initialState(id), revealed(id), distRun(id, { type: 'check' })];
+		const reached = bases.flatMap((base) => [
+			base,
+			...setup.presets.map((name) => dist.reducer(base, { type: 'preset', name })),
+			...['pictures', 'numbers', 'symbols'].map((stage) => dist.reducer(base, { type: 'stage', stage })),
+			dist.reducer(dist.reducer(base, { type: 'pencil', k: 1 }), { type: 'balance' }),
+			dist.reducer(base, { type: 'spread', on: true }),
+		]);
+		for (const state of reached) {
+			if (dist.isCovered(state)) {
+				assert.equal(dist.reducer(state, { type: 'table', open: true }), state);
+				skipped += 1;
+				continue;
+			}
+			assertTableFoldSays(`DistributionBoard ${id}`, (open) => distSay.announcementFor(state, { type: 'table', open }));
+			said += 1;
+		}
+	}
+	assert.ok(skipped > 0 && said > skipped, `swept ${said} states, skipped ${skipped} covered ones`);
 }
 
 // ---- DescriptiveStats model and datasets (decision 0015) ----
