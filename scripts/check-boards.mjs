@@ -1747,7 +1747,7 @@ const assertTableFoldSays = (where, announce) => {
 	assert.ok(printRule > screenRule, 'a later @media print block shows .ms-board-table-fold.is-folded, so print wins');
 	// Every component a board wraps in <TableFold>, as a path under src/components/react/. A file joins in the commit
 	// that wraps it, and must stay read-only: folding a control would hide a keyboard path.
-	const TABLE_FOLD_CHILDREN = ['bayesTheorem/CountTable.tsx', 'descriptiveStats/StatsTables.tsx', 'distributionBoard/DistributionTable.tsx'];
+	const TABLE_FOLD_CHILDREN = ['bayesTheorem/CountTable.tsx', 'descriptiveStats/StatsTables.tsx', 'distributionBoard/DistributionTable.tsx', 'vectorBoard/CoordinateTable.tsx'];
 	const CONTROL_TOKENS = ['<button', '<input', '<select', '<textarea', 'tabIndex', 'onFocus', 'onKeyDown', 'onClick'];
 	const wrapped = new Set();
 	for (const file of filesUnder('src/components/react').filter((name) => name.endsWith('.tsx'))) {
@@ -2785,7 +2785,6 @@ const assertTableFoldSays = (where, announce) => {
 		...vd.readoutLines(state),
 		vd.feedbackLine(state) ?? '',
 		...vd.tableRows(state).flatMap((row) => [row.name, row.x, row.y, row.length, row.spoken]),
-		...vd.lengthLines(state),
 		...vd.handlesFor(state).map((handle) => handle.label),
 		...vd.planeLabels(state).map((label) => label.text),
 		...vd.refusalNotes(state).map((note) => note.text),
@@ -2800,7 +2799,6 @@ const assertTableFoldSays = (where, announce) => {
 		vd.statusLine(state),
 		...vd.readoutLines(state),
 		...vd.tableRows(state).filter((row) => row.id !== 'guess').flatMap((row) => [row.name, row.x, row.y, row.length, row.spoken]),
-		...vd.lengthLines(state),
 		...vd.handlesFor(state).map((handle) => handle.label),
 		...vd.planeLabels(state).filter((label) => label.id !== 'guess').map((label) => label.text),
 		...vd.refusalNotes(state).map((note) => note.text),
@@ -2930,10 +2928,10 @@ const assertTableFoldSays = (where, announce) => {
 		vd.statusLine(tripsOpen),
 		'Trip a: 3 steps east, 2 steps north. Trip b: 1 step east, 3 steps north. Where do you end up? Move the ochre ring there, then press Check.',
 	);
-	assert.deepEqual(vd.handlesFor(tripsOpen).map((handle) => [handle.id, handle.label]), [['guess', 'Your guess for where the two trips end. Its position is in the table below']]);
+	assert.deepEqual(vd.handlesFor(tripsOpen).map((handle) => [handle.id, handle.label]), [['guess', 'Your guess for where the two trips end. It also moves with the buttons under the plane']]);
 	assert.equal(vd.ochreElement(tripsOpen), 'guess');
 	assert.deepEqual(vd.presetsFor(tripsOpen), []);
-	assert.equal(vd.boardLabel(tripsOpen), 'Two trips on a grid. Move the ochre ring to where they end, then press Check; or use the steppers in the table.');
+	assert.equal(vd.boardLabel(tripsOpen), 'Two trips on a grid. Move the ochre ring to where they end, then press Check; or use the step buttons under the plane.');
 	// a and b are the question: their steppers are refused, and presses say why.
 	assert.equal(vst.stepRefusal(tripsOpen, 'a', 'x', 1)?.kind, 'locked');
 	const lockedPress = vst.reducer(tripsOpen, step('a', 'x', 1));
@@ -2997,8 +2995,8 @@ const assertTableFoldSays = (where, announce) => {
 	const tripsDone = checkTrip([4, 5]);
 	assert.equal(vd.ochreElement(tripsDone), 'sum');
 	assert.deepEqual(vd.handlesFor(tripsDone).map((handle) => [handle.id, handle.label, handle.point]), [
-		['a', 'Tip of trip a. Its position is in the table below', [3, 2]],
-		['sum', 'End of trip b, where both trips end. Its position is in the table below', [4, 5]],
+		['a', 'Tip of trip a. It also moves with the buttons under the plane', [3, 2]],
+		['sum', 'End of trip b, where both trips end. It also moves with the buttons under the plane', [4, 5]],
 	]);
 	assert.deepEqual(vd.readoutLines(tripsDone), [
 		'Trip a: 3 steps east, 2 steps north.',
@@ -3126,7 +3124,7 @@ const assertTableFoldSays = (where, announce) => {
 	const cartOpen = vst.initialState('cart-push');
 	assert.equal(vd.statusLine(cartOpen), 'Goal: keep your push at length 5, and tilt it so the cart gets only 3 of it. Then press Check.');
 	assert.deepEqual(vd.readoutLines(cartOpen), ['Your push: (5, 0), length 5.']);
-	assert.deepEqual(vd.handlesFor(cartOpen).map((handle) => handle.label), ['Tip of your push. Its position is in the table below']);
+	assert.deepEqual(vd.handlesFor(cartOpen).map((handle) => handle.label), ['Tip of your push. It also moves with the buttons under the plane']);
 	assert.equal(vd.ochreElement(cartOpen), null);
 	assert.ok(vd.planeLabels(cartOpen).some((label) => label.text === 'û, length 1'));
 	assert.ok(vd.planeLabels(cartOpen).some((label) => label.text === 'length 5'));
@@ -3214,7 +3212,7 @@ const assertTableFoldSays = (where, announce) => {
 	for (const sign of ['negative', 'zero', 'positive']) assert.ok(signCheck(sign).checked);
 	assert.equal(vst.reducer(signCheck('zero'), { type: 'sign', sign: 'negative' }).signGuess, 'zero');
 	const alignDone = signCheck('negative');
-	assert.deepEqual(vd.handlesFor(alignDone).map((handle) => handle.label), ['Tip of vector a. Its position is in the table below', 'Tip of vector b. Its position is in the table below']);
+	assert.deepEqual(vd.handlesFor(alignDone).map((handle) => handle.label), ['Tip of vector a. It also moves with the buttons under the plane', 'Tip of vector b. It also moves with the buttons under the plane']);
 	assert.equal(vd.ochreElement(alignDone), 'shadow');
 	assert.deepEqual(vd.readoutLines(alignDone), ['a · b = 4 × (−1) + 1 × 3 = −1.', 'Angle: about 94.4°.', 'Shadow of b along a: a · b ÷ ‖a‖ = −1 ÷ √17 ≈ −0.24.']);
 	assert.ok(vd.planeLabels(alignDone).some((label) => label.text === 'θ'));
@@ -3332,6 +3330,75 @@ const assertTableFoldSays = (where, announce) => {
 	assert.ok(lowTrip.at[1] < -5);
 	assert.ok(vm.fitLabel(lowTrip.at, lowTrip.away, lowTrip.text, 440).at[1] > -5);
 	assert.throws(() => vm.fitLabel([0, 0], null, 'a', 0), /wider than 0px/);
+
+	// ---- Table view and the step strip (decision 0017) ----
+	// The − / + buttons live in an always-visible strip; only the read-only coordinate table folds.
+	const revealVec = (id) => runVec(id, { type: 'sign', sign: 'negative' }, { type: 'check' }, { type: 'check' }, { type: 'show-answer' });
+	for (const id of Object.keys(vs.SETUPS)) {
+		const setup = vs.getSetup(id);
+		assert.equal(vst.initialState(id).tableOpen, false, id);
+		assert.equal(revealVec(id).checked, true, id);
+		const opened = runVec(id, { type: 'table', open: true });
+		assert.equal(opened.tableOpen, true, id);
+		assert.equal(vst.reducer(opened, { type: 'table', open: false }).tableOpen, false, id);
+		assert.equal(vst.reducer(opened, { type: 'reset' }).tableOpen, false, id);
+		const openedAfter = vst.reducer(revealVec(id), { type: 'table', open: true });
+		const keepers = [
+			{ type: 'check' }, { type: 'sign', sign: 'positive' },
+			...setup.presets.map((preset) => ({ type: 'preset', id: preset.id })),
+			...['trips', 'arrows', 'lists'].map((stage) => ({ type: 'stage', stage })),
+		];
+		for (const action of keepers) {
+			assert.equal(vst.reducer(opened, action).tableOpen, true, `${id}: ${action.type} closed the table`);
+			assert.equal(vst.reducer(openedAfter, action).tableOpen, true, `${id} after Check: ${action.type} closed the table`);
+		}
+		// The strip's rows are exactly the table's rows that have buttons, in order, before and after Check.
+		const reached = [
+			vst.initialState(id),
+			revealVec(id),
+			...setup.presets.map((preset) => vst.reducer(revealVec(id), { type: 'preset', id: preset.id })),
+			...['trips', 'arrows', 'lists'].map((stage) => vst.reducer(revealVec(id), { type: 'stage', stage })),
+			...['trips', 'arrows', 'lists'].map((stage) => runVec(id, { type: 'stage', stage })),
+		];
+		for (const state of reached) {
+			assert.deepEqual(vd.stepperRows(state), vd.tableRows(state).filter((tableRow) => tableRow.stepId !== null), id);
+			assert.deepEqual(vd.stepperHeaders(state), { x: vd.tableHeaders(state).x, y: vd.tableHeaders(state).y }, id);
+			// No reachable state throws from the switch.
+			assertTableFoldSays(`VectorBoard2D ${id}`, (open) => vd.announcementFor(state, { type: 'table', open }));
+		}
+	}
+	// The bodies, word for word, in spoken form.
+	const vecBody = (state) => vd.tableFoldSentence(state);
+	assert.equal(vecBody(vst.initialState('trips-add')), 'It has a row each for your guess, trip a and trip b, with steps east, steps north and length.');
+	assert.equal(vecBody(revealVec('trips-add')), 'It has a row each for trip a, trip b and both trips, with steps east, steps north and length.');
+	assert.equal(vecBody(vst.reducer(revealVec('trips-add'), { type: 'stage', stage: 'arrows' })), 'It has a row each for a, b and a + b, with x, y and length.');
+	assert.equal(vecBody(vst.initialState('trips-scale')), 'It has a row each for a and c a, with x, y and length.');
+	assert.equal(vecBody(vst.initialState('cart-push')), 'It has a row each for a and u hat, with x, y and length.');
+	assert.equal(vecBody(vst.reducer(revealVec('cart-push'), { type: 'preset', id: 'longer-track' })), 'It has a row each for a and b, with x, y and length.');
+	assert.equal(vecBody(vst.initialState('align')), 'It has a row each for a and b, with x, y and length.');
+	assert.equal(
+		vd.announcementFor(runVec('cart-push', { type: 'table', open: true }), { type: 'table', open: true }),
+		'Table shown under the switch. It has a row each for a and u hat, with x, y and length.',
+	);
+	assert.equal(vd.announcementFor(vst.initialState('cart-push'), { type: 'table', open: false }), 'Table hidden.');
+	// trips-add before Check: three strip rows, the guess live and the trips refused with their visible reason.
+	const stripOpen = vst.initialState('trips-add');
+	assert.deepEqual(vd.stepperRows(stripOpen).map((tableRow) => tableRow.name), ['Your guess', 'Trip a', 'Trip b']);
+	assert.deepEqual(vd.stepperHeaders(stripOpen), { x: 'Steps east', y: 'Steps north' });
+	assert.equal(vst.stepRefusal(stripOpen, 'guess', 'x', 1), null);
+	assert.equal(vst.stepRefusal(stripOpen, 'b', 'y', -1)?.kind, 'locked');
+	assert.deepEqual(vd.stepperRows(revealVec('trips-add')).map((tableRow) => tableRow.name), ['Trip a', 'Trip b']);
+	assert.deepEqual(vd.stepperRows(vst.initialState('cart-push')).map((tableRow) => tableRow.name), ['a']);
+	assert.equal(vd.stepperName(vst.initialState('cart-push'), 'a', 'x', 1), 'Move your push 1 east');
+	// The labels point at the strip, never at the folded table.
+	assert.equal(vd.boardLabel(vst.initialState('trips-scale')), 'A vector a and the scaled vector c a. Set c with the slider, then press Check; move a by its tip or with the step buttons under the plane.');
+	assert.equal(vd.boardLabel(vst.initialState('cart-push')), 'A cart on a track and your push. Drag the tip of your push, or use the step buttons under the plane, then press Check.');
+	assert.equal(vd.boardLabel(vst.initialState('align')), 'Two vectors a and b. Pick whether a · b is positive, zero or negative, then press Check.');
+	for (const id of Object.keys(vs.SETUPS)) {
+		for (const state of [vst.initialState(id), revealVec(id)]) {
+			for (const text of [...allText(state), vd.tableFoldSentence(state)]) assert.ok(!text.includes('in the table'), `${id}: "${text}" points into the folded table`);
+		}
+	}
 
 	// ---- Every setup ----
 	const bannedWord = new RegExp(['pro', 'mpt'].join(''), 'i');

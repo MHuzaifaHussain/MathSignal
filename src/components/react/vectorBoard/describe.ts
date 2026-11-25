@@ -4,8 +4,9 @@
 // src/data/notation.mjs: ‖a‖ for a vector's length, |c| only for a number, · only for the dot product.
 // Design and reasoning: decision 0014.
 import { isPerfectSquare } from '../boardMath.ts';
-import { capitalize, plural } from '../boardText.ts';
+import { capitalize, joinWords, plural } from '../boardText.ts';
 import { canShowAnswer } from '../guided/guided.ts';
+import { tableFoldAnnouncement } from '../guided/tableFold.ts';
 import { formatNumber } from '../plotColors.ts';
 import {
 	VIEW_LIMIT,
@@ -133,11 +134,11 @@ function trackName(state: VectorState): string {
 export function boardLabel(state: VectorState): string {
 	switch (setupOf(state).kind) {
 		case 'add':
-			return 'Two trips on a grid. Move the ochre ring to where they end, then press Check; or use the steppers in the table.';
+			return 'Two trips on a grid. Move the ochre ring to where they end, then press Check; or use the step buttons under the plane.';
 		case 'scale':
-			return 'A vector a and the scaled vector c a. Set c with the slider, then press Check; move a by its tip or with the steppers in the table.';
+			return 'A vector a and the scaled vector c a. Set c with the slider, then press Check; move a by its tip or with the step buttons under the plane.';
 		case 'cart':
-			return 'A cart on a track and your push. Drag the tip of your push, or use the steppers in the table, then press Check.';
+			return 'A cart on a track and your push. Drag the tip of your push, or use the step buttons under the plane, then press Check.';
 		case 'align':
 			return 'Two vectors a and b. Pick whether a · b is positive, zero or negative, then press Check.';
 	}
@@ -466,7 +467,7 @@ export function ochreElement(state: VectorState): 'guess' | 'sum' | 'scaled' | '
 	}
 }
 
-const HANDLE_TAIL = '. Its position is in the table below';
+const HANDLE_TAIL = '. It also moves with the buttons under the plane';
 
 /** The Mafs handles in render order, with their names: the single source for the plane and Board's handleLabels. */
 export function handlesFor(state: VectorState): readonly { id: HandleId; point: Vec2; label: string }[] {
@@ -684,11 +685,28 @@ export function tableRows(state: VectorState): readonly TableRow[] {
 	}
 }
 
-/** The Length column as sentences, shown instead of the column on narrow boards. */
-export function lengthLines(state: VectorState): string[] {
-	return tableRows(state)
-		.filter((tableRow) => tableRow.length !== '')
-		.map((tableRow) => `${tableRow.name}: length ${tableRow.length}.`);
+/** The rows the step strip under the plane shows: the table's rows that have − / + buttons, in the table's order. */
+export function stepperRows(state: VectorState): readonly (TableRow & { stepId: VectorId })[] {
+	return tableRows(state).filter((tableRow): tableRow is TableRow & { stepId: VectorId } => tableRow.stepId !== null);
+}
+
+/** The strip's column words over the two stepper columns, the table's own headers: "Steps east", "x (east)". */
+export function stepperHeaders(state: VectorState): { x: string; y: string } {
+	const { x, y } = tableHeaders(state);
+	return { x, y };
+}
+
+/** "Your guess" becomes "your guess" inside a sentence; vector names such as "a" or "c a" are already lowercase. */
+const inSentence = (name: string) => name.charAt(0).toLowerCase() + name.slice(1);
+/** "Steps east" becomes "steps east", and "x (east)" just "x". */
+const headerWords = (header: string) => inSentence(header.replace(/ \(.*\)$/, ''));
+
+/** The body said after "Table shown under the switch.": the table's rows and columns, in spoken form. */
+export function tableFoldSentence(state: VectorState): string {
+	const headers = tableHeaders(state);
+	const rows = joinWords(tableRows(state).map((tableRow) => inSentence(tableRow.name)));
+	const columns = joinWords([headers.x, headers.y, headers.length].map(headerWords));
+	return spoken(`It has a row each for ${rows}, with ${columns}.`);
 }
 
 /** The column vectors of the Lists stage, as an empty list in other stages. */
@@ -720,7 +738,7 @@ export function stepperName(state: VectorState, id: VectorId, axis: Axis, direct
 	return `Move ${shortName(state, id)} 1 ${DIRECTION_WORDS[axis][direction]}`;
 }
 
-/** One group per table cell, since a table row can't be a group: "Move a east or west". */
+/** One group per axis inside each vector's row of the step strip: "Move a east or west". */
 export function stepperGroupName(state: VectorState, id: VectorId, axis: Axis): string {
 	return `Move ${shortName(state, id)} ${axis === 'x' ? 'east or west' : 'north or south'}`;
 }
@@ -864,6 +882,8 @@ function announcementText(state: VectorState, action: Action): string {
 			return readoutLines(state).join(' ');
 		case 'other-order':
 			return action.on ? 'Showing b first too: walking b, then a, ends at the same spot.' : 'Showing one route: a, then b.';
+		case 'table':
+			return tableFoldAnnouncement(action.open, tableFoldSentence(state));
 		case 'reset':
 			return `Board reset. ${statusLine(state)}`;
 	}

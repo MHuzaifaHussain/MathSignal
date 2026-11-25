@@ -8,10 +8,12 @@ import CheckButtons from "./guided/CheckButtons.tsx";
 import PresetButtons from "./guided/PresetButtons.tsx";
 import { RefusalNote } from "./guided/refusal.tsx";
 import StageChoice from "./guided/StageChoice.tsx";
+import TableFold from "./guided/TableFold.tsx";
 import useAnnouncer from "./guided/useAnnouncer.ts";
 import ColumnVector from "./vectorBoard/ColumnVector.tsx";
 import CoordinateTable from "./vectorBoard/CoordinateTable.tsx";
 import VectorPlane from "./vectorBoard/VectorPlane.tsx";
+import VectorSteppers from "./vectorBoard/VectorSteppers.tsx";
 import {
   CONTROL_LABELS,
   SIGN_OPTIONS,
@@ -54,7 +56,8 @@ interface VectorBoard2DProps {
 /**
  * Vectors on a whole-number grid: two trips and their sum, a vector and its multiples, a push and its part along a
  * track, and the dot product of two arrows. Every setup holds its answer until the reader commits with Check.
- * Every handle also moves with the − / + buttons in the coordinate table. Design and reasoning: decision 0014.
+ * Every handle also moves with the − / + buttons under the plane; the coordinate table folds behind Table view.
+ * Design and reasoning: decisions 0014 and 0017.
  */
 export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
   const setup = getSetup(setupId);
@@ -193,6 +196,9 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
           onPick={(id) => send({ type: "preset", id })}
         />
       )}
+      <TableFold open={state.tableOpen} onToggle={(open) => send({ type: "table", open })}>
+        <CoordinateTable state={state} linkedId={linkedId} onLink={setLinkedId} />
+      </TableFold>
     </>
   );
 
@@ -232,7 +238,7 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
                 {lists && <p className="ms-board-readout">{lists}</p>}
               </div>
             )}
-            <CoordinateTable state={state} linkedId={linkedId} onLink={setLinkedId} send={send} />
+            <VectorSteppers state={state} linkedId={linkedId} onLink={setLinkedId} send={send} />
           </div>
         </div>
         {verdict && (

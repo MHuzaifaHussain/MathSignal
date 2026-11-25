@@ -73,6 +73,8 @@ export interface VectorState extends guided.CheckProgress {
 	/** "Show b first too" on the add setup. */
 	otherOrder: boolean;
 	refusal: Refusal | null;
+	/** "Table view": the coordinate table open under the switch. Off at the start and after Reset (decision 0017). */
+	tableOpen: boolean;
 }
 
 export type Action =
@@ -85,6 +87,7 @@ export type Action =
 	| { type: 'stage'; stage: Stage }
 	| { type: 'scalar'; value: number }
 	| { type: 'other-order'; on: boolean }
+	| { type: 'table'; open: boolean }
 	| { type: 'reset' };
 
 export const AXES: readonly Axis[] = ['x', 'y'];
@@ -117,6 +120,7 @@ export function initialState(setupId: SetupId): VectorState {
 		before: null,
 		otherOrder: false,
 		refusal: null,
+		tableOpen: false,
 	};
 }
 
@@ -334,6 +338,8 @@ export function reducer(state: VectorState, action: Action): VectorState {
 			return setScalar(setup, state, action.value);
 		case 'other-order':
 			return setup.kind === 'add' && state.checked ? { ...state, otherOrder: action.on, refusal: null } : state;
+		case 'table':
+			return { ...state, tableOpen: action.open };
 		case 'reset':
 			return initialState(state.setupId);
 	}

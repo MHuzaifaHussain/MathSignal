@@ -1819,11 +1819,47 @@
 	white-space: nowrap;
 }
 
-/* The row linked to its arrow on the plane: weight and an underline, not ochre, which the plane keeps for one element. */
-.ms-vec-table tr.is-linked th {
+/* Column words may wrap, so the read-only table fits the tray at 320px without scrolling sideways. */
+.ms-vec-table thead th {
+	white-space: normal;
+}
+
+/* The row linked to its arrow on the plane: an underline, not ochre, which the plane keeps for one element. */
+.ms-vec-table tr.is-linked th,
+.ms-vec-steppers .is-linked .ms-vec-steppers-name {
 	text-decoration: underline;
 	text-decoration-thickness: 2px;
 	text-underline-offset: 3px;
+}
+
+/* The step strip under the readouts (decision 0017): a row per movable vector, its name, then x and y steppers.
+ * The name column takes what the steppers leave, the same in every row, so the head and the rows line up. */
+.ms-vec-steppers {
+	/* One stepper's width (two buttons, the value and the gaps), so the head's column words sit over them. */
+	--ms-vec-stepper-width: calc(2 * 44px + 2.25rem + 4px);
+	display: grid;
+	gap: 0.35rem;
+	font-size: 0.9375rem;
+	color: var(--ms-board-ink);
+}
+
+.ms-vec-steppers-head,
+.ms-vec-steppers-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) var(--ms-vec-stepper-width) var(--ms-vec-stepper-width);
+	align-items: center;
+	gap: 0.25rem;
+}
+
+.ms-vec-steppers-head {
+	font-size: 0.8125rem;
+	font-weight: 600;
+	text-align: center;
+}
+
+.ms-vec-steppers-name {
+	font-weight: 600;
+	overflow-wrap: anywhere;
 }
 
 .ms-vec-stepper {
@@ -1858,16 +1894,6 @@
 	color: var(--ms-board-ink-muted);
 	border-style: dashed;
 	cursor: not-allowed;
-}
-
-/* Shown instead of the Length column on narrow boards (the 399px container rule). */
-.ms-vec-length-lines {
-	display: none;
-	font-size: 0.875rem;
-}
-
-.ms-vec-length-lines p {
-	margin: 0.15rem 0;
 }
 
 .ms-vec-table-wrap {
@@ -1937,6 +1963,10 @@
 		inline-size: clamp(36px, 13cqi, 44px);
 	}
 
+	.ms-vec-steppers {
+		--ms-vec-stepper-width: calc(2 * clamp(36px, 13cqi, 44px) + 1.5rem + 4px);
+	}
+
 	.ms-vec-table th,
 	.ms-vec-table td {
 		padding-inline-end: 0.25rem;
@@ -1944,14 +1974,6 @@
 
 	.ms-vec-table tbody th {
 		white-space: normal;
-	}
-
-	.ms-vec-table .ms-vec-length {
-		display: none;
-	}
-
-	.ms-vec-length-lines {
-		display: block;
 	}
 
 	/* DescriptiveStats: only the ticks at the narrow step keep their numbers. */
@@ -2005,8 +2027,10 @@
 		outline-color: Highlight;
 	}
 
-	/* SVG strokes aren't forced, so the vector plane maps its tokens to system colors; Mafs' variables follow. */
-	.ms-vec {
+	/* SVG strokes aren't forced, so the vector plane maps its tokens to system colors; Mafs' variables follow. The
+	 * coordinate table sits in the tray's fold, outside .ms-vec, so it takes the same mapping. */
+	.ms-vec,
+	.ms-vec-table-wrap {
 		--ms-board-ink: CanvasText;
 		--ms-board-ink-muted: GrayText;
 		--ms-attention: Highlight;
