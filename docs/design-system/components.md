@@ -222,6 +222,21 @@ Every setup holds its answer until the reader commits with Check. Handles snap t
 - **Limits:** `validateSetup` allows at most 4 presets and refuses openings or presets outside their limits, an a + b or shadow off the board, a scale range that can carry c a off the board, a zero track or one whose length isn't a whole number, a cart goal with no whole-number answer, an `align` opening with a zero vector, a `span-reach` flag the slider can't reach or on the diagonal, a lined-up `span-reach` opening or a preset that draws off the board, and a `span-shape` opening other than b = k a with k whole and |k| at least 2.
 - Check, the stages, the presets, the refusal notes and the live region are the guided pieces above. All math and copy live in pure modules (`model.ts`, `setups.ts`, `state.ts`, `describe.ts`) checked by `npm run check:boards`; the Mafs code is `VectorPlane.tsx` and the table `CoordinateTable.tsx`. Island CSS lives under the `.ms-vec-*` section of `components.css`. Try every setup at `/lab/vector-board/` in the dev server.
 
+### `FunctionCurve`
+The slope of a one-input curve, as a Mafs board ([decision 0020](../decisions/0020-function-curve-board.md)). One prop: `setup`, the id of a configuration in `src/components/react/functionCurve/setups.ts` (`ruler-to-tangent`, `corner`); an unknown id, or a setup whose grids break a rule, fails the build.
+
+```mdx
+<div class="not-content">
+  <FunctionCurve client:visible setup="ruler-to-tangent" />
+</div>
+```
+
+A ruler (a secant) runs from the point to a second point h along; its rise, run and slope are exact and printed in full. h is a "Ruler length h" slider over a ladder that never holds 0 (±1, ±0.5, ±0.25 before Check; down to ±0.001 after).
+
+- **`ruler-to-tangent`** (derivatives): y = x² at x = 1. The reader tries rulers on both sides, sets "Your slope at x = 1" and presses Check; "Show the answer" appears after two misses. After Check: the "Point x" slider (the point's handle is a pointer shortcut), the shorter rulers, the Tangent and Slope curve stages and the presets Bowl, S-curve (x³ at 1) and Loss ((w − 3)² at 0). Stages: Slide (squared paper, Bowl with x from 1 to 2 only), Ruler, Tangent, Slope curve.
+- **`corner`** (derivatives): ReLU at x = 0. The reader tries rulers on both sides and answers "One slope" or "Two different slopes" once; Check is refused, with a visible reason, until one is picked. After Check: Point x, the shorter rulers, the stages Ruler, Tangent and Slope curve, the presets Hinge, V (|x| at 0) and Smooth (x² at 0), and on Hinge and V the "Lines under the corner" switch with a "Line slope s" slider.
+- All math and copy live in pure modules (`functions.ts`, `model.ts`, `setups.ts`, `state.ts`, `describe.ts`, `marks.ts`) checked by `npm run check:boards`; `marks.ts` decides every color and line style, and the Mafs files (`CurvePlane.tsx`, `SlopeStrip.tsx`) only draw its list. The table `CurveTables.tsx` folds behind Table view. Slice mode has only its model so far (`hill.ts`). Island CSS lives under the `.ms-fncurve-*` section of `components.css`. Try both setups at `/lab/function-curve/` in the dev server.
+
 ### `DescriptiveStats`
 A short list of whole numbers as dot plots on a value-positioned axis, with a data table and a summary table behind Table view ([decision 0015](../decisions/0015-descriptive-stats-board.md), [decision 0017](../decisions/0017-table-view-fold.md)). The summary shows only what the reader has committed to: nothing on `class-lineup` before Check, the quartile rows from the Quartiles step on `class-box`, and on `marks-scaling` only the numbers the chosen scale uses (none on Raw marks, where a note stands in). One prop: `setup`, the id of a configuration in `src/components/react/descriptiveStats/setups.ts` (`class-lineup`, `cafe-millionaire`, `class-spread`, `class-box`, `marks-scaling`, `pumpkin-outliers`); an unknown id, or a setup the board can't draw at 320px, fails the build.
 

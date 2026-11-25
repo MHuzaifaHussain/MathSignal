@@ -114,6 +114,22 @@ Several vectors share one plane ([decision 0014](../decisions/0014-vector-board.
 
 Pink and blue never appear on this board: a vector is not μ or σ. Ochre marks exactly one element at a time (`ochreElement` in `describe.ts`); the handles are ink dots, and Mafs' focus ring is the site's focus color beside it. Board strings follow the notation registry in plain Unicode: ‖a‖ for a vector's length, |c| only for a number, "a · b" for the dot product and "c a" or "2 × a" for a multiple, never "c·a". A negative factor gets parentheses ("4 × (−1)"), lengths are exact or "√13 ≈ 3.61", and angles are "exactly 45°" or "about 94.4°". The plane stays square at Mafs' default aspect ratio; don't copy `preserveAspectRatio={false}` from the Normal board to a vector board.
 
+### Function curves (FunctionCurve)
+
+A curve, a ruler and the slope at a point ([decision 0020](../decisions/0020-function-curve-board.md)):
+
+| Marking | Meaning |
+|---|---|
+| Ink solid 2.5px, one plot per piece | The curve; a corner stays sharp. In Slide, the slide, with the ground muted left of 0 |
+| Dashed 2.5px with an ink end dot | The ruler (the pencil in Slide); ochre while no tangent is drawn, ink once it is |
+| Muted dotted legs, "run 0.5" and "rise 1.25" | Rise over run; labeled only when \|h\| is at least 0.5 |
+| Ochre solid 3px, labeled "tangent" | The tangent at the point, in Tangent and Slope curve |
+| Ochre solid 3px through (0, 0), labeled "slope 0.5 line" | A line under the corner, while its switch is on; the tangent is not drawn then |
+| Ink dot labeled "you" or "(1, 1)" | The point |
+| Ink curve in the strip, open dots at a jump | The slope curve; no value is drawn at a corner |
+
+Ochre marks exactly one element (`ochreElement` and `planeMarks` in `marks.ts`); pink and blue never appear. Numbers are exact decimals, never "≈". Where steepness is judged (x², ReLU, |x|) the view has equal scales; x³ and Loss declare unequal scales with numbered axes and use `preserveAspectRatio={false}`, so the drawing matches the edge test.
+
 ## Discrete boards (EventSpace)
 
 Discrete sample spaces are HTML tables, not Mafs plots (decision 0011). They follow the same color rules with these conventions:
