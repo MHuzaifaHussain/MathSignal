@@ -1,0 +1,518 @@
+---
+title: "Random variables and probability distributions"
+description: "A random variable gives every outcome of chance a number. Set the candies each die face wins, watch faces merge into bars, and read off the distribution."
+sidebar:
+  order: 13
+draft: true
+topic: probability/random-variables-and-distributions
+type: A
+objectives:
+  - Describe a random variable as a rule that gives every outcome one number, and write it as a table of X(ω).
+  - Build the distribution of a random variable by adding the chances of the outcomes that share each value.
+  - "Check that a list of values and probabilities is a valid distribution: no negative chances, and a total of 1."
+  - "Recognize random variables in machine learning: coded labels, per-example correctness and loss, and generators that turn random noise into samples."
+takeaways:
+  - "A random variable is a rule, not a number: it gives every outcome of an experiment one number, such as the candies a die face wins."
+  - "Several outcomes can share a value. Then the value's probability is the sum of their chances: faces 1, 2 and 3 all win 0 candies, so P(X = 0) = 3/6 = 1/2."
+  - The distribution lists each value with its probability. The probabilities are never negative and always add up to 1, because the events X = x split the sample space.
+  - "Equally likely outcomes don't make equally likely values: two coins give 0, 1 or 2 heads with chances 1/4, 1/2 and 1/4."
+  - "Applying a function to a random variable gives a new one, and its distribution comes from merging again: if X is −1, 0, 1 or 2 with chances 1/5, 1/5, 2/5 and 1/5, then X² is 1 with chance 1/5 + 2/5 = 3/5."
+references:
+  - kolmogorov1950
+  - grinstead2003
+  - deisenroth2020
+  - goodfellow2016prob
+  - goodfellow2016
+  - goodfellow2014
+  - papamakarios2019
+author: Muhammad Huzaifa Hussain
+reviewedAt: 2026-11-25
+aiAssisted: true
+primaryQuery: random variable
+searchIntent: learn
+depthStatus: complete
+---
+
+import Analogy from "../../../components/Analogy.astro";
+import CheckYourself from "../../../components/CheckYourself.astro";
+import Cite from "../../../components/Cite.astro";
+import CommonMistakes from "../../../components/CommonMistakes.astro";
+import ConceptHeader from "../../../components/ConceptHeader.astro";
+import ConceptMap from "../../../components/ConceptMap.astro";
+import FormalDefinition from "../../../components/FormalDefinition.astro";
+import GoDeeper from "../../../components/GoDeeper.astro";
+import Mistake from "../../../components/Mistake.astro";
+import NotationKey from "../../../components/NotationKey.astro";
+import PreciseStatement from "../../../components/PreciseStatement.astro";
+import PyRunner from "../../../components/PyRunner.astro";
+import References from "../../../components/References.astro";
+import ResearchFrontier from "../../../components/ResearchFrontier.astro";
+import SideNote from "../../../components/SideNote.astro";
+import Simpler from "../../../components/Simpler.astro";
+import StepThrough from "../../../components/StepThrough.astro";
+import Takeaways from "../../../components/Takeaways.astro";
+import WhyThisMatters from "../../../components/WhyThisMatters.astro";
+import WorkedExample from "../../../components/WorkedExample.astro";
+import DistributionBoard from "../../../components/react/DistributionBoard.tsx";
+
+<ConceptHeader
+  oneLiner="A random variable is a rule that gives every outcome of a random experiment one number, and its distribution says how likely each of those numbers is."
+  difficulty="beginner"
+/>
+
+## In everyday terms
+
+<Analogy breaks="The card is fixed before the roll, and that is exactly what a random variable is: the randomness is in the roll, not in the card. The picture breaks if you imagine the card itself being picked by chance, or a face that could win two different amounts: a random variable gives each outcome exactly one number. It also hides that the number has to be a real number. 'Win a red sticker' is a label for an outcome, not a value you can add up.">
+
+At a school fair there is a die and a prize card. The card says: faces 1, 2 and 3 win nothing, faces 4 and 5 win 1 candy, face 6 wins 5 candies. Before the roll you can't say how many candies you'll take home. You can only say which amounts are possible and how often each one comes up.
+
+The card is the random variable. It doesn't roll anything. It only says what each face is worth, and it says so before anyone touches the die. Change the card and the game changes, even though the die is the same fair die.
+
+That picture leans on prizes stuck onto numbered faces. The outcomes don't have to be numbers at all. Toss two coins and use the rule "count the heads". HT and TH are different outcomes, the first coin heads in one and the second in the other, but the rule gives both the number 1. Any rule works, as long as it gives every outcome exactly one number.
+
+</Analogy>
+
+<WhyThisMatters>
+Almost every quantity a model predicts or is scored on is a random variable: the class label of the next example, whether the model gets it right (1 or 0), the loss on that example, the next token. Training and evaluation reason about their distributions, not about single outcomes. A generator in a generative adversarial network is a random variable built by hand: it takes random noise and returns a sample, and training shapes the distribution of those samples. Mixing up "how many outcomes give this value" with "how likely is this value" is the kind of slip that makes a lopsided set of labels look balanced.
+</WhyThisMatters>
+
+## Give each face its candies
+
+Before you touch anything, picture a die and a prize card. Faces 1, 2 and 3 win nothing, faces 4 and 5 win 1 candy, face 6 wins 5. How many bars will the chart of "candies won" have: 6, 3 or 2? And is each amount equally likely, a chance of 1/3 each? Pick your answers, then test them.
+
+<GoDeeper label="a sharper question before you start">
+
+What is P(X = 0) exactly, where X is the number of candies you win? And what must the heights of all the bars add up to? Write both down before you press anything.
+
+</GoDeeper>
+
+The board lists the six faces, each with a − button, its number of candies and a + button. Every face starts at 0. The buttons sit in normal tab order, and Enter or Space presses them. The chart is covered at first, with the note "The chart appears when your values match the card.", so it can't give the answer away while you work. Your task: use − and + to give each face its candies from the card, then press Check. After two wrong tries a Show the answer button appears.
+
+<div class="not-content">
+  <DistributionBoard client:visible setup="candy-build" />
+</div>
+
+Three bars, not six, and not equally likely. Once your values match, Check says "Yes, that matches the card. Three amounts are possible, 0, 1 and 5 candies, so the chart has 3 bars, not 6. They are not equally likely: 3 faces win 0, so P(X = 0) = 3/6 = 1/2, not 1/3." The chart opens with each face drawn as a tile stacked on its amount, and one sentence per bar:
+
+- "0 candies: faces 1, 2 and 3. 3 of 6 faces, so P(X = 0) = 3/6 = 1/2 = 0.50."
+- "1 candy: faces 4 and 5. 2 of 6 faces, so P(X = 1) = 2/6 = 1/3 ≈ 0.33."
+- "5 candies: face 6. 1 of 6 faces, so P(X = 5) = 1/6 ≈ 0.17."
+- "The bars add up to 6/6 = 1."
+
+The card is a rule that gives every face one number, and that rule is the random variable. Several faces can share a number, and then the number's chance is the sum of their chances.
+
+Once Check passes, more opens. A table of the bars appears under the readouts, with each value, its faces and its chance. "Show as", which so far switched between Pictures (die pips and candy dots) and Numbers, gains Symbols, which comes last on purpose: it writes the card as "X(1) = 0, X(2) = 0, X(3) = 0, X(4) = 1, X(5) = 1, X(6) = 5." and the largest bar as "The event X = 0 is the set \{1, 2, 3\}, so P(X = 0) = P(\{1, 2, 3\}) = 3/6." The presets Game card and All zero appear. And a new goal appears with a Check goal button: "New goal: make P(X = 1) = 1/2." Any three faces at 1 candy pass, for example "Yes: faces 1, 3 and 5 win 1 candy, 3 of 6 faces, so P(X = 1) = 3/6 = 1/2." There are 20 ways to pick the three faces, and the board accepts them all, because the chance of an amount depends only on how many faces win it. Press All zero to see the other extreme: one bar at 0 holding all six faces, with chance 6/6 = 1. A rule that gives every outcome the same number is still a random variable, just one with no surprise left in it.
+
+## A random variable is a rule, not a number
+
+A random variable is a rule that gives every outcome of an experiment one number; the randomness is in which outcome happens, not in the rule. The card was written before the roll and doesn't change. What you don't know in advance is the face, and so the number the card gives it.
+
+### Write the rule as a table
+
+On a small sample space the rule is a table with one row per outcome. The Symbols view writes the game card as X(1) = 0, X(2) = 0, X(3) = 0, X(4) = 1, X(5) = 1 and X(6) = 5: the face goes in, the candies come out. Read X(4) = 1 as "X of face 4 is 1". Deisenroth and coauthors give the two-coin head count the same way, X(hh) = 2, X(ht) = 1, X(th) = 1 and X(tt) = 0, and remark that for a finite sample space the rule is essentially a lookup table (§6.1.2) <Cite id="deisenroth2020" />.
+
+<SideNote>
+The name misleads. Deisenroth and coauthors note in a margin of §6.1.2 that a random variable is neither random nor a variable: it is a function <Cite id="deisenroth2020" />. The function is fixed; the outcome it is applied to is the random part.
+</SideNote>
+
+<Simpler label="the same card for one coin">
+
+Toss one coin. Let X be 1 for heads and 0 for tails. That is a whole random variable: two outcomes, two rows, one number each. With a fair coin, X is 1 half the time and 0 half the time. This yes-or-no kind of variable, 1 when something happens and 0 when it doesn't, turns up again and again later, in this page's coin board and in machine learning.
+
+</Simpler>
+
+### Outcomes that share a value pool their chances
+
+The chance that X equals some number x is the probability of the event made of every outcome the rule sends to x. For the game card, the faces that win 0 candies are 1, 2 and 3, so "X = 0" is the event \{1, 2, 3\} and P(X = 0) = P(\{1, 2, 3\}) = 3/6. The step from one face to three uses additivity from the [probability axioms](/probability/probability-axioms/): the three faces never happen together, so their chances add. This is the merge you saw on the board: three tiles land on one bar, and the bar's height is the sum of their chances.
+
+Deisenroth and coauthors write the same step for any set S of values: the probability that X lands in S is the probability of the set of outcomes X sends into S, their equation (6.8) <Cite id="deisenroth2020" />. Kolmogorov gave this definition in 1933 for any single-valued function of the outcome, calling the result the function's probability function (Chapter III, §1, equation (1)) <Cite id="kolmogorov1950" />.
+
+<SideNote>
+Kolmogorov first defines the probability function for a function whose values can be anything at all, and proves it obeys his axioms. Only in the next section does he restrict to real-valued functions and call those random variables (Chapter III, §§1–2) <Cite id="kolmogorov1950" />.
+</SideNote>
+
+### The distribution: values and their chances
+
+The distribution of a random variable that takes a list of separate values is that list, with each value's probability beside it. For the game card it is 0 with chance 1/2, 1 with chance 1/3, 5 with chance 1/6. Its other name is the probability mass function, and it has to obey two rules: no probability is negative, and the probabilities add up to 1. Goodfellow and coauthors list the same requirements for a probability mass function, and call the second one being normalized (§3.3.1) <Cite id="goodfellow2016prob" />.
+
+Neither rule is an extra assumption. Each P(X = x) is the probability of an event, so it can't be negative. And the events X = 0, X = 1 and X = 5 split the six faces into groups that don't overlap and leave no face out, because every face gets exactly one amount. So their chances add up to the chance of the whole sample space, which is 1. The proof below writes this out, and the board shows it every time: "The bars add up to 6/6 = 1."
+
+Once you have the distribution, any question about X adds bars. The chance of winning at least one candy is P(X = 1) + P(X = 5) = 1/3 + 1/6 = 1/2. Adding the bars from the left, one value at a time, gives a running total that a fold after the Notation section previews.
+
+## Count the heads on two coins
+
+Before you look: let X count the heads in two tosses. X can be 0, 1 or 2. Is P(X = 1) one third?
+
+<GoDeeper label="a sharper question about the coins">
+
+Write P(X = 1) as a count out of 4 before you press anything. Which of the four ways two coins can land give exactly one head?
+
+</GoDeeper>
+
+The board lists the four outcomes HH, HT, TH and TT, each with a − and a + button and a value from 0 to 2, all starting at 0. The chart stays covered until your values are right. Your task: give each outcome its number of heads, then press Check and read the bar for 1.
+
+<div class="not-content">
+  <DistributionBoard client:visible setup="coins-heads" />
+</div>
+
+No: P(X = 1) is 1/2. If one outcome is off, Check names it and the number of heads it should have. When all four match, it says "Yes. X = 1 for HT and TH: 2 of 4 outcomes, so P(X = 1) = 2/4 = 1/2, not 1/3." and the readouts list the three bars:
+
+- "X = 0: TT. 1 of 4 outcomes, so P(X = 0) = 1/4 = 0.25."
+- "X = 1: HT and TH. 2 of 4 outcomes, so P(X = 1) = 2/4 = 1/2 = 0.50."
+- "X = 2: HH. 1 of 4 outcomes, so P(X = 2) = 1/4 = 0.25."
+
+HT and TH are two outcomes with one value, the same lesson as the board on [sample spaces and events](/probability/sample-spaces-and-events/), now drawn as a bar twice as tall as its neighbors.
+
+### Equally likely outcomes, unequal values
+
+Four equally likely outcomes don't make three equally likely head counts. The three values hold different numbers of outcomes, one, two and one, so their chances are 1/4, 1/2 and 1/4. The game card did the same with faces: three faces on 0, two on 1 and one on 5. Counting the values, three of them, and giving each 1/3 is the mistake both Check sentences end on.
+
+Now press Coins match. That preset gives X = 1 when both coins show the same face, HH or TT, and X = 0 otherwise. The readout says "X = 1: HH and TT. 2 of 4 outcomes, so P(X = 1) = 2/4 = 1/2 = 0.50." A random variable that is 1 when an event happens and 0 when it doesn't is called the indicator of that event, and the Notation section below gives its symbol; this one is the indicator of "the coins match". Yes-or-no variables like this get their own page later, together with the binomial distribution.
+
+### The distribution forgets which outcomes gave each value
+
+Different rules can have the same distribution. With Coins match still showing, use the buttons to make a new rule: X = 1 when the first coin is heads, so HH and HT get 1 and TH and TT get 0. The bars don't move, 1/2 and 1/2, but the rule did: the two rules disagree on HT and on TT. The same happened with the game card's follow-up goal. The card with faces 1, 3 and 5 at 1 candy and a card with faces 4, 5 and 6 at 1 candy are different rules, yet both give 1 candy with chance 1/2.
+
+So the distribution answers "how likely is each value?", while the rule answers "which outcome gives which value?". For many questions the distribution is all you need. To combine two random variables on the same experiment, for example to add them, you need the rules, because you have to know which values happen together. That is why later pages keep the sample space in view; sums of random variables come later.
+
+<CheckYourself level="intuition" question="A rule gives face 1 of a die the value 2 and also the value 3. Is it a random variable?">
+No. A random variable gives each outcome exactly one number. A rule that can't decide between 2 and 3 for face 1 is not a function, so it has no single value to put on the chart, and the events "X = 2" and "X = 3" would overlap.
+</CheckYourself>
+
+## Notation
+
+<NotationKey symbols={["sample-space", "outcome", "event", "event-collection", "probability", "random-variable", "preimage", "union", "pmf", "sum-over-values", "distributed-as", "indicator", "function-of-random-variable", "cdf", "conditional", "class-label", "feature-vector", "log"]} />
+
+<PreciseStatement>
+
+In plain words: a random variable gives every outcome one real number, and its distribution gives every set of values the probability of the outcomes that land there.
+
+Let $(\Omega, \mathcal{F}, P)$ be a probability space, as on the [probability axioms](/probability/probability-axioms/) page. A (real) random variable is a function $X\colon \Omega \to \mathbb{R}$ such that $\{\omega \in \Omega : X(\omega) \le x\} \in \mathcal{F}$ for every real $x$. On a finite or countable $\Omega$ with $\mathcal{F}$ equal to all subsets, every function qualifies. $X$ is discrete if it takes finitely or countably many values. Its distribution, or law, gives each set $S$ of real values the probability
+
+$$
+P(X \in S) = P(\{\omega \in \Omega : X(\omega) \in S\}),
+$$
+
+and we write $X \sim P_X$ for "X has the distribution $P_X$". For discrete $X$ the distribution is fixed by the probability mass function $P(X = x)$, which satisfies
+
+$$
+P(X = x) \ge 0 \quad \text{and} \quad \sum_{x} P(X = x) = 1,
+$$
+
+with the sum over the values $X$ takes, and $P(X \in S) = \sum_{x \in S} P(X = x)$.
+
+Boundary cases and conventions. A number no outcome maps to has probability 0 and gets no bar. A constant $X$ has one value with probability 1, as with All zero on the board. Different random variables can share a distribution. Machine learning texts also call a variable whose states are named categories, with no numerical value, a random variable (§3.2) <Cite id="goodfellow2016prob" />. Sums and other arithmetic need real values, so this page codes labels as numbers when it needs them. The indicator of an event $A$ is $\mathbf{1}_A(\omega) = 1$ if $\omega \in A$ and $0$ otherwise.
+
+</PreciseStatement>
+
+<GoDeeper label="what 'random variable' means on infinite sample spaces" id="random-variable-measurable">
+
+On a finite sample space, every subset can be an event ([sample spaces and events](/probability/sample-spaces-and-events/)), so every rule that gives each outcome one real number is a random variable. On a space such as $[0, 1)$, probability may only be defined on a chosen collection of events, because of [sets no length can measure](/probability/sample-spaces-and-events/#non-measurable-sets). Then a rule has to pass a test: for each real number $a$, the outcomes where the rule's value is below $a$ must form an event, or "the chance that X is below a" would have no meaning. That is Kolmogorov's definition of a random variable (Chapter III, §2) <Cite id="kolmogorov1950" />. In his opening chapter he sums it up: mathematically, random variables are just measurable functions, and their expected values are Lebesgue integrals (Chapter I, §5, p. 8) <Cite id="kolmogorov1950" />. Everything on this page lives on finite spaces, where the test always passes.
+
+</GoDeeper>
+
+<GoDeeper label="a running total of the bars" id="cdf-preview">
+
+Add the bars from the left and you get the cumulative distribution function, $F_X(x) = P(X \le x)$: the chance that X is at most x. For the game card, $F_X(-1) = 0$, $F_X(0) = 1/2$, $F_X(1) = 5/6$, $F_X(2.5) = 5/6$ and $F_X(5) = 1$. It climbs in steps at the values X can take and stays flat in between. Current books, among them Deisenroth and coauthors (Definition 6.2), use "at most", $\le$ <Cite id="deisenroth2020" />. Kolmogorov used "less than": his distribution function is the chance that $x < a$, so it differs from the modern one exactly at the steps (for the card, his value at 1 is 1/2, not 5/6), and he proves it is continuous from the left (Chapter III, §2) <Cite id="kolmogorov1950" />. The function gets its own page later.
+
+</GoDeeper>
+
+<FormalDefinition>
+
+<StepThrough title="The bars always add up to 1" rigor="full">
+
+1. Let $X$ be a discrete random variable. For two different values $x \ne x'$, the events $\{X = x\}$ and $\{X = x'\}$ share no outcome, because each outcome has exactly one value.
+2. Every outcome has some value, so the union of the events $\{X = x\}$ over all values $x$ that $X$ takes is $\Omega$.
+3. There are finitely or countably many such events, so additivity (countable additivity when there are infinitely many values) gives $\sum_{x} P(X = x) = P(\Omega) = 1$.
+4. Each term is the probability of an event, so $P(X = x) \ge 0$. For the game card: $3/6 + 2/6 + 1/6 = 6/6 = 1$.
+
+</StepThrough>
+
+<StepThrough title="A function of a random variable is a random variable, and its bars merge" rigor="full">
+
+1. Let $X$ be discrete and $g\colon \mathbb{R} \to \mathbb{R}$ any function. Define $Y = g(X)$ as the rule $\omega \mapsto g(X(\omega))$: first apply $X$, then $g$. Each outcome still gets exactly one number.
+2. $Y$ takes the value $y$ exactly when $X$ takes some value $x$ with $g(x) = y$, so $\{Y = y\} = \bigcup_{x : g(x) = y} \{X = x\}$.
+3. These events are disjoint by step 1 of the previous proof, so additivity gives $P(Y = y) = \sum_{x : g(x) = y} P(X = x)$.
+4. If $g$ gives two values of $X$ the same image, their bars merge into one bar for $Y$; if $g$ is one-to-one, the bars just move. Kolmogorov states the same composition rule for probability functions (Chapter III, §1, equation (2)) <Cite id="kolmogorov1950" />. Worked example 1 below does both cases with numbers.
+
+</StepThrough>
+
+| Property | Statement | On the board |
+| --- | --- | --- |
+| One value per outcome | each $\omega$ gets exactly one $X(\omega)$ | each face has one stepper value |
+| Values split the space | the events $\{X = x\}$ are disjoint and cover $\Omega$ | every tile sits in exactly one bar |
+| Never negative | $P(X = x) \ge 0$ | no bar goes below the axis |
+| Adds up to 1 | $\sum_x P(X = x) = 1$ | "The bars add up to 6/6 = 1." |
+| Sets of values | $P(X \in S) = \sum_{x \in S} P(X = x)$ | at least one candy: $1/3 + 1/6 = 1/2$ |
+| Values nobody gets | probability 0, no bar | game card: nothing at 2, 3 or 4 |
+| Functions of $X$ | bars move, and merge where $g$ is not one-to-one | $X^2$ merges $-1$ and $1$ (worked example 1) |
+| Same distribution, different rule | the law forgets which outcome gave which value | Coins match and "first coin is heads": $1/2$ and $1/2$ |
+
+</FormalDefinition>
+
+## Worked examples
+
+<WorkedExample number={1} title="Shift and square a random variable">
+
+Grinstead and Snell's Exercise 14 in §1.2 (p. 36) gives a random variable $X$ with $P(X = -1) = 1/5$, $P(X = 0) = 1/5$, $P(X = 1) = 2/5$ and $P(X = 2) = 1/5$, and asks for the distributions of $Y = X + 3$ and $Z = X^2$ <Cite id="grinstead2003" />. First check that $X$ has a distribution: $1/5 + 1/5 + 2/5 + 1/5 = 1$.
+
+Adding 3 is one-to-one, so every bar just moves 3 to the right: $Y$ is 2, 3, 4 or 5 with chances $1/5$, $1/5$, $2/5$ and $1/5$. Squaring is not one-to-one, because $(-1)^2 = 1^2 = 1$, so those two bars merge: $P(Z = 0) = 1/5$, $P(Z = 1) = 1/5 + 2/5 = 3/5$ and $P(Z = 4) = 1/5$. Three bars, still adding up to 1.
+
+</WorkedExample>
+
+<WorkedExample number={2} title="Two draws from a bag, not fifty-fifty">
+
+A bag holds red and blue marbles, and a draw gives red with probability $3/10$. Draw one marble, put it back, draw again, and let $X$ count the reds. Putting the marble back means the second draw doesn't depend on the first, so each outcome's chance is a product. Now the four outcomes are not equally likely, so you can't count them; you add their probabilities instead:
+
+- $P(X = 2) = 0.3 \times 0.3 = 0.09$,
+- $P(X = 1) = 0.3 \times 0.7 + 0.7 \times 0.3 = 0.42$, from red then blue and blue then red,
+- $P(X = 0) = 0.7 \times 0.7 = 0.49$.
+
+The total is $0.09 + 0.42 + 0.49 = 1$. The merge is the same as for two coins, two outcomes on one value, but the outcomes bring unequal weights. Deisenroth and coauthors work exactly these numbers with coins from two countries in their Example 6.1 <Cite id="deisenroth2020" />. The board can't show this case, because its dice and coins are fair.
+
+</WorkedExample>
+
+<WorkedExample number={3} title="Count the legs of the predicted animal" faded>
+
+A classifier looks at one image and gives the probabilities cat $1/2$, dog $1/3$ and bird $1/6$, a [softmax output](/probability/probability-axioms/#softmax-outputs). Sample one label from these chances. Let $L$ be the number of legs of the sampled animal (cat 4, dog 4, bird 2) and let $C$ be 1 if the label is cat and 0 otherwise. Given: $P(L = 4) = 1/2 + 1/3 = 5/6$, because cat and dog both give 4. Find $P(L = 2)$ and the distribution of $C$.
+
+<div slot="solution">
+
+Only bird gives 2 legs, so $P(L = 2) = 1/6$, and $5/6 + 1/6 = 1$. $C$ is the indicator of "cat": $P(C = 1) = 1/2$ and $P(C = 0) = 1/3 + 1/6 = 1/2$. The shares $1/2$, $1/3$ and $1/6$ are the game card's on purpose: a different experiment, with the same distribution of chances over its three outcomes.
+
+</div>
+
+</WorkedExample>
+
+## Where these rules show up in machine learning
+
+### Labels become numbers by a choice
+
+A classifier's label is a random variable once you code it as a number, and the code is your choice. Goodfellow and coauthors point out that a categorical distribution is over categories, so state 1 is not assumed to have the numerical value 1, and one usually doesn't compute its expected value (§3.9.2) <Cite id="goodfellow2016prob" />. Coding cat, dog and bird as 0, 1 and 2 changes nothing about how likely each label is, but averaging those codes would mean nothing: swap the codes and the "average animal" changes.
+
+Two classes are coded 0 and 1 on purpose, because then arithmetic does mean something: adding the 1s counts the positives. The distribution of such a variable needs a single number, the chance of 1. If that chance is $3/4$, then $P(X = 0) = 1/4$, and one formula covers both cases, $P(X = x) = (3/4)^x (1/4)^{1 - x}$ for $x \in \{0, 1\}$: it gives $3/4$ at $x = 1$ and $1/4$ at $x = 0$. This is the Bernoulli distribution, Goodfellow and coauthors' equations (3.16)–(3.18) (§3.9.1) <Cite id="goodfellow2016prob" />. A network with a sigmoid output unit predicts exactly that one number, $P(y = 1 \mid \mathbf{x})$, for each input $\mathbf{x}$ (§6.2.2.2) <Cite id="goodfellow2016" />. For more than two classes, a softmax output gives the whole distribution at once; the [probability axioms](/probability/probability-axioms/#softmax-outputs) page shows why it always adds up to 1.
+
+### Being right and the loss are rules on outcomes too
+
+Draw one test example at random and run the model on it. "The model is right" is then a random variable: 1 when the prediction equals the label and 0 when it doesn't, the indicator of the event "prediction equals label". The loss on that example is another random variable, a function of the same outcome. With the classifier from worked example 3, if the true label is cat and the model samples its answer from its own probabilities, it is right with chance $1/2$. The usual loss for that example is $-\log$ of the probability the model gave the true class, here $-\log(1/2) = \log 2 \approx 0.6931$.
+
+Test-set accuracy is the share of 1s this variable produces over the test set, as the page on [sample spaces and events](/probability/sample-spaces-and-events/#test-set-accuracy) describes. What that share settles toward in the long run, the expected value, is the next page's subject.
+
+### Generators turn noise into samples
+
+A generative adversarial network is this page's idea at scale. Goodfellow and coauthors pick a simple distribution for input noise z and a network G that maps z to a data point. Without ever writing it down, the network defines the distribution of its samples G(z) when z follows the noise distribution (§§3–4) <Cite id="goodfellow2014" />. The network is the rule, the noise is the outcome, and the distribution of the samples is what training shapes. Their Theorem 1 says the training criterion reaches its global minimum, $-\log 4$, exactly when the samples' distribution equals the data's <Cite id="goodfellow2014" />.
+
+Normalizing flows write the same thing as x = T(u), where u is drawn from a simple base distribution and T is an invertible, differentiable map (§2.1, equation (1)) <Cite id="papamakarios2019" />. For discrete variables, the survey's equation (99) says that the probability of a value x is the sum of the base probabilities of all u that T sends to x (§5.3) <Cite id="papamakarios2019" />. That is exactly the board's merge. Take u uniform on the four coin outcomes and T = "count the heads": equation (99) gives 1/4, 1/2 and 1/4, the coins board again. Discrete flows then require T to be one-to-one and onto, so nothing merges (equation (100)), and "count the heads" doesn't qualify, since HT and TH both go to 1. One honest limit: GANs and most flows use continuous noise and densities, which a later page covers. The discrete formula is the bridge to them, not the general case.
+
+## Build distributions in code
+
+This runs in your browser with exact fractions and stops with an error if any number on this page is off. Its helper builds a distribution the way the board does: apply the rule to every outcome and add the outcomes' weights for each value, with equal weights unless you pass others. At the end it rolls the game card 60,000 times and tosses two coins 40,000 times, with a fixed seed.
+
+<PyRunner
+  title="random_variables.py"
+  code={`
+import math
+import random
+from collections import Counter
+from fractions import Fraction
+from itertools import combinations, product
+
+
+def distribution(outcomes, rule, weights=None):
+    """P(X = x) for each value x: add the weights of the outcomes the rule sends to x."""
+    if weights is None:
+        weights = {outcome: Fraction(1, len(outcomes)) for outcome in outcomes}
+    assert sum(weights.values()) == 1, "the outcome weights must add up to 1"
+    result = {}
+    for outcome in outcomes:
+        value = rule(outcome)
+        result[value] = result.get(value, Fraction(0)) + weights[outcome]
+    return dict(sorted(result.items()))
+
+
+def is_distribution(chances):
+    return all(p >= 0 for p in chances) and sum(chances) == 1
+
+
+def show(chances, name="X"):
+    return ", ".join(f"P({name} = {value}) = {p}" for value, p in chances.items())
+
+
+# The game card on a fair die.
+faces = [1, 2, 3, 4, 5, 6]
+card = {1: 0, 2: 0, 3: 0, 4: 1, 5: 1, 6: 5}
+game = distribution(faces, card.get)
+print("game card:", show(game))
+assert game == {0: Fraction(1, 2), 1: Fraction(1, 3), 5: Fraction(1, 6)}
+assert game[0] == Fraction(3, 6) and game[1] == Fraction(2, 6)
+assert len(game) == 3 and len(game) != len(faces)
+assert game[0] != Fraction(1, 3)
+assert is_distribution(game.values())
+assert Fraction(3, 6) + Fraction(2, 6) + Fraction(1, 6) == 1
+assert game[1] + game[5] == Fraction(1, 2)  # at least one candy
+assert all(v not in game for v in (2, 3, 4))  # values nobody gets have no bar
+assert (round(float(game[1]), 2), round(float(game[5]), 2)) == (0.33, 0.17)
+
+# The follow-up goal: any three faces at 1 candy give P(X = 1) = 1/2.
+goal_card = dict(zip(faces, [1, 0, 1, 0, 1, 5]))
+assert distribution(faces, goal_card.get)[1] == Fraction(1, 2)
+assert distribution(faces, dict(zip(faces, [1, 1, 0, 0, 0, 5])).get)[1] == Fraction(1, 3)
+other_card = dict(zip(faces, [0, 0, 0, 1, 1, 1]))
+assert distribution(faces, other_card.get)[1] == Fraction(1, 2)
+assert goal_card != other_card  # different rules, same chance of 1 candy
+assert len(list(combinations(faces, 3))) == math.comb(6, 3) == 20
+
+# All zero: one bar holding every face.
+assert distribution(faces, lambda face: 0) == {0: 1}
+
+# Two coins.
+coins = ["".join(pair) for pair in product("HT", repeat=2)]
+heads = distribution(coins, lambda o: o.count("H"))
+print("number of heads:", show(heads))
+assert heads == {0: Fraction(1, 4), 1: Fraction(1, 2), 2: Fraction(1, 4)}
+assert heads[1] == Fraction(2, 4) != Fraction(1, 3)
+coins_match = lambda o: 1 if o[0] == o[1] else 0
+first_heads = lambda o: 1 if o[0] == "H" else 0
+assert distribution(coins, coins_match) == {0: Fraction(1, 2), 1: Fraction(1, 2)}
+assert distribution(coins, first_heads) == distribution(coins, coins_match)
+assert [o for o in coins if coins_match(o) != first_heads(o)] == ["HT", "TT"]
+
+# The cumulative distribution function of the game card, with "at most".
+F = lambda x: sum((p for v, p in game.items() if v <= x), Fraction(0))
+assert [F(x) for x in (-1, 0, 1, 2.5, 5)] == [0, Fraction(1, 2), Fraction(5, 6), Fraction(5, 6), 1]
+kolmogorov_F = lambda a: sum((p for v, p in game.items() if v < a), Fraction(0))
+assert kolmogorov_F(1) == Fraction(1, 2) != F(1)
+
+# Worked example 1: Grinstead and Snell, Exercise 14.
+m = {-1: Fraction(1, 5), 0: Fraction(1, 5), 1: Fraction(2, 5), 2: Fraction(1, 5)}
+assert is_distribution(m.values())
+values = list(m)
+assert distribution(values, lambda x: x + 3, m) == {2: Fraction(1, 5), 3: Fraction(1, 5), 4: Fraction(2, 5), 5: Fraction(1, 5)}
+squared = distribution(values, lambda x: x * x, m)
+print("Z = X squared:", show(squared, "Z"))
+assert squared == {0: Fraction(1, 5), 1: Fraction(3, 5), 4: Fraction(1, 5)}
+assert squared[1] == Fraction(1, 5) + Fraction(2, 5)
+
+# Worked example 2: two draws with replacement, red with probability 3/10.
+red = Fraction(3, 10)
+draw = {"R": red, "B": 1 - red}
+pairs = [a + b for a, b in product("RB", repeat=2)]
+pair_weights = {pair: draw[pair[0]] * draw[pair[1]] for pair in pairs}
+reds = distribution(pairs, lambda pair: pair.count("R"), pair_weights)
+print("reds in two draws:", show(reds))
+assert reds == {0: Fraction(49, 100), 1: Fraction(42, 100), 2: Fraction(9, 100)}
+assert reds[1] == red * (1 - red) + (1 - red) * red == Fraction(21, 50)
+assert sum(reds.values()) == 1
+assert Fraction(9, 100) + Fraction(42, 100) + Fraction(49, 100) == 1
+
+# Worked example 3: legs of the sampled animal, and the cat indicator.
+labels = {"cat": Fraction(1, 2), "dog": Fraction(1, 3), "bird": Fraction(1, 6)}
+legs = {"cat": 4, "dog": 4, "bird": 2}
+assert distribution(list(labels), legs.get, labels) == {2: Fraction(1, 6), 4: Fraction(5, 6)}
+assert distribution(list(labels), lambda a: 1 if a == "cat" else 0, labels) == {0: Fraction(1, 2), 1: Fraction(1, 2)}
+assert sorted(labels.values()) == sorted(game.values())  # the game card's shares
+assert Fraction(1, 2) + Fraction(1, 3) == Fraction(5, 6) and Fraction(5, 6) + Fraction(1, 6) == 1
+assert Fraction(1, 3) + Fraction(1, 6) == Fraction(1, 2)
+
+# A 0/1 label with P(X = 1) = 3/4.
+p = Fraction(3, 4)
+bernoulli = lambda x: p**x * (1 - p) ** (1 - x)
+assert bernoulli(1) == Fraction(3, 4) and bernoulli(0) == Fraction(1, 4)
+
+# Being right with chance 1/2, and the loss when the true class gets 1/2.
+assert labels["cat"] == Fraction(1, 2)
+assert abs(-math.log(0.5) - 0.6931) < 1e-4 and abs(math.log(2) - 0.6931) < 1e-4
+
+# Equation (99) of the flows survey: push the uniform coin distribution through "count the heads".
+pushed = distribution(coins, lambda u: u.count("H"))
+assert pushed == heads
+assert len({u.count("H") for u in coins}) < len(coins)  # not one-to-one, so not a discrete flow
+
+# Check yourself.
+assert distribution(faces, dict(zip(faces, [0, 0, 0, 0, 0, 6])).get) == {0: Fraction(5, 6), 6: Fraction(1, 6)}
+spinner = {"red": Fraction(1, 2), "green": Fraction(1, 4), "blue": Fraction(1, 4)}
+payout = {"red": 2, "green": 0, "blue": 2}
+assert distribution(list(spinner), payout.get, spinner) == {0: Fraction(1, 4), 2: Fraction(3, 4)}
+assert Fraction(1, 2) + Fraction(1, 4) == Fraction(3, 4)
+assert Fraction(1, 2) + Fraction(2, 5) + Fraction(1, 5) == Fraction(11, 10)
+assert not is_distribution([Fraction(1, 2), Fraction(2, 5), Fraction(1, 5)])
+assert Fraction(7, 10) + Fraction(1, 2) - Fraction(1, 5) == 1
+assert not is_distribution([Fraction(7, 10), Fraction(1, 2), Fraction(-1, 5)])
+
+# Simulations, seeded: shares settle near the distribution's chances.
+rng = random.Random(0)
+rolls = 60_000
+won = Counter(card[rng.randint(1, 6)] for _ in range(rolls))
+print(f"0 candies in {won[0] / rolls:.3f} of rolls, 5 candies in {won[5] / rolls:.3f}")
+assert abs(won[0] / rolls - 1 / 2) < 0.01
+assert abs(won[5] / rolls - 1 / 6) < 0.01
+tosses = 40_000
+one_head = sum((rng.choice("HT") + rng.choice("HT")).count("H") == 1 for _ in range(tosses))
+print(f"exactly one head in {one_head / tosses:.3f} of tosses")
+assert abs(one_head / tosses - 1 / 2) < 0.01
+`}
+/>
+
+The simulated shares land within 0.01 of the distribution's chances: about half the rolls win nothing, about one in six wins 5 candies, and about half the coin tosses show exactly one head, not a third. Why frequencies settle near probabilities is the law of large numbers, a later topic.
+
+## Research frontier
+
+<ResearchFrontier reviewed="2026-11-25">
+
+**From prize cards to measurable functions.** Kolmogorov made the random variable a function on the sample space: a real single-valued function is a random variable when, for each real $a$, the set where it is below $a$ is an event (Chapter III, §2) <Cite id="kolmogorov1950" />. He defined the probability of its values through pre-images, the sets of outcomes that map into a given set of values (Chapter III, §1, equation (1)), and observed that, mathematically, random variables are measurable functions and their expected values are Lebesgue integrals (Chapter I, §5) <Cite id="kolmogorov1950" />. That settled what a random variable is, on any sample space.
+
+**Generators are random variables you train.** In a generative adversarial network, the generator's samples G(z) have a distribution set by the noise and the network, and Goodfellow and coauthors prove that the training criterion's global minimum, $-\log 4$, is reached if and only if that distribution equals the data distribution (§4, Theorem 1) <Cite id="goodfellow2014" />. Normalizing flows make the map invertible and differentiable, which gives an exact density for x = T(u) by a change of variables (§2.1, equations (1)–(2)). The survey shows that, under conditions on the two distributions, such a map exists between any well-behaved target and a simple base (§2.2). For discrete variables, the pushforward is the merge rule on this page, and discrete flows keep it one-to-one (§5.3, equations (98)–(100)) <Cite id="papamakarios2019" />.
+
+**What is open.** Coupling layers are a common building block of flows, and stacking D of them, each splitting the coordinates at the right place, is known to give a universal approximator in D dimensions. The survey says "it is an open problem whether" strictly fewer than O(D) such layers can be (§3.1.2) <Cite id="papamakarios2019" />. Its introduction also points to areas an earlier review labels as open problems, extensions of flows to discrete variables among them <Cite id="papamakarios2019" />.
+
+</ResearchFrontier>
+
+## Check yourself
+
+<CheckYourself level="intuition" question="Five faces of a die win 0 candies and face 6 wins 6. How many bars does the chart have, and how tall is each?">
+Two bars: 0 candies with chance $5/6$, because five faces share that amount, and 6 candies with chance $1/6$. The values 1 to 5 get no bar, since no face wins them.
+</CheckYourself>
+
+<CheckYourself level="standard" question="A spinner lands on red, green or blue with chances 1/2, 1/4 and 1/4. Red pays 2, green pays 0 and blue pays 2. What is the distribution of the payout?">
+$P(\text{payout} = 2) = 1/2 + 1/4 = 3/4$ and $P(\text{payout} = 0) = 1/4$. Red and blue share the payout 2, so their chances add. The outcomes were not equally likely, so you add their probabilities rather than count them.
+</CheckYourself>
+
+<CheckYourself level="standard" question="Is P(X = 0) = 0.5, P(X = 1) = 0.4, P(X = 2) = 0.2 a distribution? What about 0.7, 0.5 and −0.2?">
+Neither. The first adds up to $1.1$, more than 1. The second adds up to 1 but has a negative chance, $-0.2$. A distribution needs both: every probability at least 0, and a total of exactly 1.
+</CheckYourself>
+
+<CheckYourself level="proof" question="Show that if X is a discrete random variable and g is any function, then P(g(X) = y) is the sum of P(X = x) over the values x with g(x) = y.">
+The outcome gives $g(X) = y$ exactly when $X$ takes some value $x$ with $g(x) = y$, so the event $\{g(X) = y\}$ is the union of the events $\{X = x\}$ over those $x$. Different values of $X$ never share an outcome, so these events are disjoint, and additivity turns the probability of the union into the sum of their probabilities.
+</CheckYourself>
+
+## Common mistakes
+
+<CommonMistakes>
+  <Mistake wrong="A random variable is a number that changes randomly.">
+    It is a fixed rule that gives each outcome one number; what is random is the outcome. The game card never changes. Which face comes up does, and so does the number of candies the card gives that face.
+  </Mistake>
+  <Mistake wrong="When the outcomes are equally likely, so are the values.">
+    Only if every value holds the same number of outcomes. Two fair coins give exactly one head with chance $1/2$, not $1/3$, because HT and TH both give 1. The game card gives 0 candies with chance $1/2$, because three faces win 0.
+  </Mistake>
+  <Mistake wrong="The probability of a value is 1 over the number of values.">
+    Count, or add up, the outcomes that give the value, not the values. The game card has three values, but they have chances $1/2$, $1/3$ and $1/6$.
+  </Mistake>
+  <Mistake wrong="Two random variables with the same distribution are the same random variable.">
+    Coins match and "first coin is heads" both give 1 and 0 with chance $1/2$ each, yet they disagree on HT and TT. The distribution forgets which outcome gave which value; to add two random variables you need the rules.
+  </Mistake>
+  <Mistake wrong="Class labels can be averaged like numbers.">
+    Coding cat, dog and bird as 0, 1 and 2 is a choice. The label's distribution doesn't depend on the coding, but an average of the codes does, so it means nothing. Yes-or-no labels are coded 0 and 1 on purpose, so that adding them counts the yeses.
+  </Mistake>
+</CommonMistakes>
+
+## Key takeaways
+
+<Takeaways />
+
+## How this connects
+
+<ConceptMap />
+
+## References
+
+<References />

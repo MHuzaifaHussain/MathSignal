@@ -124,10 +124,10 @@ export const TOPICS = [
 		id: 'probability/random-variables-and-distributions',
 		title: 'Random variables and distributions',
 		description: 'Numbers that come out of chance, and the rules that say how likely each value is.',
-		recap: 'A random variable is a number decided by chance, such as a height or a dice roll. Its distribution says how likely each value, or range of values, is.',
+		recap: 'A random variable is a rule that gives every outcome of an experiment one number. Outcomes that share a number pool their chances, and the list of values with their probabilities is the variable\'s distribution.',
 		status: 'planned',
 		prerequisites: ['probability/probability-axioms'],
-		leadsTo: ['statistics/normal-distribution'],
+		leadsTo: ['probability/expectation-and-variance', 'statistics/normal-distribution'],
 	},
 	{
 		id: 'probability/expectation-and-variance',
@@ -135,7 +135,7 @@ export const TOPICS = [
 		description: 'The long-run average of a random variable, and how far its values spread around it.',
 		recap: 'The expected value is the long-run average of a random variable: multiply each value by its probability and add. For a list of numbers, it is the familiar mean.',
 		status: 'planned',
-		prerequisites: [],
+		prerequisites: ['probability/random-variables-and-distributions'],
 		leadsTo: ['statistics/normal-distribution', 'statistics/variance-and-standard-deviation'],
 	},
 	{
