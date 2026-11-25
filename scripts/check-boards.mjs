@@ -6385,4 +6385,182 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	);
 }
 
+// ---- Page components: the distributions registry and PropertiesTable's rows (decision 0023) ----
+{
+	const { DISTRIBUTIONS, getDistribution } = await import('../src/data/distributions.mjs');
+	const { splitMath, proseHtml, resolveRows } = await import('../src/components/properties/resolveRows.mjs');
+	const { TOPICS } = await import('../src/data/topics.mjs');
+	const topicIds = new Set(TOPICS.map((topic) => topic.id));
+
+	// Registry: unique ids, an owner page that exists as a topic, and every cell parses and renders with the site's macros.
+	assert.deepEqual(DISTRIBUTIONS.map((family) => family.id), ['binomial', 'normal', 'uniform']);
+	for (const family of DISTRIBUTIONS) {
+		assert.ok(topicIds.has(family.ownerTopic), `${family.id}: owner topic ${family.ownerTopic} is in topics.mjs`);
+		const rowIds = family.rows.map((row) => row.id);
+		assert.equal(new Set(rowIds).size, rowIds.length, `${family.id}: row ids are unique`);
+		assert.ok(rowIds.length > 0, `${family.id}: has rows`);
+		for (const text of [family.name, family.statementHeading, ...family.rows.flatMap((row) => [row.label, row.statement])]) {
+			assert.ok(text.trim() !== '', `${family.id}: no empty text`);
+			assert.doesNotThrow(() => proseHtml(text, family.id), `${family.id}: "${text}" renders`);
+			for (const segment of splitMath(text, family.id)) {
+				if (segment.kind === 'text') assert.ok(!/\\[a-zA-Z]/.test(segment.value), `${family.id}: TeX "${segment.value}" sits outside $…$`);
+			}
+		}
+	}
+	assert.equal(new Set(DISTRIBUTIONS.map((family) => family.id)).size, DISTRIBUTIONS.length);
+	assert.throws(() => getDistribution('poisson'), (error) => error.message === 'PropertiesTable: unknown distribution family "poisson"; add it to src/data/distributions.mjs');
+
+	// Every reader-facing string, pinned.
+	const pinned = (familyId, options) => {
+		const table = resolveRows(familyId, options);
+		return [table.caption, table.statementHeading, table.examplesHeading, ...table.rows.map((row) => `${row.label} | ${row.statement}${row.example === undefined ? '' : ` | ${row.example}`}`)];
+	};
+	assert.deepEqual(pinned('normal'), [
+		'Properties of the normal distribution',
+		'Value',
+		undefined,
+		'Mean, median, mode | $\\vmu$',
+		'Variance | $\\vsigma^2$',
+		'Skewness | 0',
+		'Excess kurtosis | 0',
+		'Entropy | $\\tfrac{1}{2}\\ln(2\\pi e \\vsigma^2)$',
+		'Moment generating function | $\\exp(\\vmu t + \\vsigma^2 t^2 / 2)$',
+	]);
+	assert.deepEqual(pinned('binomial'), [
+		'Properties of the binomial distribution',
+		'Statement',
+		undefined,
+		'Bernoulli | With $n = 1$: values 0 and 1, mean $p$, variance $p(1 - p)$',
+		'Formula | $P(X = k) = \\binom{n}{k} p^k (1 - p)^{n - k}$',
+		'Adds up to 1 | By the binomial theorem, $\\sum_k P(X = k) = (p + 1 - p)^n = 1$',
+		'Mean | $np$',
+		'Variance | $np(1 - p)$, at most $n/4$',
+		'Tallest bar | At $\\lfloor (n + 1)p \\rfloor$ for $0 < p < 1$, tied with the bar below when $(n + 1)p$ is whole',
+		'Mirror | $n - X \\sim \\operatorname{Bin}(n, 1 - p)$',
+		'Sums | $\\operatorname{Bin}(n, p) + \\operatorname{Bin}(m, p) = \\operatorname{Bin}(n + m, p)$ for independent counts',
+		'Needs | A fixed $n$, independent trials, the same $p$',
+	]);
+	// The PDF page's third column compares the Sand heap with the uniform, so its heading names the heap.
+	const sandHeap = { height: '$1/2$ at 2 cm', mean: '2 cm', variance: '$2/3$ cm²', point: '0' };
+	assert.deepEqual(pinned('uniform', { examples: sandHeap, examplesHeading: 'Sand heap (triangle on 0 to 4 cm, top at 2 cm)' }), [
+		'Properties of the uniform distribution',
+		'Uniform $\\mathcal{U}(a, b)$',
+		'Sand heap (triangle on 0 to 4 cm, top at 2 cm)',
+		'Height | $1/(b - a)$ | $1/2$ at 2 cm',
+		'Mean | $(a + b)/2$ | 2 cm',
+		'Variance | $(b - a)^2/12$ | $2/3$ cm²',
+		'$P(X = x)$ | 0 | 0',
+	]);
+
+	// Prose and math: math is split out at unescaped $, so prose wraps and reads as text.
+	assert.deepEqual(splitMath('Without replacement: $1/15$, not $0.09$', 'test'), [
+		{ kind: 'text', value: 'Without replacement: ' },
+		{ kind: 'math', value: '1/15' },
+		{ kind: 'text', value: ', not ' },
+		{ kind: 'math', value: '0.09' },
+	]);
+	assert.deepEqual(splitMath('Costs \\$5, or $x \\$ y$', 'test'), [
+		{ kind: 'text', value: 'Costs $5, or ' },
+		{ kind: 'math', value: 'x \\$ y' },
+	]);
+	assert.deepEqual(splitMath('$\\vmu$', 'test'), [{ kind: 'math', value: '\\vmu' }]);
+	assert.throws(() => splitMath('Fair coin $\\vmu = 5', 'PropertiesTable (binomial), example for row "mean"'), (error) => error.message === 'PropertiesTable (binomial), example for row "mean": an odd number of "$" in "Fair coin $\\vmu = 5"');
+	assert.throws(() => splitMath('a $ $ b', 'test'), /empty math/);
+	assert.throws(() => splitMath('  ', 'test'), /the text is empty/);
+	const mixed = proseHtml('Fair coin <b> & $\\vmu = 5$', 'test');
+	assert.ok(mixed.startsWith('Fair coin &lt;b&gt; &amp; <span class="katex">'), 'text is HTML-escaped and math is KaTeX');
+	assert.ok(mixed.includes('ms-mu'), '\\vmu keeps its meaning color class');
+
+	// resolveRows: subsets, order, links, and every bad input fails loudly.
+	assert.deepEqual(resolveRows('binomial', { rows: ['variance', 'mean'] }).rows.map((row) => row.id), ['variance', 'mean']);
+	assert.equal(resolveRows('normal', { rowLinks: { center: '/statistics/mean-vs-median-vs-mode/' } }).rows[0].link, '/statistics/mean-vs-median-vs-mode/');
+	const fails = (options, message) => assert.throws(() => resolveRows('binomial', options), (error) => error.message === message);
+	assert.throws(() => resolveRows('gamma'), /unknown distribution family "gamma"/);
+	fails({ rows: [] }, 'PropertiesTable (binomial): rows is empty; leave it out to show every row');
+	fails({ rows: ['mean', 'median'] }, 'PropertiesTable (binomial): unknown row "median"');
+	fails({ rows: ['mean', 'mean'] }, 'PropertiesTable (binomial): row "mean" is listed twice');
+	fails({ rows: ['mean'], examples: { variance: '2.5' }, examplesHeading: 'On the boards' }, 'PropertiesTable (binomial): an example for row "variance", which the table doesn\'t show');
+	fails({ rows: ['mean', 'variance'], examples: { mean: '5' }, examplesHeading: 'On the boards' }, 'PropertiesTable (binomial): examples are all or none, but rows "variance" have none');
+	fails({ rows: ['mean'], examples: { mean: '' }, examplesHeading: 'On the boards' }, 'PropertiesTable (binomial), example for row "mean": the text is empty');
+	fails({ rows: ['mean'], examples: { mean: '5' } }, 'PropertiesTable (binomial): examples need an examplesHeading');
+	fails({ examples: {} }, 'PropertiesTable (binomial): examples is empty; leave it out for a two-column table');
+	fails({ examplesHeading: 'On the boards' }, 'PropertiesTable (binomial): examplesHeading is set but there are no examples');
+	fails({ rows: ['mean'], rowLinks: { sums: '/probability/independence/' } }, 'PropertiesTable (binomial): a link for row "sums", which the table doesn\'t show');
+	fails({ rowLinks: { mean: 'https://example.com/' } }, 'PropertiesTable (binomial): the link for row "mean" must be a site path starting with "/", got "https://example.com/"');
+
+	// The math behind the binomial rows, exact, on DistributionBoard's own model (p = j/20).
+	const { binomial, binomialMoments, tallestValues } = await import('../src/components/react/distributionBoard/families.ts');
+	const { mean: barMean, variance: barVariance } = await import('../src/components/react/distributionBoard/model.ts');
+	const probabilities = (n, j) => binomial(n, j).bars.map((bar) => bar.probability);
+	const total = (list) => list.reduce((sum, value) => addFractions(sum, value), fraction(0, 1));
+	const FAIR = 10;
+	const RIGHT_NINE_IN_TEN = 18;
+	const RARE = 2;
+	// Fair coin, 10 flips: the bars total 1024/1024, P(X = 6) = 210/1024, μ = 5, σ² = 5/2 = n/4, the bound.
+	const fair = binomial(10, FAIR);
+	assert.equal(fair.totalWeight, 1024);
+	assert.deepEqual(total(probabilities(10, FAIR)), fraction(1, 1));
+	assert.equal(fair.bars[6].weight, 210);
+	assert.deepEqual(fair.bars[6].probability, fraction(210, 1024));
+	assert.deepEqual(barMean(fair), fraction(5, 1));
+	assert.deepEqual(barVariance(fair), fraction(5, 2));
+	assert.deepEqual(binomialMoments(10, FAIR), { mean: fraction(5, 1), variance: fraction(10, 4) });
+	// Right 9 in 10: μ = 9, σ² = 9/10. Summed by hand around μ, since the generic variance passes 2⁵³ here.
+	const varianceAbout = (n, j, center) => total(probabilities(n, j).map((probability, k) => multiplyFractions(probability, fraction((k - center) ** 2, 1))));
+	assert.deepEqual(barMean(binomial(10, RIGHT_NINE_IN_TEN)), fraction(9, 1));
+	assert.deepEqual(varianceAbout(10, RIGHT_NINE_IN_TEN, 9), fraction(9, 10));
+	assert.deepEqual(binomialMoments(10, RIGHT_NINE_IN_TEN), { mean: fraction(9, 1), variance: fraction(9, 10) });
+	// Rare, 1 in 10: also σ² = 9/10, and its bars are Right 9 in 10's read backward (the mirror row).
+	assert.deepEqual(varianceAbout(10, RARE, 1), fraction(9, 10));
+	const rare = probabilities(10, RARE);
+	const right = probabilities(10, RIGHT_NINE_IN_TEN);
+	for (let k = 0; k <= 10; k += 1) assert.deepEqual(rare[k], right[10 - k], `P(Rare = ${k}) = P(Right = ${10 - k})`);
+	// Every n ≤ 10 and p: variance at most n/4, and the tallest bar where the row says (ties included).
+	for (let n = 1; n <= 10; n += 1) {
+		for (let j = 1; j < 20; j += 1) {
+			assert.ok(compareFractions(binomialMoments(n, j).variance, fraction(n, 4)) <= 0, `Bin(${n}, ${j}/20) variance is at most n/4`);
+			// The bars share one denominator, so their integer weights compare exactly where cross-multiplying would overflow.
+			const weights = binomial(n, j).bars.map((bar) => bar.weight);
+			const top = Math.max(...weights);
+			const tallest = weights.flatMap((weight, k) => (weight === top ? [k] : []));
+			const scaled = (n + 1) * j;
+			const expected = scaled % 20 === 0 ? [scaled / 20 - 1, scaled / 20] : [Math.floor(scaled / 20)];
+			assert.deepEqual(tallest, expected, `Bin(${n}, ${j}/20): tallest at ⌊(n + 1)p⌋, tied with the bar below when (n + 1)p is whole`);
+			assert.deepEqual(tallestValues(n, j), expected);
+		}
+	}
+	// 9 coins: (n + 1)p = 5 is whole, so 4 and 5 heads tie at 126/512.
+	const nine = probabilities(9, FAIR);
+	assert.deepEqual([nine[4], nine[5]], [fraction(126, 512), fraction(126, 512)]);
+	// One flip is the Bernoulli row: values 0 and 1 at 1/2 each, μ = 1/2, σ² = 1/4, so σ = 1/2.
+	const flip = binomial(1, FAIR);
+	assert.deepEqual(flip.bars.map((bar) => [bar.value, bar.probability]), [[0, fraction(1, 2)], [1, fraction(1, 2)]]);
+	assert.deepEqual([barMean(flip), barVariance(flip)], [fraction(1, 2), fraction(1, 4)]);
+	assert.deepEqual(squareRoot(barVariance(flip)), { exact: true, value: fraction(1, 2) });
+	// Sums: Bin(3, 1/2) and Bin(2, 1/2), independent, add bar for bar to Bin(5, 1/2).
+	const three = probabilities(3, FAIR);
+	const two = probabilities(2, FAIR);
+	const summed = Array.from({ length: 6 }, (_, s) => total(three.flatMap((left, a) => (s - a >= 0 && s - a < two.length ? [multiplyFractions(left, two[s - a])] : []))));
+	assert.deepEqual(summed, probabilities(5, FAIR));
+
+	// The uniform rows, on the density board's exact shapes: height 1/(b − a), mean (a + b)/2, variance (b − a)²/12.
+	const dens = await import('../src/components/react/distributionBoard/density.ts');
+	const { SHAPES } = await import('../src/components/react/distributionBoard/densitySetups.ts');
+	const block = (b, height) => ({ ends: 'closed-block', knots: [{ x: fraction(0, 1), height }, { x: b, height }] });
+	const unit = block(fraction(1, 1), fraction(1, 1));
+	assert.deepEqual([dens.meanOf(unit), dens.varianceOf(unit)], [fraction(1, 2), fraction(1, 12)], 'U(0, 1): mean 1/2, variance 1/12');
+	for (const [shape, b] of [[SHAPES.even.shape, fraction(4, 1)], [SHAPES.narrow.shape, fraction(1, 2)]]) {
+		assert.deepEqual(dens.heightAt(shape, divideFractions(b, fraction(2, 1))), divideFractions(fraction(1, 1), b), 'height 1/(b − a)');
+		assert.deepEqual(dens.meanOf(shape), divideFractions(b, fraction(2, 1)), 'mean (a + b)/2');
+		assert.deepEqual(dens.varianceOf(shape), divideFractions(multiplyFractions(b, b), fraction(12, 1)), 'variance (b − a)²/12');
+		assert.deepEqual(dens.areaBetween(shape, fraction(1, 4), fraction(1, 4)), fraction(0, 1), 'P(X = x) = 0');
+	}
+	// The Sand heap column: height 1/2 at 2 cm, mean 2 cm, variance (16 + 4 − 8)/18 = 2/3 cm², and no chance at a point.
+	const heap = SHAPES.heap.shape;
+	assert.deepEqual(dens.heightAt(heap, fraction(2, 1)), fraction(1, 2));
+	assert.deepEqual(dens.meanOf(heap), fraction(2, 1));
+	assert.deepEqual(dens.varianceOf(heap), fraction(2, 3));
+	assert.deepEqual(dens.areaBetween(heap, fraction(2, 1), fraction(2, 1)), fraction(0, 1));
+}
+
 console.log('Board check passed.');
