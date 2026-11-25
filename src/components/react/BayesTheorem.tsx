@@ -4,6 +4,7 @@ import type { vec } from "mafs";
 import Board from "./Board";
 import TraySlider from "./TraySlider";
 import PresetButtons from "./guided/PresetButtons.tsx";
+import useAnnouncer from "./guided/useAnnouncer.ts";
 import { formatNumber, plotColors } from "./plotColors";
 import { BAYES_SCENARIOS, computePosterior, resolveScenarios, type BayesScenarioId, type BayesValues } from "./bayesTheorem/scenarios.ts";
 
@@ -45,7 +46,7 @@ export default function BayesTheorem({ scenarios, initialScenario }: BayesTheore
   const [prior, setPrior] = useState(initial.values.prior);
   const [likelihood, setLikelihood] = useState(initial.values.likelihood);
   const [falsePositive, setFalsePositive] = useState(initial.values.falsePositive);
-  const [announcement, setAnnouncement] = useState("");
+  const [announcement, announce] = useAnnouncer();
 
   const { evidence, posterior } = useMemo(
     () => computePosterior({ prior, likelihood, falsePositive }),
@@ -53,10 +54,14 @@ export default function BayesTheorem({ scenarios, initialScenario }: BayesTheore
   );
 
   // Both readout numbers, so a page that asks for P(B) (the law of total probability) is heard as well as seen.
-  const announce = useCallback((values: BayesValues, prefix = "") => {
-    const result = computePosterior(values);
-    setAnnouncement(`${prefix}Posterior P of A given B is ${posteriorText(result.posterior)}; P of B is ${formatNumber(result.evidence, 3)}.`);
-  }, []);
+  // The shared announcer empties and refills the region, so pressing the same preset twice is spoken twice.
+  const announceValues = useCallback(
+    (values: BayesValues, prefix = "") => {
+      const result = computePosterior(values);
+      announce(`${prefix}Posterior P of A given B is ${posteriorText(result.posterior)}; P of B is ${formatNumber(result.evidence, 3)}.`);
+    },
+    [announce],
+  );
 
   const loadScenario = useCallback(
     (id: BayesScenarioId) => {
@@ -65,9 +70,9 @@ export default function BayesTheorem({ scenarios, initialScenario }: BayesTheore
       setPrior(scenario.values.prior);
       setLikelihood(scenario.values.likelihood);
       setFalsePositive(scenario.values.falsePositive);
-      announce(scenario.values, `${scenario.label}. ${scenario.meaning} `);
+      announceValues(scenario.values, `${scenario.label}. ${scenario.meaning} `);
     },
-    [announce],
+    [announceValues],
   );
 
   const handleReset = useCallback(() => loadScenario(choice.initial), [loadScenario, choice.initial]);
@@ -110,9 +115,9 @@ export default function BayesTheorem({ scenarios, initialScenario }: BayesTheore
         onPick={pickPreset}
       />
       <p className="ms-event-note-line">{BAYES_SCENARIOS[scenarioId].meaning}</p>
-      {probabilitySlider("P(A)", prior, setPrior, (value) => announce({ prior: value, likelihood, falsePositive }))}
-      {probabilitySlider("P(B | A)", likelihood, setLikelihood, (value) => announce({ prior, likelihood: value, falsePositive }))}
-      {probabilitySlider("P(B | not A)", falsePositive, setFalsePositive, (value) => announce({ prior, likelihood, falsePositive: value }))}
+      {probabilitySlider("P(A)", prior, setPrior, (value) => announceValues({ prior: value, likelihood, falsePositive }))}
+      {probabilitySlider("P(B | A)", likelihood, setLikelihood, (value) => announceValues({ prior, likelihood: value, falsePositive }))}
+      {probabilitySlider("P(B | not A)", falsePositive, setFalsePositive, (value) => announceValues({ prior, likelihood, falsePositive: value }))}
       <p className="ms-board-readout">
         P(A | B) = {posteriorText(posterior)} &nbsp; P(B) = {formatNumber(evidence, 3)}
       </p>
