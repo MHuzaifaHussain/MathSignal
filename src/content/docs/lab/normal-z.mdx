@@ -1,0 +1,23 @@
+---
+title: NormalDistribution z mode lab
+description: A draft page for trying the NormalDistribution z mode and the bell during development. It is never built for the live site, because drafts are left out of production.
+draft: true
+---
+
+import NormalDistribution from "../../../components/react/NormalDistribution.tsx";
+
+Development only. The first board is `mode="z"` with `setup="taller-for-age"`; the second is the bell with no props, which must look and behave exactly as on the Normal distribution page.
+
+Before Check the z board shows the nine-year-olds alone: no z ruler, no z text, no Shade switch and no presets. Answer the question and press Check to bring them in. Its table is behind the Table view switch, the last control before Reset. Open it at 320px to check that it fits without scrolling sideways, and print the page to check that it prints while folded.
+
+## taller-for-age
+
+<div class="not-content">
+  <NormalDistribution client:visible mode="z" setup="taller-for-age" />
+</div>
+
+## The bell, no props
+
+<div class="not-content">
+  <NormalDistribution client:visible />
+</div>
