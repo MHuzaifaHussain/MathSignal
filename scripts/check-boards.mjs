@@ -4301,4 +4301,31 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	assert.ok(!/function Segment[\s({<]|const DOTTED\s|strokeDasharray/.test(planeSource), 'VectorPlane defines its own dotted line');
 }
 
+// ---- NormalDistribution: bell untouched, z mode (decision 0019) ----
+// The published bell is pinned first, so moving its code into a mode can't change its words or numbers.
+{
+	const bell = await import('../src/components/react/normalDistribution/bell.ts');
+	assert.equal(bell.describeState(0, 1), 'Mean 0.00, standard deviation 1.00, peak height 0.40.');
+	assert.equal(bell.describeState(-1.5, 2), 'Mean −1.50, standard deviation 2.00, peak height 0.20.');
+	assert.equal(bell.describeState(3, 0.4), 'Mean 3.00, standard deviation 0.40, peak height 1.00.');
+	assert.deepEqual(
+		{ ...bell, gaussian: undefined, describeState: undefined },
+		{
+			INITIAL_MU: 0,
+			INITIAL_SIGMA: 1,
+			MU_RANGE: [-3, 3],
+			SIGMA_RANGE: [0.4, 2.5],
+			MU_STEP: 0.1,
+			SIGMA_STEP: 0.05,
+			VIEW_X: [-5, 5],
+			VIEW_Y: [-0.12, 1.1],
+			BOARD_HEIGHT: 360,
+			LABEL_OFFSET: 0.07,
+			gaussian: undefined,
+			describeState: undefined,
+		},
+	);
+	assert.equal(bell.gaussian(0, 0, 1), 1 / Math.sqrt(2 * Math.PI));
+}
+
 console.log('Board check passed.');

@@ -4,23 +4,21 @@ import type { vec } from "mafs";
 import Board from "./Board";
 import ChalkNote from "./ChalkNote";
 import TraySlider from "./TraySlider";
+import {
+  BOARD_HEIGHT,
+  INITIAL_MU,
+  INITIAL_SIGMA,
+  LABEL_OFFSET,
+  MU_RANGE,
+  MU_STEP,
+  SIGMA_RANGE,
+  SIGMA_STEP,
+  VIEW_X,
+  VIEW_Y,
+  describeState,
+  gaussian,
+} from "./normalDistribution/bell.ts";
 import { formatNumber, plotColors } from "./plotColors";
-
-const INITIAL_MU = 0;
-const INITIAL_SIGMA = 1;
-const MU_RANGE: vec.Vector2 = [-3, 3];
-const SIGMA_RANGE: vec.Vector2 = [0.4, 2.5];
-const MU_STEP = 0.1;
-const SIGMA_STEP = 0.05;
-const VIEW_X: vec.Vector2 = [-5, 5];
-/** Tall enough for the narrowest bell: peak = 1 / (σ√2π) ≈ 1.0 at σ = 0.4. */
-const VIEW_Y: vec.Vector2 = [-0.12, 1.1];
-const BOARD_HEIGHT = 360;
-const LABEL_OFFSET = 0.07;
-
-function gaussian(x: number, mu: number, sigma: number): number {
-  return Math.exp(-0.5 * ((x - mu) / sigma) ** 2) / (sigma * Math.sqrt(2 * Math.PI));
-}
 
 const clamp = (value: number, [min, max]: vec.Vector2) => Math.min(max, Math.max(min, value));
 /** Tick labels at the very edge of the view get cut in half by the plot's frame, so they are left out. */
@@ -32,10 +30,6 @@ const sigmaSide = (mu: number) => (mu > 0 ? -1 : 1);
  * minimum instead of mirroring it (which made the spread grow while dragging or pressing inward).
  */
 const sigmaFromHandleX = (x: number, mu: number) => clamp(sigmaSide(mu) * (x - mu), SIGMA_RANGE);
-
-function describeState(mu: number, sigma: number): string {
-  return `Mean ${formatNumber(mu)}, standard deviation ${formatNumber(sigma)}, peak height ${formatNumber(gaussian(mu, mu, sigma))}.`;
-}
 
 /** Normal distribution board: drag μ along the axis, drag σ along the curve's inflection point. */
 export default function NormalDistribution() {
