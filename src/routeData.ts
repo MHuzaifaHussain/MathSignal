@@ -58,6 +58,7 @@ function structuredDataFor(route: StarlightRoute, subject: string | null) {
 		description: route.entry.data.description ?? '',
 		author: route.entry.data.author,
 		dateModified: route.entry.data.reviewedAt,
+		teaches: route.entry.data.objectives,
 		path: `/${route.id}/`,
 		subjectLabel: DOMAINS.find((domain) => domain.directory === subject)?.label ?? subject,
 	});

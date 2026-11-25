@@ -1,6 +1,6 @@
 // JSON-LD builders. Structured data is for entity clarity, not tricks: only fields that are true
 // and present on the page, and no FAQ markup (docs/seo/README.md).
-import { LOGO_URL, REPOSITORY_URL, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from './site.mjs';
+import { LOGO_URL, REPOSITORY_URL, SITE_DESCRIPTION, SITE_NAME, SITE_URL, TEXT_LICENSE_URL } from './site.mjs';
 
 type JsonLd = Record<string, unknown>;
 
@@ -40,9 +40,11 @@ interface ArticleInput {
 	subjectLabel: string;
 	author?: string;
 	dateModified?: Date;
+	/** The page's learning objectives, as schema.org `teaches` (decision 0023). */
+	teaches?: string[];
 }
 
-export function conceptPageGraph({ title, description, path, subjectLabel, author, dateModified }: ArticleInput): JsonLd {
+export function conceptPageGraph({ title, description, path, subjectLabel, author, dateModified, teaches }: ArticleInput): JsonLd {
 	const url = `${SITE_URL}${path}`;
 	return {
 		'@context': 'https://schema.org',
@@ -65,6 +67,8 @@ export function conceptPageGraph({ title, description, path, subjectLabel, autho
 				keywords: [subjectLabel, 'machine learning'],
 				isPartOf: { '@id': WEBSITE_ID },
 				publisher: { '@id': ORGANIZATION_ID },
+				license: TEXT_LICENSE_URL,
+				...(teaches && teaches.length > 0 ? { teaches } : {}),
 				...(author ? { author: { '@type': 'Person', name: author } } : {}),
 				...(dateModified ? { dateModified: dateModified.toISOString().slice(0, 10) } : {}),
 			},
