@@ -5179,6 +5179,13 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	assert.deepEqual([[2.1, 0.9], [-1, 5], [5, -5], [1.75, 1.25], [0.3, 2.9]].map(nb.nearestPathIndex), [8, 0, 12, 7, 1]);
 	// The checks at import throw on a broken model.
 	assert.doesNotThrow(() => nb.validateModel());
+	assert.deepEqual(nb.NORM_BALL_MODEL, { fenceLoss: FENCE_LOSS, touchLoss: TOUCH_LOSS, touchRings: nb.TOUCH_RINGS });
+	const broken = (change) => ({ ...nb.NORM_BALL_MODEL, ...change });
+	const { VIEW_LIMIT } = await import('../src/components/react/vectorBoard/model.ts');
+	// The 4.5 ring lies between the lowest path loss 3 and the lower corner loss 9/2.
+	assert.throws(() => nb.validateModel(broken({ touchRings: [f(1), f(2), f(9, 2)] })), /touch ring at loss 4\.5 .* shows the answer/);
+	assert.throws(() => nb.validateModel(broken({ fenceLoss: { ...FENCE_LOSS, center: w(f(VIEW_LIMIT + 1), f(1)) } })), /the fence loss's center .* is off the board/);
+	assert.throws(() => nb.validateModel(broken({ touchLoss: { ...TOUCH_LOSS, curvature: w(f(0), f(2)) } })), /the touch loss needs a positive curvature/);
 	// No μ or σ colors and no KaTeX in NormBall's files.
 	for (const name of readdirSync('src/components/react/normBall')) {
 		const source = readFileSync(`src/components/react/normBall/${name}`, 'utf8');

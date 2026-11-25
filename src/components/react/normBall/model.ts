@@ -229,22 +229,32 @@ function checkLoss(name: string, loss: Loss): void {
 	if (!onView(loss.center)) throw new Error(`NormBall: ${name}'s center ${text(loss.center)} is off the board (±${VIEW_LIMIT}).`);
 }
 
+/** What validateModel checks: the two losses and the rings drawn on `touch`. */
+export interface NormBallModel {
+	fenceLoss: Loss;
+	touchLoss: Loss;
+	touchRings: readonly Fraction[];
+}
+
+export const NORM_BALL_MODEL: NormBallModel = { fenceLoss: FENCE_LOSS, touchLoss: TOUCH_LOSS, touchRings: TOUCH_RINGS };
+
 /** Throws, naming the problem, if a loss, a ring or a penalized weight can't be drawn or would give the answer away. */
-export function validateModel(): void {
-	checkLoss('the fence loss', FENCE_LOSS);
-	checkLoss('the touch loss', TOUCH_LOSS);
+export function validateModel(model: NormBallModel = NORM_BALL_MODEL): void {
+	const { fenceLoss, touchLoss, touchRings } = model;
+	checkLoss('the fence loss', fenceLoss);
+	checkLoss('the touch loss', touchLoss);
 	for (const alpha of alphaGrid()) {
-		for (const [method, weights] of [['lasso', lasso(FENCE_LOSS, alpha)], ['ridge', ridge(FENCE_LOSS, alpha)]] as const) {
+		for (const [method, weights] of [['lasso', lasso(fenceLoss, alpha)], ['ridge', ridge(fenceLoss, alpha)]] as const) {
 			if (!onView(weights)) throw new Error(`NormBall: ${method} at α = ${toNumber(alpha)} gives ${text(weights)}, off the board.`);
 		}
 	}
-	for (const level of TOUCH_RINGS) {
-		if (ringGivesAway(TOUCH_LOSS, level)) throw new Error(`NormBall: the touch ring at loss ${toNumber(level)} crosses the path twice or touches it, so it shows the answer.`);
+	for (const level of touchRings) {
+		if (ringGivesAway(touchLoss, level)) throw new Error(`NormBall: the touch ring at loss ${toNumber(level)} crosses the path twice or touches it, so it shows the answer.`);
 	}
-	const parallel = pathPoints().filter((_, index) => lagrangeMultiplier(TOUCH_LOSS, index) !== null);
+	const parallel = pathPoints().filter((_, index) => lagrangeMultiplier(touchLoss, index) !== null);
 	if (parallel.length !== 1) throw new Error(`NormBall: the touch path must have exactly one point where the downhill arrow is parallel to the normal, found ${parallel.length}.`);
 	pathPoints().forEach((point, index) => {
-		for (const tip of [add(point, downhillAt(TOUCH_LOSS, point)), add(point, PATH_NORMAL)]) {
+		for (const tip of [add(point, downhillAt(touchLoss, point)), add(point, PATH_NORMAL)]) {
 			if (!onView(tip)) throw new Error(`NormBall: an arrow from path point ${index} ends at ${text(tip)}, off the board.`);
 		}
 	});
