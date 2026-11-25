@@ -119,22 +119,6 @@ P(B) lies between the smallest and largest within-case chance, because it is a w
 
 Not B adds up the same way, which gives a check. The bus is on time on 70% of rainy days and 90% of dry ones, so P(not late) = 0.70 × 0.25 + 0.90 × 0.75 = 0.175 + 0.675 = 0.85, which is 1 − 0.15.
 
-<GoDeeper label="the law inside a condition" id="conditional-form">
-
-Once you know that an event C with P(C) > 0 happened, the law holds with every part conditioned on C: $P(B \mid C)$ is the sum of $P(B \mid H_k \cap C)\,P(H_k \mid C)$ over the cases with $P(H_k \cap C) > 0$. Say C is "a weekday". It rains on 20% of weekdays, and the bus is late on 35% of rainy weekdays and 12.5% of dry ones, so P(late | weekday) = 0.35 × 0.20 + 0.125 × 0.80 = 0.07 + 0.10 = 0.17. The rain weight is now P(rain | weekday) = 0.20, not P(rain) = 0.25.
-
-<StepThrough title="The law inside a condition: P(B | C) = Σ P(B | Hₖ ∩ C) P(Hₖ | C)" rigor="full">
-
-1. Assume $P(C) > 0$.
-2. The sets $B \cap C \cap H_k$ are pairwise disjoint, and their union is $B \cap C$, because the $H_k$ split $\Omega$.
-3. Additivity gives $P(B \cap C) = \sum_k P(B \cap C \cap H_k)$. Terms with $P(H_k \cap C) = 0$ are 0, since $B \cap C \cap H_k \subseteq H_k \cap C$, and are dropped.
-4. For the rest, [the multiplication rule](/probability/conditional-probability/#the-multiplication-rule) twice gives $P(B \cap C \cap H_k) = P(B \mid H_k \cap C)\,P(H_k \cap C) = P(B \mid H_k \cap C)\,P(H_k \mid C)\,P(C)$.
-5. Divide both sides by $P(C)$. Since [a conditional probability is itself a probability](/probability/conditional-probability/#conditioning-is-a-probability), this is the ordinary law applied to $P(\,\cdot \mid C)$.
-
-</StepThrough>
-
-</GoDeeper>
-
 ## Notation
 
 <NotationKey symbols={["sample-space", "event-collection", "event", "complement", "intersection", "union", "probability", "conditional", "partition", "sum", "density", "conditional-distribution"]} />
@@ -172,6 +156,22 @@ Grinstead and Snell call the cases hypotheses, $H_1, \ldots, H_m$: no two share 
 | Complement route | $P(B^\complement) = \sum_{k} P(B^\complement \mid H_k)\,P(H_k) = 1 - P(B)$ | Bus on time: $0.85$ |
 
 </FormalDefinition>
+
+<GoDeeper label="the law inside a condition" id="conditional-form">
+
+Once you know that an event C with P(C) > 0 happened, the law holds with every part conditioned on C: $P(B \mid C)$ is the sum of $P(B \mid H_k \cap C)\,P(H_k \mid C)$ over the cases with $P(H_k \cap C) > 0$. Say C is "a weekday". It rains on 20% of weekdays, and the bus is late on 35% of rainy weekdays and 12.5% of dry ones, so P(late | weekday) = 0.35 × 0.20 + 0.125 × 0.80 = 0.07 + 0.10 = 0.17. The rain weight is now P(rain | weekday) = 0.20, not P(rain) = 0.25.
+
+<StepThrough title="The law inside a condition: P(B | C) = Σ P(B | Hₖ ∩ C) P(Hₖ | C)" rigor="full">
+
+1. Assume $P(C) > 0$.
+2. The sets $B \cap C \cap H_k$ are pairwise disjoint, and their union is $B \cap C$, because the $H_k$ split $\Omega$.
+3. Additivity gives $P(B \cap C) = \sum_k P(B \cap C \cap H_k)$. Terms with $P(H_k \cap C) = 0$ are 0, since $B \cap C \cap H_k \subseteq H_k \cap C$, and are dropped.
+4. For the rest, [the multiplication rule](/probability/conditional-probability/#the-multiplication-rule) twice gives $P(B \cap C \cap H_k) = P(B \mid H_k \cap C)\,P(H_k \cap C) = P(B \mid H_k \cap C)\,P(H_k \mid C)\,P(C)$.
+5. Divide both sides by $P(C)$. Since [a conditional probability is itself a probability](/probability/conditional-probability/#conditioning-is-a-probability), this is the ordinary law applied to $P(\,\cdot \mid C)$.
+
+</StepThrough>
+
+</GoDeeper>
 
 ## Worked examples
 
