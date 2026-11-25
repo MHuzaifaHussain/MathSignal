@@ -111,7 +111,33 @@ Small modules every guided board composes in its tray ([decision 0013](../decisi
 ### `NormalDistribution`, `LinearRegression`, `BayesTheorem`
 Concept boards. Each composes `Board`, Mafs, `plotColors`, and `TraySlider`s.
 
-`BayesTheorem` also has "Example" preset buttons, defined with their math in `src/components/react/bayesTheorem/scenarios.ts` and checked by `npm run check:boards`: "Any two events" (the opening view), "Medical test" (1 in 100 has the condition, a test right 9 times in 10, so a positive means P(A | B) ≈ 0.083) and "Wet lawn" (rain or the sprinkler, P(A | B) ≈ 0.429). A line under the presets says what A and B stand for. When A's column is thinner than 0.15, its labels sit beside it. Try it at `/lab/bayes-theorem/`.
+`BayesTheorem` also has "Example" preset buttons, defined with their math in `src/components/react/bayesTheorem/scenarios.ts` and checked by `npm run check:boards`. A line under the presets says what A and B stand for. When A's column is thinner than 0.15, its labels sit beside it. Two optional props pick a page's presets ([decision 0016](../decisions/0016-bayes-board-presets-and-table.md)):
+
+| Prop | Type | Notes |
+|---|---|---|
+| `scenarios` | `BayesScenarioId[]` | 2 to 4 ids, in the order the buttons show. Default: `any-events`, `medical-test`, `wet-lawn` |
+| `initialScenario` | `BayesScenarioId` | The opening scenario, which Reset returns to. Must be one of `scenarios`; defaults to the first. Open on a scenario that doesn't answer the page's prediction |
+
+An unknown id, a list that is empty, repeated or longer than 4, or an opening outside the list fails the build.
+
+| Id | Button | Values P(A), P(B \| A), P(B \| not A) | Readout P(A \| B), P(B) | Used by |
+|---|---|---|---|---|
+| `any-events` | Any two events | 0.30, 0.80, 0.10 | 0.774, 0.310 | Every page's opening view |
+| `medical-test` | Medical test | 0.01, 0.90, 0.10 | 0.083, 0.108 | Bayes' theorem |
+| `wet-lawn` | Wet lawn | 0.20, 0.90, 0.30 | 0.429, 0.420 | Bayes' theorem, naive Bayes |
+| `late-bus` | Late bus | 0.25, 0.30, 0.10 | 0.500, 0.150 | Law of total probability |
+| `same-chance` | Same chance either way | 0.25, 0.40, 0.40 | 0.250, 0.400 | Law of total probability |
+| `fraud-flag` | Fraud flag | 0.04, 0.80, 0.03 | 0.526, 0.061 | Law of total probability |
+| `screening-test` | Screening test | 0.02, 0.95, 0.10 | 0.162, 0.117 | Base rate fallacy |
+| `screening-clinic` | Clinic | 0.30, 0.95, 0.10 | 0.803, 0.355 | Base rate fallacy |
+
+```mdx
+<div class="not-content">
+  <BayesTheorem client:visible scenarios={["any-events", "late-bus", "same-chance", "fraud-flag"]} />
+</div>
+```
+
+A "Show as table" switch under the readout adds a native table of the square's four areas as whole counts (A and not A by B and not B, with totals), out of the smallest of 100, 1,000 or 10,000 that keeps every count whole, in the scenario's own noun ("people", "days", "transactions"). The counts come from integer arithmetic on the sliders' whole percents (`bayesTheorem/table.ts`), so they never round. Two lines under the table give P(A | B) and P(B) as "k of n" with the readout's own decimals. The B-and-A count and B's total are bold. The table is off at the start and after Reset, and always prints. Try every preset list at `/lab/bayes-theorem/`.
 
 ### `EventSpace`
 A sample space as a table of outcomes (decision 0011). One prop: `setup`, the id of a configuration in `src/components/react/eventSpace/setups.ts` (`coins-build`, `dice-count`, `dice-operations`, `die-pour`, `dice-condition`, `kids-condition`, `coin-die-independence`, `dice-independence`, `weather-exclusive`, `die-compare`); an unknown id fails the build.

@@ -1,0 +1,26 @@
+# 0016: Page presets and a count table on the BayesTheorem board
+
+Status: accepted, 2026-11-25
+
+## Context
+BayesTheorem took no props: every page got the same three presets (Any two events, Medical test, Wet lawn). Three week-one drafts reuse it with their own numbers. The law of total probability page needed a late bus, a same-chance case and a fraud flag; the base rate page needed a screening test and a clinic. Without presets the reader reached those numbers with dozens of arrow presses, a weak keyboard path. Plan §5 also asks every board for 2–4 board-specific presets and a "Show as table" view unless the board is already a table, and BayesTheorem had neither.
+
+## Decision
+- **Two optional props, `scenarios` and `initialScenario`.** A page lists 2 to 4 scenario ids from `bayesTheorem/scenarios.ts`, in its own order, and may name the opening one, which must be in the list so it shows as pressed and Reset returns to it. With no props the board keeps its original three presets and opening, so the published Bayes' theorem page is unchanged. `resolveScenarios` checks the props while the island renders at build time: an unknown id, an empty, repeated or too-long list, or an opening outside the list fails the build. MDX props aren't type-checked, so this is the only guard.
+- **Five new scenarios**, each on the sliders' 0.01 grid: Late bus, Same chance either way and Fraud flag for the law of total probability; Screening test and Clinic for the base rate fallacy. `check-boards` asserts each readout with the board's own float arithmetic.
+- **Pages open on a neutral scenario.** The law of total probability spec asked the board to open on Late bus, but that shows "P(B) = 0.150" before the reader has answered the page's prediction. The design's no-spoiler rule wins: those pages open on Any two events, and pressing the page's preset is the reader's step after predicting.
+- **"Show as table" is a switch, not a stage.** It adds a native table under the readout and keeps the picture, because seeing the areas and the counts together is the point. The table counts the square's four areas (A and not A by B and not B, with totals) out of the smallest of 100, 1,000 or 10,000 people (or trials, days, mornings, transactions: each scenario names its noun) that keeps every count whole. Every slider value is a whole percent, so 10,000 always works, and the counts come from integer arithmetic, never rounding. This reproduces the tables the pages print by hand: 9, 99 and 108 of 1,000 for the medical test, 19, 98 and 117 of 1,000 for the screening test, and 608 of 10,000 fraud flags. Two lines under it tie the table to the readout ("P(A | B): 9 of the 108 people in B, 0.083"); their decimals are the readout's own values, so the two never round differently.
+- **Accessibility and print.** The switch is a `role="switch"` button in the tray's tab order. Turning it on announces what the table counts; while it is on, every preset and slider change adds the new count to its announcement. The table is hidden on screen until the switch is on, but always prints, like the other boards' tables. The two counts P(A | B) divides are bold, never colored, so nothing depends on color in forced colors.
+- **The shared announcer.** The board now speaks through `useAnnouncer` (decision 0013), so pressing the same preset twice is announced twice.
+
+## Consequences
+- Plan §5's board items hold for every page that uses BayesTheorem: page presets, readout sentences and "Show as table".
+- A page that wants different numbers adds a scenario to `scenarios.ts` with its `countNoun` and a `check-boards` assert, then lists its id.
+- The table makes the board about 330px taller at 375px while it is on (828 to 1,155px on the lab page). It is off at the start and after Reset, so the opening view keeps its height.
+- `formatCount` groups thousands with `Intl.NumberFormat`. DescriptiveStats has its own `groupThousands`; moving one shared helper into `boardText.ts` is left for a change that touches both boards.
+
+## Alternatives considered
+- **Open the law of total probability board on Late bus**, as its spec asked. One fewer press, but it answers the page's prediction before the reader commits.
+- **A "Show as" stage choice that swaps the picture for the table.** Shorter, but it hides the areas while the table explains them, and the plan names a table view, not a replacement.
+- **A table of probabilities instead of counts.** Matches the readout's three decimals, but counts of people are what the pages and the research they cite (natural frequencies) use to make Bayes' theorem readable.
+- **Every scenario on every page.** No props needed, but up to eight buttons, most of them about another page's story.
