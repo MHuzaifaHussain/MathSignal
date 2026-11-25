@@ -3010,6 +3010,10 @@ const announcerRun = () => {
 		assert.ok(!/\bmu\b|sigma|--ms-mu|--ms-sigma/.test(source), `${file} uses a μ or σ color`);
 		assert.ok(!source.includes('<LaTeX'), `${file} renders KaTeX`);
 	}
+	// Dotted lines come from the one shared helper, so every plane draws them the same way.
+	const planeSource = readFileSync('src/components/react/vectorBoard/VectorPlane.tsx', 'utf8');
+	assert.ok(/import \{[^}]*[\s,]Segment[\s,][^}]*\} from "\.\.\/planeLines"/.test(planeSource), 'VectorPlane imports the shared Segment');
+	assert.ok(!/function Segment[\s({<]|const DOTTED\s|strokeDasharray/.test(planeSource), 'VectorPlane defines its own dotted line');
 }
 
 console.log('Board check passed.');

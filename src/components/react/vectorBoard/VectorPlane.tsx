@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Circle, Coordinates, Mafs, MovablePoint, Plot, Polyline, Text, Vector } from "mafs";
 import type { vec } from "mafs";
+import { DOTTED, Segment } from "../planeLines";
 import { plotColors } from "../plotColors";
 import { ARC_RADIUS, cartShadow, handlesFor, ochreElement, planeLabels, showsArc, showsRightAngle, type TableRow } from "./describe.ts";
 import { LABEL_SIZE, VIEW_LIMIT, VIEW_PADDING, add, cross, fitLabel, isZero, lengthSquared, numberText, scale, shadowTip, snapInto, subtract, type Vec2 } from "./model.ts";
@@ -13,7 +14,6 @@ const OCHRE_WEIGHT = 3;
 const ZERO_RING_RADIUS = 0.2;
 const GUESS_RING_RADIUS = 0.32;
 const RIGHT_ANGLE_SIZE = 0.3;
-const DOTTED = { strokeDasharray: "1 5", strokeLinecap: "round" } as const;
 
 interface VectorPlaneProps {
   state: VectorState;
@@ -30,22 +30,6 @@ const unit = (v: Vec2): Vec2 => scale(1 / Math.sqrt(lengthSquared(v)), v);
 function Arrow({ tail = [0, 0], tip, color = plotColors.ink, weight = ARROW_WEIGHT, dashed = false }: { tail?: Vec2; tip: Vec2; color?: string; weight?: number; dashed?: boolean }) {
   if (isZero(subtract(tip, tail))) return <Circle center={[tail[0], tail[1]]} radius={ZERO_RING_RADIUS} color={color} fillOpacity={0} weight={2} />;
   return <Vector tail={[tail[0], tail[1]]} tip={[tip[0], tip[1]]} color={color} weight={weight} style={dashed ? "dashed" : "solid"} />;
-}
-
-/** A plain line, dotted or solid, with no arrowhead. */
-function Segment({ from, to, color, weight, dotted = false }: { from: Vec2; to: Vec2; color: string; weight: number; dotted?: boolean }) {
-  return (
-    <Polyline
-      points={[
-        [from[0], from[1]],
-        [to[0], to[1]],
-      ]}
-      color={color}
-      weight={weight}
-      fillOpacity={0}
-      svgPolylineProps={dotted ? { style: DOTTED } : undefined}
-    />
-  );
 }
 
 /** A small open square at `corner`, with sides along the two unit directions. */
@@ -72,8 +56,8 @@ function ComponentLegs({ tail, tip }: { tail: Vec2; tip: Vec2 }) {
   const corner: Vec2 = [tip[0], tail[1]];
   return (
     <>
-      <Segment from={tail} to={corner} color={plotColors.inkMuted} weight={2} dotted />
-      <Segment from={corner} to={tip} color={plotColors.inkMuted} weight={2} dotted />
+      <Segment from={tail} to={corner} color={plotColors.inkMuted} weight={2} lineStyle="dotted" />
+      <Segment from={corner} to={tip} color={plotColors.inkMuted} weight={2} lineStyle="dotted" />
     </>
   );
 }
@@ -151,7 +135,7 @@ function CartScene({ state, ochre }: SceneProps) {
       {shadow && (
         <>
           {!isZero(shadow.tip) && <Segment from={[0, 0]} to={shadow.tip} color={ochreOr(ochre === "shadow")} weight={OCHRE_WEIGHT} />}
-          {railsShown && <Segment from={shadow.tip} to={state.a} color={plotColors.inkMuted} weight={2} dotted />}
+          {railsShown && <Segment from={shadow.tip} to={state.a} color={plotColors.inkMuted} weight={2} lineStyle="dotted" />}
           {railsShown && !isZero(shadow.tip) && (
             <RightAngle corner={shadow.tip} first={unit(scale(-1, shadow.tip))} second={unit(subtract(state.a, shadow.tip))} />
           )}
@@ -174,7 +158,7 @@ function AlignScene({ state, ochre }: SceneProps) {
       {tip && !isZero(tip) && (
         <>
           <Segment from={[0, 0]} to={tip} color={ochreOr(ochre === "shadow")} weight={OCHRE_WEIGHT} />
-          {cross(a, b) !== 0 && <Segment from={tip} to={b} color={plotColors.inkMuted} weight={2} dotted />}
+          {cross(a, b) !== 0 && <Segment from={tip} to={b} color={plotColors.inkMuted} weight={2} lineStyle="dotted" />}
         </>
       )}
       {showsArc(state) && (
