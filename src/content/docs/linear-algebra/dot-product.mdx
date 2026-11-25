@@ -166,24 +166,6 @@ cos θ = **a** · **b** / (‖**a**‖ ‖**b**‖).
 
 Dividing by one length gives the signed length of a shadow. **a** · **b** / ‖**a**‖ is how far **b** reaches along **a**'s line: 24 / 5 = 4.8 for the running pair, the board's ochre segment. It is negative when **b** leans backward, as with the opening −0.24. When the arrow you divide by has length 1, the division does nothing and the dot product is the shadow itself, which is why the cart got exactly 3. A later page on projections turns this length into the shadow vector.
 
-<GoDeeper label="why the ratio never leaves the range from −1 to 1" id="cauchy-schwarz">
-
-For the cosine formula to make sense, **a** · **b** / (‖**a**‖ ‖**b**‖) must lie between −1 and 1. That is the Cauchy–Schwarz inequality, |**a** · **b**| ≤ ‖**a**‖ ‖**b**‖, and it follows from one fact: a length squared is never negative.
-
-<StepThrough title="Cauchy–Schwarz from a quadratic that never goes below 0" rigor="full">
-
-1. Let $\mathbf{a}, \mathbf{b} \in \mathbb{R}^n$ with $\mathbf{b} \ne \mathbf{0}$. (If $\mathbf{b} = \mathbf{0}$, both sides are 0.)
-2. For every real $t$, $0 \le \lVert \mathbf{a} - t\,\mathbf{b} \rVert^2$, because a length squared is a sum of squares.
-3. Expand with the rules above: $\lVert \mathbf{a} - t\,\mathbf{b} \rVert^2 = \lVert \mathbf{a} \rVert^2 - 2t\,(\mathbf{a} \cdot \mathbf{b}) + t^2 \lVert \mathbf{b} \rVert^2$.
-4. This is a quadratic in $t$ with positive leading coefficient $\lVert \mathbf{b} \rVert^2$ that never goes below 0, so it has at most one real root, and its discriminant is at most 0: $4(\mathbf{a} \cdot \mathbf{b})^2 - 4\lVert \mathbf{a} \rVert^2 \lVert \mathbf{b} \rVert^2 \le 0$.
-5. Divide by 4 and take square roots: $|\mathbf{a} \cdot \mathbf{b}| \le \lVert \mathbf{a} \rVert\,\lVert \mathbf{b} \rVert$. Equality holds exactly when $\mathbf{a} - t\,\mathbf{b} = \mathbf{0}$ for some $t$, that is, when one vector is a multiple of the other.
-
-</StepThrough>
-
-For the running pair, $24^2 = 576 \le 625 = 25 \times 25$. In two or three dimensions this is a fact about triangles. In higher dimensions there is no picture to check against, and Cauchy–Schwarz is what makes the cosine formula a valid definition of the angle.
-
-</GoDeeper>
-
 ## Alignment, or just long arrows?
 
 A larger dot product does not always mean two arrows point more nearly the same way, because length counts too. Take **a** = (3, 4). Its dot product with itself is 25, but with (6, 8), which points the same way and is twice as long, it is 50. Both pairs have an angle of 0, yet one number is twice the other. To compare directions only, divide by both lengths, which gives the cosine, called cosine similarity in ML. A later comparison page sets the dot product, cosine similarity and Euclidean distance side by side.
@@ -242,6 +224,24 @@ Check with the running pair: step 4 gives $2 = 25 + 25 - 48$, and step 6 gives $
 | Distance | $\lVert \mathbf{a} - \mathbf{b} \rVert^2 = \lVert \mathbf{a} \rVert^2 + \lVert \mathbf{b} \rVert^2 - 2\,\mathbf{a} \cdot \mathbf{b}$ | $2 = 25 + 25 - 48$ |
 
 </FormalDefinition>
+
+<GoDeeper label="why the ratio never leaves the range from −1 to 1" id="cauchy-schwarz">
+
+For the cosine formula to make sense, **a** · **b** / (‖**a**‖ ‖**b**‖) must lie between −1 and 1. That is the Cauchy–Schwarz inequality, |**a** · **b**| ≤ ‖**a**‖ ‖**b**‖, and it follows from one fact: a length squared is never negative.
+
+<StepThrough title="Cauchy–Schwarz from a quadratic that never goes below 0" rigor="full">
+
+1. Let $\mathbf{a}, \mathbf{b} \in \mathbb{R}^n$ with $\mathbf{b} \ne \mathbf{0}$. (If $\mathbf{b} = \mathbf{0}$, both sides are 0.)
+2. For every real $t$, $0 \le \lVert \mathbf{a} - t\,\mathbf{b} \rVert^2$, because a length squared is a sum of squares.
+3. Expand with the rules above: $\lVert \mathbf{a} - t\,\mathbf{b} \rVert^2 = \lVert \mathbf{a} \rVert^2 - 2t\,(\mathbf{a} \cdot \mathbf{b}) + t^2 \lVert \mathbf{b} \rVert^2$.
+4. This is a quadratic in $t$ with positive leading coefficient $\lVert \mathbf{b} \rVert^2$ that never goes below 0, so it has at most one real root, and its discriminant is at most 0: $4(\mathbf{a} \cdot \mathbf{b})^2 - 4\lVert \mathbf{a} \rVert^2 \lVert \mathbf{b} \rVert^2 \le 0$.
+5. Divide by 4 and take square roots: $|\mathbf{a} \cdot \mathbf{b}| \le \lVert \mathbf{a} \rVert\,\lVert \mathbf{b} \rVert$. Equality holds exactly when $\mathbf{a} - t\,\mathbf{b} = \mathbf{0}$ for some $t$, that is, when one vector is a multiple of the other.
+
+</StepThrough>
+
+For the running pair, $24^2 = 576 \le 625 = 25 \times 25$. In two or three dimensions this is a fact about triangles. In higher dimensions there is no picture to check against, and Cauchy–Schwarz is what makes the cosine formula a valid definition of the angle.
+
+</GoDeeper>
 
 ## Worked examples
 
