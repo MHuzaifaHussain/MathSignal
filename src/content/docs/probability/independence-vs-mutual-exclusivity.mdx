@@ -23,6 +23,7 @@ references:
   - molnar2016
   - goodfellow2016
   - sklearn-multiclass
+  - pytorch-bcewithlogits
 author: Muhammad Huzaifa Hussain
 reviewedAt: 2026-11-25
 aiAssisted: true
@@ -207,7 +208,7 @@ Softmax turns the logits into $(0.665, 0.245, 0.090)$, which add up to 1. "The c
 
 ### One sigmoid per label: labels that are independent given the input
 
-The same logits through $\operatorname{sigmoid}(z) = 1/(1 + e^{-z})$ give $(0.881, 0.731, 0.500)$. Raise cat to 3 and the outputs become $(0.953, 0.731, 0.500)$: dog doesn't move. Treating each label as its own yes-or-no that ignores the others for this input means multiplying: $P(\text{cat and dog} \mid x) = 0.881 \times 0.731 = 0.644$, $P(\text{no label} \mid x) = 0.016$ and $P(\text{exactly one label} \mid x) = 0.178$. That is independence given the input $x$, which is [conditional independence](/probability/conditional-independence/), not independence over the whole dataset.
+The same logits through $\operatorname{sigmoid}(z) = 1/(1 + e^{-z})$ give $(0.881, 0.731, 0.500)$. Raise cat to 3 and the outputs become $(0.953, 0.731, 0.500)$: dog doesn't move. Treating each label as its own yes-or-no that ignores the others for this input means multiplying: $P(\text{cat and dog} \mid x) = 0.881 \times 0.731 = 0.644$, $P(\text{no label} \mid x) = 0.016$ and $P(\text{exactly one label} \mid x) = 0.178$. That is independence given the input $x$, which is [conditional independence](/probability/conditional-independence/), not independence over the whole dataset. PyTorch's `BCEWithLogitsLoss` trains this kind of output: it combines a sigmoid with binary cross-entropy and gives each class its own loss term in multi-label classification <Cite id="pytorch-bcewithlogits" />.
 
 ### When the labels are linked
 
