@@ -71,7 +71,7 @@ A classifier that flags rare events, such as fraud, a rare disease on a scan or 
 
 ## Find what a positive means on the board
 
-A screening test catches 95 in 100 people who have a condition and correctly clears 90 in 100 who don't. 2 in 100 people screened have it. You test positive. Is your chance closer to 95%, 50% or under 20%?
+A screening test catches 95 in 100 people who have a condition and correctly clears 90 in 100 who don't. 2 in 100 people screened have it. You test positive. Write down your estimate of the chance that you have it, to the nearest 10%.
 
 On the board, A is "has the condition" and B is "tests positive". The A column's width is P(A). Inside it, the highlighted block B and A is the true positives; under not A, the shaded strip B and not A is the false positives. P(A | B) is the highlighted block's share of both. Press Medical test, click or tab to the P(A) slider and press the right arrow once (0.01 to 0.02), then press it five times on P(B | A) (0.90 to 0.95). Leave P(B | not A) at 0.10. The note under the buttons describes the preset, not your settings. Your goal: read P(A | B), then raise P(A) one step at a time until it passes 0.500.
 
@@ -140,7 +140,7 @@ $$
 \text{NPV} = P(D^\complement \mid -) = \frac{\text{spec}\,(1-P(D))}{\text{spec}\,(1-P(D)) + (1-\text{sens})\,P(D)}.
 $$
 
-Boundary cases. If $\text{spec} = 1$ and $\text{sens} > 0$, there are no false positives and $\text{PPV} = 1$. If $\text{sens} + \text{spec} = 1$ with $\text{sens} > 0$, the test carries no information and $\text{PPV} = P(D)$, as in [the Bayes page's boundary cases](/probability/bayes-theorem/#notation). If $\text{sens} = 0$ and $\text{spec} = 1$, then $P(+) = 0$ and there is no PPV. Throughout, sens and spec are assumed not to depend on $P(D)$; the ML section below names this assumption.
+Boundary cases. If $\text{spec} = 1$ and $\text{sens} > 0$, there are no false positives and $\text{PPV} = 1$. If $\text{sens} + \text{spec} = 1$ with $\text{sens} > 0$, the test carries no information and $\text{PPV} = P(D)$, as in [the Bayes page's boundary cases](/probability/bayes-theorem/#precise-statement). If $\text{sens} = 0$ and $\text{spec} = 1$, then $P(+) = 0$ and there is no PPV. Throughout, sens and spec are assumed not to depend on $P(D)$; the ML section below names this assumption.
 
 </PreciseStatement>
 
