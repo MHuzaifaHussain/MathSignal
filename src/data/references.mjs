@@ -776,7 +776,7 @@ export const REFERENCES = [
 		year: 2021,
 		title: 'Accounting for variance in machine learning benchmarks',
 		url: 'https://arxiv.org/abs/2103.03098',
-		note: 'Version 1. Section 2.2 and Figure 2: with independent errors on n test examples, measured accuracy follows a binomial distribution, compared with bootstrap estimates on three case studies; correlated errors widen it. Section 7: prefer multiple random splits to a fixed test set. Year is arXiv v1 (March 2021).',
+		note: 'Version 1. Section 2.2 and Figure 2: with independent errors on n test examples, measured accuracy follows a binomial distribution, compared with bootstrap estimates on three case studies; correlated errors widen it. The Figure 2 legend pairs Glue-RTE (n′ = 277) with Binom(n′, 0.66), Glue-SST2 (n′ = 872) with Binom(n′, 0.95) and CIFAR10 (n′ = 10000) with Binom(n′, 0.91). Section 4: test the probability that one pipeline outperforms another, P(A > B). Section 5, "Use multiple data splits": prefer multiple random splits to a fixed test set. Year is arXiv v1 (March 2021).',
 		checked: '2026-11-25',
 	},
 	{

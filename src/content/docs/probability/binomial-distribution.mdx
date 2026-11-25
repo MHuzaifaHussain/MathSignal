@@ -1,0 +1,575 @@
+---
+title: "Bernoulli and binomial distributions"
+description: "The binomial distribution counts successes in n independent yes-or-no trials. Flip up to 10 coins, change the chance p, and watch the mean np and the spread."
+sidebar:
+  order: 17
+draft: true
+topic: probability/binomial-distribution
+type: B
+objectives:
+  - Recognize a binomial setting, a fixed number of independent trials with the same chance of success, and say when it fails (draws without replacement, streaks, a chance that changes).
+  - Compute P(X = k) = C(n, k) pᵏ(1 − p)ⁿ⁻ᵏ by counting the sequences with k successes and multiplying their equal chances.
+  - Use the mean np and the variance np(1 − p) to predict where the bars sit and how far they spread, and explain why the spread is largest at p = 1/2.
+  - Treat a test-set accuracy, a dropout mask and a binary label as Bernoulli or binomial variables, and estimate how much a test accuracy can move from the test set alone.
+takeaways:
+  - One yes-or-no trial with chance p of success is a Bernoulli variable, 1 with probability p and 0 with probability 1 − p. Its mean is p and its variance is p(1 − p), largest at p = 1/2.
+  - Count the successes in n independent trials with the same p and you get the binomial distribution, P(X = k) = C(n, k) pᵏ(1 − p)ⁿ⁻ᵏ, because each of the C(n, k) sequences with k successes has the same chance.
+  - Ten fair coins land on exactly 6 heads in 210 of the 1,024 equally likely sequences, so P = 105/512 ≈ 0.21. Even the most likely count, 5 heads, comes up only 63/256 ≈ 0.25 of the time.
+  - The mean is np and the variance is np(1 − p). Ten fair flips give μ = 5 and σ ≈ 1.58. Ten trials with p = 0.9 give μ = 9 and σ ≈ 0.95, a variance 25/9 times smaller.
+  - A test accuracy on n independent examples is a binomial count divided by n, so it moves by about √(p(1 − p)/n), about 0.0095 for 1,000 examples at 90% accuracy. The simple ± 1.96 × that interval covers the truth less evenly than its 95% label says.
+references:
+  - grinstead2003
+  - deisenroth2020
+  - goodfellow2016ml
+  - goodfellow2016
+  - srivastava2014
+  - brown2001
+  - bouthillier2021
+author: Muhammad Huzaifa Hussain
+reviewedAt: 2026-11-25
+aiAssisted: true
+primaryQuery: binomial distribution
+searchIntent: learn
+depthStatus: complete
+---
+
+import Analogy from "../../../components/Analogy.astro";
+import CheckYourself from "../../../components/CheckYourself.astro";
+import Cite from "../../../components/Cite.astro";
+import CommonMistakes from "../../../components/CommonMistakes.astro";
+import ConceptHeader from "../../../components/ConceptHeader.astro";
+import ConceptMap from "../../../components/ConceptMap.astro";
+import FormalDefinition from "../../../components/FormalDefinition.astro";
+import GoDeeper from "../../../components/GoDeeper.astro";
+import Mistake from "../../../components/Mistake.astro";
+import NotationKey from "../../../components/NotationKey.astro";
+import PreciseStatement from "../../../components/PreciseStatement.astro";
+import PropertiesTable from "../../../components/PropertiesTable.astro";
+import PyRunner from "../../../components/PyRunner.astro";
+import References from "../../../components/References.astro";
+import ResearchFrontier from "../../../components/ResearchFrontier.astro";
+import SideNote from "../../../components/SideNote.astro";
+import Simpler from "../../../components/Simpler.astro";
+import StepThrough from "../../../components/StepThrough.astro";
+import Takeaways from "../../../components/Takeaways.astro";
+import Var from "../../../components/Var.astro";
+import WhyThisMatters from "../../../components/WhyThisMatters.astro";
+import WorkedExample from "../../../components/WorkedExample.astro";
+import DistributionBoard from "../../../components/react/DistributionBoard.tsx";
+
+<ConceptHeader
+  oneLiner="The binomial distribution gives the chance of exactly k successes in n independent trials that each succeed with the same probability p; a single trial is a Bernoulli distribution."
+  difficulty="beginner"
+/>
+
+## In everyday terms
+
+<Analogy breaks="The coins have to be separate and alike. If one throw's result changes the next, as with a hot streak, or if you draw marbles from a bag without putting them back, the trials are not independent and the count is not binomial. The picture also hides that 'exactly 6' is one bar among 11: the most likely count is still unlikely.">
+
+You tip 10 coins out of a cup onto the table and count the heads. Do it again and you get a different count. How often do exactly 6 heads turn up? List every way the 10 coins can land, reading from the first coin to the last: HHHHHHTTTT is one way, TTHHHTHHHH another. There are 1,024 ways, and for fair coins they are all equally likely. So the answer is "how many of those ways have 6 heads, out of 1,024". The coins don't care about order, but listing the orders is what makes the counting easy.
+
+Fair coins hide one thing: every way is equally likely only because heads and tails are. Take a free throw that goes in 3 times out of 10, taken 10 times, or a quiz of 10 questions where each guess is right with chance 1/4. Now the ways are not equally likely. A way with more successes is rarer when success is rare. But every way with the same number of successes still has the same chance, and that is all the counting needs.
+
+</Analogy>
+
+<WhyThisMatters>
+A model scored on 1,000 independent test examples gets a binomial number of them right. Dropout keeps a binomial number of the units in a layer. Every yes-or-no label, from "spam" to "the model is right", is a Bernoulli variable, and binary cross-entropy is its negative log-likelihood. Knowing the spread np(1 − p) tells you whether a half-point gain on a 1,000-example test set means anything: at 90% accuracy, the choice of test set alone moves the accuracy by about 1 point.
+</WhyThisMatters>
+
+## Flip ten coins
+
+Before you touch the board: flip 10 fair coins. About how often do you get exactly 6 heads: about 1 time in 2, about 1 time in 5, or about 1 time in 50?
+
+<GoDeeper label="a sharper question before you start">
+
+Of the 1,024 ways 10 coins can land, how many have exactly 6 heads? And is 5 heads, the most likely count, more likely than not?
+
+</GoDeeper>
+
+The board opens on 3 coins. It lists all 8 ways they can land, from "HHH: 3 heads" to "TTT: 0 heads", and draws one column per number of heads. The "Number of coins" slider goes up to 10, and "Read the bar for" steps through the columns with Fewer heads to read and More heads to read. At 3 coins it already says "2 heads: HHT, HTH and THH. 3 of 8 sequences, so P(X = 2) = 3/8 ≈ 0.38." and "The bars add up to 8/8 = 1." From 4 coins on, the chart stays covered until you lock in a guess, and the presets wait for Check at any number of coins.
+
+Your task: pick an answer under Your guess for 6 heads in 10 flips, press Check, then read the bar for 6 heads at 10 coins.
+
+<div class="not-content">
+  <DistributionBoard client:visible setup="coins-binomial" />
+</div>
+
+About 1 time in 5. Check moves the board to 10 coins and the bar for 6 heads, and says "Yes, about 1 time in 5. C(10, 6) = 210 of the 1,024 equally likely sequences have exactly 6 heads, so P(X = 6) = 210/1024 = 105/512 ≈ 0.21." A different pick starts with "Not quite:" and says by how much it was off, then gives the same count. The next readout answers the deeper question: "Tallest bar: 5 heads, P(X = 5) = 252/1024 = 63/256 ≈ 0.25." So even the most likely count is less likely than not. Three times in four, 10 flips give something other than 5 heads.
+
+Each column counts sequences, like the two-coin [head-count board](/probability/random-variables-and-distributions/#count-the-heads-on-two-coins) with more coins. The rest of the page turns the count into a formula for any number of trials and any chance of success.
+
+## Counting the ways to get k successes
+
+The chance of exactly k successes in n independent trials with the same chance p is a count times a chance: count the sequences with k successes, C(n, k) of them, and multiply by the chance of any one of them, pᵏ(1 − p)ⁿ⁻ᵏ.
+
+### One trial: the Bernoulli distribution
+
+A single yes-or-no trial is a Bernoulli variable: it is 1 (a success) with chance p and 0 with chance 1 − p. Its mean is 0 × (1 − p) + 1 × p = p. Since 0² = 0 and 1² = 1, X² is X itself, so 𝔼[X²] = p and the [shortcut](/probability/expectation-and-variance/#the-shortcut-mean-of-the-square-minus-square-of-the-mean) gives the variance p − p² = p(1 − p). A fair coin has variance 1/4; a question you answer right 9 times in 10 has 9/100. Deisenroth and coauthors derive the same mean and variance in their Example 6.8, calling the chance μ <Cite id="deisenroth2020" />; this site keeps μ for means.
+
+<Simpler label="why the variance is biggest at one half">
+
+A yes-or-no question you are nearly sure about, with p near 0 or 1, has almost no spread: the answer is nearly always the same. A coin you can't call at all has the most. For p = 0.1, 0.3, 0.5, 0.7 and 0.9, p(1 − p) is 0.09, 0.21, 0.25, 0.21 and 0.09, the same on both sides of one half.
+
+</Simpler>
+
+### Every sequence with k successes has the same chance
+
+Independent trials multiply, as on the [independence page](/probability/independence/). Write S for a success and F for a failure. Three trials SFS have chance p × (1 − p) × p = p²(1 − p), and so do SSF and FSS: the same three factors in a different order. So all 3 sequences with 2 successes share one chance, and the chance of exactly 2 successes is 3p²(1 − p). In general, a sequence with k successes and n − k failures has chance pᵏ(1 − p)ⁿ⁻ᵏ, whatever the order.
+
+<Simpler label="three coins as a list">
+
+The board's 8 sequences for three coins fall into groups by their number of heads: 1 with 0 heads (TTT), 3 with 1, 3 with 2 and 1 with 3 (HHH). Each sequence has chance 1/8, so the chances are 1/8, 3/8, 3/8 and 1/8.
+
+</Simpler>
+
+### Count the sequences: the formula
+
+To write down a sequence with k successes, choose which k of the n trials succeed. There are C(n, k) ways, the [number of ways to choose k of n](/probability/counting-for-probability/#when-order-doesnt-matter-combinations). Multiply the count by the shared chance:
+
+P(X = k) = C(n, k) pᵏ(1 − p)ⁿ⁻ᵏ, for k = 0, 1, …, n.
+
+This is Grinstead and Snell's Theorem 3.6 (p. 98), which writes q for 1 − p, and their Definition 3.6 (p. 99) names it the binomial distribution <Cite id="grinstead2003" />. Their Example 3.8 tosses a fair coin 6 times: exactly 3 heads has chance C(6, 3)/2⁶ = 20/64 = 0.3125 <Cite id="grinstead2003" />. On the board, C(10, 6) = 210 and (1/2)¹⁰ = 1/1024, so P(X = 6) = 210/1024. The factor (1/2)¹⁰ alone is the chance of one particular sequence, such as HHHHHHTTTT, not of "6 heads".
+
+<GoDeeper label="why the bars always add up to 1" id="bars-add-to-one">
+
+The binomial theorem says (a + b)ⁿ = Σₖ C(n, k) aᵏ bⁿ⁻ᵏ (Grinstead and Snell, Theorem 3.7, p. 103) <Cite id="grinstead2003" />. Put a = p and b = 1 − p: the right side is the sum of all the bars, and the left side is (p + 1 − p)ⁿ = 1ⁿ = 1. For 10 fair coins the counts are 1 + 10 + 45 + 120 + 210 + 252 + 210 + 120 + 45 + 10 + 1 = 1,024, all of 2¹⁰.
+
+</GoDeeper>
+
+## Change the chance of success
+
+Changing p moves the bars toward the side the trials favor and changes how far they spread: the mean is np and the variance is np(1 − p).
+
+Before you look: ten flips of a fair coin, or ten test questions that a model gets right with chance 0.9 each. Which number of successes spreads out more?
+
+<GoDeeper label="by how much?">
+
+Compute both variances before you look. By what factor is one bigger than the other?
+
+</GoDeeper>
+
+The sliders are "Number of trials n" (1 to 10) and "Chance of success p" (0.05 to 0.95 in steps of 0.05). The pink triangle marks the mean <Var name="mu" /> from the start. Show the spread draws one standard deviation <Var name="sigma" /> on each side in blue and adds the variance readout. The presets are Fair coin, Right 9 in 10, Rare: 1 in 10 and One flip; after a preset change, a dashed span keeps the previous <Var name="sigma" />.
+
+Your task: with Fair coin showing, turn on Show the spread, then press Right 9 in 10 and compare the two values of <Var name="sigma" />.
+
+<div class="not-content">
+  <DistributionBoard client:visible setup="binomial-spread" />
+</div>
+
+The fair coin spreads more. With Fair coin the board reads "Variance: np(1 − p) = 10 × 0.5 × 0.5 = 2.5. Standard deviation: σ = √2.5 ≈ 1.58 successes." Right 9 in 10 reads "Variance: np(1 − p) = 10 × 0.9 × 0.1 = 0.9. Standard deviation: σ = √0.9 ≈ 0.95 successes." and "Before: σ ≈ 1.58 (Fair coin). Now: σ ≈ 0.95 (Right 9 in 10)." Both are 10 trials, but the variance is 2.5/0.9 = 25/9 ≈ 2.78 times bigger for the fair coin, and <Var name="sigma" /> is 5/3 times bigger. Now press Rare: 1 in 10. <Var name="sigma" /> is again about 0.95, and the bars are Right 9 in 10's bars in mirror image.
+
+### The mean is np
+
+The balance point of the binomial bars is np: each trial succeeds with chance p, so on average a share p of the n trials succeed. The board says "Mean: μ = np = 10 × 0.5 = 5 successes." for Fair coin. The formal definition below derives np from the formula alone.
+
+The triangle usually sits under the tallest bar, but the mean can fall between two bars. Set n to 9 with p = 0.5: the board reads "Mean: μ = np = 9 × 0.5 = 4.5 successes." and "Tallest bars: 4 and 5 successes, each P ≈ 0.25." Exactly, each of the two bars is 126/512 = 63/256.
+
+<GoDeeper label="the same mean as a sum of yes-or-no variables" id="sum-of-indicators">
+
+Let Xᵢ be 1 if trial i succeeds and 0 if it fails, an indicator. Then the count is X = X₁ + X₂ + ⋯ + Xₙ. Each Xᵢ is Bernoulli with mean p, and expected values add, even for variables that affect each other ([adding expected values](/probability/expectation-and-variance/#adding-expected-values)), so 𝔼[X] = p + p + ⋯ + p = np. This is Grinstead and Snell's Theorem 6.3 (p. 233) <Cite id="grinstead2003" />.
+
+The variance works the same way, with one extra condition: variances add for independent variables, a fact that gets its own page on sums of random variables. Each Xᵢ has variance p(1 − p), so Var[X] = np(1 − p) (Grinstead and Snell, p. 261) <Cite id="grinstead2003" />. Without independence the variances need not add: on the expectation page, X plus −X has variance 0.
+
+</GoDeeper>
+
+### The spread is np(1 − p)
+
+The variance of the number of successes is np(1 − p), so <Var name="sigma" /> = √(np(1 − p)). For a fixed number of trials it is largest at p = 1/2, where it is n/4, because p(1 − p) is. That is the board's lesson: Right 9 in 10 has 0.9 against the fair coin's 2.5.
+
+The variance grows in step with n, so <Var name="sigma" /> grows like √n: 10 fair flips give <Var name="sigma" /> ≈ 1.58 and 40 give √10 ≈ 3.16. The share of successes X/n therefore settles down as n grows, because its variance p(1 − p)/n shrinks. A test accuracy is such a share.
+
+<Simpler label="spread in coins, not formulas">
+
+With 10 fair coins, about 2 runs in 3 land within one <Var name="sigma" /> of 5, that is, on 4, 5 or 6 heads. Exactly, P(4 ≤ X ≤ 6) = 672/1024 = 21/32 ≈ 0.66. This is a fact about this distribution, not a rule for every one.
+
+</Simpler>
+
+### Where the tallest bar is, and the mirror at 1 − p
+
+The tallest bar sits at the whole-number part of (n + 1)p; when (n + 1)p is itself a whole number, two bars tie, at (n + 1)p − 1 and (n + 1)p. For n = 10 and p = 0.3 that is the whole-number part of 3.3, so 3 successes. For n = 9 and p = 1/2, (n + 1)p = 5, so 4 and 5 tie, as the board showed. Swapping the names success and failure turns p into 1 − p and k successes into n − k, which is why Rare: 1 in 10 mirrors Right 9 in 10.
+
+<GoDeeper label="why the tallest bar is there" id="tallest-bar">
+
+Compare neighboring bars. Dividing the formula at k + 1 by the formula at k gives
+
+P(X = k + 1) / P(X = k) = (n − k)/(k + 1) × p/(1 − p).
+
+The bars rise while this ratio is above 1 and fall once it drops below 1. It is above 1 exactly when (n − k)p > (k + 1)(1 − p), that is, when k + 1 < (n + 1)p. For 10 fair coins at k = 5 the ratio is 5/6, and indeed 210/252 = 5/6, so the bars fall after 5.
+
+</GoDeeper>
+
+<CheckYourself level="intuition" question="With p = 0.9 and n = 10, which is more likely: all 10 right or exactly 9 right?">
+Exactly 9 right: P(X = 9) = 10 × 0.9⁹ × 0.1 ≈ 0.387 against P(X = 10) = 0.9¹⁰ ≈ 0.349. The ratio is 10 × 0.1/0.9 = 10/9, more than 1, because there are 10 ways to miss one question and only one way to miss none. Step "Read the bar for" to 9 on Right 9 in 10 (press More successes to read four times) and the board says "9 successes: C(10, 9) × 0.9⁹ × 0.1¹ ≈ 0.39."
+</CheckYourself>
+
+### When a count of successes isn't this distribution
+
+The formula needs three things: a fixed number of trials n, trials that don't affect each other, and the same chance p on every trial, which is Grinstead and Snell's definition of Bernoulli trials (Definition 3.5, p. 96) <Cite id="grinstead2003" />. Drawing twice from a bag with red chance 3/10, putting the first marble back, gives 0, 1 or 2 reds with chances 0.49, 0.42 and 0.09, as in the worked examples on the [random variables page](/probability/random-variables-and-distributions/). That is exactly the binomial distribution with n = 2 and p = 3/10.
+
+Without putting it back, from a bag of 3 red and 7 blue marbles, two reds have chance 3/10 × 2/9 = 1/15 ≈ 0.067, not 0.09: the second draw depends on the first. Hot streaks and a drifting chance break the formula too. Counts with no fixed number of trials, and waiting for the first success, lead to the Poisson and geometric distributions, later pages in this subject.
+
+## Notation
+
+<NotationKey symbols={["random-variable", "bernoulli", "success-probability", "number-of-trials", "success-count", "binomial", "binomial-coefficient", "factorial", "pmf", "distributed-as", "expectation", "variance", "mu", "sigma", "independent", "indicator", "sum", "product", "log", "sigmoid", "class-label", "standard-error"]} />
+
+<PreciseStatement>
+
+In plain words: count the successes in n independent tries that each succeed with chance p.
+
+Let $n \ge 1$ be an integer and $p \in [0, 1]$. Let $X_1, \ldots, X_n$ be mutually independent, each with $P(X_i = 1) = p$ and $P(X_i = 0) = 1 - p$, so that each $X_i \sim \operatorname{Bernoulli}(p)$. Then $X = X_1 + \cdots + X_n$ satisfies
+
+$$
+P(X = k) = \binom{n}{k} p^k (1 - p)^{n - k} \quad \text{for } k = 0, 1, \ldots, n, \qquad \mathbb{E}[X] = \vmu = np, \qquad \operatorname{Var}[X] = \vsigma^2 = np(1 - p),
+$$
+
+and $P(X = k) = 0$ for every other $k$. We write $X \sim \operatorname{Bin}(n, p)$.
+
+Conventions: $0^0 = 1$, so $p = 0$ gives $P(X = 0) = 1$ and $p = 1$ gives $P(X = n) = 1$, both with variance 0. The case $n = 1$ is the Bernoulli distribution. Here $p$ is a chance, not a mean; Deisenroth and coauthors call it $\mu$ (Example 6.9) <Cite id="deisenroth2020" />.
+
+Boundary cases and facts. For $0 < p < 1$ the tallest bar is at $\lfloor (n + 1)p \rfloor$, tied with the bar below it when $(n + 1)p$ is a whole number. If $X \sim \operatorname{Bin}(n, p)$, then $n - X \sim \operatorname{Bin}(n, 1 - p)$. If $X \sim \operatorname{Bin}(n, p)$ and $Y \sim \operatorname{Bin}(m, p)$ are independent, then $X + Y \sim \operatorname{Bin}(n + m, p)$; the code checks $n = 2$, $m = 3$. Without independence, or with $p$ changing from trial to trial, the count is not binomial.
+
+</PreciseStatement>
+
+<FormalDefinition>
+
+<StepThrough title="The binomial probabilities" rigor="full">
+
+1. An outcome of the $n$ trials is a sequence in $\{0, 1\}^n$. By independence, a sequence with $k$ ones has probability $p^k (1 - p)^{n - k}$, whatever the order of its ones and zeros.
+2. The event $\{X = k\}$ is the union of the $\binom{n}{k}$ sequences with exactly $k$ ones, and different sequences are disjoint outcomes.
+3. Additivity gives $P(X = k) = \binom{n}{k} p^k (1 - p)^{n - k}$ (Grinstead and Snell, Theorem 3.6, p. 98) <Cite id="grinstead2003" />.
+4. The total is $\sum_{k=0}^{n} \binom{n}{k} p^k (1 - p)^{n - k} = (p + (1 - p))^n = 1$ by the binomial theorem (Theorem 3.7, p. 103) <Cite id="grinstead2003" />.
+
+</StepThrough>
+
+<StepThrough title="The mean is np" rigor="full">
+
+1. By definition, $\mathbb{E}[X] = \sum_{k=0}^{n} k \binom{n}{k} p^k (1 - p)^{n - k}$.
+2. The $k = 0$ term is 0. For $k \ge 1$, $k\binom{n}{k} = n\binom{n - 1}{k - 1}$: choosing a team of $k$ and then its captain is the same as choosing the captain from all $n$ and then the other $k - 1$. Check with $n = 10$, $k = 6$: $6 \times 210 = 10 \times 126 = 1260$.
+3. Factor out $np$ and write $j = k - 1$: $\mathbb{E}[X] = np \sum_{j=0}^{n-1} \binom{n - 1}{j} p^j (1 - p)^{n - 1 - j}$.
+4. The sum adds every bar of $\operatorname{Bin}(n - 1, p)$, which is 1 by the first derivation. So $\vmu = np$. Board check: $10 \times 0.5 = 5$.
+
+</StepThrough>
+
+<StepThrough title="The variance is np(1 − p)" rigor="full">
+
+1. In the same way, with $k(k - 1)\binom{n}{k} = n(n - 1)\binom{n - 2}{k - 2}$ for $k \ge 2$, the sum $\mathbb{E}[X(X - 1)] = \sum_k k(k - 1) \binom{n}{k} p^k (1 - p)^{n - k}$ becomes $n(n - 1)p^2$ times the total of $\operatorname{Bin}(n - 2, p)$, which is 1. (For $n = 1$ every term is 0, and $n(n - 1)p^2 = 0$ too.)
+2. So $\mathbb{E}[X^2] = \mathbb{E}[X(X - 1)] + \mathbb{E}[X] = n(n - 1)p^2 + np$.
+3. The shortcut $\operatorname{Var}[X] = \mathbb{E}[X^2] - \vmu^2$ (Grinstead and Snell, Theorem 6.6, p. 258) <Cite id="grinstead2003" /> gives $\vsigma^2 = n(n - 1)p^2 + np - n^2p^2 = np - np^2 = np(1 - p)$. Board check: $10 \times 0.9 \times 0.1 = 0.9$.
+
+</StepThrough>
+
+<PropertiesTable family="binomial" examplesHeading="On the boards" examples={{
+  bernoulli: "One flip: $\\vmu = 0.5$, $\\vsigma = 0.5$",
+  pmf: "10 coins, 6 heads: $210/1024$",
+  total: "The bars add up to 1024/1024 = 1.",
+  mean: "Fair coin $\\vmu = 5$; Right 9 in 10 $\\vmu = 9$",
+  variance: "Fair coin $\\vsigma^2 = 2.5$; Right 9 in 10 $\\vsigma^2 = 0.9$",
+  tallest: "9 coins: 4 and 5 heads",
+  mirror: "Rare: 1 in 10 against Right 9 in 10",
+  sums: "Checked in the code below",
+  needs: "Without replacement: $1/15$, not $0.09$",
+}} />
+
+</FormalDefinition>
+
+## Worked examples
+
+<WorkedExample number={1} title="One six in four rolls">
+
+Roll a fair die 4 times and call a six a success, so p = 1/6 and n = 4. Exactly one six has chance 4 × (1/6) × (5/6)³ = 500/1296 = 125/324 ≈ 0.386: 4 places for the six, times the chance of one sequence (Grinstead and Snell, Example 3.9) <Cite id="grinstead2003" />. At least one six goes through the complement: 1 − (5/6)⁴ = 671/1296 ≈ 0.518, just over a half. Both assume the rolls don't affect each other.
+
+</WorkedExample>
+
+<WorkedExample number={2} title="Guessing a true-or-false quiz">
+
+A quiz has 10 true-or-false questions and a pass mark of 7. Guessing every answer by a coin flip makes the number right binomial with n = 10 and p = 1/2, the first board's distribution. Passing needs 7, 8, 9 or 10 right: (120 + 45 + 10 + 1)/1024 = 176/1024 = 11/64 ≈ 0.17. The mean is 5, yet pure guessing passes about 1 time in 6.
+
+</WorkedExample>
+
+<WorkedExample number={3} title="How big a test set?" faded>
+
+A classifier is right on each test example with chance 0.9, independently. On 1,000 examples, the number right is binomial with mean 900 and variance 1000 × 0.9 × 0.1 = 90, so its standard deviation is about 9.49 examples. The accuracy is that count divided by 1,000, so its standard deviation, the standard error, is √(0.9 × 0.1/1000) ≈ 0.0095. Find (a) the interval 0.9 ± 1.96 × SE, and (b) the test-set size that brings the standard error down to 0.005.
+
+<div slot="solution">
+
+(a) 1.96 × 0.0095 ≈ 0.019, so the interval is about [0.881, 0.919]. (b) The standard error is √(0.09/n), and √(0.09/n) ≤ 0.005 means 0.09/n ≤ 0.000025, so n ≥ 3,600. Going from 1,000 to 3,600 examples takes the standard error from about 0.0095 to 0.005; halving it always takes four times the examples. The interval in (a) is Goodfellow and coauthors' equation (5.47) <Cite id="goodfellow2016ml" />; the research frontier shows that its real coverage can fall short of 95%.
+
+</div>
+
+</WorkedExample>
+
+## The binomial distribution in machine learning
+
+### Test accuracy is a count of successes
+
+Score a model on n test examples, right on each with chance p, independently. The number right is binomial, and the accuracy is that count divided by n. Goodfellow and coauthors work this case in §5.4: the share of successes in m Bernoulli trials is an unbiased estimate of θ, the chance of success (equations (5.21)–(5.28)), its variance is θ(1 − θ)/m (equations (5.48)–(5.52)), and the standard error is the standard deviation divided by √m (equation (5.46), p. 126) <Cite id="goodfellow2016ml" />.
+
+Bouthillier and coauthors use this model for the noise a test set adds: with independent errors on n test samples the measured accuracy is binomial, and with correlated errors its distribution is wider. On their three classification case studies, the binomial model's standard deviation agrees with what they measure by resampling the data (§2.2, Figure 2) <Cite id="bouthillier2021" />. So 1,000 test examples at 90% accuracy give a standard error of about 0.0095, roughly 1 point, and 10,000 examples at 91% about 0.0029. The spread across training seeds, on the [variance page](/statistics/variance-and-standard-deviation/#reporting-results-a-mean-and-its-spread), comes on top.
+
+### Dropout keeps a random number of units
+
+Dropout keeps each unit with probability p, independently of the other units, and writes the mask entry for unit j as a Bernoulli(p) variable (§1, p. 1930; §4, p. 1933) <Cite id="srivastava2014" />. So the number of units kept in a layer of n units is binomial with n and p. Ten units with p = 0.5 is the first board: all 10 are dropped with chance 1/1024. A layer of 1,024 units with keep probability 0.8 keeps 819.2 units on average, with standard deviation √(1024 × 0.8 × 0.2) = √163.84 = 12.8 units exactly. The independence of the masks is on the [independence page](/probability/independence/#dropout-drops-each-unit-on-its-own).
+
+<SideNote>
+Here p is the chance a unit is kept, as in Srivastava and coauthors. Some libraries, PyTorch among them, use p for the chance a unit is dropped.
+</SideNote>
+
+### Binary cross-entropy is a Bernoulli log-likelihood
+
+For 0/1 labels that are independent Bernoulli(p) draws, with k ones among n labels, the log-likelihood is k log p + (n − k) log(1 − p), largest at p = k/n. The binomial version adds log C(n, k), which doesn't depend on p, so both peak at the same p.
+
+<Simpler label="the numbers for 7 ones in 10 labels">
+
+With 7 ones in 10 labels the log-likelihood 7 ln p + 3 ln(1 − p) peaks at p = 0.7, where it is 7 ln 0.7 + 3 ln 0.3 ≈ −6.1086. The binomial version adds ln C(10, 7) = ln 120 ≈ 4.7875 and peaks at the same p, at ≈ −1.3212.
+
+</Simpler>
+
+A classifier makes p depend on the input: a sigmoid output unit gives P(y = 1 | x), as on the [random variables page](/probability/random-variables-and-distributions/#labels-become-numbers-by-a-choice). Its loss, the negative log-likelihood of the Bernoulli label, is Goodfellow and coauthors' equations (6.24)–(6.26), which they write with the softplus function (§6.2.2.2) <Cite id="goodfellow2016" />. This is binary cross-entropy. They also note that "cross-entropy" is often used for this Bernoulli negative log-likelihood alone, although every negative log-likelihood is a cross-entropy (§5.5) <Cite id="goodfellow2016ml" />.
+
+## Check the binomial in code
+
+This runs in your browser, uses exact fractions so every equality is exact, and stops with an error if a number on this page is off. It builds the binomial formula, checks every state of both boards, recomputes the frontier's coverage numbers, and ends with a seeded simulation.
+
+<PyRunner
+  title="binomial.py"
+  code={`
+import math
+import random
+from fractions import Fraction
+from itertools import product
+from math import comb
+from statistics import NormalDist, variance as sample_variance
+
+
+def binomial(n, p):
+    """P(X = k) for k = 0..n: C(n, k) p^k (1 - p)^(n - k)."""
+    return [comb(n, k) * p**k * (1 - p) ** (n - k) for k in range(n + 1)]
+
+
+def mean(dist):
+    return sum(k * chance for k, chance in enumerate(dist))
+
+
+def var(dist):
+    mu = mean(dist)
+    return sum((k - mu) ** 2 * chance for k, chance in enumerate(dist))
+
+
+half = Fraction(1, 2)
+
+# One trial: the Bernoulli distribution.
+p = Fraction(3, 4)
+assert binomial(1, p) == [1 - p, p]
+assert mean(binomial(1, p)) == p and var(binomial(1, p)) == p * (1 - p) == Fraction(3, 16)
+spreads = [q * (1 - q) for q in (Fraction(1, 10), Fraction(3, 10), half, Fraction(7, 10), Fraction(9, 10))]
+assert spreads == [Fraction(9, 100), Fraction(21, 100), Fraction(1, 4), Fraction(21, 100), Fraction(9, 100)]
+grid = [Fraction(k, 20) * (1 - Fraction(k, 20)) for k in range(21)]
+assert max(grid) == Fraction(1, 4) and grid.index(max(grid)) == 10
+
+# Three coins: 8 sequences, grouped 1, 3, 3, 1.
+assert binomial(3, half) == [Fraction(1, 8), Fraction(3, 8), Fraction(3, 8), Fraction(1, 8)]
+two_heads = ["".join(s) for s in product("HT", repeat=3) if s.count("H") == 2]
+assert two_heads == ["HHT", "HTH", "THH"]
+third = Fraction(1, 3)
+assert binomial(3, third)[2] == 3 * third**2 * (1 - third) == Fraction(2, 9)
+
+# Ten coins: the opening board.
+ten = binomial(10, half)
+assert [chance * 1024 for chance in ten] == [1, 10, 45, 120, 210, 252, 210, 120, 45, 10, 1]
+assert sum(ten) == 1 and sum(comb(10, k) for k in range(11)) == 1024
+assert ten[6] == Fraction(210, 1024) == Fraction(105, 512) and round(float(ten[6]), 2) == 0.21
+assert ten[5] == Fraction(63, 256) and round(float(ten[5]), 2) == 0.25 and 1 - ten[5] == Fraction(193, 256)
+assert half**10 == Fraction(1, 1024) != ten[6]
+assert sum(1 for s in product("HT", repeat=10) if s.count("H") == 6) == 210
+assert ten[4] + ten[5] + ten[6] == Fraction(21, 32) and round(float(Fraction(21, 32)), 2) == 0.66
+assert ten[6] / ten[5] == Fraction(5, 6) == Fraction(10 - 5, 5 + 1)
+print("10 fair coins, 6 heads:", ten[6], "  5 heads:", ten[5])
+
+# Grinstead and Snell, Examples 3.8 and 3.9; 100 tosses.
+assert binomial(6, half)[3] == Fraction(20, 64) == Fraction(5, 16) and float(Fraction(5, 16)) == 0.3125
+one_six = binomial(4, Fraction(1, 6))[1]
+assert one_six == Fraction(500, 1296) == Fraction(125, 324) and round(float(one_six), 3) == 0.386
+assert 1 - Fraction(5, 6) ** 4 == Fraction(671, 1296) and round(671 / 1296, 3) == 0.518
+assert round(float(binomial(100, half)[50]), 2) == 0.08
+
+# Mean np and variance np(1 - p), checked on every state of the second board.
+for n in range(1, 11):
+    for j in range(1, 20):
+        q = Fraction(j, 20)
+        dist = binomial(n, q)
+        assert sum(dist) == 1 and mean(dist) == n * q and var(dist) == n * q * (1 - q)
+fair, right, rare = binomial(10, half), binomial(10, Fraction(9, 10)), binomial(10, Fraction(1, 10))
+assert (mean(fair), var(fair)) == (5, Fraction(5, 2)) and round(math.sqrt(2.5), 2) == 1.58
+assert (mean(right), var(right)) == (9, Fraction(9, 10)) and round(math.sqrt(0.9), 2) == 0.95
+assert (mean(rare), var(rare)) == (1, Fraction(9, 10))
+assert (mean(binomial(1, half)), var(binomial(1, half))) == (half, Fraction(1, 4))
+assert var(fair) / var(right) == Fraction(25, 9) and round(25 / 9, 2) == 2.78
+assert abs(math.sqrt(2.5) / math.sqrt(0.9) - 5 / 3) < 1e-12
+assert var(binomial(40, half)) == 10 and round(math.sqrt(10), 2) == 3.16
+nine = binomial(9, half)
+assert nine[4] == nine[5] == Fraction(126, 512) == Fraction(63, 256) and mean(nine) == Fraction(9, 2)
+assert 6 * comb(10, 6) == 10 * comb(9, 5) == 1260
+
+# The tallest bar sits at floor((n + 1)p), with a tie when (n + 1)p is whole.
+for n in range(1, 11):
+    for j in range(1, 20):
+        q = Fraction(j, 20)
+        dist = binomial(n, q)
+        tallest = {k for k, chance in enumerate(dist) if chance == max(dist)}
+        m = (n + 1) * q
+        expected = {int(m) - 1, int(m)} if m.denominator == 1 and 1 <= m <= n else {math.floor(m)}
+        assert tallest == expected, (n, j)
+tallest_03 = binomial(10, Fraction(3, 10))
+assert tallest_03.index(max(tallest_03)) == 3 == math.floor(11 * Fraction(3, 10))
+
+# The mirror at 1 - p, and 9 right against 10 right.
+assert all(rare[k] == right[10 - k] for k in range(11))
+assert right[9] / right[10] == Fraction(10, 9)
+assert round(float(right[10]), 3) == 0.349 and round(float(right[9]), 3) == 0.387
+
+# Sums: Bin(2, p) + Bin(3, p) is Bin(5, p) for independent counts.
+two, three = binomial(2, half), binomial(3, half)
+convolved = [sum(two[i] * three[k - i] for i in range(3) if 0 <= k - i <= 3) for k in range(6)]
+assert convolved == binomial(5, half)
+
+# p = 0 and p = 1 give one bar (Python's 0**0 is 1, as in the formula).
+assert binomial(4, Fraction(0)) == [1, 0, 0, 0, 0] and binomial(4, Fraction(1)) == [0, 0, 0, 0, 1]
+
+# Draws without replacement are not binomial.
+bag = binomial(2, Fraction(3, 10))
+assert bag == [Fraction(49, 100), Fraction(21, 50), Fraction(9, 100)]
+assert Fraction(3, 10) * Fraction(2, 9) == Fraction(1, 15) != bag[2]
+
+# Worked examples 2 and 3.
+pass_mark = sum(ten[7:])
+assert pass_mark == Fraction(176, 1024) == Fraction(11, 64) and round(float(pass_mark), 2) == 0.17
+test = Fraction(9, 10)
+assert 1000 * test == 900 and 1000 * test * (1 - test) == 90 and round(math.sqrt(90), 2) == 9.49
+se = math.sqrt(0.9 * 0.1 / 1000)
+assert abs(se - 0.0095) < 1e-4
+assert (round(0.9 - 1.96 * se, 3), round(0.9 + 1.96 * se, 3)) == (0.881, 0.919)
+assert Fraction(9, 100) / Fraction(1, 200) ** 2 == 3600
+assert abs(math.sqrt(0.91 * 0.09 / 10000) - 0.0029) < 1e-4
+
+# Dropout: how many of a layer's units are kept.
+assert 1024 * Fraction(4, 5) == Fraction(4096, 5) and float(Fraction(4096, 5)) == 819.2
+kept_var = 1024 * Fraction(4, 5) * Fraction(1, 5)
+assert kept_var == Fraction(4096, 25) == Fraction(64, 5) ** 2 and float(Fraction(64, 5)) == 12.8
+assert ten[5] == Fraction(63, 256) and ten[0] == Fraction(1, 1024)
+
+# Binary cross-entropy: 7 ones in 10 labels.
+log_lik = lambda q: 7 * math.log(q) + 3 * math.log(1 - q)
+assert max(range(1, 1000), key=lambda i: log_lik(i / 1000)) == 700
+assert abs(log_lik(0.7) + 6.1086) < 1e-4
+assert abs(math.log(120) + log_lik(0.7) + 1.3212) < 1e-4 and comb(10, 7) == 120
+
+# Research frontier: the real coverage of the interval p-hat +/- 1.96 SE.
+# Floats, not fractions: z is irrational.
+z = NormalDist().inv_cdf(0.975)
+
+
+def coverage(n, q):
+    total = 0.0
+    for x in range(n + 1):
+        p_hat = x / n
+        half_width = z * math.sqrt(p_hat * (1 - p_hat) / n)
+        if p_hat - half_width < q < p_hat + half_width:
+            total += comb(n, x) * q**x * (1 - q) ** (n - x)
+    return total
+
+
+for n, q, paper in ((100, 0.106, 0.952), (100, 0.107, 0.911), (591, 0.005, 0.945), (592, 0.005, 0.792)):
+    assert abs(coverage(n, q) - paper) < 5e-4, (n, q, coverage(n, q))
+print(f"coverage at n = 100: {coverage(100, 0.106):.3f} (p = 0.106), {coverage(100, 0.107):.3f} (p = 0.107)")
+
+# Check yourself.
+four = binomial(4, half)
+assert four[2] == Fraction(3, 8) and 1 - four[2] == Fraction(5, 8)
+five = binomial(5, Fraction(4, 5))
+assert five[5] == Fraction(1024, 3125) and float(five[5]) == 0.32768
+assert five[4] == Fraction(256, 625) and float(five[4]) == 0.4096
+quarter = binomial(20, Fraction(1, 4))
+assert mean(quarter) == 5 and var(quarter) == Fraction(15, 4) and round(math.sqrt(3.75), 2) == 1.94
+seven, mirrored = binomial(7, Fraction(2, 5)), binomial(7, Fraction(3, 5))
+assert all(seven[k] == mirrored[7 - k] for k in range(8))
+
+# Simulation, seeded: 100,000 runs of 10 fair coins, and of 10 trials at p = 0.9.
+rng = random.Random(0)
+runs = 100_000
+six = sum(1 for _ in range(runs) if bin(rng.getrandbits(10)).count("1") == 6)
+counts = [sum(rng.random() < 0.9 for _ in range(10)) for _ in range(runs)]
+print(f"share with 6 heads: {six / runs:.4f} (exact {float(ten[6]):.4f})")
+print(f"s^2 of the p = 0.9 counts: {sample_variance(counts):.3f} (np(1 - p) = 0.9)")
+assert abs(six / runs - float(Fraction(105, 512))) < 0.005
+assert abs(sample_variance(counts) - 0.9) < 0.02
+`}
+/>
+
+The simulation flips 10 fair coins 100,000 times, one run per 10 random bits, and checks that the share of runs with exactly 6 heads lands within 0.005 of 105/512 ≈ 0.2051. Then it runs 100,000 rounds of 10 trials at p = 0.9 and checks that the sample variance of the counts, s², lands within 0.02 of np(1 − p) = 0.9. Close, not exact, which is all random sampling can do.
+
+## Research frontier
+
+<ResearchFrontier reviewed="2026-11-25">
+
+**How sure is a test accuracy?** The usual 95% interval for an accuracy is the estimate plus or minus 1.96 standard errors, Goodfellow and coauthors' equation (5.47) <Cite id="goodfellow2016ml" />. Their equation (5.46) uses the true standard deviation; in practice it is estimated from the observed accuracy $\hat{p}$ as $\sqrt{\hat{p}(1 - \hat{p})/n}$, and the interval $\hat{p} \pm 1.96\sqrt{\hat{p}(1 - \hat{p})/n}$ is called the Wald interval. Brown, Cai and DasGupta show that its real coverage, the chance that it contains the true $p$, is erratic in $n$ and $p$, and that this erratic behavior is far more persistent than had been appreciated. With $n = 100$ it covers 0.952 of the time at $p = 0.106$ but only 0.911 at $p = 0.107$. At $p = 0.005$ it reaches 0.945 with $n = 591$ and drops to 0.792 with $n = 592$: one more test example, much worse coverage (p. 102) <Cite id="brown2001" />. The code above recomputes these four numbers from the binomial formula. They recommend the Wilson or equal-tailed Jeffreys interval for small $n$ and the Agresti–Coull interval for larger $n$ (abstract), and call the "exact" Clopper–Pearson interval wastefully conservative (§4.2.1) <Cite id="brown2001" />.
+
+**When the binomial model is too narrow.** The binomial model assumes the errors on different test examples are independent. Bouthillier and coauthors note that correlated errors leave fewer effective examples and a wider distribution of the measured accuracy (§2.2) <Cite id="bouthillier2021" />. They also find that the test set is one source of variance among several: data splits, weight initialization, data order and hyperparameter search each add their own, and they recommend evaluating over multiple random data splits rather than one fixed test set (§5, "Use multiple data splits") <Cite id="bouthillier2021" />. To decide whether one pipeline beats another under this noise, they propose testing the probability that it outperforms the other across splits, rather than comparing two averages (§4) <Cite id="bouthillier2021" />.
+
+</ResearchFrontier>
+
+## Check yourself
+
+<CheckYourself level="intuition" question="In 4 flips of a fair coin, which is more likely: exactly 2 heads, or anything else?">
+Anything else. Exactly 2 heads has chance C(4, 2)/2⁴ = 6/16 = 3/8, so everything else has 5/8. The most likely count is still less likely than not, as with 5 heads in 10 flips.
+</CheckYourself>
+
+<CheckYourself level="standard" question="A model is right on each example with chance 0.8, independently. On 5 examples, what are P(all 5 right) and P(exactly 4 right)?">
+P(all 5 right) = 0.8⁵ = 1024/3125 = 0.32768, and P(exactly 4 right) = 5 × 0.8⁴ × 0.2 = 256/625 = 0.4096. Exactly 4 is more likely than all 5, because there are 5 ways to miss one example and only one way to miss none.
+</CheckYourself>
+
+<CheckYourself level="standard" question="X is binomial with n = 20 and p = 1/4. Find its mean, variance and standard deviation.">
+The mean is np = 20 × 1/4 = 5, the variance is np(1 − p) = 5 × 3/4 = 15/4 = 3.75, and the standard deviation is √3.75 ≈ 1.94.
+</CheckYourself>
+
+<CheckYourself level="proof" question="Show that P(X = k) for Bin(n, p) equals P(Y = n − k) for Bin(n, 1 − p).">
+$P(Y = n - k) = \binom{n}{n - k}(1 - p)^{n - k} p^{k}$. Choosing which $n - k$ trials fail is the same as choosing which $k$ succeed, so $\binom{n}{n - k} = \binom{n}{k}$, and the two powers are the same product as in $P(X = k) = \binom{n}{k} p^k (1 - p)^{n - k}$. So the two are equal: the count of failures in $\operatorname{Bin}(n, p)$ is $\operatorname{Bin}(n, 1 - p)$.
+</CheckYourself>
+
+<CheckYourself level="intuition" question="A bag has 3 red and 7 blue marbles. You draw 2 without putting the first back. Is the number of reds binomial?">
+No. Two reds have chance 3/10 × 2/9 = 1/15 ≈ 0.067, while the binomial formula with n = 2 and p = 3/10 would give 0.09. The second draw depends on the first, so the trials are not independent.
+</CheckYourself>
+
+## Common mistakes
+
+<CommonMistakes>
+  <Mistake wrong="The most likely count is likely.">
+    Five heads is the tallest bar for 10 fair coins, yet its chance is 63/256 ≈ 0.25. With 100 flips, exactly 50 heads has chance only about 0.08. The tallest bar is just the largest of many small ones.
+  </Mistake>
+  <Mistake wrong="P(6 heads in 10 flips) = (1/2)¹⁰.">
+    That is the chance of one particular sequence, such as HHHHHHTTTT. 210 sequences have 6 heads, so the chance is 210/1024 = 105/512.
+  </Mistake>
+  <Mistake wrong="Each number of heads is equally likely, 1/(n + 1).">
+    The counts hold different numbers of sequences: 1, 10, 45, 120, … for 10 coins. The [two-coin board](/probability/random-variables-and-distributions/#equally-likely-outcomes-unequal-values) on the random variables page shows the same with n = 2: 1 head has chance 1/2, and 0 or 2 heads 1/4 each.
+  </Mistake>
+  <Mistake wrong="Any count of successes is binomial.">
+    Only with a fixed number of trials, independent trials and the same p. Drawing without replacement gives 1/15 instead of 0.09 for two reds. Correlated errors make a test accuracy spread more than the binomial model says (Bouthillier and coauthors, §2.2).
+  </Mistake>
+  <Mistake wrong="The variance of a count of successes is np.">
+    It is np(1 − p). The factor 1 − p is what makes p = 0.9 spread less than p = 0.5: 0.9 against 2.5 for 10 trials.
+  </Mistake>
+  <Mistake wrong="Twice the trials, twice the spread.">
+    The variance doubles, so <Var name="sigma" /> grows only by √2. Ten fair flips give <Var name="sigma" /> ≈ 1.58 and 40 give ≈ 3.16: four times the flips, twice the spread.
+  </Mistake>
+</CommonMistakes>
+
+## Key takeaways
+
+<Takeaways />
+
+## How this connects
+
+<ConceptMap />
+
+## References
+
+<References />
