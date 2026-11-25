@@ -1,13 +1,15 @@
-import { useCallback, useId, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Mafs, Polygon, Text } from "mafs";
 import type { vec } from "mafs";
 import Board from "./Board";
 import TraySlider from "./TraySlider";
 import PresetButtons from "./guided/PresetButtons.tsx";
+import TableFold from "./guided/TableFold.tsx";
+import { tableFoldAnnouncement } from "./guided/tableFold.ts";
 import useAnnouncer from "./guided/useAnnouncer.ts";
 import { formatNumber, plotColors } from "./plotColors";
 import { BAYES_SCENARIOS, computePosterior, resolveScenarios, type BayesScenarioId, type BayesValues } from "./bayesTheorem/scenarios.ts";
-import { TABLE_LABELS, tableSummary } from "./bayesTheorem/table.ts";
+import { tableSummary } from "./bayesTheorem/table.ts";
 import CountTable from "./bayesTheorem/CountTable.tsx";
 import { labelPositions } from "./bayesTheorem/labels.ts";
 
@@ -48,7 +50,6 @@ export default function BayesTheorem({ scenarios, initialScenario }: BayesTheore
   const [falsePositive, setFalsePositive] = useState(initial.values.falsePositive);
   const [tableShown, setTableShown] = useState(false);
   const [announcement, announce] = useAnnouncer();
-  const tableId = useId();
   const scenario = BAYES_SCENARIOS[scenarioId];
 
   const { evidence, posterior } = useMemo(
@@ -87,11 +88,9 @@ export default function BayesTheorem({ scenarios, initialScenario }: BayesTheore
     loadScenario(choice.initial, false);
   }, [loadScenario, choice.initial]);
 
-  const toggleTable = () => {
-    const next = !tableShown;
-    setTableShown(next);
-    const values = { prior, likelihood, falsePositive };
-    announce(next ? `${TABLE_LABELS.shown} ${tableSummary(values, scenario)}` : TABLE_LABELS.hidden);
+  const toggleTable = (open: boolean) => {
+    setTableShown(open);
+    announce(tableFoldAnnouncement(open, tableSummary({ prior, likelihood, falsePositive }, scenario)));
   };
 
   // Only the page's own presets can be picked, so a stray id from the buttons fails loudly.
@@ -134,17 +133,9 @@ export default function BayesTheorem({ scenarios, initialScenario }: BayesTheore
       <p className="ms-board-readout">
         P(A | B) = {posteriorText(posterior)} &nbsp; P(B) = {formatNumber(evidence, 3)}
       </p>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={tableShown}
-        aria-controls={tableId}
-        className="ms-board-button ms-board-switch"
-        onClick={toggleTable}
-      >
-        {TABLE_LABELS.toggle}
-      </button>
-      <CountTable id={tableId} values={{ prior, likelihood, falsePositive }} scenario={scenario} shown={tableShown} />
+      <TableFold open={tableShown} onToggle={toggleTable}>
+        <CountTable values={{ prior, likelihood, falsePositive }} scenario={scenario} />
+      </TableFold>
     </>
   );
 

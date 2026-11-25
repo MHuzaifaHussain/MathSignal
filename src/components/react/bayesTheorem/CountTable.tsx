@@ -2,21 +2,19 @@ import type { BayesScenario, BayesValues } from "./scenarios.ts";
 import { tableCopy } from "./table.ts";
 
 interface CountTableProps {
-  id: string;
   values: BayesValues;
   scenario: BayesScenario;
-  /** Off: hidden on screen and from screen readers, but still printed, as the other boards' tables are. */
-  shown: boolean;
 }
 
 /**
  * The square as a native table of whole counts (A and not A by B and not B, with totals), plus the two readout
  * numbers as "k of n". The B-and-A count and B's total, the two numbers P(A | B) divides, are bold, never colored.
+ * It sits inside the board's TableFold, which hides it until "Table view" is on and always prints it.
  */
-export default function CountTable({ id, values, scenario, shown }: CountTableProps) {
+export default function CountTable({ values, scenario }: CountTableProps) {
   const copy = tableCopy(values, scenario);
   return (
-    <div id={id} className={shown ? "ms-bayes-table" : "ms-bayes-table is-print-only"}>
+    <div className="ms-bayes-table">
       <table>
         <caption>{copy.caption}</caption>
         <thead>

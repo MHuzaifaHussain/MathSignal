@@ -1,4 +1,4 @@
-// The BayesTheorem board's "Show as table" view: the square's four areas as whole counts, and every sentence the
+// The BayesTheorem board's "Table view": the square's four areas as whole counts, and every sentence the
 // table shows or speaks. Pure TypeScript with no React, so scripts/check-boards.mjs can assert the counts.
 import { formatNumber } from '../plotColors.ts';
 import { computePosterior, type BayesScenario, type BayesValues } from './scenarios.ts';
@@ -115,16 +115,9 @@ export function tableCopy(values: BayesValues, scenario: BayesScenario): TableCo
 	};
 }
 
-/** Spoken when the switch turns the table on, and after each change while it is on. */
+/** The body spoken after the shared opening when "Table view" turns on, and alone after each change while it is on. */
 export function tableSummary(values: BayesValues, scenario: BayesScenario): string {
 	const counts = countTable(values);
 	const inB = counts.bAndA + counts.bAndNotA;
 	return `Out of ${formatCount(counts.population)} ${scenario.countNoun}, ${formatCount(inB)} are in B and ${formatCount(counts.bAndA)} of those are in A.`;
 }
-
-export const TABLE_LABELS = {
-	/** The switch's name; it is on while the table shows. */
-	toggle: 'Show as table',
-	shown: 'Table shown under the readout.',
-	hidden: 'Table hidden.',
-} as const;

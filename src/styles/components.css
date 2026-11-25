@@ -461,17 +461,27 @@
 	cursor: not-allowed;
 }
 
-/* ── BayesTheorem: "Show as table" (decision 0016) ──
- * The square's four areas as whole counts under the readout. The two counts P(A | B) divides are bold, never
- * colored, so the table reads the same in forced colors. Hidden on screen until the switch is on; always printed. */
-.ms-bayes-table {
+/* ── The "Table view" fold (guided/TableFold.tsx, decision 0017) ──
+ * The board's data table, full width directly under its switch. Folded, it is display: none on screen and out of
+ * the accessibility tree; in print it always shows. No overflow-x here: a scrolling region would need its own focus
+ * stop, so every folded table must fit the tray. Never the hidden attribute, which print can't override. */
+.ms-board-table-fold {
 	flex-basis: 100%;
-	overflow-x: auto;
 }
 
-.ms-bayes-table.is-print-only {
+.ms-board-table-fold.is-folded {
 	display: none;
 }
+
+@media print {
+	.ms-board-table-fold.is-folded {
+		display: block;
+	}
+}
+
+/* ── BayesTheorem: its "Table view" (decision 0016) ──
+ * The square's four areas as whole counts. The two counts P(A | B) divides are bold, never colored, so the table
+ * reads the same in forced colors. */
 
 .ms-bayes-table table {
 	margin: 0;
@@ -501,12 +511,6 @@
 .ms-bayes-table .ms-board-readout {
 	margin: 0.15rem 0;
 	overflow-wrap: anywhere;
-}
-
-@media print {
-	.ms-bayes-table.is-print-only {
-		display: block;
-	}
 }
 
 /* ── EventSpace: a sample space as a table of outcomes (decision 0011) ──

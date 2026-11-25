@@ -899,7 +899,7 @@ assert.throws(() => bayes.resolveScenarios(['any-events', 'medical-test', 'wet-l
 assert.throws(() => bayes.resolveScenarios(['wet-lawn', 'any-events', 'wet-lawn']), /lists "wet-lawn" twice/);
 // Every scenario names what its table counts.
 for (const scenario of Object.values(bayes.BAYES_SCENARIOS)) assert.ok(scenario.countNoun.length > 0, `${scenario.id}: no countNoun`);
-// "Show as table": the four areas as whole counts, out of the smallest of 100, 1,000 or 10,000 that keeps them whole.
+// "Table view": the four areas as whole counts, out of the smallest of 100, 1,000 or 10,000 that keeps them whole.
 // The medical test and screening tables match the ones the pages print; fraud flag is the page's "608 of 10,000".
 const bayesTable = await import('../src/components/react/bayesTheorem/table.ts');
 const countsOf = (id) => bayesTable.countTable(bayes.BAYES_SCENARIOS[id].values);
@@ -1688,6 +1688,80 @@ const announcerRun = () => {
 	assert.equal(clock.pending(), 0);
 	clock.advance(1000);
 	assert.deepEqual(shown, []);
+}
+
+// ---- Shared guided piece: the "Table view" fold (guided/tableFold.ts and TableFold.tsx, decision 0017) ----
+// One switch, named and worded the same on every board; each board writes only the body of its opening sentence.
+const tableFold = await import('../src/components/react/guided/tableFold.ts');
+assert.equal(tableFold.TABLE_FOLD_LABEL, 'Table view');
+assert.equal(tableFold.TABLE_FOLD_SHOWN, 'Table shown under the switch.');
+assert.equal(tableFold.TABLE_FOLD_HIDDEN, 'Table hidden.');
+assert.equal(
+	tableFold.tableFoldAnnouncement(true, 'It lists 3 bars, each with its faces and its chance.'),
+	'Table shown under the switch. It lists 3 bars, each with its faces and its chance.',
+);
+assert.equal(tableFold.tableFoldAnnouncement(false, 'It lists 3 bars, each with its faces and its chance.'), 'Table hidden.');
+// A bad body fails loudly, open or closed, and the message names it.
+for (const open of [true, false]) {
+	assert.throws(() => tableFold.tableFoldAnnouncement(open, ''), (error) => error.message === 'tableFoldAnnouncement: the body "" is empty.');
+	assert.throws(() => tableFold.tableFoldAnnouncement(open, '   '), /the body " {3}" is empty/);
+	assert.throws(() => tableFold.tableFoldAnnouncement(open, 'It lists 3 bars'), (error) => error.message === 'tableFoldAnnouncement: the body "It lists 3 bars" does not end with a period.');
+	assert.throws(() => tableFold.tableFoldAnnouncement(open, 'Table shown under the switch. It lists 3 bars.'), /starts with "Table shown", which the fold already says/);
+	assert.throws(() => tableFold.tableFoldAnnouncement(open, 'Table hidden.'), /starts with "Table hidden", which the fold already says/);
+}
+// Bayes: the body is tableSummary, unchanged.
+{
+	const bayesScenarios = await import('../src/components/react/bayesTheorem/scenarios.ts');
+	const bayesTableText = await import('../src/components/react/bayesTheorem/table.ts');
+	const medical = bayesScenarios.BAYES_SCENARIOS['medical-test'];
+	assert.equal(
+		tableFold.tableFoldAnnouncement(true, bayesTableText.tableSummary(medical.values, medical)),
+		'Table shown under the switch. Out of 1,000 people, 108 are in B and 9 of those are in A.',
+	);
+	assert.ok(!('TABLE_LABELS' in bayesTableText), 'the Bayes board has its own switch words again');
+	// Every scenario's body is a valid one, so no preset can throw from a click.
+	for (const scenario of Object.values(bayesScenarios.BAYES_SCENARIOS)) {
+		assert.ok(tableFold.tableFoldAnnouncement(true, bayesTableText.tableSummary(scenario.values, scenario)).startsWith(tableFold.TABLE_FOLD_SHOWN));
+	}
+}
+// Text scans, like the color scans: the old name is gone, print wins the cascade, and no fold holds a control.
+{
+	const { readFileSync, readdirSync } = await import('node:fs');
+	const path = await import('node:path');
+	const filesUnder = (dir) => readdirSync(dir, { recursive: true, withFileTypes: true }).filter((entry) => entry.isFile()).map((entry) => path.join(entry.parentPath, entry.name).split(path.sep).join('/'));
+	const oldName = ['Show as', 'table'].join(' ');
+	for (const file of [...filesUnder('src/components/react'), ...filesUnder('src/content/docs')]) {
+		assert.ok(!readFileSync(file, 'utf8').includes(oldName), `${file} still names the switch "${oldName}"; it is "Table view" (decision 0017)`);
+	}
+	const css = readFileSync('src/styles/components.css', 'utf8');
+	const screenRule = css.search(/\.ms-board-table-fold\.is-folded\s*\{\s*display:\s*none;\s*\}/);
+	const printRule = css.search(/@media print\s*\{\s*\.ms-board-table-fold\.is-folded\s*\{\s*display:\s*block;\s*\}/);
+	assert.ok(screenRule >= 0, 'components.css folds .ms-board-table-fold.is-folded with display: none');
+	assert.ok(printRule > screenRule, 'a later @media print block shows .ms-board-table-fold.is-folded, so print wins');
+	// Every component a board wraps in <TableFold>, as a path under src/components/react/. A file joins in the commit
+	// that wraps it, and must stay read-only: folding a control would hide a keyboard path.
+	const TABLE_FOLD_CHILDREN = ['bayesTheorem/CountTable.tsx'];
+	const CONTROL_TOKENS = ['<button', '<input', '<select', '<textarea', 'tabIndex', 'onFocus', 'onKeyDown', 'onClick'];
+	const wrapped = new Set();
+	for (const file of filesUnder('src/components/react').filter((name) => name.endsWith('.tsx'))) {
+		const source = readFileSync(file, 'utf8');
+		for (const [, inner] of source.matchAll(/<TableFold\b[^>]*>([\s\S]*?)<\/TableFold>/g)) {
+			const children = [...inner.matchAll(/<([A-Z]\w*)\b/g)].map((match) => match[1]);
+			assert.equal(children.length, 1, `${file}: a <TableFold> wraps exactly one table component, found ${children.join(', ') || 'none'}`);
+			const importLine = source.match(new RegExp(`import ${children[0]} from "(\.[^"]+)"`));
+			assert.ok(importLine, `${file}: <TableFold> child ${children[0]} is not a default import from a relative path`);
+			const resolved = path.posix.relative('src/components/react', path.posix.join(path.posix.dirname(file), importLine[1]));
+			assert.ok(TABLE_FOLD_CHILDREN.includes(resolved), `${file}: <TableFold> child ${children[0]} (${resolved}) is not in TABLE_FOLD_CHILDREN`);
+			wrapped.add(resolved);
+		}
+	}
+	assert.deepEqual([...wrapped].sort(), [...TABLE_FOLD_CHILDREN].sort(), 'every listed table is folded by some board');
+	for (const child of TABLE_FOLD_CHILDREN) {
+		const source = readFileSync(`src/components/react/${child}`, 'utf8');
+		for (const token of CONTROL_TOKENS) assert.ok(!source.includes(token), `${child} is folded behind Table view but contains ${token}`);
+	}
+	// The shared piece is the only place the switch's name is written.
+	assert.ok(readFileSync('src/components/react/guided/TableFold.tsx', 'utf8').includes('{TABLE_FOLD_LABEL}'));
 }
 
 // ---- DescriptiveStats model and datasets (decision 0015) ----
