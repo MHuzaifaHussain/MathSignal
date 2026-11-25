@@ -5394,6 +5394,27 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 		assert.equal(rm.leastAbsolute(points).kind, 'line');
 	}
 	rd.ANSCOMBE.forEach((set, i) => checkIdentities(set, `Anscombe set ${i + 1}`));
+	// Every preset keeps the identities, r² = R² included. The list is explicit; the guard below fails when a new
+	// data set is exported from datasets.ts without joining it.
+	const presets = {
+		OUR_CLASS: rd.OUR_CLASS,
+		PERFECT_LINE: rd.PERFECT_LINE,
+		SHUFFLED_ARMS: rd.SHUFFLED_ARMS,
+		ONE_TYPO: rd.ONE_TYPO,
+		RUNNERS_CURVE: rd.RUNNERS_CURVE,
+		RUNNERS_SLOW_START: rd.RUNNERS_SLOW_START,
+		RUNNERS_STRAIGHT: rd.RUNNERS_STRAIGHT,
+		RUNNERS_FALL: rd.RUNNERS_FALL,
+		SHOE_READING: rd.SHOE_READING,
+		SAME_FEET: rd.SAME_FEET,
+		TEAM_PRACTICE: rd.TEAM_PRACTICE,
+		PRACTICE_ALIKE: rd.PRACTICE_ALIKE,
+	};
+	Object.entries(presets).forEach(([name, points]) => checkIdentities(points, name));
+	const isFraction = (value) => typeof value === 'object' && value !== null && 'numerator' in value && 'denominator' in value;
+	const isDataSet = (value) => Array.isArray(value) && value.length > 0 && value.every((point) => Array.isArray(point) && point.length === 2 && point.every(isFraction));
+	const exportedDataSets = Object.keys(rd).filter((name) => isDataSet(rd[name])).sort();
+	assert.deepEqual(exportedDataSets, Object.keys(presets).sort(), 'every data set in datasets.ts is in the identity sweep');
 	// The model file has no μ or σ colors and no KaTeX.
 	for (const name of ['model.ts', 'datasets.ts']) {
 		const source = readFileSync(`src/components/react/linearRegression/${name}`, 'utf8');
