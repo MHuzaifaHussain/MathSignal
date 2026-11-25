@@ -6157,6 +6157,8 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 			}
 		}
 		assert.ok(reachable.length > 2000, `enumerated ${reachable.length} states`);
+		const FC_PLANE_SIZES = [270, 400];
+		let fittedLabels = 0;
 		for (const state of reachable) {
 			const where = `${state.setupId} ${state.preset} x=${state.xIndex / 2} h#${state.hIndex} ${state.stage} lines=${state.linesOn}`;
 			const marks = fcMarks.planeMarks(state);
@@ -6173,6 +6175,47 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 			assert.equal(marks.at(-1).kind, 'point', 'the point is drawn last, on top');
 			assert.equal(marks.find((mark) => mark.kind === 'point').color, 'ink', 'the point is ink');
 			assert.equal(marks.find((mark) => mark.kind === 'point').movable, state.checked, 'the point moves only after Check');
+			// Every plane label, fitted, clears every edge of the narrowest plane (about 270px on a 320px phone) and the widest (400px).
+			const view = fcSetups.viewOf(state.preset).view;
+			const { x, y } = fcModel.viewNumbers(view);
+			for (const mark of marks.filter((entry) => entry.label)) {
+				for (const size of FC_PLANE_SIZES) {
+					const { text, at, attach } = mark.label;
+					const fitted = fcModel.fitLabel(view, at, attach, text, size);
+					assert.equal(fitted.attach, attach, `fitLabel keeps the attach side: ${where}`);
+					const box = fcModel.labelBox(view, fitted.at, fitted.attach, text, size);
+					const marginX = (fcModel.LABEL_EDGE_MARGIN * (x[1] - x[0])) / size - 1e-9;
+					const marginY = (fcModel.LABEL_EDGE_MARGIN * (y[1] - y[0])) / size - 1e-9;
+					const inside = box.left >= x[0] + marginX && box.right <= x[1] - marginX && box.bottom >= y[0] + marginY && box.top <= y[1] - marginY;
+					assert.ok(inside, `"${text}" leaves a ${size}px plane: ${where}`);
+					fittedLabels += 1;
+				}
+			}
+		}
+		assert.ok(fittedLabels > 10000, `fitted ${fittedLabels} labels`);
+		// labelBox follows Mafs' Text: 'e' starts 6px right of the anchor, 'n' puts the baseline 6px below it, 'se' moves
+		// 6/√2 px each way. On the 5 × 5 equal-scale view at 400px one pixel is 1/80 of a unit.
+		{
+			const view = fcSetups.CURVE_VIEWS.square.view;
+			const box = (attach) => fcModel.labelBox(view, [0, 2], attach, 'ab', 400);
+			const close = (actual, expected, what) => assert.ok(Math.abs(actual - expected) < 1e-12, `${what}: ${actual} vs ${expected}`);
+			close(box('e').left, 6 / 80, "'e' left");
+			close(box('e').right, (6 + 17) / 80, "'e' right");
+			close(box('w').right, -6 / 80, "'w' right");
+			close(box('n').bottom, 2 - 6 / 80, "'n' bottom");
+			close(box('n').top, 2 - 6 / 80 + 18 / 80, "'n' top");
+			close(box('s').top, 2 + 6 / 80, "'s' top");
+			close(box('se').left, (6 * Math.SQRT1_2) / 80, "'se' left");
+			close(box('se').top, 2 + (6 * Math.SQRT1_2) / 80, "'se' top");
+			// A label that already fits stays where marks.ts put it; one past an edge moves inward along that axis only.
+			assert.deepEqual(fcModel.fitLabel(view, [0, 2], 'e', 'ab', 400), { at: [0, 2], attach: 'e' });
+			const right = fcModel.fitLabel(view, [2.5, 2], 'e', 'ab', 400);
+			close(right.at[0], 2.5 - (6 + 17 + 4) / 80, 'pushed in from the right edge');
+			assert.equal(right.at[1], 2);
+			const bottom = fcModel.fitLabel(view, [0, -0.5], 's', 'ab', 400);
+			close(bottom.at[1], -0.5 + (18 - 6 + 4) / 80, 'pushed up from the bottom edge');
+			assert.throws(() => fcModel.fitLabel(view, [0, 0], 'e', 'x'.repeat(60), 400), /the label "x{60}" doesn't fit a 400px plane/);
+			assert.throws(() => fcModel.labelBox(view, [0, 0], 'e', 'a', 0), /wider than 0px/);
 		}
 		// The point's label: "you" on the slide, its coordinates elsewhere; leg labels only from |h| = 0.5.
 		const labels = (state) => fcMarks.planeMarks(state).flatMap((mark) => (mark.label ? [mark.label.text] : []));

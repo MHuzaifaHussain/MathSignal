@@ -5,15 +5,13 @@ import { toNumber } from "../boardMath";
 import { Segment } from "../planeLines";
 import { plotColors } from "../plotColors";
 import { evaluate, pieceCurve } from "./functions.ts";
-import { LABEL_SIZE, fitLabel, viewNumbers } from "./model.ts";
+import { LABEL_DISTANCE, LABEL_SIZE, fitLabel, viewNumbers } from "./model.ts";
 import { planeMarks, type Mark, type MarkColor } from "./marks.ts";
 import { pointValue, viewOf } from "./setups.ts";
 import { curveFor, type CurveState } from "./state.ts";
 
 /** The only place mark colors become CSS: marks.ts decides which mark is ink, muted or ochre. */
 export const MARK_COLORS: Readonly<Record<MarkColor, string>> = { ink: plotColors.ink, muted: plotColors.inkMuted, ochre: plotColors.attention };
-/** Gap between a label and what it names, in pixels. */
-const LABEL_DISTANCE = 6;
 
 /** An axis number with a real minus sign. */
 const axisNumber = (value: number) => (value < 0 ? `−${Math.abs(value)}` : String(value));
