@@ -2183,6 +2183,12 @@
 /* ── NormalDistribution z mode: a fixed standard normal over two rulers (decision 0019) ──
  * The curve and the shading are ink, the z ruler muted ink; pink is the μ guide, blue the σ span, and the one ochre
  * element is the value marker with its handle, all drawn in Mafs code. */
+/* The note sits above the plot in normal flow: over the plot it would cover the μ label and the peak at every width. */
+.ms-normal-z .ms-chalk-note {
+	position: static;
+	padding: 0.5rem 1rem 0;
+}
+
 .ms-normal-z-readouts .ms-board-readout {
 	margin: 0.15rem 0;
 	overflow-wrap: anywhere;

@@ -225,6 +225,7 @@ export default function ZBoard({ setup: setupId }: { setup: ZSetupId }) {
   return (
     <Board label={BOARD_LABEL} tray={tray} onReset={() => send({ type: "reset" })} announcement={announcement} onInteractionEnd={endInteraction}>
       <div className="ms-normal-z" aria-hidden="true">
+        {note && <ChalkNote long={note.long} short={note.short} />}
         <Mafs height={Z_BOARD_HEIGHT} viewBox={{ x: Z_VIEW_X, y: Z_VIEW_Y, padding: 0 }} preserveAspectRatio={false} pan={false} zoom={false}>
           <Coordinates.Cartesian xAxis={{ lines: 1, labels: false }} yAxis={false} />
 
@@ -272,7 +273,6 @@ export default function ZBoard({ setup: setupId }: { setup: ZSetupId }) {
           <Segment from={[z, 0]} to={[z, standardNormalDensity(z)]} color={plotColors.attention} weight={3} />
           <MovablePoint point={[z, 0]} constrain={constrainHandle} onMove={dragHandle} color={plotColors.attention} />
         </Mafs>
-        {note && <ChalkNote long={note.long} short={note.short} />}
       </div>
     </Board>
   );
