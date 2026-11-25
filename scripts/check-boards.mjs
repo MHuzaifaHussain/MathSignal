@@ -1967,8 +1967,9 @@ const announcerRun = () => {
 	const open = dst.initialState('class-lineup');
 	assert.equal(dsay.statusLine(open), '9 children, in the order they arrived. Heights from 122 cm to 148 cm.');
 	assert.equal(dsay.statusLine(run('class-lineup', { type: 'line-up', on: true })), '9 children, lined up from shortest to tallest. Heights from 122 cm to 148 cm.');
-	assert.equal(dsay.coveredText(), 'The summary appears when you find the middle child.');
-	assert.equal(dsay.checkRefusal(open), 'Pick a child under Your middle child first.');
+	assert.equal(dsay.coveredText(), 'The summary appears when you find the middle of the class.');
+	assert.equal(dsay.checkRefusal(open), 'Pick a child under Your pick for the middle first.');
+	assert.equal(dsay.announcementFor(run('class-lineup', { type: 'pick', child: 4 }), { type: 'pick', child: 4 }), 'Your pick for the middle: child 5, 148 cm.');
 	assert.equal(
 		dsay.feedbackLine(run('class-lineup', { type: 'pick', child: 4 }, { type: 'check' })),
 		'Child 5 stands in the middle of the arrival line, but 8 children are shorter and none is taller. Line them up first.',
@@ -2006,7 +2007,7 @@ const announcerRun = () => {
 	assert.deepEqual(dsay.dataTable(found).rows[0], { header: 'Child 1', cells: ['133', '5th'] });
 	assert.deepEqual(dsay.summaryTable(open).rows, []);
 	assert.equal(dsay.dataTable(open).caption, 'The children, in the order they arrived.');
-	assert.equal(dsay.boardLabel(ds.getSetup('class-lineup')), 'A class of children as bars drawn to their height. Find the child in the middle.');
+	assert.equal(dsay.boardLabel(ds.getSetup('class-lineup')), 'A class of children as bars drawn to their height. Find the middle of the class.');
 
 	// Ten children: no child stands at the median, which is halfway between the two middle children.
 	const ten = run('class-lineup', { type: 'preset', id: 'ten-children' });
@@ -2014,11 +2015,11 @@ const announcerRun = () => {
 	assert.equal(dsay.announcementFor(ten, { type: 'preset', id: 'ten-children' }), 'Ten children. 10 children, in the order they arrived. Heights from 122 cm to 148 cm.');
 	assert.equal(
 		dsay.feedbackLine(dst.reducer(dst.reducer(ten, { type: 'pick', child: 4 }), { type: 'check' })),
-		'Child 5 stands in the middle of the arrival line, but 9 children are shorter and none is taller. Line them up first.',
+		'Child 5 is one of the two in the middle of the arrival line, but 9 children are shorter and none is taller. Line them up first.',
 	);
 	assert.equal(
 		dsay.feedbackLine(dst.reducer(dst.reducer(ten, { type: 'pick', child: 5 }), { type: 'check' })),
-		'Child 6 stands in the middle of the arrival line, but 1 child is shorter and 8 are taller. Line them up first.',
+		'Child 6 is one of the two in the middle of the arrival line, but 1 child is shorter and 8 are taller. Line them up first.',
 	);
 	assert.equal(dsay.feedbackLine(dst.reducer(dst.reducer(ten, { type: 'pick', child: 6 }), { type: 'check' })), 'Child 7 (137 cm) has 6 children shorter and 3 taller. Try a shorter child.');
 	const tenFound = dst.reducer(dst.reducer(ten, { type: 'pick', child: 9 }), { type: 'check' });

@@ -8,7 +8,7 @@ import { toNumber } from '../boardMath.ts';
 
 export type SetupId = 'class-lineup' | 'cafe-millionaire' | 'class-spread' | 'class-box' | 'marks-scaling' | 'pumpkin-outliers';
 /**
- * lineup: find the middle child, then see the summary. newcomer: one value joins and the three centers react.
+ * lineup: find the middle of the class, then see the summary. newcomer: one value joins and the three centers react.
  * spread: σ around the mean, with s beside it. box: quartiles and the box plot. scaling: two tests on raw, min–max
  * and z scales. outliers: the IQR rule against |z|.
  */
@@ -91,7 +91,7 @@ const SETUP_LIST: readonly Setup[] = [
 	{
 		id: 'class-lineup',
 		kind: 'lineup',
-		label: 'A class of children as bars drawn to their height. Find the child in the middle.',
+		label: 'A class of children as bars drawn to their height. Find the middle of the class.',
 		words: HEIGHT_WORDS,
 		opening: CLASS_HEIGHTS,
 		axis: { min: 120, max: 150, tickStep: 5, narrowTickStep: 10 },

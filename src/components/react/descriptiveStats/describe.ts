@@ -54,7 +54,7 @@ export const CONTROL_LABELS = {
 	check: 'Check',
 	showAnswer: 'Show the answer',
 	lineUp: 'Line them up',
-	pick: 'Your middle child',
+	pick: 'Your pick for the middle',
 	childToMove: 'Child to move',
 	height: 'Height',
 	distances: 'Show distances',
@@ -180,7 +180,7 @@ export function statusLine(state: DescriptiveState): string {
 // ---- Line-up: the middle child ----
 
 export function coveredText(): string {
-	return 'The summary appears when you find the middle child.';
+	return 'The summary appears when you find the middle of the class.';
 }
 
 export function checkRefusal(state: DescriptiveState): string | null {
@@ -244,9 +244,11 @@ export function feedbackLine(state: DescriptiveState): string | null {
 	const rank = rankOf(values, feedback.child);
 	const name = childName(feedback.child);
 	const hint = rank.shorter > rank.taller ? 'Try a shorter child.' : 'Try a taller child.';
-	if (arrivalMiddle(values.length).includes(feedback.child)) {
+	const arrival = arrivalMiddle(values.length);
+	if (arrival.includes(feedback.child)) {
 		const next = state.linedUp ? hint : 'Line them up first.';
-		return `${name} stands in the middle of the arrival line, but ${rankClauses(rank)}. ${next}`;
+		const where = arrival.length === 1 ? 'stands in the middle' : 'is one of the two in the middle';
+		return `${name} ${where} of the arrival line, but ${rankClauses(rank)}. ${next}`;
 	}
 	return `${name} (${height} cm) has ${shorterAndTaller(rank)}. ${hint}`;
 }
@@ -877,7 +879,7 @@ export function announcementFor(state: DescriptiveState, action: Action): string
 		case 'line-up':
 			return statusLine(state);
 		case 'pick':
-			return `Your middle child: child ${action.child + 1}, ${state.values[action.child]} cm.`;
+			return `${CONTROL_LABELS.pick}: child ${action.child + 1}, ${state.values[action.child]} cm.`;
 		case 'check':
 			return state.refusal ? (checkRefusal(state) ?? '') : checkAnnouncement(state);
 		case 'show-answer':
