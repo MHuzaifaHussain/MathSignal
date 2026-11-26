@@ -238,16 +238,12 @@ export interface NormBallModel {
 
 export const NORM_BALL_MODEL: NormBallModel = { fenceLoss: FENCE_LOSS, touchLoss: TOUCH_LOSS, touchRings: TOUCH_RINGS };
 
-/** Throws, naming the problem, if a loss, a ring or a penalized weight can't be drawn or would give the answer away. */
+/** Throws, naming the problem, if a loss, a ring or an arrow can't be drawn or would give the answer away. */
 export function validateModel(model: NormBallModel = NORM_BALL_MODEL): void {
 	const { fenceLoss, touchLoss, touchRings } = model;
 	checkLoss('the fence loss', fenceLoss);
 	checkLoss('the touch loss', touchLoss);
-	for (const alpha of alphaGrid()) {
-		for (const [method, weights] of [['lasso', lasso(fenceLoss, alpha)], ['ridge', ridge(fenceLoss, alpha)]] as const) {
-			if (!onView(weights)) throw new Error(`NormBall: ${method} at α = ${toNumber(alpha)} gives ${text(weights)}, off the board.`);
-		}
-	}
+	// Lasso and ridge only shrink: |wᵢ| ≤ |cᵢ| for every α ≥ 0, so a center on the board keeps every penalized weight on it.
 	for (const level of touchRings) {
 		if (ringGivesAway(touchLoss, level)) throw new Error(`NormBall: the touch ring at loss ${toNumber(level)} crosses the path twice or touches it, so it shows the answer.`);
 	}

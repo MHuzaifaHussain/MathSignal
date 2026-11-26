@@ -5280,6 +5280,10 @@ const labelsOverlap = (first, second, size) => {
 	assert.throws(() => nb.validateModel(broken({ touchRings: [f(1), f(2), f(9, 2)] })), /touch ring at loss 4\.5 .* shows the answer/);
 	assert.throws(() => nb.validateModel(broken({ fenceLoss: { ...FENCE_LOSS, center: w(f(VIEW_LIMIT + 1), f(1)) } })), /the fence loss's center .* is off the board/);
 	assert.throws(() => nb.validateModel(broken({ touchLoss: { ...TOUCH_LOSS, curvature: w(f(0), f(2)) } })), /the touch loss needs a positive curvature/);
+	// The fence loss on the touch path is parallel to the normal only at w₁ = 8/3, between the 0.25 steps.
+	assert.throws(() => nb.validateModel(broken({ touchLoss: FENCE_LOSS })), /exactly one point .* found 0/);
+	// Curvature (2, 2): one parallel point at w₁ = 2.5, but the downhill arrow from (0, 3) ends at (8, 1).
+	assert.throws(() => nb.validateModel(broken({ touchLoss: { ...TOUCH_LOSS, curvature: w(f(2), f(2)) } })), /arrow from path point 0 ends at \(8\/1, 1\/1\), off the board/);
 	// No μ or σ colors and no KaTeX in NormBall's files.
 	for (const name of readdirSync('src/components/react/normBall')) {
 		const source = readFileSync(`src/components/react/normBall/${name}`, 'utf8');
