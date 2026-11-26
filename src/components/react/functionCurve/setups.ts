@@ -4,6 +4,7 @@
 import { absoluteFraction, compareFractions, fraction, multiplyFractions, toNumber, type Fraction } from '../boardMath.ts';
 import { terminatesWithin } from '../boardText.ts';
 import type { CheckMode } from '../guided/guided.ts';
+import type { SpokenLine } from '../guided/spokenLine.ts';
 import { CATALOG, evaluate, type CurveId, type ExactFunction } from './functions.ts';
 import { CURVE_DECIMAL_PLACES, offBoard, type View } from './model.ts';
 
@@ -71,19 +72,20 @@ export const CURVE_VIEWS: Readonly<Record<CurveId, CurveView>> = {
 
 export interface CurvePreset {
 	id: PresetId;
-	label: string;
+	/** The button's name: the symbols on screen, words for a screen reader ("x squared", "minus"). */
+	label: SpokenLine;
 	curve: CurveId;
 	/** Where the preset puts the point, as a half-step index. */
 	xIndex: number;
 }
 
 export const PRESETS: Readonly<Record<PresetId, CurvePreset>> = {
-	bowl: { id: 'bowl', label: 'Bowl: x² at 1', curve: 'square', xIndex: 2 },
-	's-curve': { id: 's-curve', label: 'S-curve: x³ at 1', curve: 'cube', xIndex: 2 },
-	loss: { id: 'loss', label: 'Loss: (w − 3)² at 0', curve: 'loss', xIndex: 0 },
-	hinge: { id: 'hinge', label: 'Hinge: ReLU at 0', curve: 'relu', xIndex: 0 },
-	v: { id: 'v', label: 'V: |x| at 0', curve: 'abs', xIndex: 0 },
-	smooth: { id: 'smooth', label: 'Smooth: x² at 0', curve: 'square', xIndex: 0 },
+	bowl: { id: 'bowl', label: { visible: 'Bowl: x² at 1', spoken: 'Bowl: x squared at 1' }, curve: 'square', xIndex: 2 },
+	's-curve': { id: 's-curve', label: { visible: 'S-curve: x³ at 1', spoken: 'S-curve: x cubed at 1' }, curve: 'cube', xIndex: 2 },
+	loss: { id: 'loss', label: { visible: 'Loss: (w − 3)² at 0', spoken: 'Loss: w minus 3, squared, at 0' }, curve: 'loss', xIndex: 0 },
+	hinge: { id: 'hinge', label: { visible: 'Hinge: ReLU at 0', spoken: 'Hinge: ReLU at 0' }, curve: 'relu', xIndex: 0 },
+	v: { id: 'v', label: { visible: 'V: |x| at 0', spoken: 'V: the absolute value of x at 0' }, curve: 'abs', xIndex: 0 },
+	smooth: { id: 'smooth', label: { visible: 'Smooth: x² at 0', spoken: 'Smooth: x squared at 0' }, curve: 'square', xIndex: 0 },
 };
 
 /** Slopes of the line through the corner, by preset. Both hold 0.5, where the switch opens. */

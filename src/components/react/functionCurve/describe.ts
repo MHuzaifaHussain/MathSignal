@@ -244,7 +244,7 @@ export function chalkNote(state: CurveState): { long: string; short: string } | 
 	return { long: "shorter ruler, closer to the curve's own tilt", short: 'shorter ruler, closer tilt' };
 }
 
-export function presetsFor(state: CurveState): readonly { id: PresetId; label: string }[] {
+export function presetsFor(state: CurveState): readonly { id: PresetId; label: SpokenLine }[] {
 	if (covered(state)) return [];
 	return setupOf(state).presets.map((id) => ({ id, label: PRESETS[id].label }));
 }

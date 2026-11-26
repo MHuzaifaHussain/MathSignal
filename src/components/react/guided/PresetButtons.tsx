@@ -1,11 +1,14 @@
 import { refusedBy } from "./refusal.tsx";
+import SpokenText from "./SpokenText.tsx";
+import type { SpokenLine } from "./spokenLine.ts";
 
 interface PresetButtonsProps {
   /** Accessible name of the group, e.g. "Presets for event A". */
   label: string;
   /** Short visible caption before the buttons, e.g. "A"; screen readers get `label` instead. */
   caption: string;
-  presets: readonly { id: string; label: string }[];
+  /** Each button's name: plain text, or a spoken pair when it holds symbols a screen reader would skip ("|x|", "²"). */
+  presets: readonly { id: string; label: string | SpokenLine }[];
   /**
    * The preset the board shows now (null when the reader has stepped away from every preset), drawn pressed.
    * Omit it for presets that only load values and never stay selected; the buttons then carry no aria-pressed.
@@ -32,7 +35,7 @@ export default function PresetButtons({ label, caption, presets, activeId, refus
           {...refusedBy(refusalId)}
           onClick={() => onPick(preset.id)}
         >
-          {preset.label}
+          {typeof preset.label === "string" ? preset.label : <SpokenText line={preset.label} />}
         </button>
       ))}
     </div>

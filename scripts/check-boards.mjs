@@ -6227,7 +6227,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	assert.deepEqual(fcSetups.LINE_SLOPES.hinge.map(fcText), ['−0.5', '0', '0.25', '0.5', '0.75', '1', '1.5']);
 	assert.deepEqual(fcSetups.LINE_SLOPES.v.map(fcText), ['−1.5', '−1', '−0.5', '0', '0.5', '1', '1.5']);
 	assert.deepEqual(
-		Object.values(fcSetups.PRESETS).map((preset) => [preset.id, preset.label, preset.curve, preset.xIndex]),
+		Object.values(fcSetups.PRESETS).map((preset) => [preset.id, preset.label.visible, preset.curve, preset.xIndex]),
 		[
 			['bowl', 'Bowl: x² at 1', 'square', 2],
 			['s-curve', 'S-curve: x³ at 1', 'cube', 2],
@@ -6608,9 +6608,14 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		});
 		assert.equal(fcSay.boardLabel(fcAfter(R2T, { preset: 'loss', xIndex: 0, stage: 'ruler' })).visible, 'The curve L(w) = (w − 3)² with a ruler from w = 0. Move the point with the Point w slider and choose the ruler with Ruler length h.');
 		assert.deepEqual(fcSay.presetsFor(passed), [
-			{ id: 'bowl', label: 'Bowl: x² at 1' },
-			{ id: 's-curve', label: 'S-curve: x³ at 1' },
-			{ id: 'loss', label: 'Loss: (w − 3)² at 0' },
+			{ id: 'bowl', label: { visible: 'Bowl: x² at 1', spoken: 'Bowl: x squared at 1' } },
+			{ id: 's-curve', label: { visible: 'S-curve: x³ at 1', spoken: 'S-curve: x cubed at 1' } },
+			{ id: 'loss', label: { visible: 'Loss: (w − 3)² at 0', spoken: 'Loss: w minus 3, squared, at 0' } },
+		]);
+		assert.deepEqual(fcSay.presetsFor(fcRun('corner', { type: 'choice', choice: 'two' }, { type: 'check' })), [
+			{ id: 'hinge', label: { visible: 'Hinge: ReLU at 0', spoken: 'Hinge: ReLU at 0' } },
+			{ id: 'v', label: { visible: 'V: |x| at 0', spoken: 'V: the absolute value of x at 0' } },
+			{ id: 'smooth', label: { visible: 'Smooth: x² at 0', spoken: 'Smooth: x squared at 0' } },
 		]);
 		// A preset stays pressed only while the board shows its curve and point.
 		assert.equal(fcState.activePresetOf(passed), 'bowl');
