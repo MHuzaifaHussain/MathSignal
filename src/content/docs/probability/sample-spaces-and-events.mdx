@@ -65,12 +65,12 @@ Before you toss a coin, take a pile of blank cards and write one possible result
 
 Now ask a question about the toss, such as "did it land heads?". The answer picks out some of the cards, here just one. That group of cards is an event. A question like "did it land heads or tails?" picks out the whole pile, and "did it land on its edge?", if you left that card out, picks out none. Which cards to write is a modeling choice: leaving out the edge assumes it never happens.
 
-Toss two coins, a penny and a dime, and the pile needs more care. "Penny heads, dime tails" and "penny tails, dime heads" are different cards, because you can tell the coins apart. Write them as one card and you still have a valid pile, but its cards are no longer equally likely: "one of each" can happen in two ways, while "both heads" can happen in only one, so counting cards gives the wrong answer. A pile you can count has one card for each distinct way the experiment can turn out.
+Toss two coins, a penny and a dime, and the pile needs more care. "Penny heads, dime tails" and "penny tails, dime heads" are different cards, because you can tell the coins apart. A pile you can count has one card for each distinct way the experiment can turn out.
 
 </Analogy>
 
 <WhyThisMatters>
-Every probability a model reports is a probability of some event in some sample space. A classifier spreads its probability over a fixed set of labels, and a language model spreads it over its whole vocabulary of tokens. Test accuracy is how often the event "the prediction is right" happens. So when a model reports 0.9, ask which sample space and which event the 0.9 belongs to. Get those wrong, for example by merging outcomes and then counting them as if they were equally likely, and the numbers that come out look precise but are not.
+Every probability a model reports is a probability of some event in some sample space. A classifier spreads its probability over a fixed set of labels, and a language model spreads it over its whole vocabulary of tokens. Test accuracy is how often the event "the prediction is right" happens. So when a model reports 0.9, ask which sample space and which event the 0.9 belongs to. Get those wrong, for example by counting outcomes that are not equally likely, and the numbers that come out look precise but are not.
 </WhyThisMatters>
 
 ## Count the ways two coins can land
@@ -91,7 +91,7 @@ The board shows every way two coins can land, one square per outcome, with the f
 
 The answer is 3/4. The two coins can land in four ways, HH, HT, TH and TT, and three of them have at least one head. HT and TH are different outcomes: in HT the first coin shows heads, in TH the second one does. Fair coins make all four equally likely, and the event "at least one head" holds 3 of the 4.
 
-Once Check passes, the presets, tosses and switch unlock. Switch "Show as" to Pictures to see the coins drawn as faces, or to Sets for the same answer as sets. The Sets view writes the list of all outcomes as Ω and the chance of event A as P(A); the Notation section below explains both. Turn on "Treat HT and TH as the same outcome" to see where 2/3 comes from: with three tiles, HH, one of each and TT, two of the three contain a head. That model would be right only if the three tiles were equally likely, and they aren't. Press Toss 100 a few times: the tile "one of each" collects about half of the tosses, not a third, and at least one head comes up close to three quarters of the time.
+Once Check passes, the presets, Toss 100 and the switch "Treat HT and TH as the same outcome" unlock. Set "Show as" to Pictures to see the coins drawn as faces, or to Sets for the same answer as sets. The Sets view writes the list of all outcomes as Ω and the chance of event A as P(A); the Notation section below explains both. Turn on the switch to see where 2/3 comes from: there are three tiles (HH, one of each, TT), and two of the three contain a head. That model would be right only if the three tiles were equally likely, and they aren't: "one of each" can happen in two ways, HT and TH, while "both heads" can happen in only one. Press Toss 100 a few times: the tile "one of each" collects about half of the tosses, not a third, and at least one head comes up close to three quarters of the time.
 
 ## What is a sample space?
 
@@ -242,7 +242,7 @@ $$
 \frac{P(\{\omega\})}{P(V_k)}.
 $$
 
-In words: each kept token's probability is divided by the total probability of the kept tokens, so they add up to 1 again, and every token outside $V_k$ gets probability 0. This renormalizing is conditioning on the event $V_k$, which conditional probability, a later topic, makes precise.
+In words: each kept token's probability is divided by the total probability of the kept tokens, so they add up to 1 again, and every token outside $V_k$ gets probability 0. This renormalizing is conditioning on the event $V_k$; [conditional probability](/probability/conditional-probability/) makes it precise.
 
 ### Test-set accuracy
 
@@ -298,6 +298,16 @@ no_heads = [outcome for outcome in three_coins if "H" not in outcome]
 assert len(three_coins) == 8 and len(no_heads) == 1
 assert 1 - probability(no_heads, three_coins) == Fraction(7, 8)
 
+# Check yourself: a coin with a die, and two dice as unordered pairs.
+assert len(list(product("HT", range(1, 7)))) == 2 * 6 == 12
+unordered = {tuple(sorted(roll)) for roll in dice}
+assert len(unordered) == 21
+assert Fraction(1, len(unordered)) == Fraction(1, 21) != Fraction(1, 36)
+
+# The classifier's event and the test-set accuracy.
+assert abs(0.7 + 0.2 - 0.9) < 1e-12
+assert Fraction(912, 1000) == Fraction("0.912")
+
 # A space with n outcomes has 2**n subsets (the properties table).
 assert sum(1 for _ in product([False, True], repeat=len(coins))) == 16
 assert [2**n for n in (2, 4, 6, 36)] == [4, 16, 64, 68_719_476_736]
@@ -337,8 +347,8 @@ The simulation's share is within 0.01 of 0.75 and the share of "one of each" is 
 The 21 unordered pairs are not equally likely. The pair $\{1, 2\}$ covers two ordered outcomes, $(1, 2)$ and $(2, 1)$, while $\{1, 1\}$ covers only one. Counting treats them all as the same size, so it gives doubles too much probability: $1/21$ each instead of $1/36$.
 </CheckYourself>
 
-<CheckYourself level="standard" question="You roll two dice, with the 36 ordered pairs as the sample space. Is sum is 7 an outcome or an event?">
-An event. It is the set of 6 outcomes $\{(1,6), (2,5), (3,4), (4,3), (5,2), (6,1)\}$. An outcome is one ordered pair, such as $(3, 4)$, and it is also the one-outcome event $\{(3, 4)\}$ when you treat it as a question. If you recorded only the sum, from 2 to 12, then "the sum is 7" would be an outcome of that smaller sample space.
+<CheckYourself level="standard" question='You roll two dice, with the 36 ordered pairs as the sample space. Is "the sum is 7" an outcome or an event?'>
+An event. It is the set of 6 outcomes $\{(1,6), (2,5), (3,4), (4,3), (5,2), (6,1)\}$. An outcome is one ordered pair, such as $(3, 4)$, and the one-outcome event $\{(3, 4)\}$ is the set that holds only it. If you recorded only the sum, from 2 to 12, then "the sum is 7" would be an outcome of that smaller sample space.
 </CheckYourself>
 
 <CheckYourself level="proof" question="On a finite sample space with equally likely outcomes, show that P(A ∪ B) ≤ P(A) + P(B) for any events A and B.">
@@ -352,7 +362,7 @@ Every outcome in $A \cup B$ is in $A$ or in $B$, so it is counted at least once 
     There are four equally likely outcomes, HH, HT, TH and TT, because the first coin showing heads and the second showing heads are different results. At least one head is $3/4$. The three-way list is a valid sample space, but its outcomes are not equally likely: one of each has probability $1/2$. Try the switch and Toss 100 on the board above.
   </Mistake>
   <Mistake wrong="An outcome and an event are the same thing.">
-    An outcome is one result, such as HT. An event is a set of outcomes, such as $\{HH, HT, TH\}$, and can hold none, one or many. A single outcome becomes the event $\{HT\}$ only when you ask about it.
+    An outcome is one result, such as HT. An event is a set of outcomes, such as $\{HH, HT, TH\}$, and can hold none, one or many. The outcome HT is one result; the event $\{HT\}$ is the set that holds only it. They answer different questions: which result happened, versus did HT happen?
   </Mistake>
   <Mistake wrong="Equally sized squares mean equally likely outcomes.">
     The board draws every outcome the same size, but that is a drawing choice and says nothing about the experiment. $P(A) = |A|/|\Omega|$ holds only when the outcomes really are equally likely, as with fair coins and dice. For a loaded die or a classifier's labels, add up the outcomes' probabilities instead.
