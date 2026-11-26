@@ -5,7 +5,11 @@
     "**/*"
   ],
   "exclude": [
-    "dist"
+    "dist",
+    // Node runs the build scripts and nothing type-checks them (checkJs is off). check-boards.mjs is past TypeScript's
+    // control-flow size limit (TS2563); with checkJs off that error stays hidden, but it switches off flow analysis for
+    // the rest of the program and surfaces as hundreds of implicit-any errors in src/.
+    "scripts"
   ],
   "compilerOptions": {
     "jsx": "react-jsx",
