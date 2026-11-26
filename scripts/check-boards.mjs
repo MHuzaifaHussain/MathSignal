@@ -7204,6 +7204,8 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		'Variance | $(b - a)^2/12$ | $2/3$ cm²',
 		'$P(X = x)$ | 0 | 0',
 	]);
+	const { readFileSync: readPage } = await import('node:fs');
+	assert.ok(readPage('src/content/docs/probability/probability-density-functions.mdx', 'utf8').includes('<PropertiesTable family="uniform" examplesHeading="Sand heap (triangle on 0 to 4 cm, top at 2 cm)" examples={{ height: "$1/2$ at 2 cm", mean: "2 cm", variance: "$2/3$ cm²", point: "0" }} />'), 'the PDF page shows the pinned Sand heap column (decision 0023)');
 
 	// Prose and math: math is split out at unescaped $, so prose wraps and reads as text.
 	assert.deepEqual(splitMath('Without replacement: $1/15$, not $0.09$', 'test'), [
