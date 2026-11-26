@@ -283,7 +283,7 @@ A model's training houses have mean area 120 m² and standard deviation 30 m². 
 
 scikit-learn's `StandardScaler` computes z = (x − u)/s, where u and s are the mean and standard deviation of the training samples, stored at `fit` and reused in `transform`, so new data are measured against the training group, as in worked example 5. Its s is our σ, dividing by n, and a feature with zero variance keeps scale 1 <Cite id="sklearn-standardscaler" />. The variance page compares both versions of s for [feature scaling](/statistics/variance-and-standard-deviation/#feature-scaling).
 
-### Normalization layers compute z-scores inside the network
+### Normalization layers standardize values inside the network
 
 Batch normalization standardizes each activation with its mini-batch's mean and variance (Algorithm 1, p. 3) <Cite id="ioffe2015" />, and layer normalization uses the mean and standard deviation over one layer's hidden units for a single training case <Cite id="ba2016" />. The Normal page shows [batch normalization as a z-score](/statistics/normal-distribution/#batch-normalization), and the variance page shows [which variance each one uses](/statistics/variance-and-standard-deviation/#batch-normalization-uses-both-versions).
 
