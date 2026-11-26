@@ -104,9 +104,9 @@ export default function OutcomeGrid({ state, scenario, describedBy, editable, on
                         <span className="ms-event-label" aria-hidden="true">{outcome.label}</span>
                       )}
                       {inB && <span className="ms-event-tag ms-event-tag-b" data-tag="B" aria-hidden="true" />}
-                      {missed === outcome.id && <span className="ms-event-note" aria-hidden="true">missed</span>}
-                      {showTallies && <span className="ms-event-note" aria-hidden="true">{state.tallies[outcome.id] ?? 0}</span>}
-                      {units && <span className="ms-event-units" aria-hidden="true">{units}</span>}
+                      {missed === outcome.id && <span className="ms-event-note" data-text="missed" aria-hidden="true" />}
+                      {showTallies && <span className="ms-event-note" data-text={String(state.tallies[outcome.id] ?? 0)} aria-hidden="true" />}
+                      {units && <span className="ms-event-units" data-text={units} aria-hidden="true" />}
                     </button>
                   </td>
                 );

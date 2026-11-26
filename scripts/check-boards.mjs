@@ -7481,9 +7481,9 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	assert.ok(/\.ms-readout-pair\s*\{\s*white-space: nowrap;/.test(readFileSync('src/styles/components.css', 'utf8')), 'a readout pair never wraps');
 }
 
-// ---- EventSpace: the A and B tags are drawn, not text (WCAG 2.5.3) ----
-// A cell's visible text must be where its name starts ("opens 3. … In A and B."), so the corner letters come from
-// CSS (`content: attr(data-tag)`) and the button holds no letter of its own.
+// ---- EventSpace: the A and B tags, notes and units are drawn, not text (WCAG 2.5.3) ----
+// A cell's visible text must be where its name starts ("opens 3. … In A and B."), so the corner letters, the
+// missed note, the tallies and the units come from CSS (`content: attr(…)`) and the button holds only its label.
 {
 	const { readFileSync } = await import('node:fs');
 	const grid = readFileSync('src/components/react/eventSpace/OutcomeGrid.tsx', 'utf8');
@@ -7492,6 +7492,11 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		assert.ok(grid.includes(tag), `the ${letter.toUpperCase()} tag is an empty span with data-tag`);
 	}
 	assert.ok(!/ms-event-tag[^>]*>[AB]</.test(grid), 'no tag letter is a text node');
+	assert.ok(grid.includes('<span className="ms-event-note" data-text="missed" aria-hidden="true" />'), 'the missed note is drawn');
+	assert.ok(grid.includes('<span className="ms-event-note" data-text={String(state.tallies[outcome.id] ?? 0)} aria-hidden="true" />'), 'the tally is drawn');
+	assert.ok(grid.includes('<span className="ms-event-units" data-text={units} aria-hidden="true" />'), 'the units are drawn');
+	assert.ok(!/className="ms-event-(note|units)".*<\/span>/.test(grid), 'no note or units text node in a cell');
+	assert.ok(/\.ms-event-note::before,\s*\.ms-event-units::before\s*\{\s*content: attr\(data-text\);/.test(readFileSync('src/styles/components.css', 'utf8')), 'components.css draws notes and units');
 	assert.ok(/\.ms-event-tag::before\s*\{\s*content: attr\(data-tag\);/.test(readFileSync('src/styles/components.css', 'utf8')), 'components.css draws the tag letter');
 }
 
