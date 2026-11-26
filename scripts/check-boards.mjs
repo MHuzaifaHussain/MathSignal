@@ -5949,7 +5949,11 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	const dispatcher = readFileSync('src/components/react/NormalDistribution.tsx', 'utf8').split('export default function NormalDistribution')[1];
 	assert.ok(dispatcher && !/\buse[A-Z]\w*\(/.test(dispatcher), 'the default export holds no hooks');
 	const css = readFileSync('src/styles/components.css', 'utf8');
-	const forced = css.slice(css.indexOf('@media (forced-colors: active)'));
+	const forcedStart = css.indexOf('@media (forced-colors: active) {');
+	assert.ok(forcedStart >= 0, 'components.css has a forced-colors block');
+	const forcedEnd = css.indexOf('\n}\n', forcedStart);
+	assert.ok(forcedEnd > forcedStart, 'the first forced-colors block closes with a column-0 brace');
+	const forced = css.slice(forcedStart, forcedEnd);
 	const block = forced.match(/\.ms-normal-z\s*\{([^}]*)\}/);
 	assert.ok(block, 'components.css maps .ms-normal-z in forced colors');
 	const declarations = ['--ms-board-ink: CanvasText', '--ms-board-ink-muted: GrayText', '--ms-attention: Highlight', '--ms-board: Canvas', '--ms-board-grid: GrayText', '--ms-board-axis: CanvasText', '--ms-mu: CanvasText', '--ms-sigma: CanvasText'];
