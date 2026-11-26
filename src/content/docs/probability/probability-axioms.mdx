@@ -99,7 +99,7 @@ Each of the three rules shows up as something the board won't do or won't call a
 
 - **Never negative.** Press Start over, then press − on any cup. The board refuses: "A cup can't hold less than nothing." No pouring can give a face less than zero.
 - **The whole jug, no more and no less.** The board opens with all 12 units in the cups, so pouring into any cup is refused with "The jug is empty." After Start over, pour 2 units into each of cups 1 to 4 and the board says "8 of 12 units poured. The cups add up to 8/12, not 1, so this isn't a probability yet." The event line changes too: it says "Even holds 2/12 + 2/12 + 0/12 = 4/12 of the jug" instead of giving P(even). Only when all 12 units are poured does it say "All 12 units poured: the cups add up to 1."
-- **Separate cups add.** The event line always writes the sum out, one term per cup in the event. On the fair die, Six holds 2/12 and At most 2 holds 4/12, and they share no cup, so together they hold 6/12. The board has no preset for "at most 2 or six"; the 6/12 is computed here from its two lines.
+- **Separate cups add.** The event line always writes the sum out, one term per cup in the event. Press Fair die, then choose Six and then At most 2: the board gives "P(six) = 2/12 ≈ 0.17" and "P(at most 2) = 2/12 + 2/12 = 4/12 ≈ 0.33". The two events share no cup, so "at most 2 or six" gets 2/12 + 4/12 = 6/12. The board has no preset for that event; the 6/12 comes from those two readings.
 
 Under the cups the board keeps one note: "The cups are drawn the same size. The water in them is the probability, not the cup."
 
@@ -135,13 +135,13 @@ The rules you use every day for "not A", for "A or B" and for comparing events a
 
 Before you look: roll two dice. Event A is "the sum is 7" and event B is "the first die shows 6". Each holds 6 of the 36 outcomes. Is the probability of "A or B" equal to 6/36 + 6/36 = 12/36? Decide, then check.
 
-The board opens with A and B already marked: A squares have a solid border and an "A" tag, B squares a dashed outline and a "B" tag. "Editing" chooses which event a tap changes, A or B, and the presets set an event in one press: Sum is 7, Doubles or Clear for A, and First die is 6, Second die is 6 or Clear for B. "Look at" mutes every square outside the set you choose: Everything, A and B, A or B, or Not A. The arrow keys move between squares and Space toggles one. Your task: set "Look at" to A or B and count the squares still in view.
+The board opens with A and B already marked: A squares have a solid border and an "A" tag, B squares a dashed outline and a "B" tag. "Editing" chooses which event a tap changes, A or B, and the presets set an event in one press: Sum is 7, Doubles or Clear for A, and First die is 6, Second die is 6 or Clear for B. "Look at" mutes every square outside the set you choose: Everything, A and B, A or B, or Not A. The arrow keys move between squares and Space toggles one. Your task: read the "A or B" line under the board, then set "Look at" to A and B to see where the missing square went.
 
 <div class="not-content">
   <EventSpace client:visible setup="dice-operations" />
 </div>
 
-No: 11/36, not 12/36. The readout says "A or B: 6 + 6 − 1 = 11 of 36 ≈ 0.31". Adding 6 and 6 counts the square (6,1) twice, because a first die of 6 and a second die of 1 make a sum of 7, so it belongs to both events. Set "Look at" to A and B and that one square is all that stays in view: "A and B = {(6,1)}: 1 of 36". Taking it off once gives 6 + 6 − 1 = 11. Try other presets, such as Doubles with First die is 6, and watch the − term follow the overlap.
+No: 11/36, not 12/36. The readout says "A or B: 6 + 6 − 1 = 11 of 36 ≈ 0.31". Adding 6 and 6 counts the square (6,1) twice, because a first die of 6 and a second die of 1 make a sum of 7, so it belongs to both events. Set "Look at" to A and B and that one square is all that stays in view: "A and B = {(6,1)}: 1 of 36". Taking it off once gives 6 + 6 − 1 = 11. Every other pair of presets also shares exactly one square: with Doubles and First die is 6, the shared square moves from (6,1) to (6,6) while the − 1 stays. Press Clear for A and the overlap is gone: "A or B: 0 + 6 − 0 = 6 of 36".
 
 ### Not A is one minus A
 
@@ -153,7 +153,7 @@ For any two events, the probability of A or B is the probability of A plus the p
 
 ### A bigger event is never less likely
 
-If every outcome of A is also in B, then B is at least as likely as A. B is A plus some extra outcomes, and the extra outcomes can't have negative probability. On the loaded die, "six" sits inside "even", and 7/12 is less than 9/12. Taking B to be the whole sample space gives the last familiar rule: no probability is above 1.
+If every outcome of A is also in B, then B is at least as likely as A. B is A plus some extra outcomes, and the extra outcomes can't have negative probability. This rule is called monotonicity. On the loaded die, "six" sits inside "even", and 7/12 is less than 9/12. Taking B to be the whole sample space gives the last familiar rule: no probability is above 1.
 
 Every rule in this subject, with the condition it needs, is collected on the [probability rules cheat sheet](/probability/probability-rules-cheat-sheet/).
 
@@ -282,11 +282,11 @@ Each $e^{z_k}$ is positive, so every $p_k > 0$ and axiom 1 holds; dividing by th
 
 ### One sigmoid per label
 
-A multi-label model, which may tag one image as both "outdoor" and "dog", uses one sigmoid per label instead, $\operatorname{sigmoid}(z_k) = 1/(1 + e^{-z_k})$. Each output lies between 0 and 1 and is the probability of a separate yes-or-no event, "label $k$ applies", on its own two-outcome sample space with $P(\text{yes}) = \operatorname{sigmoid}(z_k)$ and $P(\text{no}) = 1 - \operatorname{sigmoid}(z_k)$. Those are fine probabilities: a sigmoid output unit is how a network gives one binary variable a valid probability <Cite id="goodfellow2016" />. But the labels are not disjoint outcomes of one experiment, so the outputs need not add up to 1: the same logits $(2, 1, 0)$ give $(0.881, 0.731, 0.5)$, which add up to about $2.11$. Reading them as one distribution over the labels breaks axiom 2. Taken together, the $K$ sigmoids do define one distribution, the product one, which treats the labels as independent given the input: over the $2^K$ possible sets of labels, the product space of $K$ yes-or-no experiments from [sample spaces and events](/probability/sample-spaces-and-events/).
+A multi-label model, which may tag one image as both "outdoor" and "dog", uses one sigmoid per label instead, $\operatorname{sigmoid}(z_k) = 1/(1 + e^{-z_k})$. Each output lies between 0 and 1 and is the probability of a separate yes-or-no event, "label $k$ applies", on its own two-outcome sample space with $P(\text{yes}) = \operatorname{sigmoid}(z_k)$ and $P(\text{no}) = 1 - \operatorname{sigmoid}(z_k)$. Those are fine probabilities: a sigmoid output unit is how a network gives one binary variable a valid probability <Cite id="goodfellow2016" />. But the labels are not disjoint outcomes of one experiment, so the outputs need not add up to 1: the same logits $(2, 1, 0)$ give $(0.881, 0.731, 0.5)$, which add up to about $2.11$. Reading them as one distribution over the labels breaks axiom 2. Taken together, the $K$ sigmoids do define one distribution, but over the $2^K$ possible sets of labels, not over the labels. It is the product distribution on the product space of $K$ yes-or-no experiments from [sample spaces and events](/probability/sample-spaces-and-events/), and it treats the labels as independent given the input.
 
 ### Normalizing scores
 
-Any list of non-negative scores $s_k$ with a positive total becomes a distribution by dividing by that total, $p_k = s_k / \sum_j s_j$. Scores $(3, 1, 0)$ give $(3/4, 1/4, 0)$. The method needs the scores to be non-negative; dividing raw logits that can be negative by their sum can give negative "probabilities", or divide by 0, which is one reason softmax exponentiates first.
+Any list of non-negative scores $s_k$ with a positive total becomes a distribution by dividing by that total, $p_k = s_k / \sum_j s_j$. Scores $(3, 1, 0)$ give $(3/4, 1/4, 0)$. The method needs the scores to be non-negative. Raw logits can be negative, so dividing them by their sum can give negative "probabilities", and a sum of 0 cannot be divided by at all. That is one reason softmax exponentiates first.
 
 ### Why cross-entropy needs outputs that add up to 1
 
@@ -314,7 +314,7 @@ where $y$ is the one-hot label. Every entry is non-negative, and the total is $(
 
 ## Check the axioms in code
 
-This runs in your browser and stops with an error if a result is off. It checks the page's numbers, including the label-smoothing and cross-entropy numbers from the fold above, a function `is_distribution` for axioms 1 and 2, and inclusion–exclusion on all 4,096 pairs of events of the loaded die. The dice and jug checks use exact fractions, so their equalities are exact; the softmax, sigmoid and cross-entropy checks use ordinary floating-point numbers:
+This runs in your browser and stops with an error if a result is off. It defines `is_distribution` to test axioms 1 and 2, checks every number on the page (including the label-smoothing and cross-entropy numbers from the fold above), and tests inclusion–exclusion on all 64 × 64 = 4,096 pairs of events of the loaded die, most of which the boards never show. The dice and jug checks use exact fractions, so their equalities are exact; the softmax, sigmoid and cross-entropy checks use ordinary floating-point numbers:
 
 <PyRunner
   title="axioms.py"
@@ -353,6 +353,10 @@ print("P(even): fair", probability(even, fair), " loaded", probability(even, loa
 assert probability([6], loaded) == Fraction(7, 12) <= probability(even, loaded)
 assert probability([1, 2], loaded) == Fraction(2, 12)
 assert probability([1, 2, 6], loaded) == Fraction(2, 12) + Fraction(7, 12) == Fraction(9, 12)
+# Separate cups add on the fair die: six and at most 2 share no cup.
+assert probability([6], fair) == Fraction(2, 12) and round(2 / 12, 2) == 0.17
+assert probability([1, 2], fair) == Fraction(4, 12) and round(4 / 12, 2) == 0.33
+assert probability([1, 2, 6], fair) == Fraction(2, 12) + Fraction(4, 12) == Fraction(6, 12)
 
 # Two dice, A = sum is 7, B = first die is 6 (the second board).
 dice = list(product(faces, repeat=2))
@@ -371,6 +375,9 @@ print("not A", probability(not_A, uniform), " A and B", probability(A & B, unifo
 # Worked example 1: the two dice show different faces.
 doubles = {roll for roll in dice if roll[0] == roll[1]}
 assert 1 - probability(doubles, uniform) == Fraction(30, 36) == Fraction(5, 6)
+# Other presets on the second board: doubles and B still share one square; an empty A shares none.
+assert doubles & B == {(6, 6)} and len(doubles | B) == 6 + 6 - 1 == 11
+assert len(set() | B) == 0 + 6 - 0 == 6
 
 # Worked example 2: sum is 7 or a double (disjoint), then sum is 8 or a double (they overlap in (4,4)).
 assert A & doubles == set()
@@ -450,8 +457,6 @@ print("cross-entropy of the softmax output:", round(cross_entropy(one_hot, softm
 `}
 />
 
-The loop covers all 64 × 64 = 4,096 pairs, most of which the boards never show.
-
 ## Research frontier
 
 <ResearchFrontier reviewed="2026-11-24">
@@ -492,7 +497,7 @@ Inclusion–exclusion gives $P(A \cap B) = P(A) + P(B) - P(A \cup B)$. Since $A 
     Only when $A$ and $B$ are disjoint. Otherwise the outcomes in both are counted twice, and you must subtract $P(A \cap B)$ once. For sum is 7 or first die is 6, the answer is $11/36$, not $12/36$; see the second board.
   </Mistake>
   <Mistake wrong="Disjoint events are independent.">
-    If $A$ and $B$ are disjoint and both have positive probability, they are dependent: learning that $A$ happened tells you $B$ did not. Sum is 7 and a double are disjoint, so $P(A \cap D) = 0$, while $P(A)\,P(D) = 1/6 \times 1/6 = 1/36$. [Independence](/probability/independence/) has its own page in this subject.
+    If $A$ and $B$ are disjoint and both have positive probability, they are dependent: learning that $A$ happened tells you $B$ did not. With $A$ = sum is 7 and $D$ = a double, as in worked example 2, the two are disjoint, so $P(A \cap D) = 0$, while $P(A)\,P(D) = 1/6 \times 1/6 = 1/36$. [Independence](/probability/independence/) has its own page in this subject.
   </Mistake>
   <Mistake wrong="An event with probability 0 is impossible.">
     On a finite space where every outcome has a positive weight, as with fair dice, yes: only $\emptyset$ has probability 0. In general, no. Even on a finite space a cup can hold 0 units: with cups 3, 3, 3, 3, 0 and 0, face 6 is still an outcome of the sample space, so the event {6} has probability 0 without being empty. And pick a point uniformly from $[0, 1]$: any single point $x$ lies in an interval of length $2\delta$ around it, so monotonicity gives $P(\{x\}) \le 2\delta$ for every $\delta > 0$, and $P(\{x\}) = 0$. Yet some point is always picked. That is no contradiction. Writing $1 = \sum_x P(\{x\}) = 0$ would need additivity over every point, but $[0, 1]$ has uncountably many points and additivity covers only countably many events. This is how densities such as the [normal distribution](/statistics/normal-distribution/) work.
