@@ -26,7 +26,7 @@ references:
   - theis2015
   - nalisnick2018
 author: Muhammad Huzaifa Hussain
-reviewedAt: 2026-11-25
+reviewedAt: 2026-11-26
 aiAssisted: true
 primaryQuery: probability density function
 searchIntent: learn
@@ -151,14 +151,14 @@ Width matters as much as height. On the Sand heap, the quarter centimeter beside
 For a variable with a density, every single value has probability 0, so including or leaving out the endpoints of a stretch changes nothing: on the Lopsided heap, P(1 ≤ X ≤ 4) = P(1 < X < 4) = 3/4. Deisenroth and coauthors make the same remark: asking for P(X = x) is like asking for a stretch from a to b with a = b (§6.2.2) <Cite id="deisenroth2020" />. So a density value p(x) is not the probability of x.
 
 <GoDeeper label="what p(x) does say about a single point" id="density-at-a-point">
-Grinstead and Snell say that p(x) is not the probability of the outcome x, adding that with infinitesimals you can read p(x) dx as one (p. 56) <Cite id="grinstead2003" />. Goodfellow and coauthors put it the same way: a tiny region of width δx around x holds probability p(x)δx (§3.3.2) <Cite id="goodfellow2016prob" />. On Narrow sand, the strip from 0.25 to 0.35 cm is 0.1 wide and 2 tall, so it holds 1/5 of the sand.
+Grinstead and Snell say that p(x) is not the probability of the outcome x, adding that with infinitesimals you can read p(x) dx as the probability of a tiny stretch around x (p. 56) <Cite id="grinstead2003" />. Goodfellow and coauthors put it the same way: a tiny region of width δx around x holds probability p(x)δx (§3.3.2) <Cite id="goodfellow2016prob" />. On Narrow sand, the strip from 0.25 to 0.35 cm is 0.1 wide and 2 tall, so it holds 1/5 of the sand.
 </GoDeeper>
 
 Probability 0 does not mean impossible. Every exact position has probability 0, and the grain still lies somewhere. A die is different: each face has chance 1/6, not 0, so a discrete variable has no density. Some random variables that take every value in a range still have no density, Grinstead and Snell note; like this page, their book treats only those that do (p. 59) <Cite id="grinstead2003" />.
 
 ### Why single values can't carry the probability
 
-A ruler has more points than any list can hold, so giving every point the same positive share, however small, would push the total past 1. Grinstead and Snell reach the same dead end with a spinner on a circle of circumference 1: every outcome must get probability 0, and then the outcomes add up to 0, not 1 (Example 2.1, p. 41) <Cite id="grinstead2003" />. So the model is built from arcs instead: an arc of length L gets probability L <Cite id="grinstead2003" />. The third axiom adds probabilities over [countably many events](/probability/probability-axioms/#countable-additivity) only, so it never asks you to add up a ruler's worth of zeros.
+A ruler has infinitely many points, so giving every point the same positive share, however small, would push the total past 1. Grinstead and Snell reach the same dead end with a spinner on a circle of circumference 1: every outcome must get probability 0, and then the outcomes add up to 0, not 1 (Example 2.1, p. 41) <Cite id="grinstead2003" />. So the model is built from arcs instead: an arc of length L gets probability L <Cite id="grinstead2003" />. The third axiom adds probabilities over [countably many events](/probability/probability-axioms/#countable-additivity) only, so it never asks you to add up a ruler's worth of zeros.
 
 <CheckYourself level="intuition" question="On Narrow sand the curve is 2 per cm tall at 0.3 cm. Is the chance that the grain lies at exactly 0.3 cm equal to 2?">
 No. 2 is sand per centimeter, not a chance. The grain lies in the strip from 0.25 to 0.35 cm with chance $0.1 \times 2 = 1/5$, and a strip of width 0 holds 0.
@@ -182,7 +182,7 @@ The uniform distribution on [a, b] spreads probability evenly: its density is 1/
 
 Read ∫ … dx as "the area under …"; on this page it is only notation. The expected value of a variable with a density is 𝔼[X] = ∫ x p(x) dx, the area under x times p(x): each position weighted by how much sand sits there (§3.8) <Cite id="goodfellow2016prob" />. It is the point where the pile balances, as the bars balanced on a pencil on the [expected value page](/probability/expectation-and-variance/#why-it-is-the-balance-point). A uniform block balances at its middle, so the mean of 𝒰(a, b) is (a + b)/2, and its variance is (b − a)²/12. For Even sand that is 16/12 = 4/3 cm²: on the second board, press Even sand and turn on Show the mean and spread, and it says "Variance: 4/3 ≈ 1.33 cm². Standard deviation: σ = √(4/3) ≈ 1.15 cm."
 
-With the switch on, Sand heap has the same mean, 2 cm, and a smaller variance, "Variance: 2/3 ≈ 0.67 cm²", because its sand is piled toward the middle. The Lopsided heap is tallest at 1 cm, but the board says "The mean is μ = 5/3 ≈ 1.67 cm: the pile balances there." The long right side pulls the balance point past the top, just as the tallest bar of the candy game on the expected value page was not its balance point.
+With the switch on, Sand heap has the same mean, 2 cm, and a smaller variance, "Variance: 2/3 ≈ 0.67 cm²", because its sand is piled toward the middle. The Lopsided heap is tallest at 1 cm, but the board says "The mean is μ = 5/3 ≈ 1.67 cm: the pile balances there." The long right side pulls the balance point past the top, just as on the expected value page, where a die game whose tallest bar sits at 0 candies balances at 1.
 
 Every probability here is an area of rectangles, triangles and trapezoids; the board and the code below supply the heaps' means and variances.
 
@@ -278,7 +278,7 @@ Glorot and Bengio compare a common heuristic, weights drawn uniformly from $[-1/
 
 ### Image models add noise to make pixels continuous
 
-Pixel values are stored as whole numbers from 0 to 255, but image models often use densities. Theis and coauthors point out that a density fitted to such discrete data can reach arbitrarily high likelihoods, even on test data <Cite id="theis2015" />: Narrow sand pushed to its limit, since piling each whole number's sand on ever thinner slivers makes the likelihood grow without bound. The usual fix adds uniform noise from $[0, 1)$ to each pixel value, dequantizing it <Cite id="theis2015" />. Then the area of the model's density over each pixel's cell of width 1 is a genuine probability, and a standard inequality (Jensen's) shows that the log-likelihood on the noisy data is at most the log-likelihood of those probabilities (§3.1, equations (3)–(6)) <Cite id="theis2015" />. Models that turn simple noise into samples through an invertible map, and get exact densities that way, are on the [random variables page](/probability/random-variables-and-distributions/#generators-turn-noise-into-samples).
+Pixel values are stored as whole numbers from 0 to 255, but image models often use densities. Theis and coauthors point out that a density fitted to such discrete data can reach arbitrarily high likelihoods, even on test data <Cite id="theis2015" />. It is Narrow sand pushed to its limit: pile each whole number's sand on a thinner and thinner sliver, and the likelihood grows without bound. The usual fix adds uniform noise from $[0, 1)$ to each pixel value, dequantizing it <Cite id="theis2015" />. Then the area of the model's density over each pixel's cell of width 1 is a genuine probability, and a standard inequality (Jensen's) shows that the log-likelihood on the noisy data is at most the log-likelihood of those probabilities (§3.1, equations (3)–(6)) <Cite id="theis2015" />. Models that turn simple noise into samples through an invertible map, and get exact densities that way, are on the [random variables page](/probability/random-variables-and-distributions/#generators-turn-noise-into-samples).
 
 ## Measure the sand in code
 
@@ -483,7 +483,7 @@ The sampled bars land within 0.01 of the exact heights, and no grain lands at ex
 
 **High density is not the same as typical.** Nalisnick and coauthors trained Glow, a model with exact densities, on CIFAR-10 photos of objects and measured bits per dimension, where lower means higher density: 3.386 on its training set, 3.464 on its test set, and 2.389 on SVHN photos of house numbers it never saw (§3, Figure 1) <Cite id="nalisnick2018" />. A constant image scored 0.589 under a CIFAR-10 model (Figure 8) <Cite id="nalisnick2018" />. A density's tallest region is where probability is most crowded, which in many dimensions need not be where real samples fall: this page's point that height is not probability, at scale.
 
-**What explains it.** For these models, called flows, when the map stretches space equally everywhere, the authors trace the gap to the data's variance and the model's curvature (§5), and conclude that comparing likelihoods alone cannot identify the training set or inputs like it (§7) <Cite id="nalisnick2018" />.
+**What explains it.** Glow is a flow model. For flows whose map stretches space equally everywhere, the authors trace the gap to two things: how spread out each dataset is, and how sharply the model's log-density curves (§5). They conclude that comparing likelihoods alone cannot identify the training set or inputs like it (§7) <Cite id="nalisnick2018" />.
 
 **What is open.** They leave open whether the fault lies with these models or with high-dimensional likelihoods as such (§7) <Cite id="nalisnick2018" />. For exact densities through invertible maps, see the [random variables page's frontier](/probability/random-variables-and-distributions/#research-frontier).
 
