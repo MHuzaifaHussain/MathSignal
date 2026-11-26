@@ -116,12 +116,12 @@ The giant's z-score creeps toward a ceiling of √(n − 1) = √8 ≈ 2.83 that
 
 <StepThrough title="k equal values can't pass √((n − k)/k)" rigor="full">
 
-1. Take n values, k of them equal to a, with k at least 1 and smaller than n, and d = a − μ nonzero; σ divides by n.
-2. The distances from the mean add up to 0, so the other n − k distances add up to −kd.
-3. The mean of squares is at least the square of the mean, so their squares add up to at least (kd)²/(n − k).
-4. So nσ² ≥ kd² + k²d²/(n − k) = kd² × n/(n − k).
-5. Divide: z² = d²/σ² ≤ (n − k)/k, with equality only when the other values are all equal.
-6. k = 1 gives √(n − 1), which is √8 for 9 pumpkins; k = 2 gives √3.5. With s, multiply by √((n − 1)/n): for k = 1 that is NIST's (n − 1)/√n.
+1. Take $n$ values, $k$ of them equal to $a$, with $1 \le k < n$, and $d = a - \vmu \ne 0$; $\vsigma$ divides by $n$.
+2. The distances from the mean add up to 0, so the other $n - k$ distances add up to $-kd$.
+3. The mean of squares is at least the square of the mean, so their squares add up to at least $(kd)^2/(n - k)$.
+4. So $n\vsigma^2 \ge kd^2 + k^2d^2/(n - k) = kd^2\,n/(n - k)$.
+5. Divide: $z^2 = d^2/\vsigma^2 \le (n - k)/k$, with equality only when the other values are all equal.
+6. $k = 1$ gives $\sqrt{n - 1}$, which is $\sqrt{8}$ for 9 pumpkins; $k = 2$ gives $\sqrt{3.5}$. With $s$, multiply by $\sqrt{(n - 1)/n}$: for $k = 1$ that is NIST's $(n - 1)/\sqrt{n}$.
 
 </StepThrough>
 
