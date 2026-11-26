@@ -353,14 +353,12 @@ export const WORD_LIMITS = {
  * page that doesn't exist fails the check.
  */
 export const WORD_COUNT_EXCEPTIONS = {
-	'linear-algebra/dot-product': { measured: 3348 },
+	'linear-algebra/dot-product': { measured: 3346 },
 	'linear-algebra/vectors': { measured: 3156 },
 	'probability/bayes-theorem': { measured: 3568 },
 	'probability/independence': { measured: 3402 },
 	'probability/naive-bayes-classifier': { measured: 2723 },
-	'probability/random-variables-and-distributions': { measured: 3665 },
 	'statistics/normal-distribution': { measured: 1425 },
-	'statistics/variance-and-standard-deviation': { measured: 3482 },
 };
 
 /** Attributes that are reader prose: the CheckYourself question, the Analogy's limit, the Mistake, the one-liner. */
