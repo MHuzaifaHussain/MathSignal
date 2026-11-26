@@ -151,34 +151,38 @@ function BellBoard() {
       announcement={announcement}
       onInteractionEnd={() => announce(mu, sigma)}
     >
-      <Mafs
-        height={BOARD_HEIGHT}
-        viewBox={{ x: VIEW_X, y: VIEW_Y, padding: 0 }}
-        preserveAspectRatio={false}
-        pan={false}
-        zoom={false}
-      >
-        <Coordinates.Cartesian xAxis={{ lines: 1, labels: edgeSafeLabel }} yAxis={false} />
+      {/* The tray sliders and the live readout are the plot's equivalent; its tick numbers and μ, σ glyphs would be
+          read as loose text, so the whole canvas is hidden. Its handles are already out of the tab order. */}
+      <div aria-hidden="true">
+        <Mafs
+          height={BOARD_HEIGHT}
+          viewBox={{ x: VIEW_X, y: VIEW_Y, padding: 0 }}
+          preserveAspectRatio={false}
+          pan={false}
+          zoom={false}
+        >
+          <Coordinates.Cartesian xAxis={{ lines: 1, labels: edgeSafeLabel }} yAxis={false} />
 
-        <Plot.Inequality y={{ "<": curve, ">": () => 0 }} color={plotColors.mu} fillOpacity={0.12} strokeOpacity={0} />
-        <Plot.OfX y={curve} color={plotColors.mu} weight={2.5} />
+          <Plot.Inequality y={{ "<": curve, ">": () => 0 }} color={plotColors.mu} fillOpacity={0.12} strokeOpacity={0} />
+          <Plot.OfX y={curve} color={plotColors.mu} weight={2.5} />
 
-        {/* μ guide from the axis to the peak */}
-        <Line.Segment point1={[mu, 0]} point2={[mu, peakY]} color={plotColors.mu} style="dashed" weight={1} />
+          {/* μ guide from the axis to the peak */}
+          <Line.Segment point1={[mu, 0]} point2={[mu, peakY]} color={plotColors.mu} style="dashed" weight={1} />
 
-        {/* σ span from the mean to the inflection point */}
-        <Line.Segment point1={[mu, sigmaHandle[1]]} point2={sigmaHandle} color={plotColors.sigma} weight={2} />
+          {/* σ span from the mean to the inflection point */}
+          <Line.Segment point1={[mu, sigmaHandle[1]]} point2={sigmaHandle} color={plotColors.sigma} weight={2} />
 
-        <Text x={mu} y={-LABEL_OFFSET} size={16} color={plotColors.mu}>
-          μ
-        </Text>
-        <Text x={mu + (side * sigma) / 2} y={sigmaHandle[1] + LABEL_OFFSET} size={16} color={plotColors.sigma}>
-          σ
-        </Text>
+          <Text x={mu} y={-LABEL_OFFSET} size={16} color={plotColors.mu}>
+            μ
+          </Text>
+          <Text x={mu + (side * sigma) / 2} y={sigmaHandle[1] + LABEL_OFFSET} size={16} color={plotColors.sigma}>
+            σ
+          </Text>
 
-        <MovablePoint point={[mu, 0]} onMove={handleMuMove} constrain={constrainMu} color={plotColors.mu} />
-        <MovablePoint point={sigmaHandle} onMove={handleSigmaMove} constrain={constrainSigma} color={plotColors.sigma} />
-      </Mafs>
+          <MovablePoint point={[mu, 0]} onMove={handleMuMove} constrain={constrainMu} color={plotColors.mu} />
+          <MovablePoint point={sigmaHandle} onMove={handleSigmaMove} constrain={constrainSigma} color={plotColors.sigma} />
+        </Mafs>
+      </div>
       <ChalkNote long="widen the bell and watch the peak" short="widen it, watch the peak" />
     </Board>
   );

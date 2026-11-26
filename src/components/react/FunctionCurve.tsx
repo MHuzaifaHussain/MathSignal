@@ -306,11 +306,12 @@ export default function FunctionCurve({ setup: setupId }: FunctionCurveProps) {
           </p>
         )}
         {note && <ChalkNote long={note.long} short={note.short} />}
-        <div ref={planeRef} className="ms-fncurve-plane">
+        {/* The status line, readouts and Table view are the plane's equivalent; its handle is out of the tab order. */}
+        <div ref={planeRef} className="ms-fncurve-plane" aria-hidden="true">
           <CurvePlane state={state} size={planeSize} onMovePoint={movePoint} />
         </div>
         {state.stage === "slope-curve" && !isCovered && (
-          <div className="ms-fncurve-strip">
+          <div className="ms-fncurve-strip" aria-hidden="true">
             <SlopeStrip state={state} width={planeSize} />
           </div>
         )}

@@ -334,15 +334,19 @@ export default function VectorPlane({ state, linkedId, size, onMove }: VectorPla
 
   return (
     <Mafs height={size} viewBox={{ x: VIEW, y: VIEW, padding: 0 }} pan={false} zoom={false}>
-      <Coordinates.Cartesian xAxis={axis} yAxis={axis} />
-      {linked && !isZero(subtract(linked.tip, linked.tail)) && <ComponentLegs tail={linked.tail} tip={linked.tip} />}
-      <Scene state={state} ochre={ochreElement(state)} />
-      {/* Kept inside the plane at this size, and on the span setups clear of each other, the arrows and the axis numbers (labelLayout.ts). */}
-      {placedLabels(state, size).map((label) => (
-        <Text key={label.id} x={label.at[0]} y={label.at[1]} size={LABEL_SIZE} color={plotColors.ink} attach={label.attach === "center" ? undefined : label.attach}>
-          {label.text}
-        </Text>
-      ))}
+      {/* The drawing, axis numbers and labels are hidden from screen readers: the readouts, steppers and table say the
+          same in words. Only the named handles below stay exposed. */}
+      <g aria-hidden="true">
+        <Coordinates.Cartesian xAxis={axis} yAxis={axis} />
+        {linked && !isZero(subtract(linked.tip, linked.tail)) && <ComponentLegs tail={linked.tail} tip={linked.tip} />}
+        <Scene state={state} ochre={ochreElement(state)} />
+        {/* Kept inside the plane at this size, and on the span setups clear of each other, the arrows and the axis numbers (labelLayout.ts). */}
+        {placedLabels(state, size).map((label) => (
+          <Text key={label.id} x={label.at[0]} y={label.at[1]} size={LABEL_SIZE} color={plotColors.ink} attach={label.attach === "center" ? undefined : label.attach}>
+            {label.text}
+          </Text>
+        ))}
+      </g>
       {handles.map((handle) => {
         const handleMove = moveHandlers[handle.id];
         if (!handleMove) throw new Error(`VectorBoard2D: handle "${handle.id}" has no move handler.`);

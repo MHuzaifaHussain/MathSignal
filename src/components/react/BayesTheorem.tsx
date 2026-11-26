@@ -147,29 +147,33 @@ export default function BayesTheorem({ scenarios, initialScenario }: BayesTheore
       onReset={handleReset}
       announcement={announcement}
     >
-      <Mafs height={BOARD_HEIGHT} viewBox={{ x: [-0.05, 1.05], y: [-0.08, 1.05], padding: 0 }} preserveAspectRatio={false} pan={false} zoom={false}>
-        {/* The whole population */}
-        <Polygon points={rectangle(0, 1, 0, 1)} color={plotColors.axis} fillOpacity={0.06} strokeOpacity={0.6} />
-        {/* A: column whose width is the prior */}
-        <Polygon points={rectangle(0, prior, 0, 1)} color={plotColors.ink} fillOpacity={0.08} strokeOpacity={0.5} />
-        {/* B and A: the numerator, highlighted */}
-        <Polygon points={rectangle(0, prior, 0, likelihood)} color={plotColors.attention} fillOpacity={0.45} />
-        {/* B and not A: false positives */}
-        <Polygon points={rectangle(prior, 1, 0, falsePositive)} color={plotColors.ink} fillOpacity={0.28} />
+      {/* No handles here: the readout, the announcements and Table view are the areas' equivalent, so the canvas and
+          its loose labels are hidden. */}
+      <div aria-hidden="true">
+        <Mafs height={BOARD_HEIGHT} viewBox={{ x: [-0.05, 1.05], y: [-0.08, 1.05], padding: 0 }} preserveAspectRatio={false} pan={false} zoom={false}>
+          {/* The whole population */}
+          <Polygon points={rectangle(0, 1, 0, 1)} color={plotColors.axis} fillOpacity={0.06} strokeOpacity={0.6} />
+          {/* A: column whose width is the prior */}
+          <Polygon points={rectangle(0, prior, 0, 1)} color={plotColors.ink} fillOpacity={0.08} strokeOpacity={0.5} />
+          {/* B and A: the numerator, highlighted */}
+          <Polygon points={rectangle(0, prior, 0, likelihood)} color={plotColors.attention} fillOpacity={0.45} />
+          {/* B and not A: false positives */}
+          <Polygon points={rectangle(prior, 1, 0, falsePositive)} color={plotColors.ink} fillOpacity={0.28} />
 
-        <Text {...labels.aName} size={14} color={plotColors.ink}>
-          A
-        </Text>
-        <Text {...labels.notAName} size={14} color={plotColors.inkMuted}>
-          not A
-        </Text>
-        <Text {...labels.bAndA} size={13} color={plotColors.ink}>
-          B and A
-        </Text>
-        <Text {...labels.bAndNotA} size={13} color={plotColors.ink}>
-          B and not A
-        </Text>
-      </Mafs>
+          <Text {...labels.aName} size={14} color={plotColors.ink}>
+            A
+          </Text>
+          <Text {...labels.notAName} size={14} color={plotColors.inkMuted}>
+            not A
+          </Text>
+          <Text {...labels.bAndA} size={13} color={plotColors.ink}>
+            B and A
+          </Text>
+          <Text {...labels.bAndNotA} size={13} color={plotColors.ink}>
+            B and not A
+          </Text>
+        </Mafs>
+      </div>
     </Board>
   );
 }
