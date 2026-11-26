@@ -6,7 +6,7 @@ import { absoluteFraction, toNumber, type Fraction } from '../boardMath.ts';
 import type { LineStyle } from '../planeLines.tsx';
 import { derivativeCoefficients, evaluate, slopeAt, type Piece } from './functions.ts';
 import { axisNumber, numberText, ruler, type Attach, type CurvePoint } from './model.ts';
-import { viewOf } from './setups.ts';
+import { viewOf, type CurveView } from './setups.ts';
 import { covered, curveFor, hOf, lineSlopeOf, pointOf, type CurveState } from './state.ts';
 
 /** 'axis' is the axes' own color, for the strip's numbers, drawn here so they clear the open dots (STRIP_NUMBER_OFFSET). */
@@ -271,8 +271,17 @@ export function stripMarks(state: CurveState): readonly Mark[] {
 		const number: MarkLabel = { text: axisNumber(value), at: [0, value], attach: side, color: 'axis', alsoAt: [] };
 		marks.push({ kind: 'axis-number', at: [0, value], color: 'axis', lineStyle: 'solid', weight: WEIGHTS.dot, label: number });
 	}
-	const top = viewOf(state.preset).strip.y[1];
-	// "slope" hangs below and right of the strip's top-left corner, so it sits inside the strip.
-	marks.push({ kind: 'axis-name', at: [left, top], color: 'ink', lineStyle: 'solid', weight: WEIGHTS.dot, label: label('slope', [left, top], 'se') });
+	const name = stripNameLabel(viewOf(state.preset));
+	marks.push({ kind: 'axis-name', at: name.at, color: 'ink', lineStyle: 'solid', weight: WEIGHTS.dot, label: name });
 	return marks;
+}
+
+/**
+ * The strip's name, "slope", hanging from the strip's top edge so it sits inside the strip: below and right of the
+ * top-left corner, or below and left of the y-axis's top (the view's nameSpot).
+ */
+export function stripNameLabel(curveView: CurveView): MarkLabel {
+	const top = curveView.strip.y[1];
+	if (curveView.strip.nameSpot === 'top-left-of-axis') return label('slope', [0, top], 'sw');
+	return label('slope', [toNumber(curveView.view.x[0]), top], 'se');
 }

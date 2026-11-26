@@ -44,7 +44,7 @@ export default function SlopeStrip({ state, width }: SlopeStripProps) {
           case "axis-name":
           case "axis-number": {
             if (!mark.label) return null;
-            // attachDistance 0: labelTextPoint puts the name's box just inside the strip's top-left corner, and each
+            // attachDistance 0: labelTextPoint puts the name's box just inside the strip's top edge, and each
             // number STRIP_NUMBER_OFFSET px from the y-axis. The numbers take the axes' own size, as on the plane.
             const distance = mark.kind === "axis-number" ? STRIP_NUMBER_OFFSET : LABEL_DISTANCE;
             const [textX, textY] = labelTextPoint(scale, mark.label.at, mark.label.attach, distance);

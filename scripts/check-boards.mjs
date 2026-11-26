@@ -7443,36 +7443,65 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		// Every strip number's ink (18px digits run 5.6px below their middle to 8.4px above) fits inside the strip on the
 		// strips a 320px phone, a 375px phone and a desktop draw (a quarter of the plane's width).
 		const fcCurves = await import('../src/components/react/functionCurve/functions.ts');
+		const STRIP_ROOM = 2;
+		/** True when some piece's slope curve passes through the box, sampled across it. */
+		const slopeCurveHits = (curve, box) => {
+			for (let step = 0; step <= 200; step += 1) {
+				const at = box.left + ((box.right - box.left) * step) / 200;
+				const pieces = CATALOG[curve].pieces.filter((piece) => (piece.from === null || toNumber(piece.from) <= at) && (piece.to === null || at <= toNumber(piece.to)));
+				for (const piece of pieces) {
+					const slope = fcCurves.pieceCurve(fcCurves.derivativeCoefficients(piece.coefficients))(at);
+					if (slope >= box.bottom && slope <= box.top) return at;
+				}
+			}
+			return null;
+		};
+		const boxesMeet = (one, two) => one.left < two.right && two.left < one.right && one.bottom < two.top && two.bottom < one.top;
+		/** How far a dot's middle is from the box, in pixels (the strip's scales differ across and up). */
+		const pixelsFromBox = (at, box, scale) => Math.hypot((Math.min(Math.max(at[0], box.left), box.right) - at[0]) / scale.x, (Math.min(Math.max(at[1], box.bottom), box.top) - at[1]) / scale.y);
+		const presetOfCurve = (curve) => Object.values(fcSetups.PRESETS).find((preset) => preset.curve === curve).id;
+		const setupOfPreset = (preset) => Object.values(fcSetups.SETUPS).find((setup) => setup.presets.includes(preset)).id;
 		for (const [curve, curveView] of Object.entries(fcSetups.CURVE_VIEWS)) {
 			const [low, high] = curveView.strip.y;
+			const [left, right] = fcModel.viewNumbers(curveView.view).x;
+			const preset = presetOfCurve(curve);
+			const setupId = setupOfPreset(preset);
+			const name = fcMarks.stripNameLabel(curveView);
 			for (const size of FC_PLANE_SIZES) {
-				const pixelsPerUnit = Math.round(size * 0.25) / (high - low);
+				const stripHeight = Math.round(size * 0.25);
+				const pixelsPerUnit = stripHeight / (high - low);
+				const unitsAcross = (right - left) / size;
+				const scale = fcModel.scaleOf([left, right], [low, high], size, stripHeight);
+				// The name's box: its ink and halo where SlopeStrip draws it, with 2px of room.
+				const drawnName = fcModel.textBox(scale, fcModel.labelTextPoint(scale, name.at, name.attach, fcModel.LABEL_DISTANCE), name.attach, name.text);
+				const nameBox = { left: drawnName.left - STRIP_ROOM * scale.x, right: drawnName.right + STRIP_ROOM * scale.x, bottom: drawnName.bottom - STRIP_ROOM * scale.y, top: drawnName.top + STRIP_ROOM * scale.y };
+				assert.ok(nameBox.left >= left && nameBox.right <= right && nameBox.top <= high, `"slope" sits inside a ${size}px ${curve} strip`);
+				const nameHit = slopeCurveHits(curve, { ...nameBox, bottom: nameBox.bottom - (fcMarks.WEIGHTS.curve / 2) * scale.y, top: nameBox.top + (fcMarks.WEIGHTS.curve / 2) * scale.y });
+				assert.equal(nameHit, null, `"slope" misses the ${curve} slope curve on a ${size}px strip (x = ${nameHit})`);
+				// The value dot (6px) at every x the point can reach, and the open dots (6px and half their 2px ring).
+				for (let xIndex = curveView.xIndexRange[0]; xIndex <= curveView.xIndexRange[1]; xIndex += 1) {
+					const state = fcAfter(setupId, { preset, xIndex, stage: 'slope-curve' });
+					for (const dot of fcMarks.stripMarks(state).filter((mark) => mark.kind === 'value-dot' || mark.kind === 'open-dot')) {
+						const radius = 6 + (dot.kind === 'open-dot' ? fcMarks.WEIGHTS.openDot / 2 : 0);
+						assert.ok(pixelsFromBox(dot.at, drawnName, scale) >= radius + STRIP_ROOM, `"slope" misses the ${dot.kind} at (${dot.at}) on a ${size}px ${curve} strip`);
+					}
+				}
 				for (const value of curveView.strip.labels.filter((entry) => entry !== 0)) {
 					assert.ok((value - low) * pixelsPerUnit >= 5.6 && (high - value) * pixelsPerUnit >= 8.4, `the strip number ${value} fits a ${size}px ${curve} strip`);
 					// Its box (11.5px a character, its ink and halo 7.1px below to 9.9px above, 2px of room) misses the slope
-					// curve and the name "slope" in the top-left corner.
-					const [left, right] = fcModel.viewNumbers(curveView.view).x;
-					const unitsAcross = (right - left) / size;
+					// curve and the name "slope".
 					const width = fcModel.axisNumber(value).length * 11.5;
-					const fromAxis = fcMarks.STRIP_NUMBER_OFFSET - 2;
+					const fromAxis = fcMarks.STRIP_NUMBER_OFFSET - STRIP_ROOM;
 					const onLeft = curveView.strip.leftNumbers.includes(value);
 					const box = {
-						left: (onLeft ? -(fromAxis + width + 4) : fromAxis) * unitsAcross,
-						right: (onLeft ? -fromAxis : fromAxis + width + 4) * unitsAcross,
-						bottom: value - 9.1 / pixelsPerUnit,
-						top: value + 11.9 / pixelsPerUnit,
+						left: (onLeft ? -(fromAxis + width + 2 * STRIP_ROOM) : fromAxis) * unitsAcross,
+						right: (onLeft ? -fromAxis : fromAxis + width + 2 * STRIP_ROOM) * unitsAcross,
+						bottom: value - (7.1 + STRIP_ROOM) / pixelsPerUnit,
+						top: value + (9.9 + STRIP_ROOM) / pixelsPerUnit,
 					};
-					const f = CATALOG[curve];
-					for (let step = 0; step <= 200; step += 1) {
-						const at = box.left + ((box.right - box.left) * step) / 200;
-						const pieces = f.pieces.filter((piece) => (piece.from === null || toNumber(piece.from) <= at) && (piece.to === null || at <= toNumber(piece.to)));
-						for (const piece of pieces) {
-							const slope = fcCurves.pieceCurve(fcCurves.derivativeCoefficients(piece.coefficients))(at);
-							assert.ok(slope < box.bottom || slope > box.top, `the strip number ${value} misses the ${curve} slope curve on a ${size}px strip (x = ${at})`);
-						}
-					}
-					const name = { right: left + ((4.2 + fcModel.labelWidth('slope') + 2) * unitsAcross), bottom: high - (4.2 + 17 + 2) / pixelsPerUnit };
-					assert.ok(box.left > name.right || box.top < name.bottom, `the strip number ${value} misses "slope" on a ${size}px ${curve} strip`);
+					const hit = slopeCurveHits(curve, box);
+					assert.equal(hit, null, `the strip number ${value} misses the ${curve} slope curve on a ${size}px strip (x = ${hit})`);
+					assert.ok(!boxesMeet(box, nameBox), `the strip number ${value} misses "slope" on a ${size}px ${curve} strip`);
 				}
 			}
 		}
