@@ -1,6 +1,6 @@
 import type { PointerEvent } from "react";
 import { MeanGuide, MeanMark, SigmaSpan, type Position } from "../chartMarks.tsx";
-import type { ChartDot, ChartRow } from "./chart.ts";
+import { flagTagsShown, type ChartDot, type ChartRow } from "./chart.ts";
 
 /** Spread onto the strip under the axis: pointer drag that mirrors a tray slider. */
 export interface ScrubHandlers {
@@ -14,12 +14,13 @@ function dotClass(dot: ChartDot): string {
   return ["ms-desc-dot", dot.look ? "is-look" : "", dot.iqrFlag ? "is-iqr" : "", dot.zFlag ? "is-z" : ""].filter(Boolean).join(" ");
 }
 
-function Dot({ dot }: { dot: ChartDot }) {
+function Dot({ dot, stack }: { dot: ChartDot; stack: readonly ChartDot[] }) {
+  const tags = flagTagsShown(dot, stack);
   return (
     <span className={dotClass(dot)} style={{ "--x": `${dot.x}%`, "--row": dot.row } as Position}>
       {dot.text && <span className="ms-desc-dot-text">{dot.text}</span>}
-      {dot.iqrFlag && <span className="ms-desc-flag-tag is-iqr">IQR</span>}
-      {dot.zFlag && <span className="ms-desc-flag-tag is-z">z</span>}
+      {tags.iqr && <span className="ms-desc-flag-tag is-iqr">IQR</span>}
+      {tags.z && <span className="ms-desc-flag-tag is-z">z</span>}
     </span>
   );
 }
@@ -48,7 +49,7 @@ function Row({ row, scrub }: { row: ChartRow; scrub?: ScrubHandlers }) {
             <span key={index} className="ms-desc-arm" style={{ "--from": `${arm.from}%`, "--to": `${arm.to}%`, "--row": arm.row } as Position} />
           ))}
           {onAxis.map((dot) => (
-            <Dot key={dot.key} dot={dot} />
+            <Dot key={dot.key} dot={dot} stack={onAxis} />
           ))}
           {row.modeTags.map((tag) => (
             <span key={tag.x} className="ms-desc-mode-tag" style={{ "--x": `${tag.x}%`, "--row": tag.row } as Position}>

@@ -3715,6 +3715,22 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 
 	const giants = dc.chartRows(run('pumpkin-outliers', { type: 'preset', id: 'two-giants' }, { type: 'set-value', value: 45 }))[0];
 	assert.deepEqual(giants.dots.filter((dot) => dot.lane).map((dot) => [dot.text, dot.iqrFlag, dot.zFlag]), [['45 kg →', true, false], ['45 kg →', true, false]]);
+	assert.deepEqual(giants.dots.filter((dot) => dot.lane).map((dot) => dc.flagTagsShown(dot, giants.dots)), [{ iqr: true, z: false }, { iqr: true, z: false }], 'lane arrows sit side by side, so each keeps its tag');
+	// Two 30 kg giants stack at one x: both keep their rings, and only the top one carries the "IQR" tag, so the
+	// lower tag never sits under the upper ring.
+	const stacked = dc.chartRows(run('pumpkin-outliers', { type: 'preset', id: 'two-giants' }))[0];
+	const flagged = stacked.dots.filter((dot) => dot.iqrFlag);
+	assert.equal(flagged.length, 2);
+	assert.ok(flagged.every((dot) => !dot.lane && dot.x === flagged[0].x), 'the giants share an x');
+	const top = Math.max(...flagged.map((dot) => dot.row));
+	assert.deepEqual(flagged.map((dot) => [dot.row === top, dc.flagTagsShown(dot, stacked.dots).iqr]), flagged.map((dot) => [dot.row === top, dot.row === top]), 'one IQR tag, on the top giant');
+	const oneGiant = dc.chartRows(run('pumpkin-outliers', { type: 'preset', id: 'one-giant' }))[0];
+	assert.deepEqual(oneGiant.dots.filter((dot) => dot.iqrFlag).map((dot) => dc.flagTagsShown(dot, oneGiant.dots).iqr), [true], 'a lone flagged dot keeps its tag');
+	const zAndIqr = { key: 'a', x: 90, row: 0, lane: false, text: null, look: false, iqrFlag: true, zFlag: true };
+	const above = { ...zAndIqr, key: 'b', row: 1, zFlag: false };
+	assert.deepEqual(dc.flagTagsShown(zAndIqr, [zAndIqr, above]), { iqr: false, z: true }, 'each flag is judged on its own: z stays when only IQR repeats above');
+	const dotPlot = readFileSync('src/components/react/descriptiveStats/DotPlot.tsx', 'utf8');
+	assert.ok(dotPlot.includes('const tags = flagTagsShown(dot, stack);') && dotPlot.includes('<Dot key={dot.key} dot={dot} stack={onAxis} />'), 'DotPlot draws on-axis tags through flagTagsShown');
 	const zRows = dc.chartRows(run('marks-scaling', { type: 'scale', scale: 'z' }));
 	assert.deepEqual(zRows.map((row) => row.zTicks.map((tick) => tick.kind)), [['mean', 'sigma', 'sigma'], ['mean', 'sigma', 'sigma']]);
 	assert.deepEqual(dc.chartRows(dst.initialState('marks-scaling')).map((row) => row.zTicks.length), [0, 0], 'pink and blue only on the z scale');

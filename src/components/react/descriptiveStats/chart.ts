@@ -24,6 +24,17 @@ export interface ChartDot {
 	zFlag: boolean;
 }
 
+/**
+ * Which of a dot's flag tags are drawn. Stacked dots share an x one pitch apart, so a tag above a lower dot would sit
+ * under the ring of the dot above it: a flag's tag is drawn once per stack, above its top flagged dot. Every flagged
+ * dot keeps its ring. Dots in the off-chart lane are listed side by side, never stacked, so each keeps its tags.
+ */
+export function flagTagsShown(dot: ChartDot, dots: readonly ChartDot[]): { iqr: boolean; z: boolean } {
+	if (dot.lane) return { iqr: dot.iqrFlag, z: dot.zFlag };
+	const above = dots.filter((other) => !other.lane && other.x === dot.x && other.row > dot.row);
+	return { iqr: dot.iqrFlag && !above.some((other) => other.iqrFlag), z: dot.zFlag && !above.some((other) => other.zFlag) };
+}
+
 export interface ChartRow {
 	id: string;
 	title: string | null;
