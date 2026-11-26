@@ -79,8 +79,8 @@ Use a 4px scale (0.25rem steps) and Starlight's layout utilities (`sl-flex`, `sl
 On screens wider than 1920px the root font size grows, from 100% at 1920px to 150% at 3840px and no further, so text, the column, the sidebars and the boards grow together on 4K monitors and TVs ([decision 0025](../decisions/0025-large-screen-scaling.md)). Phones, laptops and 1920px screens are unchanged, and browser zoom still enlarges text.
 
 - Size things in rem, so they follow. 1rem is 16px at the base size; convert exactly (399px is 24.9375rem).
-- Px stay px only for 1px hairlines, border radii, outline widths and offsets, focus halos and the 44px minimum tap target.
-- Container queries in rem measure against the initial font size, so a board's breakpoints don't move as the root grows.
+- Px stay px only for 1px hairlines, border radii, outline widths and offsets, focus halos and the 44px minimum tap target. A fixed-size tap target is `max(44px, 2.75rem)`.
+- Container queries in rem resolve against the root font size, so a board's breakpoints grow with its content; media queries in rem use the initial size.
 - Mafs boards multiply every px they pass to Mafs by `useBoardScale()` ([math-plots-code.md](math-plots-code.md#plots-mafs-boards)).
 
 ## Focus

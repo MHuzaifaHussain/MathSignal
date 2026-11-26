@@ -2083,18 +2083,20 @@ const bigChoose = (n, k) => {
 	assert.equal(columnAxis.tickEvery(11), 2);
 	assert.equal(columnAxis.tickEvery(4), 1);
 	// components.css copies two of these numbers by hand; tie them to columnAxis so neither side drifts alone.
+	// The CSS writes them in rem (decision 0025); 1rem is 16px at the base size, where columnAxis measures.
 	const columnCss = readText('src/styles/components.css');
-	const stub = columnCss.match(/--ms-cols-stub:\s*(\d+)px;/);
-	assert.ok(stub, 'components.css no longer sets --ms-cols-stub');
-	assert.equal(Number(stub[1]), columnAxis.MIN_VISIBLE_PX, 'the CSS column stub matches MIN_VISIBLE_PX');
-	const gutter = columnCss.match(/--ms-cols-gutter:\s*(\d+)px;/);
-	const thinning = columnCss.match(/@container ms-cols \(max-width:\s*(\d+)px\)/);
-	assert.ok(gutter && thinning, 'components.css no longer sets --ms-cols-gutter or the tick-thinning container query');
+	const basePx = (match) => match && [match[0], Number(match[1]) * 16];
+	const stub = basePx(columnCss.match(/--ms-cols-stub:\s*(\d+(?:\.\d+)?)rem;/));
+	assert.ok(stub, 'components.css no longer sets --ms-cols-stub in rem');
+	assert.equal(stub[1], columnAxis.MIN_VISIBLE_PX, 'the CSS column stub matches MIN_VISIBLE_PX');
+	const gutter = basePx(columnCss.match(/--ms-cols-gutter:\s*(\d+(?:\.\d+)?)rem;/));
+	const thinning = basePx(columnCss.match(/@container ms-cols \(max-width:\s*(\d+(?:\.\d+)?)rem\)/));
+	assert.ok(gutter && thinning, 'components.css no longer sets --ms-cols-gutter or the tick-thinning container query in rem');
 	// The query is sized for the family charts' axis: below it, their columns are narrower than MIN_LABELED_COLUMN_PX.
 	const familyColumns = new Set(Object.values(famSetups.FAMILY_SETUPS).map(({ axis: [first, last] }) => last - first + 1));
 	assert.equal(familyColumns.size, 1, 'the family setups share one axis width');
 	const [columns] = familyColumns;
-	assert.equal(Number(thinning[1]), Number(gutter[1]) + columns * columnAxis.MIN_LABELED_COLUMN_PX, 'the tick-thinning query is the gutter plus every family column at MIN_LABELED_COLUMN_PX');
+	assert.equal(thinning[1], gutter[1] + columns * columnAxis.MIN_LABELED_COLUMN_PX, 'the tick-thinning query is the gutter plus every family column at MIN_LABELED_COLUMN_PX');
 	const base = famSetups.FAMILY_SETUPS['binomial-spread'];
 	for (const id of ['coins-binomial', 'binomial-spread']) assert.equal(famSetups.getFamilySetup(id).id, id);
 	const bad = [
@@ -8382,6 +8384,26 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	// A reader's larger default font adds on, and is never shrunk.
 	assert.equal(rootPx(1920, 20), 20);
 	assert.equal(rootPx(3840, 20), 20 + (3840 - 2400) / 240);
+}
+// Board styles grow with the root, so components.css sizes in rem. Px stay only where a size must not grow: 1px
+// hairline borders, radii, outlines and focus halos, the 44px tap-target floor, and Mafs' 5px axis-number gap, which
+// the translate turns into 0.3125rem. MarimoEmbed's spinner is not a board.
+{
+	const css = readText('src/styles/components.css').replace(/\/\*[\s\S]*?\*\//g, '');
+	const allowed = [
+		/^border(-[a-z-]+)?: 1px (solid|dotted|dashed) /,
+		/^border(-[a-z-]+)?-radius: /,
+		/^outline(-offset)?: /,
+		/^box-shadow: /,
+		/^(min-height|min-block-size): 44px;$/,
+		/^translate: (0 )?calc\(0\.3125rem - 5px\)( 0)?;$/,
+	];
+	const strays = css
+		.split('\n')
+		.map((line) => line.trim())
+		.filter((line) => /\dpx\b/.test(line.replaceAll('max(44px, 2.75rem)', '')))
+		.filter((line) => !allowed.some((pattern) => pattern.test(line)));
+	assert.deepEqual(strays, ['border: 2px solid var(--ms-rule);'], 'components.css sizes in rem (decision 0025)');
 }
 
 console.log('Board check passed.');
