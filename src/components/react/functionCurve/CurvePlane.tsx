@@ -74,10 +74,11 @@ export default function CurvePlane({ state, size, onMovePoint }: CurvePlaneProps
   );
   const handleMove = useCallback((point: vec.Vector2) => onMovePoint(Math.round(point[0] * 2)), [onMovePoint]);
   const slide = state.stage === "slide";
-  const numbered = numberedValues(curveView);
+  const marks = planeMarks(state);
+  // A number gives way where a dot or the ochre line covers it, so it depends on the state and the plane's size.
+  const numbered = numberedValues(state, size, marks);
   const xAxis = slide ? { lines: 1, labels: false as const } : { lines: curveView.xLines, labels: axisLabels(numbered.x) };
   const yAxis = slide ? { lines: 1, labels: false as const } : { lines: curveView.yLines, labels: axisLabels(numbered.y) };
-  const marks = planeMarks(state);
   const labels = planeLabels(state, size);
 
   return (

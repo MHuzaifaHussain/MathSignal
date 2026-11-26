@@ -7249,6 +7249,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		// The planes a 320px phone, a 375px phone and a desktop draw (the cap is 400px).
 		const FC_PLANE_SIZES = [270, 325, 400];
 		let fittedLabels = 0;
+		let drawnNumbers = 0;
 		for (const state of reachable) {
 			const where = `${state.setupId} ${state.preset} x=${state.xIndex / 2} h#${state.hIndex} ${state.stage} lines=${state.linesOn}`;
 			const marks = fcMarks.planeMarks(state);
@@ -7286,9 +7287,31 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 					assert.deepEqual(label.collisions, [], `"${label.text}" is clear on a ${size}px plane: ${where}`);
 					fittedLabels += 1;
 				}
+				// No drawn axis number sits under a dot (the handle's 15px ring, else a 6px dot) or under the ochre straight
+				// line (3px wide, so 1.5px reaches past its middle): Mafs draws the numbers below the marks.
+				const scale = fcModel.planeScale(view, size);
+				const drawn = fcLayout.axisNumberBoxes(fcSetups.viewOf(state.preset), size, fcLayout.numberedValues(state, size));
+				for (const { name, box } of drawn) {
+					for (const dot of marks.filter((mark) => mark.kind === 'point' || mark.kind === 'ruler-end')) {
+						const radius = dot.kind === 'point' && dot.movable ? 15 : 6;
+						const dx = (Math.min(Math.max(dot.at[0], box.left), box.right) - dot.at[0]) / scale.x;
+						const dy = (Math.min(Math.max(dot.at[1], box.bottom), box.top) - dot.at[1]) / scale.y;
+						assert.ok(Math.hypot(dx, dy) >= radius, `the ${dot.kind} covers the ${name} on a ${size}px plane: ${where}`);
+					}
+					for (const line of marks.filter((mark) => mark.kind === 'tangent' || mark.kind === 'corner-line')) {
+						const through = line.kind === 'tangent' ? line.point : [0, 0];
+						const heightAt = (at) => through[1] + line.slope * (at - through[0]);
+						const reach = { x: 1.5 * scale.x, y: 1.5 * scale.y };
+						const ends = [heightAt(box.left - reach.x), heightAt(box.right + reach.x)];
+						const misses = Math.max(...ends) < box.bottom - reach.y || Math.min(...ends) > box.top + reach.y;
+						assert.ok(misses, `the ${line.kind} strikes through the ${name} on a ${size}px plane: ${where}`);
+					}
+					drawnNumbers += 1;
+				}
 			}
 		}
 		assert.ok(fittedLabels > 10000, `fitted ${fittedLabels} labels`);
+		assert.ok(drawnNumbers > 10000, `checked ${drawnNumbers} drawn axis numbers`);
 		// Every axis number Mafs can draw (x numbers hanging below the axis, y numbers right of it, ink and halo) fits
 		// inside every view on every plane size, with the labels' edge margin to spare.
 		for (const [curve, curveView] of Object.entries(fcSetups.CURVE_VIEWS)) {
@@ -7296,7 +7319,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 			for (const size of FC_PLANE_SIZES) {
 				const marginX = (fcModel.LABEL_EDGE_MARGIN * (x[1] - x[0])) / size;
 				const marginY = (fcModel.LABEL_EDGE_MARGIN * (y[1] - y[0])) / size;
-				for (const { name, box } of fcLayout.axisNumberBoxes(curveView, size, fcLayout.numberedValues(curveView))) {
+				for (const { name, box } of fcLayout.axisNumberBoxes(curveView, size, fcLayout.gridNumbers(curveView))) {
 					const inside = box.left >= x[0] + marginX && box.right <= x[1] - marginX && box.bottom >= y[0] + marginY && box.top <= y[1] - marginY;
 					assert.ok(inside, `the ${name} fits the ${curve} view on a ${size}px plane`);
 				}
@@ -7362,6 +7385,25 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 			kept(fcAfter('corner', { stage: 'tangent', linesOn: true }), [400]);
 			const phone = fcLayout.planeLabels(fcAfter('corner', { stage: 'tangent', linesOn: true }), 270).map((label) => label.text);
 			assert.deepEqual(phone, ['rise 1', '(0, 0)']);
+			// Where a dot or the ochre line covers an axis number in those states, the number gives way, on these sizes
+			// (270, 325, 400): the tangent at S-curve x = 1 crosses the y-axis at −2 and at x = −1.5 runs through −1 on the
+			// x-axis; on Loss at w = 0 the tangent falls through 8 (and 6 on the smallest plane) and on a phone the handle's
+			// ring at (0, 9) covers 8; on a 320px phone the corner line runs through −1.
+			const givesWay = (state) =>
+				FC_PLANE_SIZES.map((size) => {
+					const grid = fcLayout.gridNumbers(fcSetups.viewOf(state.preset));
+					const drawn = fcLayout.numberedValues(state, size);
+					return [...grid.x.filter((value) => !drawn.x.includes(value)).map((value) => `x ${value}`), ...grid.y.filter((value) => !drawn.y.includes(value)).map((value) => `y ${value}`)];
+				});
+			for (const state of [fcAfter(R2T, { stage: 'ruler' }), fcAfter(R2T, { stage: 'tangent', hIndex: hAt(1, 100) }), fcInitial('corner'), fcAfter('corner', { stage: 'tangent' })]) {
+				assert.deepEqual(givesWay(state), [[], [], []], `every axis number drawn: ${JSON.stringify(state)}`);
+			}
+			assert.deepEqual(givesWay(fcAfter(R2T, { stage: 'tangent', preset: 's-curve', xIndex: 2, hIndex: hAt(1, 100) })), [['y -2'], ['y -2'], ['y -2']]);
+			assert.deepEqual(givesWay(fcAfter(R2T, { stage: 'slope-curve', preset: 's-curve', xIndex: -3, hIndex: hAt(-1, 1000) })), [['x -1'], ['x -1'], ['x -1']]);
+			assert.deepEqual(givesWay(fcAfter(R2T, { stage: 'tangent', preset: 'loss', xIndex: 0, hIndex: hAt(1, 100) })), [['y 6', 'y 8'], ['y 8'], ['y 8']]);
+			assert.deepEqual(givesWay(fcAfter(R2T, { stage: 'ruler', preset: 'loss', xIndex: 0 })), [['y 8'], [], []]);
+			assert.deepEqual(givesWay(fcAfter('corner', { stage: 'tangent', linesOn: true })), [['x -1'], [], []]);
+			assert.deepEqual(fcLayout.numberedValues(opening, 270), { x: [], y: [] }, 'the slide numbers nothing');
 			// "you" and the axis names are never left out: planeLabels keeps them even when crowded, and the loop above
 			// finds every kept label clear.
 			assert.ok(fcLayout.planeLabels({ ...opening, hIndex: hAt(-1, 1) }, 270).some((label) => label.text === 'you'));

@@ -1,10 +1,11 @@
-// Where FunctionCurve's plane labels go at a given plane size: each label tries its sides in order and takes the first
-// spot whose box clears the plane's edges, the axis numbers, the dots, every drawn line and the labels placed before
-// it. Pure, so scripts/check-boards.mjs places every label of every reachable state on the plane sizes phones and
+// Where FunctionCurve's plane labels go at a given plane size, and which axis values Mafs numbers there: a number
+// gives way where a dot or the ochre straight line covers it, and each label tries its sides in order and takes the
+// first spot whose box clears the plane's edges, the drawn axis numbers, the dots, every drawn line and the labels
+// placed before it. Pure, so scripts/check-boards.mjs places every label of every reachable state on the plane sizes phones and
 // desktops draw. Design and reasoning: decision 0020.
 import { pieceCurve } from './functions.ts';
 import { LABEL_DISTANCE, axisNumber, fitLabel, planeScale, textBox, viewNumbers, type Attach, type LabelBox, type Scale, type View } from './model.ts';
-import { planeMarks, type Mark, type MarkColor, type Vec } from './marks.ts';
+import { WEIGHTS, planeMarks, type Mark, type MarkColor, type Vec } from './marks.ts';
 import { viewOf, type CurveView } from './setups.ts';
 import type { CurveState } from './state.ts';
 
@@ -25,6 +26,8 @@ const Y_NUMBER_EXTENT = [-7.1, 9.9] as const;
 /** A Mafs Point's radius; a MovablePoint's translucent ring is wider. */
 const DOT_RADIUS = 6;
 const HANDLE_RING_RADIUS = 15;
+/** Half the ochre straight line's stroke, in pixels: a number its edge reaches is struck through. */
+const OCHRE_LINE_HALF_WEIGHT = Math.max(WEIGHTS.tangent, WEIGHTS.cornerLine) / 2;
 /** Room a label keeps from a dot, past its radius. */
 const DOT_CLEARANCE = 3;
 /** Room a label's box (its halo included) keeps from lines, numbers and other labels, in pixels. */
@@ -69,27 +72,38 @@ const multiplesInside = (low: number, high: number, step: number): number[] => {
 };
 
 /**
- * The axis values the plane numbers: every grid line inside the view but 0. Where the axes are named, the top y
+ * The axis values a view can number: every grid line inside the view but 0. Where the axes are named, the top y
  * number gives way to the name ("loss" sits where 10 would).
  */
-export function numberedValues(curveView: CurveView): AxisValues {
+export function gridNumbers(curveView: CurveView): AxisValues {
 	const { x, y } = viewNumbers(curveView.view);
 	const ys = multiplesInside(y[0], y[1], curveView.yLines);
 	return { x: multiplesInside(x[0], x[1], curveView.xLines), y: curveView.axisNames ? ys.slice(0, -1) : ys };
 }
 
-/** The boxes Mafs' numbers at these axis values cover on a plane this size, ink and halo (the extents above). */
+const numberWidth = (value: number) => Array.from(axisNumber(value)).length * AXIS_NUMBER_CHARACTER_WIDTH;
+
+/** The box Mafs' number at this x value covers, ink and halo (the extents above), in grid units. */
+const xNumberBox = (value: number, scale: Scale): LabelBox => ({
+	left: value - (numberWidth(value) / 2) * scale.x,
+	right: value + (numberWidth(value) / 2) * scale.x,
+	bottom: X_NUMBER_EXTENT[0] * scale.y,
+	top: X_NUMBER_EXTENT[1] * scale.y,
+});
+
+/** The box Mafs' number at this y value covers, ink and halo (the extents above), in grid units. */
+const yNumberBox = (value: number, scale: Scale): LabelBox => ({
+	left: Y_NUMBER_OFFSET * scale.x,
+	right: (Y_NUMBER_OFFSET + numberWidth(value)) * scale.x,
+	bottom: value + Y_NUMBER_EXTENT[0] * scale.y,
+	top: value + Y_NUMBER_EXTENT[1] * scale.y,
+});
+
+/** The boxes Mafs' numbers at these axis values cover on a plane this size. */
 export function axisNumberBoxes(curveView: CurveView, planeSize: number, values: AxisValues): NamedBox[] {
 	const scale = planeScale(curveView.view, planeSize);
-	const width = (value: number) => Array.from(axisNumber(value)).length * AXIS_NUMBER_CHARACTER_WIDTH;
-	const xBoxes = values.x.map((value) => ({
-		name: `x-axis number ${axisNumber(value)}`,
-		box: { left: value - (width(value) / 2) * scale.x, right: value + (width(value) / 2) * scale.x, bottom: X_NUMBER_EXTENT[0] * scale.y, top: X_NUMBER_EXTENT[1] * scale.y },
-	}));
-	const yBoxes = values.y.map((value) => ({
-		name: `y-axis number ${axisNumber(value)}`,
-		box: { left: Y_NUMBER_OFFSET * scale.x, right: (Y_NUMBER_OFFSET + width(value)) * scale.x, bottom: value + Y_NUMBER_EXTENT[0] * scale.y, top: value + Y_NUMBER_EXTENT[1] * scale.y },
-	}));
+	const xBoxes = values.x.map((value) => ({ name: `x-axis number ${axisNumber(value)}`, box: xNumberBox(value, scale) }));
+	const yBoxes = values.y.map((value) => ({ name: `y-axis number ${axisNumber(value)}`, box: yNumberBox(value, scale) }));
 	return [...xBoxes, ...yBoxes];
 }
 
@@ -123,18 +137,22 @@ function markLine(mark: Mark, view: View): Vec[] | null {
 	}
 }
 
+/** The plane's dots: the point (its handle's ring while it moves) and the ruler's end. */
+function dotsOf(marks: readonly Mark[]): Obstacles['dots'] {
+	return marks.flatMap((mark) => {
+		if (mark.kind !== 'point' && mark.kind !== 'ruler-end') return [];
+		return [{ name: mark.kind, at: mark.at, radius: mark.kind === 'point' && mark.movable ? HANDLE_RING_RADIUS : DOT_RADIUS }];
+	});
+}
+
 function obstaclesFor(state: CurveState, marks: readonly Mark[], planeSize: number): Obstacles {
 	const curveView = viewOf(state.preset);
 	const lines: Obstacles['lines'] = [];
-	const dots: Obstacles['dots'] = [];
 	for (const mark of marks) {
 		const points = markLine(mark, curveView.view);
 		if (points) lines.push({ name: mark.kind, points });
-		if (mark.kind === 'point' || mark.kind === 'ruler-end') {
-			dots.push({ name: mark.kind, at: mark.at, radius: mark.kind === 'point' && mark.movable ? HANDLE_RING_RADIUS : DOT_RADIUS });
-		}
 	}
-	return { boxes: state.stage === 'slide' ? [] : axisNumberBoxes(curveView, planeSize, numberedValues(curveView)), dots, lines };
+	return { boxes: axisNumberBoxes(curveView, planeSize, numberedValues(state, planeSize, marks)), dots: dotsOf(marks), lines };
 }
 
 const grow = (box: LabelBox, byX: number, byY: number): LabelBox => ({ left: box.left - byX, right: box.right + byX, bottom: box.bottom - byY, top: box.top + byY });
@@ -173,6 +191,26 @@ function dotHitsBox(at: Vec, radiusPixels: number, box: LabelBox, scale: Scale):
 	const nearestX = Math.min(Math.max(at[0], box.left), box.right);
 	const nearestY = Math.min(Math.max(at[1], box.bottom), box.top);
 	return Math.hypot((nearestX - at[0]) / scale.x, (nearestY - at[1]) / scale.y) < radiusPixels;
+}
+
+/**
+ * The axis values Mafs numbers in this state on a plane this size: the view's grid numbers (gridNumbers), less any
+ * that a dot (the point's handle ring, the ruler's end) or the ochre straight line (the tangent or the corner line)
+ * passes through, since Mafs draws the numbers under the marks and nothing moves them. The slide has no numbers.
+ */
+export function numberedValues(state: CurveState, planeSize: number, marks: readonly Mark[] = planeMarks(state)): AxisValues {
+	if (state.stage === 'slide') return { x: [], y: [] };
+	const curveView = viewOf(state.preset);
+	const scale = planeScale(curveView.view, planeSize);
+	const dots = dotsOf(marks);
+	const ochreLines = marks.flatMap((mark) => (mark.kind === 'tangent' || mark.kind === 'corner-line' ? [markLine(mark, curveView.view) ?? []] : []));
+	const clear = (box: LabelBox) => {
+		if (dots.some((dot) => dotHitsBox(dot.at, dot.radius, box, scale))) return false;
+		const struck = grow(box, OCHRE_LINE_HALF_WEIGHT * scale.x, OCHRE_LINE_HALF_WEIGHT * scale.y);
+		return !ochreLines.some((points) => points.some((point, index) => index > 0 && segmentHitsBox(points[index - 1], point, struck)));
+	};
+	const grid = gridNumbers(curveView);
+	return { x: grid.x.filter((value) => clear(xNumberBox(value, scale))), y: grid.y.filter((value) => clear(yNumberBox(value, scale))) };
 }
 
 /** Everything this box touches: lines, dots, axis numbers and labels already placed. */
