@@ -3,9 +3,15 @@
 
 /** The narrowest a column may be at a 320 px viewport. */
 export const MIN_COLUMN_PX = 14;
-/** Any nonzero chance draws at least this tall, so a tiny bar never vanishes. */
+/**
+ * Any nonzero chance draws at least this tall, so a tiny bar never vanishes. components.css applies it as
+ * --ms-cols-stub; scripts/check-boards.mjs keeps the two equal.
+ */
 export const MIN_VISIBLE_PX = 2;
-/** A column narrower than this gets a label only on every second value. */
+/**
+ * A column narrower than this gets a label only on every second value. components.css's tick-thinning container
+ * query is the gutter plus the family axis's columns at this width; scripts/check-boards.mjs checks the sum.
+ */
 export const MIN_LABELED_COLUMN_PX = 24;
 /**
  * The column area's width at a 320 px viewport: the chart measured 270 px on the lab page, less the 28 px gridline

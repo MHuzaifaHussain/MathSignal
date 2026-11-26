@@ -2063,6 +2063,20 @@ const bigChoose = (n, k) => {
 	assert.throws(() => columnAxis.fitsAt320(tooMany, 'too-many'), new RegExp(`setup "too-many" has ${tooMany} columns, more than fit at 320 px`));
 	assert.equal(columnAxis.tickEvery(11), 2);
 	assert.equal(columnAxis.tickEvery(4), 1);
+	// components.css copies two of these numbers by hand; tie them to columnAxis so neither side drifts alone.
+	const { readFileSync } = await import('node:fs');
+	const columnCss = readFileSync('src/styles/components.css', 'utf8');
+	const stub = columnCss.match(/--ms-cols-stub:\s*(\d+)px;/);
+	assert.ok(stub, 'components.css no longer sets --ms-cols-stub');
+	assert.equal(Number(stub[1]), columnAxis.MIN_VISIBLE_PX, 'the CSS column stub matches MIN_VISIBLE_PX');
+	const gutter = columnCss.match(/--ms-cols-gutter:\s*(\d+)px;/);
+	const thinning = columnCss.match(/@container ms-cols \(max-width:\s*(\d+)px\)/);
+	assert.ok(gutter && thinning, 'components.css no longer sets --ms-cols-gutter or the tick-thinning container query');
+	// The query is sized for the family charts' axis: below it, their columns are narrower than MIN_LABELED_COLUMN_PX.
+	const familyColumns = new Set(Object.values(famSetups.FAMILY_SETUPS).map(({ axis: [first, last] }) => last - first + 1));
+	assert.equal(familyColumns.size, 1, 'the family setups share one axis width');
+	const [columns] = familyColumns;
+	assert.equal(Number(thinning[1]), Number(gutter[1]) + columns * columnAxis.MIN_LABELED_COLUMN_PX, 'the tick-thinning query is the gutter plus every family column at MIN_LABELED_COLUMN_PX');
 	const base = famSetups.FAMILY_SETUPS['binomial-spread'];
 	for (const id of ['coins-binomial', 'binomial-spread']) assert.equal(famSetups.getFamilySetup(id).id, id);
 	const bad = [

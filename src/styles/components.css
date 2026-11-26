@@ -1451,8 +1451,8 @@
 	border-inline-start: 1px solid var(--ms-board-ink);
 }
 
-/* Every value is labeled while each column is at least 24px wide (11 columns plus the gutter); below that, every
- * second one (columnAxis.tickEvery). */
+/* Every value is labeled while each family column is at least 24px wide (11 columns plus the gutter); below that,
+ * every second one (columnAxis.tickEvery). check-boards ties 292px to the gutter and MIN_LABELED_COLUMN_PX. */
 @container ms-cols (max-width: 292px) {
 	.ms-cols-tick.is-thin {
 		visibility: hidden;
