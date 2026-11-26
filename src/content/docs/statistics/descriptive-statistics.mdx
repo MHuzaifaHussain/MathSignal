@@ -15,7 +15,7 @@ takeaways:
   - Descriptive statistics summarize a list in a few numbers and a picture, saying where its center is, how spread out it is and what shape it has.
   - The mean is the total shared out equally, the sum divided by n. The median is the middle of the sorted list, or halfway between the two middle values when n is even. The mode is the most common value, and a list can have several modes or none.
   - A list in arrival order hides its median. Sort it first, and the median is the value with as many values below it as above it.
-  - The range, largest minus smallest, is the simplest spread, and it depends on just two values. The variance and the interquartile range use the whole list.
+  - The range, largest minus smallest, is the simplest spread, and it depends on just two values. The variance uses every value; the interquartile range uses the middle half, so one bad value can't move it.
   - A histogram counts values in bins. Moving the bin edges by half a bin can turn a flat picture into a hump, so try more than one set of edges.
 references:
   - deisenroth2020
@@ -154,7 +154,7 @@ Two lists can share a center and still look nothing alike, so a description also
 
 ### The range: tallest minus shortest
 
-The range is the largest value minus the smallest. For our class it is 148 − 122 = 26 cm. Shared heights has a range of 149 − 123 = 26 cm too, with a different shape inside it. The range depends on two values only, so one typo of 1,480 cm makes it 1,358 cm. Spreads that use every value are the [variance and standard deviation](/statistics/variance-and-standard-deviation/) and the interquartile range, the distance between the quartiles that a box plot draws, on [reading box plots](/statistics/reading-box-plots-quartiles-iqr/).
+The range is the largest value minus the smallest. For our class it is 148 − 122 = 26 cm. Shared heights has a range of 149 − 123 = 26 cm too, with a different shape inside it. The range depends on two values only, so one typo of 1,480 cm makes it 1,358 cm. The [variance and standard deviation](/statistics/variance-and-standard-deviation/) use every value. The interquartile range, the distance between the quartiles that a box plot draws, uses the middle half and ignores the extremes, so the typo leaves it alone; see [reading box plots](/statistics/reading-box-plots-quartiles-iqr/).
 
 ### Draw the whole list: dot plots and histograms
 
