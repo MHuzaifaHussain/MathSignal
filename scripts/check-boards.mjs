@@ -923,6 +923,9 @@ assert.deepEqual(countsOf('late-bus'), { population: 1000, bAndA: 75, notBAndA: 
 assert.deepEqual(countsOf('same-chance'), { population: 100, bAndA: 10, notBAndA: 15, bAndNotA: 30, notBAndNotA: 45 });
 assert.deepEqual(countsOf('fraud-flag'), { population: 10000, bAndA: 320, notBAndA: 80, bAndNotA: 288, notBAndNotA: 9312 });
 assert.deepEqual(countsOf('wet-lawn'), { population: 100, bAndA: 18, notBAndA: 2, bAndNotA: 24, notBAndNotA: 56 });
+// Counts group through boardText's shared formatter, which refuses a non-integer instead of rounding it.
+assert.equal(bayesTable.formatCount(9312), '9,312');
+assert.throws(() => bayesTable.formatCount(1.5), /boardText.groupThousands: takes whole numbers, got 1.5/);
 assert.deepEqual(countsOf('any-events'), { population: 100, bAndA: 24, notBAndA: 6, bAndNotA: 7, notBAndNotA: 63 });
 // Every slider position gives whole counts that add up to the population, from the smallest population that can.
 for (let a = 1; a <= 99; a += 1) {

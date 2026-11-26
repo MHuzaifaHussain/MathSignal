@@ -1,5 +1,6 @@
 // The BayesTheorem board's "Table view": the square's four areas as whole counts, and every sentence the
 // table shows or speaks. Pure TypeScript with no React, so scripts/check-boards.mjs can assert the counts.
+import { groupThousands } from '../boardText.ts';
 import { formatNumber } from '../plotColors.ts';
 import { computePosterior, type BayesScenario, type BayesValues } from './scenarios.ts';
 
@@ -56,9 +57,8 @@ export function countTable({ prior, likelihood, falsePositive }: BayesValues): C
 	};
 }
 
-const groupThousands = new Intl.NumberFormat('en-US', { useGrouping: true, maximumFractionDigits: 0 });
 /** "1,000", "9,312". */
-export const formatCount = (count: number) => groupThousands.format(count);
+export const formatCount = (count: number) => groupThousands(count);
 
 export interface TableCell {
 	text: string;
