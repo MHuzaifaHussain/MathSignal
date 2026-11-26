@@ -30,6 +30,13 @@ const HANDLE_RING_RADIUS = 15;
 const OCHRE_LINE_HALF_WEIGHT = Math.max(WEIGHTS.tangent, WEIGHTS.cornerLine) / 2;
 /** Room a label keeps from a dot, past its radius. */
 const DOT_CLEARANCE = 3;
+/**
+ * Room the tangent's and the corner line's labels keep from the ruler's end, past its radius: at DOT_CLEARANCE the
+ * word reads as that dot's name.
+ */
+export const LINE_LABEL_RULER_END_CLEARANCE = 16;
+/** The labels that name a straight line, so they keep LINE_LABEL_RULER_END_CLEARANCE from the ruler's end. */
+const LINE_LABELS: ReadonlySet<Mark['kind']> = new Set(['tangent', 'corner-line']);
 /** Room a label's box (its halo included) keeps from lines, numbers and other labels, in pixels. */
 const LABEL_CLEARANCE = 2;
 /** Samples per curve piece when testing a label against it. */
@@ -222,15 +229,18 @@ export function numberedValues(state: CurveState, planeSize: number, marks: read
 	return { x: grid.x.filter((value) => clear(xNumberBox(value, scale))), y: grid.y.filter((value) => clear(yNumberBox(value, scale))) };
 }
 
-/** Everything this box touches: lines, dots, axis numbers and labels already placed. */
-function collisionsOf(box: LabelBox, obstacles: Obstacles, placed: readonly PlacedLabel[], scale: Scale): string[] {
+/** The room a label for this mark keeps from this dot, past its radius. */
+const dotClearance = (mark: Mark, dot: Obstacles['dots'][number]) => (LINE_LABELS.has(mark.kind) && dot.name === 'ruler-end' ? LINE_LABEL_RULER_END_CLEARANCE : DOT_CLEARANCE);
+
+/** Everything this mark's label box touches: lines, dots, axis numbers and labels already placed. */
+function collisionsOf(mark: Mark, box: LabelBox, obstacles: Obstacles, placed: readonly PlacedLabel[], scale: Scale): string[] {
 	const padded = grow(box, LABEL_CLEARANCE * scale.x, LABEL_CLEARANCE * scale.y);
 	const hits: string[] = [];
 	for (const line of obstacles.lines) {
 		if (line.points.some((point, index) => index > 0 && segmentHitsBox(line.points[index - 1], point, padded))) hits.push(line.name);
 	}
 	for (const dot of obstacles.dots) {
-		if (dotHitsBox(dot.at, dot.radius + DOT_CLEARANCE, box, scale)) hits.push(dot.name);
+		if (dotHitsBox(dot.at, dot.radius + dotClearance(mark, dot), box, scale)) hits.push(dot.name);
 	}
 	for (const other of obstacles.boxes) {
 		if (boxesOverlap(padded, other.box)) hits.push(other.name);
@@ -289,7 +299,7 @@ function bestSpot(mark: Mark, view: View, planeSize: number, obstacles: Obstacle
 			for (const attach of sides) {
 				const fitted = fitLabel(view, anchor, attach, label.text, planeSize, firstDistance(mark) + extra);
 				const box = textBox(scale, fitted.textAt, attach, label.text);
-				const collisions = collisionsOf(box, obstacles, placed, scale);
+				const collisions = collisionsOf(mark, box, obstacles, placed, scale);
 				const spot = { text: label.text, color: label.color, attach, textAt: fitted.textAt, box, collisions };
 				if (collisions.length === 0) return spot;
 				if (!best || collisions.length < best.collisions.length) best = spot;

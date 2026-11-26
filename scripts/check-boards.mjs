@@ -7250,6 +7250,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		const FC_PLANE_SIZES = [270, 325, 400];
 		let fittedLabels = 0;
 		let drawnNumbers = 0;
+		let lineLabelsNearRulerEnds = 0;
 		for (const state of reachable) {
 			const where = `${state.setupId} ${state.preset} x=${state.xIndex / 2} h#${state.hIndex} ${state.stage} lines=${state.linesOn}`;
 			const marks = fcMarks.planeMarks(state);
@@ -7288,6 +7289,17 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 					assert.deepEqual(label.collisions, [], `"${label.text}" is clear on a ${size}px plane: ${where}`);
 					fittedLabels += 1;
 				}
+				// "tangent" and the corner line's label keep 16px past a ruler end's 6px radius, more than other labels' 3px,
+				// so neither reads as that dot's name.
+				const scaleHere = fcModel.planeScale(view, size);
+				for (const label of placed.filter((entry) => entry.text === 'tangent' || /^slope .+ line$/.test(entry.text))) {
+					for (const end of marks.filter((mark) => mark.kind === 'ruler-end')) {
+						const dx = (Math.min(Math.max(end.at[0], label.box.left), label.box.right) - end.at[0]) / scaleHere.x;
+						const dy = (Math.min(Math.max(end.at[1], label.box.bottom), label.box.top) - end.at[1]) / scaleHere.y;
+						assert.ok(Math.hypot(dx, dy) >= 6 + 16, `"${label.text}" keeps clear of the ruler's end on a ${size}px plane: ${where}`);
+						lineLabelsNearRulerEnds += 1;
+					}
+				}
 				// No drawn axis number sits under a dot (the handle's 15px ring, else a 6px dot) or under the ochre straight
 				// line (3px wide, so 1.5px reaches past its middle): Mafs draws the numbers below the marks.
 				const scale = fcModel.planeScale(view, size);
@@ -7313,6 +7325,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		}
 		assert.ok(fittedLabels > 10000, `fitted ${fittedLabels} labels`);
 		assert.ok(drawnNumbers > 10000, `checked ${drawnNumbers} drawn axis numbers`);
+		assert.ok(lineLabelsNearRulerEnds > 1000, `checked ${lineLabelsNearRulerEnds} line labels against the ruler's end`);
 		// Every axis number Mafs can draw (x numbers hanging below the axis, y numbers right of it, ink and halo) fits
 		// inside every view on every plane size, with the labels' edge margin to spare.
 		for (const [curve, curveView] of Object.entries(fcSetups.CURVE_VIEWS)) {
@@ -7383,6 +7396,9 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 			kept(fcAfter(R2T, { stage: 'tangent', hIndex: hAt(1, 100) }));
 			kept(fcAfter(R2T, { stage: 'tangent', preset: 's-curve', xIndex: 2, hIndex: hAt(1, 100) }));
 			kept(fcAfter(R2T, { stage: 'tangent', preset: 'loss', xIndex: 0, hIndex: hAt(1, 100) }));
+			// On Loss at w = 0 with h = 1, "tangent" moves off the ruler's end at (1, 4) but stays on every plane size.
+			const lossLongRuler = fcAfter(R2T, { stage: 'tangent', preset: 'loss', xIndex: 0, hIndex: hAt(1, 1) });
+			for (const size of FC_PLANE_SIZES) assert.ok(fcLayout.planeLabels(lossLongRuler, size).some((label) => label.text === 'tangent'), `"tangent" kept on a ${size}px plane`);
 			const sCurveLeft = fcAfter(R2T, { stage: 'slope-curve', preset: 's-curve', xIndex: -3, hIndex: hAt(-1, 1000) });
 			kept(sCurveLeft, [325, 400]);
 			assert.deepEqual(fcLayout.planeLabels(sCurveLeft, 270).map((label) => label.text), ['tangent']);
