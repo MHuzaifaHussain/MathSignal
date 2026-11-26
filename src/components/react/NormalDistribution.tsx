@@ -1,9 +1,10 @@
-import { Suspense, lazy, useCallback, useMemo, useState } from "react";
+import { Suspense, lazy, useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Coordinates, Line, Mafs, MovablePoint, Plot, Text } from "mafs";
 import type { vec } from "mafs";
 import Board from "./Board";
 import ChalkNote from "./ChalkNote";
 import TraySlider from "./TraySlider";
+import useCommittedSlider from "./guided/useCommittedSlider.ts";
 import {
   BOARD_HEIGHT,
   INITIAL_MU,
@@ -35,11 +36,19 @@ const sigmaSide = (mu: number) => (mu > 0 ? -1 : 1);
  */
 const sigmaFromHandleX = (x: number, mu: number) => clamp(sigmaSide(mu) * (x - mu), SIGMA_RANGE);
 
+type BellSlider = "mu" | "sigma";
+
 /** Normal distribution board: drag μ along the axis, drag σ along the curve's inflection point. */
 function BellBoard() {
   const [mu, setMu] = useState(INITIAL_MU);
   const [sigma, setSigma] = useState(INITIAL_SIGMA);
   const [announcement, setAnnouncement] = useState("");
+  // A tray slider speaks after a pause; Reset or a handle drag since then must not be talked over (sliderGuard.ts).
+  const sliderGuard = useCommittedSlider<BellSlider>();
+  const valuesRef = useRef({ mu, sigma });
+  useLayoutEffect(() => {
+    valuesRef.current = { mu, sigma };
+  });
 
   const curve = useCallback((x: number) => gaussian(x, mu, sigma), [mu, sigma]);
   const peakY = useMemo(() => gaussian(mu, mu, sigma), [mu, sigma]);
@@ -52,8 +61,11 @@ function BellBoard() {
   }, []);
 
   const handleMuMove = useCallback(
-    ([x]: vec.Vector2) => setMu(clamp(x, MU_RANGE)),
-    [],
+    ([x]: vec.Vector2) => {
+      sliderGuard.interrupt();
+      setMu(clamp(x, MU_RANGE));
+    },
+    [sliderGuard],
   );
 
   const constrainMu = useCallback(
@@ -62,8 +74,11 @@ function BellBoard() {
   );
 
   const handleSigmaMove = useCallback(
-    ([x]: vec.Vector2) => setSigma(sigmaFromHandleX(x, mu)),
-    [mu],
+    ([x]: vec.Vector2) => {
+      sliderGuard.interrupt();
+      setSigma(sigmaFromHandleX(x, mu));
+    },
+    [mu, sliderGuard],
   );
 
   const constrainSigma = useCallback(
@@ -75,10 +90,29 @@ function BellBoard() {
   );
 
   const handleReset = useCallback(() => {
+    sliderGuard.interrupt();
     setMu(INITIAL_MU);
     setSigma(INITIAL_SIGMA);
     announce(INITIAL_MU, INITIAL_SIGMA);
-  }, [announce]);
+  }, [announce, sliderGuard]);
+
+  const slide = useCallback(
+    (key: BellSlider, value: number) => {
+      sliderGuard.moved(key);
+      if (key === "mu") setMu(value);
+      else setSigma(value);
+    },
+    [sliderGuard],
+  );
+
+  const commitSlide = useCallback(
+    (key: BellSlider, value: number) => {
+      const current = valuesRef.current;
+      if (!sliderGuard.take(key, current[key] === value)) return;
+      announce(current.mu, current.sigma);
+    },
+    [announce, sliderGuard],
+  );
 
   const tray = (
     <>
@@ -91,8 +125,8 @@ function BellBoard() {
         step={MU_STEP}
         format={(value) => formatNumber(value)}
         describe={(value) => `mean ${formatNumber(value)}`}
-        onValueChange={setMu}
-        onValueCommitted={(value) => announce(value, sigma)}
+        onValueChange={(value) => slide("mu", value)}
+        onValueCommitted={(value) => commitSlide("mu", value)}
       />
       <TraySlider
         label="Spread σ"
@@ -103,8 +137,8 @@ function BellBoard() {
         step={SIGMA_STEP}
         format={(value) => formatNumber(value)}
         describe={(value) => `standard deviation ${formatNumber(value)}`}
-        onValueChange={setSigma}
-        onValueCommitted={(value) => announce(mu, value)}
+        onValueChange={(value) => slide("sigma", value)}
+        onValueCommitted={(value) => commitSlide("sigma", value)}
       />
     </>
   );

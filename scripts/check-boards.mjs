@@ -6065,6 +6065,31 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	for (const declaration of declarations) assert.ok(block[1].includes(`${declaration};`), `the .ms-normal-z forced-colors block sets ${declaration}`);
 }
 
+// The bell's tray sliders go through the shared guard too: a commit still pending when Reset or a handle drag comes
+// stays silent, so the live region never ends on a mean or spread the board no longer shows.
+{
+	const { readFileSync } = await import('node:fs');
+	const { createSliderGuard } = await import('../src/components/react/guided/sliderGuard.ts');
+	const guard = createSliderGuard();
+	guard.moved('mu');
+	guard.interrupt();
+	assert.equal(guard.take('mu', true), false, 'End on Mean, then Reset before the commit: the commit is silent');
+	guard.moved('mu');
+	guard.moved('sigma');
+	assert.equal(guard.take('mu', true), false, 'Mean then Spread: the Mean commit is silent');
+	assert.equal(guard.take('sigma', true), true, 'Mean then Spread: the Spread commit speaks');
+	guard.moved('mu');
+	assert.equal(guard.take('mu', false), false, 'a commit for a value the board no longer holds is silent');
+	const bellBoard = readFileSync('src/components/react/NormalDistribution.tsx', 'utf8').split('function BellBoard')[1].split('export default function')[0];
+	assert.ok(bellBoard.includes('useCommittedSlider<BellSlider>()'), 'the bell holds one shared slider guard');
+	assert.ok(/const handleReset = useCallback\(\(\) => \{\s*sliderGuard\.interrupt\(\);/.test(bellBoard), 'Reset interrupts the guard first');
+	for (const handler of ['handleMuMove', 'handleSigmaMove']) {
+		assert.ok(new RegExp(`const ${handler} = useCallback\\(\\s*\\(\\[x\\]: vec\\.Vector2\\) => \\{\\s*sliderGuard\\.interrupt\\(\\);`).test(bellBoard), `${handler} interrupts the guard first`);
+	}
+	assert.ok(!/onValueCommitted=\{\(value\) => announce\(/.test(bellBoard), 'no tray slider announces without the guard');
+	assert.equal((bellBoard.match(/onValueCommitted=\{\(value\) => commitSlide\("(mu|sigma)", value\)\}/g) ?? []).length, 2, 'both tray sliders commit through commitSlide');
+}
+
 // ---- FunctionCurve: exact catalog, rulers and the hill model (decision 0020) ----
 {
 	const fcFunctions = await import('../src/components/react/functionCurve/functions.ts');
