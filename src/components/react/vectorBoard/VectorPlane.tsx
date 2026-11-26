@@ -5,7 +5,18 @@ import { DOTTED, Segment } from "../planeLines";
 import { plotColors } from "../plotColors";
 import { cornerDots, drawnMeasures } from "./normsDescribe.ts";
 import { ballOutline, type Measure } from "./norms.ts";
-import { ARC_RADIUS, cartShadow, combinePieces, handlesFor, ochreElement, planeLabels, showsArc, showsRightAngle, spanLine, sumDot, type TableRow } from "./describe.ts";
+import { ARC_RADIUS, cartShadow, combinePieces, handlesFor, ochreElement, showsArc, showsRightAngle, spanLine, sumDot, type TableRow } from "./describe.ts";
+import {
+  ARROW_WEIGHT,
+  GUESS_RING_RADIUS,
+  MUTED_WEIGHT,
+  OCHRE_WEIGHT,
+  SPAN_LINE_WEIGHT,
+  SUM_DOT_RADIUS,
+  TARGET_RING_RADIUS,
+  ZERO_RING_RADIUS,
+  placedLabels,
+} from "./labelLayout.ts";
 import {
   LABEL_SIZE,
   VIEW_LIMIT,
@@ -14,7 +25,6 @@ import {
   clipSegment,
   combine,
   cross,
-  fitLabel,
   isZero,
   lengthSquared,
   numberText,
@@ -28,18 +38,7 @@ import {
 import { handleBox, handleIds, requireFlag, setupOf, type HandleId, type VectorState } from "./state.ts";
 
 const VIEW: vec.Vector2 = [-(VIEW_LIMIT + VIEW_PADDING), VIEW_LIMIT + VIEW_PADDING];
-const ARROW_WEIGHT = 2.5;
-/** The one ochre element is heavier, so it stands out by weight as well as hue. */
-const OCHRE_WEIGHT = 3;
-const ZERO_RING_RADIUS = 0.2;
-const GUESS_RING_RADIUS = 0.32;
 const RIGHT_ANGLE_SIZE = 0.3;
-/** a and b on span-reach: the muted references the scaled arrows are copied from. */
-const MUTED_WEIGHT = 1.5;
-/** The flag on span-reach and the origin ring on span-shape are the size of the guess ring. */
-const TARGET_RING_RADIUS = GUESS_RING_RADIUS;
-/** The small ink dot at c a + d b, which marks the sum even when d b is cut at the edge. */
-const SUM_DOT_RADIUS = 0.12;
 
 interface VectorPlaneProps {
   state: VectorState;
@@ -224,7 +223,7 @@ function CombineScene({ state, ochre }: SceneProps) {
   const dot = sumDot(state);
   return (
     <>
-      {line && <Segment from={line[0]} to={line[1]} color={plotColors.inkMuted} weight={2} lineStyle="dotted" />}
+      {line && <Segment from={line[0]} to={line[1]} color={plotColors.inkMuted} weight={SPAN_LINE_WEIGHT} lineStyle="dotted" />}
       <Arrow tip={state.a} color={referenceColor(state.a)} weight={MUTED_WEIGHT} />
       <Arrow tip={state.b} color={referenceColor(state.b)} weight={MUTED_WEIGHT} dashed />
       {combinePieces(state).map((piece) =>
@@ -338,15 +337,12 @@ export default function VectorPlane({ state, linkedId, size, onMove }: VectorPla
       <Coordinates.Cartesian xAxis={axis} yAxis={axis} />
       {linked && !isZero(subtract(linked.tip, linked.tail)) && <ComponentLegs tail={linked.tail} tip={linked.tip} />}
       <Scene state={state} ochre={ochreElement(state)} />
-      {planeLabels(state).map((label) => {
-        // Kept inside the plane at this size, so a label near an edge isn't cut off (fitLabel in model.ts).
-        const fitted = fitLabel(label.at, label.away, label.text, size);
-        return (
-          <Text key={label.id} x={fitted.at[0]} y={fitted.at[1]} size={LABEL_SIZE} color={plotColors.ink} attach={fitted.attach === "center" ? undefined : fitted.attach}>
-            {label.text}
-          </Text>
-        );
-      })}
+      {/* Kept inside the plane at this size, and on the span setups clear of each other, the arrows and the axis numbers (labelLayout.ts). */}
+      {placedLabels(state, size).map((label) => (
+        <Text key={label.id} x={label.at[0]} y={label.at[1]} size={LABEL_SIZE} color={plotColors.ink} attach={label.attach === "center" ? undefined : label.attach}>
+          {label.text}
+        </Text>
+      ))}
       {handles.map((handle) => {
         const handleMove = moveHandlers[handle.id];
         if (!handleMove) throw new Error(`VectorBoard2D: handle "${handle.id}" has no move handler.`);

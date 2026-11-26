@@ -3746,13 +3746,14 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 // Labels are checked at the narrowest plane (about 270px on a 320px phone) and the widest (440px), as fitLabel draws them.
 const PLANE_SIZES = [270, 440];
 const vectorModel = await import('../src/components/react/vectorBoard/model.ts');
-/** The box a plane label covers once fitLabel has placed it, in grid units. */
-const labelBox = (label, size) => {
-	const fitted = vectorModel.fitLabel(label.at, label.away, label.text, size);
-	const [left, right] = vectorModel.fittedLabelSpan(fitted, label.text, size);
-	const [, halfHeight] = vectorModel.labelHalfSize(label.text, size);
+/** The box a fitted label (`at` and `attach`, as fitLabel returns them) covers, in grid units. */
+const fittedLabelBox = (fitted, text, size) => {
+	const [left, right] = vectorModel.fittedLabelSpan(fitted, text, size);
+	const [, halfHeight] = vectorModel.labelHalfSize(text, size);
 	return { left, right, bottom: fitted.at[1] - halfHeight, top: fitted.at[1] + halfHeight };
 };
+/** The box a plane label covers once fitLabel has placed it, in grid units. */
+const labelBox = (label, size) => fittedLabelBox(vectorModel.fitLabel(label.at, label.away, label.text, size), label.text, size);
 const labelFits = (label, size) => {
 	const box = labelBox(label, size);
 	const reach = vectorModel.labelReach(size) + 1e-9;
@@ -4657,6 +4658,154 @@ const labelsOverlap = (first, second, size) => {
 	assert.ok(!labelTexts(reachDone).includes('span'));
 	assert.deepEqual(vd.spanLine(reachPreset('same-line')), [[-5, -2.5], [5, 2.5]]);
 	assert.equal(vd.spanLine(reachOpen), null);
+	// Labels on span-reach and span-shape (labelLayout.ts, 0014 amendment of 2026-11-26) clear each other, every arrow,
+	// arrowhead, ring, dot and handle, and the axis numbers' row and column, on PLANE_SIZES and the 325px plane of a
+	// 375px phone, where "c a" sat on b's dashed arrow, "b" on the y-axis 1 and "a" among the x-axis numbers. Each
+	// label also stays beside what it names.
+	{
+		const layout = await import('../src/components/react/vectorBoard/labelLayout.ts');
+		const SPAN_PLANE_SIZES = [270, 325, 440];
+		assert.equal(layout.segmentToBox([0, 0], [4, 0], { left: 1, right: 2, bottom: 1, top: 2 }), 1);
+		assert.equal(layout.segmentToBox([0, 0], [4, 4], { left: 1, right: 2, bottom: 1, top: 2 }), 0);
+		assert.equal(layout.segmentToBox([4, 5], [4, 5], { left: 1, right: 2, bottom: 1, top: 5 }), 2);
+		assert.ok(PLANE_SIZES.every((size) => SPAN_PLANE_SIZES.includes(size)));
+		/** The segment (or point) a label names. */
+		const named = (state, id) => {
+			switch (id) {
+				case 'a':
+				case 'b':
+					return [[0, 0], state[id]];
+				case 'zero':
+					return [[0, 0], [0, 0]];
+				case 'flag':
+					return [vs.getSetup('span-reach').target, vs.getSetup('span-reach').target];
+				case 'span':
+					return vd.spanLine(state);
+				default: {
+					const piece = vd.combinePieces(state).find((candidate) => candidate.id === id);
+					return [piece.from, piece.to];
+				}
+			}
+		};
+		/** Everything a placed label covers or strays from, as "text ~ what" strings; empty when the layout is clear. */
+		const crowding = (state, size) => {
+			const labels = layout.placedLabels(state, size);
+			const boxes = labels.map((label) => fittedLabelBox(label, label.text, size));
+			const obstacles = layout.planeObstacles(state, size);
+			const rows = layout.axisNumberRows(size);
+			return labels.flatMap((label, index) => {
+				const box = boxes[index];
+				const found = [
+					...obstacles.filter((obstacle) => layout.obstacleHitsBox(obstacle, box)).map((obstacle) => `${label.text} ~ ${obstacle.id}`),
+					...rows.filter((row) => layout.boxesOverlap(row, box)).map(() => `${label.text} ~ axis numbers`),
+					...labels.flatMap((other, otherIndex) => (otherIndex > index && layout.boxesOverlap(boxes[otherIndex], box) ? [`${label.text} ~ ${other.text}`] : [])),
+				];
+				const [from, to] = named(state, label.id);
+				const reach = layout.segmentToBox(from, to, box);
+				if (reach > layout.NAMING_REACH) found.push(`${label.text} strays from what it names`);
+				const arrows = layout.arrowSegments(state);
+				if (arrows.some((arrow) => arrow.id === label.id) && arrows.some((arrow) => arrow.id !== label.id && layout.segmentToBox(arrow.from, arrow.to, box) + layout.NEARNESS_MARGIN < reach)) found.push(NEARER);
+				return found;
+			});
+		};
+		// A label clearly nearer another arrow than its own is avoided whenever a clear layout allows it, but on crowded
+		// planes the only clear spots can be near both; those states are tallied apart from the overlaps (0014).
+		const NEARER = 'nearer another arrow';
+		const nearerTally = { presets: 0, shape: 0, dragged: 0 };
+		/** The overlaps and strays in a layout, with a state that has a label nearer another arrow tallied under `key`. */
+		const overlapsIn = (state, size, key) => {
+			const all = crowding(state, size);
+			const found = all.filter((text) => text !== NEARER);
+			if (found.length !== all.length) nearerTally[key]++;
+			return found;
+		};
+		const pairOf = (preset) => ({ a: preset.a, b: preset.b });
+		// span-reach: the opening pair and every preset pair, at all 441 slider states, before and after Check. On East and
+		// north, a = (1, 0) lies under c a on the x-axis; when c a and d b fence it in against the y-axis numbers, a's label
+		// has no clear spot on the narrow planes (0014) and covers only axis numbers, never an arrow or another label.
+		const reachExceptions = [];
+		for (const pair of [reachSetup.opening, ...reachSetup.presets].map(pairOf)) {
+			for (const checked of [false, true]) {
+				for (const scalar of SLIDER_WEIGHTS) {
+					for (const scalarD of SLIDER_WEIGHTS) {
+						const state = { ...reachOpen, ...pair, scalar, scalarD, checked };
+						for (const size of SPAN_PLANE_SIZES) {
+							const found = overlapsIn(state, size, 'presets');
+							if (found.length > 0) reachExceptions.push(`(${pair.a}) (${pair.b}) c = ${scalar}, d = ${scalarD}${checked ? ', checked' : ''}, ${size}px: ${found.join(', ')}`);
+						}
+					}
+				}
+			}
+		}
+		assert.deepEqual(reachExceptions, [
+			'(1,0) (0,1) c = 1.5, d = 1.5, 270px: a ~ axis numbers',
+			'(1,0) (0,1) c = 1.5, d = 1.5, 325px: a ~ axis numbers',
+			'(1,0) (0,1) c = 2, d = 1, 270px: a ~ axis numbers',
+			'(1,0) (0,1) c = 2, d = 1.5, 270px: a ~ axis numbers',
+			'(1,0) (0,1) c = 2, d = 2, 270px: a ~ axis numbers',
+			'(1,0) (0,1) c = 1.5, d = 1.5, checked, 270px: a ~ axis numbers',
+			'(1,0) (0,1) c = 1.5, d = 1.5, checked, 325px: a ~ axis numbers',
+			'(1,0) (0,1) c = 2, d = 1, checked, 270px: a ~ axis numbers',
+			'(1,0) (0,1) c = 2, d = 1.5, checked, 270px: a ~ axis numbers',
+			'(1,0) (0,1) c = 2, d = 2, checked, 270px: a ~ axis numbers',
+		]);
+		// span-shape: the opening and the presets before Check, and every pair within ±5 after it. On the narrow planes a
+		// few states have no clear spot (0014): two zero vectors, whose 21-character label is wider than the plane left of
+		// the y-axis numbers, and a short arrow on the x-axis, or one step below it, under a vector a little above it,
+		// which fences the arrow in against the axis numbers. Each covers only axis numbers.
+		const shapeExceptions = [];
+		for (const pair of [shapeSetup.opening, ...shapeSetup.presets].map(pairOf)) {
+			for (const size of SPAN_PLANE_SIZES) {
+				const found = overlapsIn({ ...vst.initialState('span-shape'), ...pair }, size, 'shape');
+				if (found.length > 0) shapeExceptions.push(`before Check (${pair.a}) (${pair.b}) ${size}px: ${found.join(', ')}`);
+			}
+		}
+		const gridWithinView = Array.from({ length: 11 }, (_, index) => index - 5).flatMap((x) => Array.from({ length: 11 }, (_, index) => [x, index - 5]));
+		for (const a of gridWithinView) {
+			for (const b of gridWithinView) {
+				for (const size of SPAN_PLANE_SIZES) {
+					const found = overlapsIn({ ...vst.initialState('span-shape'), a, b, checked: true }, size, 'shape');
+					if (found.length > 0) shapeExceptions.push(`(${a}) (${b}) ${size}px: ${found.join(', ')}`);
+				}
+			}
+		}
+		assert.deepEqual(shapeExceptions, [
+			'before Check (0,0) (0,0) 270px: a and b: zero vectors ~ axis numbers',
+			'before Check (0,0) (0,0) 325px: a and b: zero vectors ~ axis numbers',
+			'(0,0) (0,0) 270px: a and b: zero vectors ~ axis numbers',
+			'(0,0) (0,0) 325px: a and b: zero vectors ~ axis numbers',
+			'(1,-1) (1,-1) 270px: b ~ axis numbers',
+			'(1,0) (2,1) 270px: a ~ axis numbers',
+			'(1,0) (2,1) 325px: a ~ axis numbers',
+			'(1,0) (4,2) 270px: a ~ axis numbers',
+			'(1,0) (4,2) 325px: a ~ axis numbers',
+			'(1,0) (5,2) 270px: a ~ axis numbers',
+			'(1,0) (5,3) 270px: a ~ axis numbers',
+			'(2,0) (5,2) 270px: a ~ axis numbers',
+			'(2,1) (1,0) 270px: b ~ axis numbers',
+			'(2,1) (1,0) 325px: b ~ axis numbers',
+			'(4,2) (1,0) 270px: b ~ axis numbers',
+			'(4,2) (1,0) 325px: b ~ axis numbers',
+			'(5,2) (1,0) 270px: b ~ axis numbers',
+			'(5,2) (2,0) 270px: b ~ axis numbers',
+			'(5,3) (1,0) 270px: b ~ axis numbers',
+		]);
+		// span-reach after Check with a and b dragged anywhere within ±5, at the opening weights c = d = 1. Some dragged
+		// pairs crowd so many arrows near the axes or the flag that no clear spot exists, and the label then takes its
+		// least crowded spot. No label strays, and the tally is pinned so a change to the layout shows here (0014).
+		const draggedTally = Object.fromEntries(SPAN_PLANE_SIZES.map((size) => [size, 0]));
+		for (const a of gridWithinView) {
+			for (const b of gridWithinView) {
+				for (const size of SPAN_PLANE_SIZES) {
+					const found = overlapsIn({ ...reachOpen, a, b, checked: true }, size, 'dragged');
+					assert.ok(!found.some((text) => text.includes('strays')), `span-reach: a label strays at a = (${a}), b = (${b}), ${size}px: ${found.join(', ')}`);
+					if (found.length > 0) draggedTally[size]++;
+				}
+			}
+		}
+		assert.deepEqual(draggedTally, { 270: 533, 325: 132, 440: 2 });
+		assert.deepEqual(nearerTally, { presets: 197, shape: 68, dragged: 637 });
+	}
 	{
 		const flag = vd.planeLabels(reachOpen).find((label) => label.id === 'flag');
 		for (const size of PLANE_SIZES) {
