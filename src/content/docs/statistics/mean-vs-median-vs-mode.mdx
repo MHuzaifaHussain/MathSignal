@@ -84,7 +84,7 @@ The switch "The millionaire walks in" adds a tenth customer with 1,000. Once the
 
 One extreme value can drag the mean as far as it likes, while the median moves at most to a neighboring value and the mode often doesn't move at all. Turn on the switch, or press The millionaire (1,000), and the board says "The mean jumped from 4 to 103.6 thousand dollars; the median moved from 4 to 4.5; the mode stayed at 5." The new mean, 103.6, is more than every regular has. The mean has left the chart too: its pink label sits at the right edge as "mean 103.6 →". The newcomer has 1,000 − 4 = 996 more than the old mean, and the jar now shares that extra among 10 people: 996/10 = 99.6. The median moved from 4 to 4.5 because, with 10 people, the middle falls between the 5th (4) and the 6th (5).
 
-Now press A neighbor (6): "A neighbor (6). The mean moved from 4 to 4.2 thousand dollars; the median moved from 4 to 4.5; the mode stayed at 5." This time the median moved further, 0.5 against 0.2: "the median barely moves" is about extreme values, not every newcomer.
+Now press A neighbor (6): "A neighbor (6). The mean moved from 4 to 4.2 thousand dollars; the median moved from 4 to 4.5; the mode stayed at 5." This time the median moved further, 0.5 against 0.2. The median resists extreme values, not every newcomer.
 
 <Fold kind="answer" label="how far the median can go">
 
@@ -124,7 +124,7 @@ $$
 
 as NIST defines it <Cite id="nist-location" />. For odd $n$ only the median makes $\sum_{i=1}^{n} \lvert x_i - c \rvert$ smallest; for even $n$ every $c$ from $x_{(n/2)}$ to $x_{(n/2+1)}$ does, and the median is that interval's midpoint.
 
-**Mode** (needs only values you can compare, labels included). The values held by the most $x_i$ each make the number of misses, the count of $i$ with $x_i \ne c$, as small as it can be. They are the modes, $\operatorname{mode}(x_1, \ldots, x_n)$, except that on this site a list of at least two different values that all appear equally often has no mode. When only some values tie for most, each is a mode; an all-equal list has that value as its mode. Python's `statistics.multimode` lists every tied value, and `statistics.mode` returns the first one it meets <Cite id="python-statistics" />.
+**Mode** (needs only values you can compare, labels included). A mode, $\operatorname{mode}(x_1, \ldots, x_n)$, is a value held by the most $x_i$; it keeps the misses of a guess $c$ (how many $x_i$ differ from $c$) as few as possible. On this site, two or more different values that all appear equally often have no mode. When only some values tie for most, each is a mode; an all-equal list has that value as its mode. Python's `statistics.multimode` lists every tied value, and `statistics.mode` returns the first one it meets <Cite id="python-statistics" />.
 
 Boundary cases: the mode is always one of the values; the mean and median need not be. With $n = 1$, or every value equal, all three equal that value. Ordered categories such as T-shirt sizes can have a median, the middle size, when the count is odd or the two middle orders agree, but never a mean.
 
@@ -157,7 +157,7 @@ One new value $v$ added to $n$ values moves the mean by $(v - \vmu)/(n + 1)$, so
 
 <Simpler label="when the median does jump" id="median-jumps-across-a-gap">
 
-At the bus stop, 1, 1, 1, 1, 10, 10, 10 and 10, the two middle values are 1 and 10, so the median is (1 + 10)/2 = 5.5, the same as the mean. One more arrival at minute 10 makes the median 10; one more at minute 1 makes it 1. One value moved it by 4.5, because the middle sat in a gap.
+Eight bus riders arrive at minutes 1, 1, 1, 1, 10, 10, 10 and 10. The two middle values are 1 and 10, so the median is (1 + 10)/2 = 5.5, the same as the mean. One more arrival at minute 10 makes the median 10; one more at minute 1 makes it 1. One value moved it by 4.5, because the middle sat in a gap.
 
 </Simpler>
 
@@ -195,7 +195,7 @@ The mean's matching property, for squared distances, is proved on the [variance 
 
 <WorkedExample number={1} title="Planning a shift: the mean">
 
-Five delivery times are 20, 22, 25, 28 and 95 minutes, one of them stuck in traffic. The mean is $190/5 = 38$ and the median 25. A courier plans 40 deliveries. The total time is estimated by $40 \times 38 = 1{,}520$ minutes; planning with the median would give 1,000 and run 520 minutes short. The far value is part of the cost, and only the mean carries it.
+Five deliveries take 20, 22, 25, 28 and 95 minutes; the last hit traffic. The mean is $190/5 = 38$ and the median 25. A courier plans 40 deliveries. The total time is estimated by $40 \times 38 = 1{,}520$ minutes; planning with the median would give 1,000 and run 520 minutes short. The far value is part of the cost, and only the mean carries it.
 
 </WorkedExample>
 
@@ -219,7 +219,7 @@ Twelve T-shirt orders are S 2, M 5, L 3 and XL 2. Twelve drink orders are coffee
 
 ## The loss you choose picks the center
 
-A loss is the penalty for a wrong guess: squared error charges (y − guess)², absolute error charges |y − guess|, and a miss count charges 1 for every guess that isn't exactly right. When a model is trained to minimize squared error it learns to predict a mean, with absolute error a median, and with the number of misses a mode.
+A loss is the penalty for a wrong guess: squared error charges (y − guess)², absolute error charges |y − guess|, and a miss count charges 1 for every guess that isn't exactly right. A flexible enough model learns to predict, for each input, a mean under squared error, a median under absolute error and a mode under the miss count.
 
 ### Squared error predicts the mean, absolute error the median
 
@@ -237,7 +237,7 @@ A classifier scored by accuracy does best by predicting, for each input, [the mo
 
 ### Filling gaps and setting baselines
 
-`SimpleImputer` replaces missing values with a column's `"mean"`, `"median"` or `"most_frequent"` value. The first two need numbers, while `"most_frequent"` works for strings too and, on a tie, returns the smallest value <Cite id="sklearn-simpleimputer" />, but `statistics.mode` keeps whichever comes first, so two tools can fill one tied column differently. `DummyRegressor` always predicts the training set's `"mean"` or `"median"` <Cite id="sklearn-dummyregressor" />. Match the baseline to the metric: for a model scored by mean absolute error, the median baseline is the fair one to beat.
+`SimpleImputer` replaces missing values with a column's `"mean"`, `"median"` or `"most_frequent"` value. The first two need numbers, while `"most_frequent"` works for strings too and, on a tie, returns the smallest value <Cite id="sklearn-simpleimputer" />. Python's `statistics.mode` returns the first tied value instead, so filling by hand can differ. `DummyRegressor` always predicts the training set's `"mean"` or `"median"` <Cite id="sklearn-dummyregressor" />. Match the baseline to the metric: for a model scored by mean absolute error, the median baseline is the fair one to beat.
 
 ## Check the three centers in code
 
@@ -376,7 +376,7 @@ assert sae([1, 2, 3, 4], 1) == 6 == sae([1, 2, 3, 4], 4)
 
 # Mayen, Diaz and Batanero, Tables 1 and 2: 518 students.
 assert 162 + 356 == 518
-assert round(64 / 518 * 100, 1) == 12.4 and round(52 / 518 * 100) == 10
+assert round(64 / 518 * 100, 1) == 12.4 and round(52 / 518 * 100, 1) == 10.0
 assert 32 + 107 + 86 + 11 == 236 and round(236 / 518 * 100, 1) == 45.6
 assert round(159 / 518 * 100, 1) == 30.7
 
@@ -416,7 +416,7 @@ For $2 \le c \le 3$, the total is $(c - 1) + (c - 2) + (3 - c) + (4 - c) = 4$, s
 
 <CommonMistakes>
   <Mistake wrong="The median is the value in the middle of the list.">
-    It is the middle of the *sorted* list. Of 518 secondary students, 12.4% and 10% took the median of unsorted data in two questions (Table 1, p. 76) <Cite id="mayen2009" />.
+    It is the middle of the *sorted* list. Of 518 secondary students, 64 (12.4%) on one question and 52 (10.0%) on another took the middle of the unsorted list (Table 1, p. 76) <Cite id="mayen2009" />.
   </Mistake>
   <Mistake wrong="The mean is always the best single number.">
     With a far value it can sit above almost everyone: 5 of the 6 salaries in worked example 2. In the same study, 236 of the 518 students (45.6%) called the mean adequate for data with an outlier, against 159 (30.7%) who chose the median (Table 2, p. 76) <Cite id="mayen2009" />.
@@ -428,7 +428,7 @@ For $2 \le c \le 3$, the total is $(c - 1) + (c - 2) + (3 - c) + (4 - c) = 4$, s
     The mode is the value, 5. When the board says "Mode: 5, held by 3 customers", 3 is its count. Mixing up frequencies and values is among the conflicts students show in the median study (pp. 75–76) <Cite id="mayen2009" />.
   </Mistake>
   <Mistake wrong="Every list has exactly one mode.">
-    At 4 the board says "Mode: 4 and 5, each held by 3 customers." Python's `statistics.mode` returns only the first one it meets <Cite id="python-statistics" />.
+    With the newcomer's savings at 4, the board says "Mode: 4 and 5, each held by 3 customers." Python's `statistics.mode` returns only the first one it meets <Cite id="python-statistics" />.
   </Mistake>
 </CommonMistakes>
 
