@@ -4,7 +4,7 @@
 // Design and reasoning: decision 0020.
 import { absoluteFraction, toNumber, type Fraction } from '../boardMath.ts';
 import type { LineStyle } from '../planeLines.tsx';
-import { derivativeCoefficients, evaluate, slopeAt } from './functions.ts';
+import { derivativeCoefficients, evaluate, slopeAt, type Piece } from './functions.ts';
 import { numberText, ruler, type Attach, type CurvePoint } from './model.ts';
 import { viewOf } from './setups.ts';
 import { covered, curveFor, hOf, lineSlopeOf, pointOf, type CurveState } from './state.ts';
@@ -69,6 +69,12 @@ export function ochreElement(state: CurveState): OchreElement {
 const asVec = (point: CurvePoint): Vec => [toNumber(point.x), toNumber(point.y)];
 const label = (text: string, at: Vec, attach: Attach): MarkLabel => ({ text, at, attach, color: 'ink' });
 
+/** The stretch of x a piece covers on the board: an open end runs to the view's edge. */
+const pieceDomain = (piece: Piece, left: number, right: number): Vec => [
+	piece.from === null ? left : toNumber(piece.from),
+	piece.to === null ? right : toNumber(piece.to),
+];
+
 function curveMarks(state: CurveState): Mark[] {
 	const f = curveFor(state);
 	const view = viewOf(state.preset).view;
@@ -85,7 +91,7 @@ function curveMarks(state: CurveState): Mark[] {
 	return f.pieces.map((piece) => ({
 		kind: 'curve' as const,
 		coefficients: piece.coefficients,
-		domain: [piece.from === null ? left : toNumber(piece.from), piece.to === null ? right : toNumber(piece.to)] as const,
+		domain: pieceDomain(piece, left, right),
 		color: 'ink' as const,
 		lineStyle: 'solid' as const,
 		weight: WEIGHTS.curve,
@@ -213,7 +219,7 @@ export function stripMarks(state: CurveState): readonly Mark[] {
 	const marks: Mark[] = f.pieces.map((piece) => ({
 		kind: 'curve' as const,
 		coefficients: derivativeCoefficients(piece.coefficients),
-		domain: [piece.from === null ? left : toNumber(piece.from), piece.to === null ? right : toNumber(piece.to)] as const,
+		domain: pieceDomain(piece, left, right),
 		color: 'ink' as const,
 		lineStyle: 'solid' as const,
 		weight: WEIGHTS.curve,
