@@ -278,10 +278,16 @@ export function stripMarks(state: CurveState): readonly Mark[] {
 
 /**
  * The strip's name, "slope", hanging from the strip's top edge so it sits inside the strip: below and right of the
- * top-left corner, or below and left of the y-axis's top (the view's nameSpot).
+ * top-left corner, or below and to one side of the y-axis's top (the view's nameSpot).
  */
 export function stripNameLabel(curveView: CurveView): MarkLabel {
 	const top = curveView.strip.y[1];
-	if (curveView.strip.nameSpot === 'top-left-of-axis') return label('slope', [0, top], 'sw');
-	return label('slope', [toNumber(curveView.view.x[0]), top], 'se');
+	switch (curveView.strip.nameSpot) {
+		case 'top-left':
+			return label('slope', [toNumber(curveView.view.x[0]), top], 'se');
+		case 'top-left-of-axis':
+			return label('slope', [0, top], 'sw');
+		case 'top-right-of-axis':
+			return label('slope', [0, top], 'se');
+	}
 }

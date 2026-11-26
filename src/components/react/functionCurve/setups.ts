@@ -30,7 +30,7 @@ export const guessValue = (index: number): Fraction => multiplyFractions(f(index
 /** The point's x is a half-step index, the same meaning on every range: xIndex = 2x. */
 export const pointValue = (xIndex: number): Fraction => f(xIndex, 2);
 
-export type StripNameSpot = 'top-left' | 'top-left-of-axis';
+export type StripNameSpot = 'top-left' | 'top-left-of-axis' | 'top-right-of-axis';
 
 export interface StripView {
 	y: readonly [number, number];
@@ -42,9 +42,9 @@ export interface StripView {
 	/** Numbers drawn left of the y-axis, because the slope curve runs through their height on the right. */
 	leftNumbers: readonly number[];
 	/**
-	 * Where the strip's name, "slope", hangs from the strip's top edge: inside its top-left corner, or just left of the
-	 * y-axis where the slope curve runs high at both edges. Either way it misses the slope curve, the dots and the
-	 * numbers (checked by check-boards).
+	 * Where the strip's name, "slope", hangs from the strip's top edge: inside its top-left corner, or just left or right
+	 * of the y-axis where the slope curve is low there. Wherever it hangs it misses the slope curve, the dots, the
+	 * numbers and the y-axis line (checked by check-boards).
 	 */
 	nameSpot: StripNameSpot;
 }
@@ -86,8 +86,9 @@ export const CURVE_VIEWS: Readonly<Record<CurveId, CurveView>> = {
 		axisNames: { x: 'w', y: 'loss' },
 		xIndexRange: [0, 12],
 		// The y-axis sits 0.5 from the left edge, so the number goes right of it, at −2: a positive one would run into the
-		// strip's name, and the slope curve runs through −4 and −6 (the slope at w = 0) near the axis.
-		strip: { y: [-7.5, 7.5], labels: [-2, 0], leftNumbers: [], nameSpot: 'top-left' },
+		// strip's name, and the slope curve runs through −4 and −6 (the slope at w = 0) near the axis. The name goes just
+		// right of the y-axis: in the corner it would cross the axis line, and 2(w − 3) stays low there.
+		strip: { y: [-7.5, 7.5], labels: [-2, 0], leftNumbers: [], nameSpot: 'top-right-of-axis' },
 	},
 };
 

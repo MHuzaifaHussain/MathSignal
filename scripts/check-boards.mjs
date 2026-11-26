@@ -7492,6 +7492,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 				const drawnName = fcModel.textBox(scale, fcModel.labelTextPoint(scale, name.at, name.attach, fcModel.LABEL_DISTANCE), name.attach, name.text);
 				const nameBox = { left: drawnName.left - STRIP_ROOM * scale.x, right: drawnName.right + STRIP_ROOM * scale.x, bottom: drawnName.bottom - STRIP_ROOM * scale.y, top: drawnName.top + STRIP_ROOM * scale.y };
 				assert.ok(nameBox.left >= left && nameBox.right <= right && nameBox.top <= high, `"slope" sits inside a ${size}px ${curve} strip`);
+				if (left < 0 && 0 < right) assert.ok(nameBox.right < 0 || nameBox.left > 0, `"slope" misses the y-axis line on a ${size}px ${curve} strip`);
 				const nameHit = slopeCurveHits(curve, { ...nameBox, bottom: nameBox.bottom - (fcMarks.WEIGHTS.curve / 2) * scale.y, top: nameBox.top + (fcMarks.WEIGHTS.curve / 2) * scale.y });
 				assert.equal(nameHit, null, `"slope" misses the ${curve} slope curve on a ${size}px strip (x = ${nameHit})`);
 				// The value dot (6px) at every x the point can reach, and the open dots (6px and half their 2px ring).

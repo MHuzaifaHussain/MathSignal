@@ -34,7 +34,7 @@ const DOT_CLEARANCE = 3;
  * Room the tangent's and the corner line's labels keep from the ruler's end, past its radius: at DOT_CLEARANCE the
  * word reads as that dot's name.
  */
-export const LINE_LABEL_RULER_END_CLEARANCE = 16;
+const LINE_LABEL_RULER_END_CLEARANCE = 16;
 /** The labels that name a straight line, so they keep LINE_LABEL_RULER_END_CLEARANCE from the ruler's end. */
 const LINE_LABELS: ReadonlySet<Mark['kind']> = new Set(['tangent', 'corner-line']);
 /** Room a label's box (its halo included) keeps from lines, numbers and other labels, in pixels. */
