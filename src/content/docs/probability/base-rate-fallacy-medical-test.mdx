@@ -74,13 +74,13 @@ A screening test catches 95 in 100 people who have a condition and correctly cle
 
 A second, optional guess: how common would the condition have to be for a positive to be an even chance?
 
-On the board, A is "has the condition" and B is "tests positive". The A column's width is P(A). Inside it, the highlighted block B and A is the true positives; under not A, the shaded strip B and not A is the false positives. P(A | B) is the highlighted block's share of both. Press Screening test, which loads these numbers. Your goal: read P(A | B), then check your second guess: raise P(A) one step at a time with the arrow keys until it passes 0.500. The note under the buttons describes the preset, not your settings.
+On the board, A is "has the condition" and B is "tests positive". The A column's width is P(A). Inside it, the highlighted block, B and A, holds the true positives: people who have it and test positive. Under not A, the shaded strip, B and not A, holds the false positives: people who don't have it but test positive. P(A | B) is the highlighted block's share of both. Press Screening test, which loads these numbers, and read P(A | B). Then check your second guess: raise P(A) one step at a time with the arrow keys until P(A | B) passes 0.500. The note under the buttons describes the preset, not your settings.
 
 <div class="not-content">
   <BayesTheorem client:visible scenarios={["any-events", "screening-test", "screening-clinic"]} />
 </div>
 
-About 16%, which rounds to 20%: far below the 95% the test's accuracy suggests. The readout says "P(A | B) = 0.162   P(B) = 0.117"; P(B) is the share who test positive, 117 in 1,000. Raising P(A), the readout reaches 0.484 at 0.09 and 0.514 at 0.10, so the even-chance point, your second guess, lies between them: exactly 2/21 ≈ 0.095, as [how common the condition has to be](#how-common-does-the-condition-have-to-be) shows. Now press Clinic, where 30 in 100 patients with symptoms have the condition: "P(A | B) = 0.803   P(B) = 0.355". The test never changed; only who was tested did. Leave "Table view" off for now: you will count these groups yourself below.
+About 16%, which rounds to 20%: far below the 95 in 100 the test catches. The readout says "P(A | B) = 0.162   P(B) = 0.117"; P(B) is the share who test positive, 117 in 1,000. As you raise P(A), the readout reaches 0.484 at 0.09 and 0.514 at 0.10. So a positive becomes an even chance between them, at exactly 2/21 ≈ 0.095; compare that with your second guess. [How common the condition has to be](#how-common-does-the-condition-have-to-be) shows why. In a clinic, where far more of the patients have the condition, the same test means much more. Leave Clinic and "Table view" alone for now: you will count those groups yourself below.
 
 ## Count four groups, then read one column
 
@@ -229,7 +229,7 @@ Precision moves with the ratio of positives to negatives, while recall and speci
 
 ### When the base rate moves after deployment
 
-Lipton, Wang and Smola open with a pneumonia predictor, trained when 0.1% of patients had pneumonia, that months later predicts 5% <Cite id="lipton2018" />. They call the case where the share of each label changes, while how the inputs look within each label does not, label shift, and call that assumption strong but reasonable in medical diagnosis, where diseases cause symptoms (Section 3) <Cite id="lipton2018" />. Under label shift, a fixed predictor's sensitivity and specificity stay the same (their Lemma 1, Section 4) <Cite id="lipton2018" />. Only the predictive values move. For example, with sensitivity 0.90 and specificity 0.99 the PPV is $10/121 \approx 0.083$ at prevalence 0.001 and $90/109 \approx 0.826$ at prevalence 0.05. To correct a model's scores for a new prevalence, see [when the base rate shifts](/probability/bayes-theorem/#when-the-base-rate-shifts).
+Lipton, Wang and Smola open with a pneumonia predictor, trained when 0.1% of patients had pneumonia, that months later flags 5% of patients as having pneumonia, a sign that the real rate has risen <Cite id="lipton2018" />. They call the case where the share of each label changes, while how the inputs look within each label does not, label shift, and call that assumption strong but reasonable in medical diagnosis, where diseases cause symptoms (Section 3) <Cite id="lipton2018" />. Under label shift, a fixed predictor's sensitivity and specificity stay the same (their Lemma 1, Section 4) <Cite id="lipton2018" />. Only the predictive values move. For example, with sensitivity 0.90 and specificity 0.99 the PPV is $10/121 \approx 0.083$ at prevalence 0.001 and $90/109 \approx 0.826$ at prevalence 0.05. To correct a model's scores for a new prevalence, see [when the base rate shifts](/probability/bayes-theorem/#when-the-base-rate-shifts).
 
 ## Check every answer in code
 
