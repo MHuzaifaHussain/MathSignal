@@ -2,6 +2,7 @@
 // a screen reader hears "x equals minus 0.5" and "y equals x squared". Pure, so scripts/check-boards.mjs pins every
 // string. Board strings are plain Unicode, never KaTeX (decision 0007). Design and reasoning: decision 0020.
 import { absoluteFraction, compareFractions, fraction, type Fraction } from '../boardMath.ts';
+import { capitalize, joinWords } from '../boardText.ts';
 import { canShowAnswer } from '../guided/guided.ts';
 import type { SpokenLine } from '../guided/spokenLine.ts';
 import { tableFoldAnnouncement } from '../guided/tableFold.ts';
@@ -162,10 +163,7 @@ export function tangentLine(state: CurveState): SpokenLine | null {
 	return line(opening, comparison(ruler(f, a, hOf(state)).slope, result));
 }
 
-const capitalized = (part: SpokenLine): SpokenLine => ({
-	visible: part.visible.charAt(0).toUpperCase() + part.visible.slice(1),
-	spoken: part.spoken.charAt(0).toUpperCase() + part.spoken.slice(1),
-});
+const capitalized = (part: SpokenLine): SpokenLine => ({ visible: capitalize(part.visible), spoken: capitalize(part.spoken) });
 
 /** The readout of "Lines under the corner", while it is on. */
 export function cornerLineReadout(state: CurveState): SpokenLine | null {
@@ -206,10 +204,7 @@ function preCheckSlopes(state: CurveState): { right: readonly Fraction[]; left: 
 	return { right: right.map((entry) => entry.slope), left: left.map((entry) => entry.slope) };
 }
 
-const listed = (values: readonly Fraction[]) => {
-	const words = values.map(numberText);
-	return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;
-};
+const listed = (values: readonly Fraction[]) => joinWords(values.map(numberText));
 
 /** Check's verdict, or null while there is none. */
 export function feedbackLine(state: CurveState): SpokenLine | null {
