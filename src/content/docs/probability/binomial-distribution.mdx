@@ -513,9 +513,6 @@ assert four[2] == Fraction(3, 8) and 1 - four[2] == Fraction(5, 8)
 five = binomial(5, Fraction(4, 5))
 assert five[5] == Fraction(1024, 3125) and float(five[5]) == 0.32768
 assert five[4] == Fraction(256, 625) and float(five[4]) == 0.4096
-small_test_var = Fraction(4, 5) * Fraction(1, 5) / 400
-assert small_test_var == Fraction(1, 2500) == Fraction(1, 50) ** 2 and float(Fraction(1, 2500)) == 0.0004
-assert (round(0.8 - 1.96 * 0.02, 3), round(0.8 + 1.96 * 0.02, 3)) == (0.761, 0.839)
 quarter = binomial(20, Fraction(1, 4))
 assert mean(quarter) == 5 and var(quarter) == Fraction(15, 4) and round(math.sqrt(3.75), 2) == 1.94
 seven, mirrored = binomial(7, Fraction(2, 5)), binomial(7, Fraction(3, 5))
@@ -553,10 +550,6 @@ Anything else. Exactly 2 heads has chance C(4, 2)/2⁴ = 6/16 = 3/8, so everythi
 
 <CheckYourself level="standard" question="A model is right on each example with chance 0.8, independently. On 5 examples, what are P(all 5 right) and P(exactly 4 right)?">
 P(all 5 right) = 0.8⁵ = 1024/3125 = 0.32768, and P(exactly 4 right) = 5 × 0.8⁴ × 0.2 = 256/625 = 0.4096. Exactly 4 is more likely than all 5, because there are 5 ways to miss one example and only one way to miss none.
-</CheckYourself>
-
-<CheckYourself level="standard" question="A model is right on 80% of a 400-example test set. About how much could its accuracy move from the choice of test set alone?">
-SE = √(0.8 × 0.2/400) = √0.0004 = 0.02, about 2 points; the simple 95% interval is 0.8 ± 1.96 × 0.02 ≈ [0.761, 0.839].
 </CheckYourself>
 
 <CheckYourself level="standard" question="X is binomial with n = 20 and p = 1/4. Find its mean, variance and standard deviation.">
