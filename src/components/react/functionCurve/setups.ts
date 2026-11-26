@@ -1,11 +1,11 @@
 // FunctionCurve's setups, presets, views and ladders. Every value the reader can pick is an index on a fixed grid,
 // and every grid value is a Fraction built from integers, so nothing the board prints comes from a float.
 // validateSetup runs at import. Design and reasoning: decision 0020.
-import { compareFractions, fraction, multiplyFractions, toNumber, type Fraction } from '../boardMath.ts';
+import { absoluteFraction, compareFractions, fraction, multiplyFractions, toNumber, type Fraction } from '../boardMath.ts';
 import { terminatesWithin } from '../boardText.ts';
 import type { CheckMode } from '../guided/guided.ts';
 import { CATALOG, evaluate, type CurveId, type ExactFunction } from './functions.ts';
-import { CURVE_DECIMAL_PLACES, absolute, offBoard, type View } from './model.ts';
+import { CURVE_DECIMAL_PLACES, offBoard, type View } from './model.ts';
 
 export type SetupId = 'ruler-to-tangent' | 'corner';
 export type Stage = 'slide' | 'ruler' | 'tangent' | 'slope-curve';
@@ -176,7 +176,7 @@ export function validateSetup(setup: Setup, grids: SetupGrids = {}): void {
 	for (const index of preCheck) {
 		const h = ladder[index];
 		if (!h) fail(`pre-Check index ${index} is not on the ladder`);
-		if (compareFractions(absolute(h), QUARTER) < 0) fail(`the pre-Check ladder holds ${toNumber(h)}, shorter than 0.25`);
+		if (compareFractions(absoluteFraction(h), QUARTER) < 0) fail(`the pre-Check ladder holds ${toNumber(h)}, shorter than 0.25`);
 	}
 	if (setup.presets.length > MAX_PRESETS) fail(`has ${setup.presets.length} presets, more than ${MAX_PRESETS}`);
 	if (!setup.presets.includes(setup.openingPreset)) fail(`opens on preset "${setup.openingPreset}", which it doesn't offer`);

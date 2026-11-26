@@ -2,10 +2,10 @@
 // is decided here, and CurvePlane.tsx and SlopeStrip.tsx only map the list to Mafs. So scripts/check-boards.mjs can
 // enumerate every reachable state and check that exactly one mark is ochre and every label is ink.
 // Design and reasoning: decision 0020.
-import { toNumber, type Fraction } from '../boardMath.ts';
+import { absoluteFraction, toNumber, type Fraction } from '../boardMath.ts';
 import type { LineStyle } from '../planeLines.tsx';
 import { derivativeCoefficients, evaluate, slopeAt } from './functions.ts';
-import { absolute, numberText, ruler, type Attach, type CurvePoint } from './model.ts';
+import { numberText, ruler, type Attach, type CurvePoint } from './model.ts';
 import { viewOf } from './setups.ts';
 import { covered, curveFor, hOf, lineSlopeOf, pointOf, type CurveState } from './state.ts';
 
@@ -96,7 +96,7 @@ function legLabels(state: CurveState, rise: Fraction): { run: string; rise: stri
 	const h = hOf(state);
 	if (state.stage === 'slide') {
 		const up = rise.numerator >= 0;
-		return { run: `${numberText(absolute(h))} across`, rise: `${numberText(absolute(rise))} ${up ? 'up' : 'down'}` };
+		return { run: `${numberText(absoluteFraction(h))} across`, rise: `${numberText(absoluteFraction(rise))} ${up ? 'up' : 'down'}` };
 	}
 	return { run: `run ${numberText(h)}`, rise: `rise ${numberText(rise)}` };
 }

@@ -9,7 +9,7 @@
 // - The pencil, and anything measured from it, shows two decimals, because it repeats the slider's readout:
 //   "your pencil at 3.50", "1 − 1.50 = −0.50".
 // "≈" appears only when the decimal is rounded.
-import { addFractions, compareFractions, formatFraction, fraction, squareRoot, toNumber, type Fraction } from '../boardMath.ts';
+import { absoluteFraction, addFractions, compareFractions, formatFraction, fraction, squareRoot, toNumber, type Fraction } from '../boardMath.ts';
 import { capitalize, joinWords, plural } from '../boardText.ts';
 import type { OutcomeId } from '../eventSpace/model.ts';
 import { CHECKS_BEFORE_ANSWER } from '../guided/guided.ts';
@@ -141,7 +141,6 @@ function averageChain(sum: Fraction, count: number): string {
 
 const sumFractions = (values: readonly Fraction[]) => values.reduce(addFractions, fraction(0, 1));
 const difference = (a: Fraction, b: Fraction) => addFractions(a, fraction(-b.numerator, b.denominator));
-const absolute = (value: Fraction) => fraction(Math.abs(value.numerator), value.denominator);
 
 // ---- Outcomes and bars ----
 
@@ -427,7 +426,7 @@ export function meanLines(state: DistributionState): string[] {
 function distanceText(setup: Setup, d: Distribution, center: Fraction): string {
 	const groups = new Map<string, { distance: Fraction; values: number[] }>();
 	for (const bar of d.bars) {
-		const distance = absolute(difference(fraction(bar.value, 1), center));
+		const distance = absoluteFraction(difference(fraction(bar.value, 1), center));
 		const key = formatFraction(distance);
 		const group = groups.get(key) ?? { distance, values: [] };
 		group.values.push(bar.value);
@@ -532,7 +531,7 @@ export function chartLabels(state: DistributionState): ChartLabels {
 		ghost: spreadOn && state.ghost ? `Before: σ ${sigmaValue(state.ghost.sigma)}` : null,
 		arms: spreadOn
 			? d.bars
-					.map((bar) => ({ value: bar.value, distance: absolute(difference(fraction(bar.value, 1), center)) }))
+					.map((bar) => ({ value: bar.value, distance: absoluteFraction(difference(fraction(bar.value, 1), center)) }))
 					.filter(({ distance }) => distance.numerator !== 0)
 					.map(({ value, distance }) => ({ value, text: `${shortAmount(distance)} away` }))
 			: [],

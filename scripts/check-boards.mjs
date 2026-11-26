@@ -6036,7 +6036,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 			const a = F(xIndex, 2);
 			assert.deepEqual(fcModel.ruler(CATALOG.square, a, h).slope, addFractions(multiplyFractions(F(2, 1), a), h));
 			const result = fcModel.miss(CATALOG.square, a, h);
-			assert.deepEqual(result, { kind: h.numerator > 0 ? 'above' : 'below', size: fcModel.absolute(h) });
+			assert.deepEqual(result, { kind: h.numerator > 0 ? 'above' : 'below', size: absoluteFraction(h) });
 		}
 		for (const xIndex of fcPoints('loss')) {
 			const a = F(xIndex, 2);
@@ -6274,10 +6274,10 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 				const a = F(xIndex, 2);
 				const y = r.start.y;
 				const lineA = `You sit ${fcText(a)} ${unit(a)} across, ${fcText(y)} ${unit(y)} up.`;
-				const rise = fcModel.absolute(r.rise);
+				const rise = absoluteFraction(r.rise);
 				const lineB = h.numerator > 0
 					? `A pencil to ${fcText(r.end.x)} across climbs ${fcText(rise)} ${unit(rise)} in ${fcText(h)}: ${fcText(r.slope)} up for every 1 across.`
-					: `A pencil back to ${fcText(r.end.x)} across drops ${fcText(rise)} ${unit(rise)} in ${fcText(fcModel.absolute(h))}: ${fcText(r.slope)} up for every 1 across.`;
+					: `A pencil back to ${fcText(r.end.x)} across drops ${fcText(rise)} ${unit(rise)} in ${fcText(absoluteFraction(h))}: ${fcText(r.slope)} up for every 1 across.`;
 				const lines = fcSay.readoutLines(state);
 				assert.equal(lines[0].visible, lineA);
 				assert.equal(lines[1].visible, lineB);
@@ -6478,7 +6478,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 					}
 					const gap = subtractFractions(rulerSlope, tangentSlope);
 					const order = compareFractions(gap, F(0, 1));
-					const comparison = order === 0 ? 'matches it.' : `is ${fcText(fcModel.absolute(gap))} ${order > 0 ? 'above' : 'below'} it.`;
+					const comparison = order === 0 ? 'matches it.' : `is ${fcText(absoluteFraction(gap))} ${order > 0 ? 'above' : 'below'} it.`;
 					if (order === 0) matches[preset] = (matches[preset] ?? 0) + 1;
 					const sign = compareFractions(tangentSlope, F(0, 1));
 					const lossOpening = sign === 0 ? 'Slope 0: the loss is flat here.' : `Slope ${fcText(tangentSlope)}: a step to the right ${sign < 0 ? 'lowers' : 'raises'} the loss.`;
@@ -6766,7 +6766,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 			}
 		}
 		// The pre-Check ladder holds no ruler shorter than 0.25.
-		for (const index of fcSetups.PRE_CHECK_H_INDICES) assert.ok(compareFractions(fcModel.absolute(fcSetups.H_LADDER[index]), F(1, 4)) >= 0);
+		for (const index of fcSetups.PRE_CHECK_H_INDICES) assert.ok(compareFractions(absoluteFraction(fcSetups.H_LADDER[index]), F(1, 4)) >= 0);
 	}
 
 	// ---- What the plane draws: one ochre mark in every reachable state, labels ink, line styles fixed ----

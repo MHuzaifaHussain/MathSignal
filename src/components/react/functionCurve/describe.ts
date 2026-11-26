@@ -1,12 +1,12 @@
 // Every sentence FunctionCurve shows or speaks, as { visible, spoken } pairs: the screen writes "x = −0.5" and "y = x²",
 // a screen reader hears "x equals minus 0.5" and "y equals x squared". Pure, so scripts/check-boards.mjs pins every
 // string. Board strings are plain Unicode, never KaTeX (decision 0007). Design and reasoning: decision 0020.
-import { compareFractions, fraction, type Fraction } from '../boardMath.ts';
+import { absoluteFraction, compareFractions, fraction, type Fraction } from '../boardMath.ts';
 import { canShowAnswer } from '../guided/guided.ts';
 import type { SpokenLine } from '../guided/spokenLine.ts';
 import { tableFoldAnnouncement } from '../guided/tableFold.ts';
 import { evaluate, slopeAt, type ExactFunction } from './functions.ts';
-import { absolute, cornerLine, miss, numberText, offBoard, ruler, spokenNumber, type Miss } from './model.ts';
+import { cornerLine, miss, numberText, offBoard, ruler, spokenNumber, type Miss } from './model.ts';
 import { H_LADDER, PRE_CHECK_H_INDICES, PRESETS, SLIDE_X_INDICES, curveOf, guessValue, pointValue, viewOf, type Choice, type PresetId, type Stage } from './setups.ts';
 import { allowedHIndices, covered, curveFor, hOf, lineSlopeOf, lineSlopesOf, pointOf, setupOf, type Action, type CurveState } from './state.ts';
 
@@ -108,8 +108,8 @@ export function rulerLine(state: CurveState): SpokenLine {
 	if (state.stage === 'slide') {
 		const up = `: ${numberText(r.slope)} up for every 1 across.`;
 		if (r.run.numerator > 0) return line(`A pencil to ${numberText(r.end.x)} across climbs ${numberText(r.rise)} ${squares(r.rise)} in ${numberText(r.run)}${up}`);
-		const drop = absolute(r.rise);
-		return line(`A pencil back to ${numberText(r.end.x)} across drops ${numberText(drop)} ${squares(drop)} in ${numberText(absolute(r.run))}${up}`);
+		const drop = absoluteFraction(r.rise);
+		return line(`A pencil back to ${numberText(r.end.x)} across drops ${numberText(drop)} ${squares(drop)} in ${numberText(absoluteFraction(r.run))}${up}`);
 	}
 	return line('Ruler to ', at(variableOf(state), r.end.x), ': rise ', num(r.rise), ' over run ', num(r.run), ', slope ', num(r.slope), '.');
 }

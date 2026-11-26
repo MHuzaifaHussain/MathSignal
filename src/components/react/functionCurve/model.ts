@@ -1,7 +1,7 @@
 // FunctionCurve's exact geometry: rulers (secants), how far a ruler's slope misses the tangent's, lines through a
 // corner, and which drawn points leave the view. Fractions throughout; floats appear only where Mafs draws.
 // Pure, so scripts/check-boards.mjs checks it. Design and reasoning: decision 0020.
-import { addFractions, compareFractions, divideFractions, formatFraction, fraction, subtractFractions, toNumber, type Fraction } from '../boardMath.ts';
+import { absoluteFraction, addFractions, compareFractions, divideFractions, formatFraction, fraction, subtractFractions, toNumber, type Fraction } from '../boardMath.ts';
 import { decimalText } from '../boardText.ts';
 import type { SpokenLine } from '../guided/spokenLine.ts';
 import { evaluate, slopeAt, type ExactFunction } from './functions.ts';
@@ -20,8 +20,6 @@ export function spokenNumber(value: Fraction): SpokenLine {
 	const visible = numberText(value);
 	return { visible, spoken: visible.replace('−', 'minus ') };
 }
-
-export const absolute = (value: Fraction): Fraction => fraction(Math.abs(value.numerator), value.denominator);
 
 export interface CurvePoint {
 	x: Fraction;
@@ -55,7 +53,7 @@ export function miss(f: ExactFunction, a: Fraction, h: Fraction): Miss | null {
 	const gap = subtractFractions(ruler(f, a, h).slope, tangent.value);
 	const order = compareFractions(gap, fraction(0, 1));
 	if (order === 0) return { kind: 'matches' };
-	return { kind: order > 0 ? 'above' : 'below', size: absolute(gap) };
+	return { kind: order > 0 ? 'above' : 'below', size: absoluteFraction(gap) };
 }
 
 export type CornerLine = 'under' | 'above-right' | 'above-left';
