@@ -7,7 +7,7 @@
 import { fraction, toNumber, type Fraction } from '../boardMath.ts';
 import { amountText, decimalText, fractionText, groupThousands, joinWords, plural, terminatesWithin } from '../boardText.ts';
 import { tableFoldAnnouncement } from '../guided/tableFold.ts';
-import { spokenMath } from './spokenMath.ts';
+import { spokenMath } from '../spokenMath.ts';
 import { formatNumber } from '../plotColors.ts';
 import { chanceOf, chooseCount, tallestValues } from './families.ts';
 import type { FamilySetup, GuessId } from './familySetups.ts';

@@ -12,7 +12,7 @@ import useCommittedSlider from "../guided/useCommittedSlider.ts";
 import ColumnChart from "./ColumnChart.tsx";
 import ReadPair from "./ReadPair.tsx";
 import SpokenText from "../guided/SpokenText.tsx";
-import { spokenMathLine, spokenMathTwin } from "./spokenMath.ts";
+import { spokenMathLine, spokenMathTwin } from "../spokenMath.ts";
 import ValueTable from "./ValueTable.tsx";
 import { familyChart } from "./familyChart.ts";
 import {

@@ -10,7 +10,7 @@ import useCommittedSlider from "../guided/useCommittedSlider.ts";
 import ColumnChart from "./ColumnChart.tsx";
 import CurvePlot from "./CurvePlot.tsx";
 import SpokenText from "../guided/SpokenText.tsx";
-import { spokenMathLine, spokenMathTwin } from "./spokenMath.ts";
+import { spokenMathLine, spokenMathTwin } from "../spokenMath.ts";
 import ValueTable from "./ValueTable.tsx";
 import { densityChart } from "./densityChart.ts";
 import {

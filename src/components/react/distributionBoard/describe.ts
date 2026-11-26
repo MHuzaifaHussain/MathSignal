@@ -14,7 +14,7 @@ import { capitalize, joinWords, plural } from '../boardText.ts';
 import type { OutcomeId } from '../eventSpace/model.ts';
 import { CHECKS_BEFORE_ANSWER } from '../guided/guided.ts';
 import { tableFoldAnnouncement } from '../guided/tableFold.ts';
-import { spokenMath } from './spokenMath.ts';
+import { spokenMath } from '../spokenMath.ts';
 import { amountChain, briefChance, fullChance, isRoundedValue, isWhole, plainDecimal, shortAmount, trimmedDecimal } from './numberFormat.ts';
 import { classifyGuess, mean, standardDeviation, torqueSign, variance, type Bar, type Distribution } from './model.ts';
 import { ALL_ZERO, presetValues, type Setup } from './setups.ts';

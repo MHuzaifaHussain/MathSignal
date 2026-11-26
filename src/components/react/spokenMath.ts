@@ -1,8 +1,9 @@
-// The words a screen reader hears for DistributionBoard's notation. Screen readers at their default punctuation level
-// drop parentheses, braces and bars and say √, ² or / by symbol name, so "C(10, 6)" came out as "C 10 6" and
-// "√(4/3)" as "square root 4 slash 3". The visible lines keep the symbols; SpokenText and the announcements use these
-// words. Pure, so `npm run check:boards` checks that no symbol is left in any line a reader can reach.
-import type { SpokenLine } from '../guided/spokenLine.ts';
+// The words a screen reader hears for the statistics and probability boards' notation (DistributionBoard,
+// DescriptiveStats, the z table). Screen readers at their default punctuation level drop parentheses, braces and bars
+// and say √, ² or / by symbol name, so "C(10, 6)" came out as "C 10 6", "√(4/3)" as "square root 4 slash 3" and
+// "|z|" as "z". The visible lines keep the symbols; SpokenText and the announcements use these words. Pure, so
+// `npm run check:boards` checks that no symbol is left in any line a reader can reach.
+import type { SpokenLine } from './guided/spokenLine.ts';
 
 const SUPERSCRIPT_DIGITS: Readonly<Record<string, string>> = { '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4', '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9' };
 const fromSuperscript = (digits: string) => [...digits].map((digit) => SUPERSCRIPT_DIGITS[digit]).join('');
@@ -21,7 +22,14 @@ const SPOKEN_MATH: readonly (readonly [RegExp, string | ((match: string, ...grou
 	[/√\(([^()]+)\)/g, 'the square root of $1'],
 	[/√([\d.]+)/g, 'the square root of $1'],
 	[/cm²/g, 'square centimeters'],
+	[/([σs])²/g, '$1 squared'],
 	[/([\d.]+)([⁰¹²³⁴⁵⁶⁷⁸⁹]+)/g, (_match, base, power) => `${base} to the power ${fromSuperscript(power)}`],
+	// x̄ is x and a combining macron, which no screen reader names.
+	[/x̄/g, 'x bar'],
+	// The bars around z are the absolute value, which the outlier rule turns on: it flags large negative z too.
+	[/\bevery \|z\|/g, 'every z, ignoring its sign,'],
+	[/\|z\|/g, 'the size of z'],
+	[/ > /g, ' above '],
 	[/μ/g, 'mu'],
 	[/σ/g, 'sigma'],
 	[/ × /g, ' times '],

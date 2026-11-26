@@ -7,7 +7,7 @@ import { joinWords, plural, equalsDecimal, fractionText, terminatesWithin, decim
 import { probability, checkGoal, pour, intersect, union, complement, WEIGHT_TOTAL } from '../src/components/react/eventSpace/model.ts';
 import { SCENARIOS, hasWordedRowHeaders } from '../src/components/react/eventSpace/scenarios.ts';
 import { getSetup } from '../src/components/react/eventSpace/setups.ts';
-import { spokenMath } from '../src/components/react/distributionBoard/spokenMath.ts';
+import { spokenMath } from '../src/components/react/spokenMath.ts';
 import { distributionOf, distributionFromPmf, mean, variance, standardDeviation, torqueSign, classifyGuess } from '../src/components/react/distributionBoard/model.ts';
 
 // ---- Shared board helpers ----
@@ -7871,7 +7871,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	const denStateModule = await import('../src/components/react/distributionBoard/densityState.ts');
 	const denDescribe = await import('../src/components/react/distributionBoard/densityDescribe.ts');
 	const denSetupModule = await import('../src/components/react/distributionBoard/densitySetups.ts');
-	const { spokenMathLine, spokenMathTwin } = await import('../src/components/react/distributionBoard/spokenMath.ts');
+	const { spokenMathLine, spokenMathTwin } = await import('../src/components/react/spokenMath.ts');
 	// ≈ is left: screen readers say it ("almost equal to") at their default level.
 	const notation = /[|²³⁴⁵⁶⁷⁸⁹√σμ≤×{}]|P\(|C\(|X\(| \/ |\bnp\b/;
 	const spokenOf = (line) => (typeof line === 'string' ? spokenMathLine(line) : spokenMathTwin(line)).spoken;

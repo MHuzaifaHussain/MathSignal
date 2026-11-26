@@ -27,7 +27,7 @@ import {
   tableRows,
 } from "./describe.ts";
 import { getSetup, type SetupId } from "./setups.ts";
-import { spokenMathLine } from "./spokenMath.ts";
+import { spokenMathLine } from "../spokenMath.ts";
 import { initialState, isCovered, parkedPencil, reducer, stageAllowed, type Action, type Stage } from "./state.ts";
 import CheckButtons from "../guided/CheckButtons.tsx";
 import PresetButtons from "../guided/PresetButtons.tsx";

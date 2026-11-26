@@ -3,7 +3,7 @@
 import { compareFractions, fraction, toNumber, type Fraction } from '../boardMath.ts';
 import { AMOUNT_DECIMAL_PLACES, amountText, decimalText, fractionText, terminatesWithin } from '../boardText.ts';
 import { tableFoldAnnouncement } from '../guided/tableFold.ts';
-import { spokenMath } from './spokenMath.ts';
+import { spokenMath } from '../spokenMath.ts';
 import { formatNumber } from '../plotColors.ts';
 import { areaBetween, bins, heightAt, meanOf, RULER_CM, supportOf, varianceOf, type Bin, type PiecewiseLinear } from './density.ts';
 import { CURVE_BINS_PER_CM, type BinsPerCm, type DensityStage } from './densitySetups.ts';
