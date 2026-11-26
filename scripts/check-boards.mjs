@@ -8022,6 +8022,19 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	assert.ok(!said.includes('Q1') && !said.includes('IQR rule flags it'), `the cutoff doesn't repeat the fences: ${said}`);
 }
 
+// ---- EventSpace: fixed-data cells say why a press does nothing ----
+
+{
+	const esSay = await import('../src/components/react/eventSpace/describe.ts');
+	assert.equal(esSay.fixedCellsNote(getSetup('die-compare')), 'The events here are fixed. Use the presets to change them.');
+	assert.equal(esSay.fixedCellsNote(getSetup('monty-condition')), 'The events here are fixed. Use the presets to change them.');
+	assert.equal(esSay.fixedCellsNote(getSetup('kids-condition')), 'The events here are fixed: the outcomes can be read, not marked.');
+	const { readFileSync } = await import('node:fs');
+	const grid = readFileSync('src/components/react/eventSpace/OutcomeGrid.tsx', 'utf8');
+	assert.ok(grid.includes('aria-describedby={editable ? undefined : fixedReasonId}'), 'a fixed cell points at the visible note');
+	assert.ok(grid.includes('onClick={editable ? () => onToggle(outcome.id) : onFixedPress}'), 'a press on a fixed cell is answered');
+}
+
 // ---- Page components: names of wide tables and formulas (decision 0024) ----
 
 {

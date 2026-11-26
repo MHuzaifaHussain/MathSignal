@@ -6,7 +6,7 @@ import { CHECKS_BEFORE_ANSWER } from '../guided/guided.ts';
 import type { SpokenLine } from '../guided/spokenLine.ts';
 import { compareEvents, complement, conditionalProbability, eventSize, intersect, probability, union, WEIGHT_TOTAL, type EventComparison, type Outcome, type OutcomeId } from './model.ts';
 import { eventMembers, type Scenario } from './scenarios.ts';
-import { CLEAR_PRESET } from './setups.ts';
+import { CLEAR_PRESET, type Setup } from './setups.ts';
 import { activeWeightPreset, isLocked, scenarioOf, setupOf, weightsOf, type Action, type EventKey, type EventSpaceState, type Refusal, type ShrinkRefusal, type Stage } from './state.ts';
 
 /** The "Show as" options' names, shown on the buttons and spoken when the view changes. */
@@ -222,6 +222,15 @@ export function focusSet(state: EventSpaceState): ReadonlySet<OutcomeId> | null 
 		case 'not A':
 			return complement(A, scenarioOf(state).outcomes);
 	}
+}
+
+/**
+ * Why a fixed-data grid's cells don't toggle: shown beside the grid, named by every cell's aria-describedby, and
+ * said when a cell is pressed. The cells stay focusable so each can be read (decision 0011).
+ */
+export function fixedCellsNote(setup: Setup): string {
+	const hasPresets = Object.values(setup.events).some((event) => (event?.presets.length ?? 0) > 0);
+	return hasPresets ? 'The events here are fixed. Use the presets to change them.' : 'The events here are fixed: the outcomes can be read, not marked.';
 }
 
 export function cellName(state: EventSpaceState, outcome: Outcome): string {

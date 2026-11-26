@@ -13,7 +13,7 @@ import CupRow from "./eventSpace/CupRow.tsx";
 import OutcomeGrid from "./eventSpace/OutcomeGrid.tsx";
 import WrongModelTiles from "./eventSpace/WrongModelTiles.tsx";
 import { simulate } from "./eventSpace/model.ts";
-import { COMPARE_COVERED_NOTE, COMPARE_LABEL, STAGE_LABELS, additivityLine, announcementFor, compareLines, feedbackLine, jugLine, markedLine, presetLabel, readoutLines, setsLine, shrinkRefusalText, spokenLine, statusLine, tossLine, totalLine } from "./eventSpace/describe.ts";
+import { COMPARE_COVERED_NOTE, COMPARE_LABEL, STAGE_LABELS, additivityLine, announcementFor, compareLines, feedbackLine, fixedCellsNote, jugLine, markedLine, presetLabel, readoutLines, setsLine, shrinkRefusalText, spokenLine, statusLine, tossLine, totalLine } from "./eventSpace/describe.ts";
 import { SCENARIOS } from "./eventSpace/scenarios.ts";
 import { canShrink, getSetup, type Setup, type SetupId } from "./eventSpace/setups.ts";
 import { activeWeightPreset, initialState, isLocked, reducer, shrinkBlocked, stageAllowed, type Action, type EventKey, type LookAt, type Stage } from "./eventSpace/state.ts";
@@ -69,6 +69,7 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
   const lockedReasonId = useId();
   const shrinkReasonId = useId();
   const compareNoteId = useId();
+  const fixedNoteId = useId();
   const lastAction = useRef<Action | null>(null);
   const feedbackRef = useRef<HTMLParagraphElement>(null);
 
@@ -100,6 +101,7 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
   const tosses = tossLine(state);
   const sets = setsLine(state);
   const showWrongModel = state.wrongModel && Boolean(scenario.wrongModel);
+  const editable = Boolean(setup.events[state.editing]?.editable);
   /** Refused until Check passes on a goal setup: the button stays pressable, and a press only says why. */
   const lockedRefusalId = locked ? lockedReasonId : null;
   const unlessLocked = (onPress: () => void) => (locked ? announce(`${LOCKED_REASON}.`) : onPress());
@@ -268,11 +270,14 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
                   state={state}
                   scenario={scenario}
                   describedBy={statusId}
-                  editable={Boolean(setup.events[state.editing]?.editable)}
+                  editable={editable}
+                  fixedReasonId={fixedNoteId}
+                  onFixedPress={() => announce(fixedCellsNote(setup))}
                   onToggle={(id) => send({ type: "toggle", id })}
                 />
               </WithChalkNote>
             )}
+            {!editable && !showWrongModel && <RefusalNote id={fixedNoteId}>{fixedCellsNote(setup)}</RefusalNote>}
           </>
         )}
         {sets && (

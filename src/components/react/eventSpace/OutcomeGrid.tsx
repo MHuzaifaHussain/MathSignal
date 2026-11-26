@@ -12,14 +12,17 @@ interface OutcomeGridProps {
   describedBy: string;
   /** False when the events are fixed data: cells stay focusable for reading but don't toggle. */
   editable: boolean;
+  /** On a fixed grid: the id of the visible note that says why, and what a press says. */
+  fixedReasonId?: string;
   onToggle: (id: OutcomeId) => void;
+  onFixedPress?: () => void;
 }
 
 /**
  * The sample space as a real table: one row per value of the first part, one column per value of the second,
  * one toggle button per outcome. Membership is shown by fill, border and a letter tag, and spoken in the name.
  */
-export default function OutcomeGrid({ state, scenario, describedBy, editable, onToggle }: OutcomeGridProps) {
+export default function OutcomeGrid({ state, scenario, describedBy, editable, fixedReasonId, onToggle, onFixedPress }: OutcomeGridProps) {
   const isList = scenario.layout === "list";
   const rows = scenario.rowValues.length;
   const cols = scenario.colValues.length;
@@ -89,9 +92,10 @@ export default function OutcomeGrid({ state, scenario, describedBy, editable, on
                       tabIndex={tabIndexFor(outcome.row, outcome.col)}
                       aria-pressed={editable ? editing.has(outcome.id) : undefined}
                       aria-disabled={editable ? undefined : true}
+                      aria-describedby={editable ? undefined : fixedReasonId}
                       aria-label={cellName(state, outcome)}
                       onFocus={() => onCellFocus(outcome.row, outcome.col)}
-                      onClick={editable ? () => onToggle(outcome.id) : undefined}
+                      onClick={editable ? () => onToggle(outcome.id) : onFixedPress}
                     >
                       {inA && <span className="ms-event-tag ms-event-tag-a" data-tag="A" aria-hidden="true" />}
                       {state.stage === "picture" && scenario.pictureFaces ? (
