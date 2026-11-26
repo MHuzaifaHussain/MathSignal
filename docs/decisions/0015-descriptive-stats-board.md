@@ -32,7 +32,7 @@ The descriptive statistics pages (descriptive statistics; mean, median and mode;
 
 ## Consequences
 - The site has four kinds of board: Mafs plots, EventSpace tables, DistributionBoard bar charts and DescriptiveStats dot plots. `components.md`, `math-plots-code.md` and `accessibility.md` document the new one.
-- Every board breaks foundations.md's "about 480px tall" limit at 1280px, mostly because of the two tables. This is an open deviation for the owner, as for VectorBoard2D: accept it, or fold the tables into a "Show as table" disclosure.
+- Every board breaks foundations.md's "about 480px tall" limit at 1280px, mostly because of the two tables. This is an open deviation for the owner, as for VectorBoard2D: accept it, or fold the tables into a "Show as table" disclosure. (Settled 2026-11-25 by [0017](0017-table-view-fold.md): the tables fold behind Table view; the trays take the rest.)
 - The narrow-tray fix that lets every tray slider fit at 320px (the tray is now a size container and the slider's label takes its own line under 400px) came out of this board's checks and applies to every board.
 - The notation registry still lacks median, Q1, Q3, IQR, n, x̄ and s. The board's labels use those plain names; the entries are page work. The registry's `selection` entry also uses `s`, which will clash with the sample standard deviation when that entry is added.
 - The descriptive statistics cheat sheet can import `model.ts` at build time for its tables, so its numbers match the board without shipping an island.
