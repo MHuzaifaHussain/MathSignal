@@ -25,7 +25,7 @@ references:
   - goodfellow2014
   - papamakarios2019
 author: Muhammad Huzaifa Hussain
-reviewedAt: 2026-11-25
+reviewedAt: 2026-11-26
 aiAssisted: true
 primaryQuery: random variable
 searchIntent: learn
@@ -67,12 +67,12 @@ At a school fair there is a die and a prize card. The card says: faces 1, 2 and 
 
 The card is the random variable. It doesn't roll anything; it says what each face is worth, before anyone touches the die. Change the card and the game changes, even though the die is the same.
 
-The outcomes don't have to be numbers at all. Toss two coins and use the rule "count the heads". HT and TH are different outcomes, but the rule gives both the number 1. Any rule works, as long as it gives every outcome exactly one number.
+The outcomes don't have to be numbers at all. Draw a playing card and use the rule "a heart wins 1 candy, any other suit wins 0". The two of clubs and the king of spades are different cards, but the rule gives both the number 0. Any rule works, as long as it gives every outcome exactly one number.
 
 </Analogy>
 
 <WhyThisMatters>
-Almost every quantity a model predicts or is scored on is a random variable: the class label of the next example, whether the model gets it right (1 or 0), the loss on that example, the next token. Training and evaluation reason about their distributions, not about single outcomes. Giving every value the same chance, instead of adding up the outcomes behind each one, makes a lopsided set of labels look balanced: three classes need not mean 1/3 each.
+Almost every quantity a model predicts or is scored on is a random variable: the class label of the next example, whether the model gets it right (1 or 0), the loss on that example, the next token. Training and evaluation reason about their distributions, not about single outcomes.
 </WhyThisMatters>
 
 ## Give each face its candies
@@ -87,7 +87,7 @@ What is P(X = 0) exactly? And what must the heights of all the bars add up to? W
 
 </GoDeeper>
 
-The board lists the six faces, each with − and + buttons and its candies, all starting at 0. Show as switches the faces between Pictures and Numbers. The chart stays covered ("The chart appears when your values match the card.") until your values are right. Give each face its candies from the card, then press Check; after two wrong tries a Show the answer button appears.
+The board lists the six faces, each with − and + buttons and its candies, all starting at 0. The Show as choice switches the faces between Pictures and Numbers. The chart stays covered ("The chart appears when your values match the card.") until your values are right. Give each face its candies from the card, then press Check; after two wrong tries a Show the answer button appears.
 
 <div class="not-content">
   <DistributionBoard client:visible setup="candy-build" />
@@ -97,9 +97,15 @@ Once your values match, Check says "Yes, that matches the card. Three amounts ar
 
 The card is a rule that gives every face one number, and that rule is the random variable. Several faces can share a number, and then the number's chance is the sum of their chances.
 
-After the match, a Table view switch appears; turn it on to see the bars as a table, with each value, its faces and its chance. Show as gains a third view, Symbols: it writes the card as "X(1) = 0, X(2) = 0, X(3) = 0, X(4) = 1, X(5) = 1, X(6) = 5." and the largest bar as "The event X = 0 is the set \{1, 2, 3\}, so P(X = 0) = P(\{1, 2, 3\}) = 3/6."
+After the match, a Table view switch appears; turn it on to see the bars as a table, with each value, its faces and its chance. The Show as choice gains a third view, Symbols: it writes the card as "X(1) = 0, X(2) = 0, X(3) = 0, X(4) = 1, X(5) = 1, X(6) = 5." and the largest bar as "The event X = 0 is the set \{1, 2, 3\}, so P(X = 0) = P(\{1, 2, 3\}) = 3/6."
 
-The presets Game card and All zero appear, and so does a new goal with a Check goal button: "New goal: make P(X = 1) = 1/2." Any three faces at 1 candy pass, for example "Yes: faces 1, 3 and 5 win 1 candy, 3 of 6 faces, so P(X = 1) = 3/6 = 1/2." Which three you pick doesn't matter, because the chance of an amount depends only on how many faces win it.
+The presets Game card and All zero appear, and so does a new goal with a Check goal button: "New goal: make P(X = 1) = 1/2." How many faces must win 1 candy, and does it matter which ones? Try it, then press Check goal.
+
+<GoDeeper label="the answer to the new goal">
+
+Any three faces at 1 candy pass, for example "Yes: faces 1, 3 and 5 win 1 candy, 3 of 6 faces, so P(X = 1) = 3/6 = 1/2." Which three you pick doesn't matter, because the chance of an amount depends only on how many faces win it.
+
+</GoDeeper>
 
 Press All zero to see the other extreme: one bar at 0 holding all six faces, with chance 6/6 = 1. A rule that gives every outcome the same number is still a random variable, just one with no surprise left in it.
 
@@ -109,7 +115,7 @@ A random variable is a rule that gives every outcome of an experiment one number
 
 ### Write the rule as a table
 
-On a small sample space the rule is a table with one row per outcome. The Symbols view writes the game card as X(1) = 0, X(2) = 0, X(3) = 0, X(4) = 1, X(5) = 1 and X(6) = 5: the face goes in, the candies come out. Read X(4) = 1 as "X of face 4 is 1". Deisenroth and coauthors give the two-coin head count the same way, X(hh) = 2, X(ht) = 1, X(th) = 1 and X(tt) = 0, and remark that for a finite sample space the rule is essentially a lookup table (§6.1.2) <Cite id="deisenroth2020" />.
+On a small sample space the rule is a table with one row per outcome. The Symbols view writes the game card as X(1) = 0, X(2) = 0, X(3) = 0, X(4) = 1, X(5) = 1 and X(6) = 5: the face goes in, the candies come out. Read X(4) = 1 as "X of face 4 is 1". Deisenroth and coauthors write a two-coin example the same way, one row per outcome, and remark that for a finite sample space the rule is essentially a lookup table (§6.1.2) <Cite id="deisenroth2020" />.
 
 <SideNote>
 The name misleads. Deisenroth and coauthors note in a margin of §6.1.2 that a random variable is neither random nor a variable: it is a function <Cite id="deisenroth2020" />.
@@ -131,7 +137,7 @@ The distribution of a random variable that takes a list of separate values is th
 
 Neither rule is an extra assumption. Each P(X = x) is the probability of an event, so it can't be negative. And the events X = 0, X = 1 and X = 5 split the six faces without overlap or gaps, because every face gets exactly one amount, so their chances add up to the chance of the whole sample space, 1. The board shows it every time: "The bars add up to 6/6 = 1."
 
-Once you have the distribution, any question about X adds bars. The chance of winning at least one candy is P(X = 1) + P(X = 5) = 1/3 + 1/6 = 1/2.
+Once you have the distribution, you answer any question about X by adding bars. The chance of winning at least one candy is P(X = 1) + P(X = 5) = 1/3 + 1/6 = 1/2.
 
 ## Count the heads on two coins
 
@@ -292,7 +298,7 @@ Test-set accuracy is the share of 1s this variable produces over the test set, a
 
 A generative adversarial network is this page's idea at scale: Goodfellow and coauthors' network G maps random noise z to a data point, and so defines the distribution of its samples G(z) without ever writing it down (§§3–4) <Cite id="goodfellow2014" />. The network is the rule, the noise is the outcome, and training shapes the distribution of the samples.
 
-Normalizing flows write the same thing as x = T(u), where u is drawn from a simple base distribution and T is an invertible map (§2.1, equation (1)) <Cite id="papamakarios2019" />. For discrete variables, the survey's equation (99) says that the probability of a value x is the sum of the base probabilities of all u that T sends to x (§5.3) <Cite id="papamakarios2019" />. That is exactly the board's merge: with u uniform on the four coin outcomes and T = "count the heads", it gives 1/4, 1/2 and 1/4. A limit: GANs and most flows use continuous noise and densities, which a later page covers.
+Normalizing flows write the same thing as x = T(u), where u is drawn from a simple base distribution and T is an invertible map (§2.1, equation (1)) <Cite id="papamakarios2019" />. For discrete variables, the survey's equation (99) says that the probability of a value x is the sum of the base probabilities of all u that T sends to x (§5.3) <Cite id="papamakarios2019" />. That sum is the general pushforward rule and works for any map. A flow keeps T invertible, so each x has one u and nothing merges. With a map that is not one-to-one, such as "count the heads" on u uniform over the four coin outcomes, the same rule gives the board's merge: 1/4, 1/2 and 1/4. A limit: GANs and most flows use continuous noise and densities, which a later page covers.
 
 ## Build distributions in code
 
@@ -444,12 +450,12 @@ assert abs(won[0] / rolls - 1 / 2) < 0.01
 assert abs(won[5] / rolls - 1 / 6) < 0.01
 tosses = 40_000
 one_head = sum((rng.choice("HT") + rng.choice("HT")).count("H") == 1 for _ in range(tosses))
-print(f"exactly one head in {one_head / tosses:.3f} of tosses")
+print(f"exactly one head in {one_head / tosses:.3f} of pairs of tosses")
 assert abs(one_head / tosses - 1 / 2) < 0.01
 `}
 />
 
-The simulated shares land within 0.01 of the distribution's chances: about half the coin tosses show exactly one head, not a third. Why frequencies settle near probabilities is the law of large numbers, a later topic.
+The simulated shares land within 0.01 of the distribution's chances: about half the pairs of tosses show exactly one head, not a third. Why frequencies settle near probabilities is the law of large numbers, a later topic.
 
 ## Research frontier
 
