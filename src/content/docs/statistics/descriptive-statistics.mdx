@@ -98,9 +98,9 @@ Your task: under **Your pick for the middle**, choose the child with as many chi
 
 **Someone else: the middle of the arrival line is the tallest child.** The board opens with "9 children, in the order they arrived. Heights from 122 cm to 148 cm." Pick child 5 before lining them up and Check says "Child 5 stands in the middle of the arrival line, but 8 children are shorter and none is taller. Line them up first." After Line them up the status reads "9 children, lined up from shortest to tallest. Heights from 122 cm to 148 cm." A near miss such as child 7 gives "Child 7 (137 cm) has 5 children shorter and 3 taller. Try a shorter child." The middle child is child 1, who arrived first: "Yes. Child 1 (133 cm) has 4 children shorter and 4 taller, so the median height is 133 cm."
 
-**Above.** Once Check passes, the summary appears, and its first line answers the deeper question: "Mean: (122 + 125 + 128 + 131 + 133 + 137 + 140 + 142 + 148) / 9 = 1,206 / 9 = 134 cm. The tallest children stand further above the median than the shortest stand below it, so the mean sits 1 cm higher." The next lines say "No height repeats, so this class has no mode." and "Range: 148 − 122 = 26 cm." Show as now offers Symbols, which writes the median as "median = x₍₅₎ = 133 cm".
+**Above.** Once Check passes, the summary appears, and its first line answers the deeper question: "Mean: (122 + 125 + 128 + 131 + 133 + 137 + 140 + 142 + 148) / 9 = 1,206 / 9 = 134 cm. The tallest children stand further above the median than the shortest stand below it, so the mean sits 1 cm higher." The next lines say "No height repeats, so this class has no mode." and "Range: 148 − 122 = 26 cm." Show as now offers Symbols, which writes the median as "median = x₍₅₎ = 133 cm", the 5th height in order.
 
-**Two more classes.** Press Ten children: our class plus a child of 136 cm who arrived last. With an even count nobody stands in the middle, so either middle child passes Check, and the board names the other one: "Yes. Child 10 (136 cm) is one of the two middle children, with 5 children shorter and 4 taller. The other is child 1 (133 cm), so the median height is halfway between them: (133 + 136) / 2 = 134.5 cm." The mean is now 134.2 cm: the newcomer moved it up only 0.2 cm and the median 1.5 cm, so this time the mean sits 0.3 cm below the median. Then press Shared heights and find its middle child yourself before reading on. It is child 7 (132 cm), and its summary says "Mode: 127 cm and 141 cm, each held by 2 children." It has the same total, 1,206 cm, so the same mean, 134 cm, but a different median, and two modes nowhere near the middle. A mode tells you what repeats, not where the center is.
+**Two more classes.** Press Ten children: our class plus a child of 136 cm who arrived last. With an even count nobody stands in the middle, so either middle child passes Check, and the board names the other one: "Yes. Child 10 (136 cm) is one of the two middle children, with 5 children shorter and 4 taller. The other is child 1 (133 cm), so the median height is halfway between them: (133 + 136) / 2 = 134.5 cm." The mean is now 134.2 cm: the newcomer moved it up only 0.2 cm and the median 1.5 cm, so this time the mean sits 0.3 cm below the median. Then press Shared heights and find its middle child. Its summary says "Mode: 127 cm and 141 cm, each held by 2 children." It has the same total, 1,206 cm, so the same mean, 134 cm, but a different median, and two modes nowhere near the middle. A mode tells you what repeats, not where the center is.
 
 ## Three ways to say where the middle is
 
@@ -132,7 +132,7 @@ Beyond one dimension there is no single median, because there is no obvious way 
 
 ### The mode: the most common value
 
-The mode is the value that appears most often. A list can have one mode, several (Shared heights has two: 127 cm and 141 cm), or, by this site's convention, none, when two or more different values all appear equally often, as in our class. NIST notes that the mode is not necessarily unique and is typically used in a qualitative way, for example to spot humps in the data <Cite id="nist-location" />. The mode is also the only center a category has, since labels can't be added or sorted. Turning labels into number codes doesn't help: [averaging codes means nothing](/probability/random-variables-and-distributions/#labels-become-numbers-by-a-choice).
+The mode is the value that appears most often. A list can have one mode, several (Shared heights has two: 127 cm and 141 cm), or, by this site's convention, none, when two or more different values all appear equally often, as in our class. NIST notes that the mode is not necessarily unique and is typically used in a qualitative way, for example to spot humps in the data <Cite id="nist-location" />. The mode is also the only center a category has, since labels can't be added or sorted. Number codes don't help: their average depends on the coding ([labels become numbers by a choice](/probability/random-variables-and-distributions/#labels-become-numbers-by-a-choice)).
 
 <SideNote>
 Tools disagree about ties. This site says "no mode" when every value appears equally often, but Python's `statistics.multimode` returns every most common value, so for our class it lists all nine heights <Cite id="python-statistics" />. pandas' `Series.mode()` can return several modes, in sorted order <Cite id="pandas-mode" />, and `describe()` reports one `top` value, chosen arbitrarily among ties <Cite id="pandas-describe" />.
@@ -164,7 +164,7 @@ A dot plot puts one dot per value on an axis, as the board's Numbers stage does.
 | 115, 125, 135, 145, 155 (10 cm wide, shifted by 5) | 1, 4, 3, 1 | a hump |
 | 120, 125, 130, 135, 140, 145, 150 (5 cm wide) | 1, 2, 2, 1, 2, 1 | bumpy |
 
-Same data, three pictures. scikit-learn's user guide makes the same point: the choice of binning can have a disproportionate effect, and shifting the bins can make two histograms of the same data look entirely different (§2.8.1) <Cite id="sklearn-density" />. So try at least two bin widths and two starting points before you read a shape. A histogram's tallest bin, its modal bin, is where values crowd together most: the humps NIST suggests the mode is used to spot.
+Same data, three pictures. scikit-learn's user guide makes the same point: the choice of binning can have a disproportionate effect, and shifting the bins can make two histograms of the same data look entirely different (§2.8.1) <Cite id="sklearn-density" />. So try at least two bin widths and two starting points before you read a shape. A histogram's tallest bin, its modal bin, is where values crowd together most. Those are the humps NIST says the mode is typically used to spot.
 
 <Simpler label="a histogram by hand" id="histograms">
 
@@ -180,7 +180,7 @@ scikit-learn's guide describes a histogram as a stack of blocks, one per data va
 
 ### Describing a list, not guessing beyond it
 
-Descriptive statistics describe the list you have. Using a list to say something about a bigger group it came from is inference, and it changes some formulas. Deisenroth and coauthors call a mean computed from a finite data set an empirical mean (§6.4.2, pp. 191–192) <Cite id="deisenroth2020" />. The difference first shows in the n − 1 of the [sample standard deviation](/statistics/variance-and-standard-deviation/#two-versions-the-whole-group-or-a-sample), where the sample mean is written x̄.
+Descriptive statistics describe the list you have. Using a list to say something about a bigger group it came from is inference, and it changes some formulas. Deisenroth and coauthors separate the mean of a finite data set from the population mean (§6.4.2, pp. 191–192) <Cite id="deisenroth2020" />. The difference first shows in the n − 1 of the [sample standard deviation](/statistics/variance-and-standard-deviation/#two-versions-the-whole-group-or-a-sample), where the sample mean is written x̄.
 
 ## Notation
 
@@ -209,7 +209,7 @@ Conventions: the median is the 50% point of NumPy's default linear quantile, whi
 
 1. Group equal values: each value $v$ appears $n_v$ times, so $\sum_{i=1}^{n} x_i = \sum_{v} v \cdot n_v$.
 2. Divide by $n$: $\vmu = \sum_{v} v \cdot \dfrac{n_v}{n}$. Each value is weighted by its share of the list.
-3. Check with the eight dice rolls of worked example 2, whose counts are 1, 1, 1, 1, 3 and 1 for the faces 1 to 6: $1 + 2 + 3 + 4 + 15 + 6 = 31$, and $31/8 = 3.875$.
+3. Check with the eight dice rolls of worked example 2 below, whose counts are 1, 1, 1, 1, 3 and 1 for the faces 1 to 6: $1 + 2 + 3 + 4 + 15 + 6 = 31$, and $31/8 = 3.875$.
 
 </StepThrough>
 
