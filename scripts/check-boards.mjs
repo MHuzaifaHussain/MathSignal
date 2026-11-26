@@ -5431,7 +5431,10 @@ const labelsOverlap = (first, second, size) => {
 	});
 	// Set IV's lone point at x = 19 sets the slope alone: its residual is 0.
 	assert.deepEqual(rm.residuals(rd.ANSCOMBE[3], lineOf(rd.ANSCOMBE[3]))[7], f(0));
-	assert.ok(rm.residuals(rd.ANSCOMBE[1], lineOf(rd.ANSCOMBE[1])).every((residual) => Math.abs(toNumber(residual)) <= 4), 'Anscombe residuals fit a ±4 axis');
+	// Set III's outlier at x = 13 has the largest residual, about 3.24.
+	rd.ANSCOMBE.forEach((set, i) => {
+		assert.ok(rm.residuals(set, lineOf(set)).every((residual) => Math.abs(toNumber(residual)) <= 4), `Anscombe set ${i + 1} residuals fit a ±4 axis`);
+	});
 
 	// Undefined cases never become "R² = 1".
 	const flat = rm.wholePoints(CLASS_HEIGHTS, CLASS_HEIGHTS.map(() => 140));
