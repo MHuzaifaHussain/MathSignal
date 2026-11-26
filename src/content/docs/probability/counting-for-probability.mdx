@@ -15,7 +15,7 @@ takeaways:
   - An ordered pick of k from n has (n)ₖ = n!/(n − k)! ways. An unordered one divides by the k! orders of each group, which gives n choose k. From 3 friends there are 6 ordered pairs but only 3 teams of 2.
   - A probability by counting is favorable over total, with both counted the same way. Two red marbles from a bag of 3 red and 2 blue is 6/20 counted in order and 3/10 counted without order, the same answer.
   - Counting gives a probability only when every outcome is equally likely. Two dice have 21 unordered results but 36 equally likely ordered ones, so "a 1 and a 2" has probability 2/36 = 1/18, not 1/21.
-  - Counts grow fast. Leave-2-out cross-validation on 100 examples needs 100 choose 2 = 4,950 splits, and the number of rules a learner chooses from enters its simplest guarantee through ln |𝓗|.
+  - Counts grow fast. Leave-2-out cross-validation on 100 examples needs 100 choose 2 = 4,950 splits, and the number of rules a learner chooses from enters its simplest guarantee only through its logarithm.
 references:
   - grinstead2003
   - schapire2003-cos511
@@ -70,7 +70,7 @@ Many probabilities in machine learning are counts in disguise: how many ways a t
 
 Keep your two answers from above. One more question before you check: if the order in the photo is drawn from a hat, what is the chance that Ana stands in the middle? If the team is drawn from a hat, what is the chance that Ana is on it? Are the two chances the same?
 
-Your task: write down your two counts and whether Ana is more likely to be in the middle of the photo or on the team, then open the list and check that every photo and every team appears exactly once.
+Your task: write down your two counts and whether Ana is more likely to be in the middle of the photo or on the team, then open the list and check that every photo appears exactly once and every team twice.
 
 <Fold kind="answer" label="every photo and every team, listed">
 
@@ -89,7 +89,7 @@ The two chances differ. Ana is in the middle of 2 of the 6 photos, a chance of 1
 
 </Fold>
 
-The list shows the pattern the rest of this page builds on: putting things in order and choosing them give different counts.
+Six photos but only three teams: putting things in order and choosing them give different counts, and the rest of this page builds on that.
 
 ## Notation
 
@@ -116,9 +116,9 @@ Before counting, ask two questions: does the order of the picks matter, and can 
 
 ### Multiply the choices at each step
 
-When a task happens in steps, and each step has the same number of choices whatever was chosen before, the number of ways is the product of the choices; this is the counting principle. A lock with 3 dials of 10 digits has 10 × 10 × 10 = 1,000 codes, and 10 × 9 × 8 = 720 of them repeat no digit. Grinstead and Snell state the principle for a task done in stages, the total being the product of the stage counts (§3.1) <Cite id="grinstead2003" />.
+When a task happens in steps, and each step has the same number of choices whatever was chosen before, the number of ways is the product of the choices; this is the counting principle. A lock with 3 dials of 10 digits has 10 × 10 × 10 = 1,000 codes, and 10 × 9 × 8 = 720 of them repeat no digit. Grinstead and Snell state it for a task done in stages (§3.1) <Cite id="grinstead2003" />.
 
-The choices themselves can change; only how many there are must stay the same. After Ana takes the left, the middle is Ben or Cai; after Ben takes it, Ana or Cai. Either way there are 2.
+The choices themselves can change; only how many there are must stay the same. After Ana takes the left, the middle is Ben or Cai; after Ben takes the left, Ana or Cai. Either way there are 2.
 
 <SideNote>
 The counting principle multiplies numbers of choices; [the multiplication rule](/probability/conditional-probability/#the-multiplication-rule) multiplies probabilities. They meet on equally likely outcomes: for two red marbles from 3 red and 2 blue, 3/5 × 2/4 is 3 × 2 over 5 × 4.
@@ -152,11 +152,11 @@ Draw two marbles from a bag of 3 red and 2 blue, without putting the first back.
 
 The slip is to mix the two: 6 ordered pairs over 10 unordered pairs gives 3/5, twice too big.
 
-Both counts are fair because a random draw makes every ordered pair equally likely, and so every unordered pair, each being 2 ordered ones. That step fails for two dice read without order: of the 36 ordered rolls, a double such as two 6s is only 1, while a 1 and a 2 is 2.
+Both counts are fair because a random draw makes every ordered pair equally likely, and so every unordered pair too, since each is 2 ordered pairs. That step fails for two dice read without order: a double such as two 6s is 1 of the 36 ordered rolls, while a 1 and a 2 is 2.
 
 ### Every subset, and Pascal's triangle
 
-Adding $\binom{n}{k}$ over every $k$ from 0 to $n$ gives $2^n$, the number of subsets of $n$ items, because each item is either in or out. Three friends form 1 + 3 + 3 + 1 = 8 = 2³ groups, from nobody to everyone. Grinstead and Snell note that each row of Pascal's triangle adds up to $2^n$ (§3.2) <Cite id="grinstead2003" />.
+Adding $\binom{n}{k}$ over every $k$ from 0 to $n$ gives $2^n$, the number of subsets of $n$ items, because each item is either in or out. Three friends form 1 + 3 + 3 + 1 = 8 = 2³ groups, from nobody to everyone. Grinstead and Snell note that each row of Pascal's triangle, where row $n$ lists $\binom{n}{0}$ through $\binom{n}{n}$, adds up to $2^n$ (§3.2) <Cite id="grinstead2003" />.
 
 Without the empty group and the $n$ groups of one, $2^n - n - 1$ groups of two or more remain. [Mutual independence](/probability/independence/#three-or-more-events) needs one product equation for each such group, so 4 equations for three events and 11 for four. The same $2^n$ counts the networks [dropout](/probability/independence/#dropout-drops-each-unit-on-its-own) can make from $n$ units, since each unit is either kept or dropped.
 
@@ -200,11 +200,11 @@ Dividing works only because every group has the same size, $k!$. With repeated i
 | Property | Statement | Check |
 | --- | --- | --- |
 | Ends of a row | $\binom{n}{0} = \binom{n}{n} = 1$ | $\binom{3}{0} = \binom{3}{3} = 1$ |
-| Symmetry | $\binom{n}{k} = \binom{n}{n-k}$ | $\binom{10}{3} = \binom{10}{7} = 120$ |
+| Symmetry | $\binom{n}{k} = \binom{n}{n-k}$ | $\binom{8}{3} = \binom{8}{5} = 56$ |
 | Pascal's rule | $\binom{n}{k} = \binom{n-1}{k} + \binom{n-1}{k-1}$, for $0 < k < n$ | $10 = 6 + 4$ |
 | Row sum | adding the whole row, $\binom{n}{0} + \cdots + \binom{n}{n} = 2^n$ | $1 + 3 + 3 + 1 = 8$ |
 | Too many | $\binom{n}{k} = (n)_k = 0$ for $k > n$ | $\binom{3}{4} = 0$ |
-| Pick a captain | $k \binom{n}{k} = n \binom{n-1}{k-1}$, for $1 \le k \le n$ (team then captain, or captain then team) | $2 \times 10 = 5 \times 4 = 20$ |
+| Pick a captain | $k \binom{n}{k} = n \binom{n-1}{k-1}$, for $1 \le k \le n$ | $3 \times 10 = 5 \times 6 = 30$ |
 
 </FormalDefinition>
 
@@ -314,13 +314,13 @@ $$
 m \ge \frac{1}{\epsilon}\left(\ln|\mathcal{H}| + \ln\frac{1}{\delta}\right).
 $$
 
-Finding $|\mathcal{H}|$ is counting. A rule like "feature 2 and feature 5 and feature 7", over $n$ yes-or-no features, is fixed by the subset of features it uses: $2^n$ rules. A yes-or-no function of $n$ features answers each of the $2^n$ inputs its own way: $2^{2^n}$ functions. The notes give these, the second for DNF formulas, as $\ln|\mathcal{H}| = n \ln 2$ and $|\mathcal{H}| = 2^{2^n}$, and read the bound as Occam's razor (§5.2) <Cite id="schapire2003-cos511" />.
+Finding $|\mathcal{H}|$ is counting. A rule like "feature 2 and feature 5 and feature 7", over $n$ yes-or-no features, is fixed by the subset of features it uses: $2^n$ rules. A yes-or-no function of $n$ features answers each of the $2^n$ inputs its own way: $2^{2^n}$ functions. The notes give these as $\ln|\mathcal{H}| = n \ln 2$ and $|\mathcal{H}| = 2^{2^n}$, and read the bound as Occam's razor (§5.2) <Cite id="schapire2003-cos511" />.
 
 With $n = 10$, $\epsilon = 1/10$ and $\delta = 1/20$, the bound for the first class is met once $m \ge 10(\ln 1024 + \ln 20) \approx 99.27$, so 100 examples are enough. All functions of 10 features have $\ln|\mathcal{H}| = 1024 \ln 2 \approx 709.78$, and about 7,128 are enough: only 71 times as many, because the bound grows with the logarithm. It assumes some rule fits the data perfectly, and it says nothing about infinite classes (§5.1, §5.3) <Cite id="schapire2003-cos511" />.
 
 ## Check every count in code
 
-This runs in your browser, lists the outcomes and checks every count and probability with exact fractions.
+This runs in your browser, lists the outcomes and checks every count and probability, the probabilities as exact fractions.
 
 <PyRunner
   title="counting.py"
@@ -403,6 +403,8 @@ assert [choose(3, k) for k in range(4)] == [1, 3, 3, 1]
 assert choose(10, 3) == choose(10, 7) == 120
 assert choose(5, 2) == choose(4, 2) + choose(4, 1) == 6 + 4 == 10
 assert 2 * choose(5, 2) == 5 * choose(4, 1) == 20
+assert choose(8, 3) == choose(8, 5) == 56
+assert 3 * choose(5, 3) == 5 * choose(4, 2) == 3 * 10 == 5 * 6 == 30
 rows = [[choose(n, k) for k in range(n + 1)] for n in range(6)]
 assert rows == [[1], [1, 1], [1, 2, 1], [1, 3, 3, 1], [1, 4, 6, 4, 1], [1, 5, 10, 10, 5, 1]]
 assert [sum(row) for row in rows] == [1, 2, 4, 8, 16, 32]
@@ -544,7 +546,7 @@ except ValueError as error:
 `}
 />
 
-Listing small cases is the proof; the formulas are the shortcut. The same count with scikit-learn, shown here but not run in the browser:
+Listing small cases is the evidence; the formulas are the shortcut. The same count with scikit-learn, shown here but not run in the browser:
 
 ```python title="leave_p_out.py"
 import numpy as np
