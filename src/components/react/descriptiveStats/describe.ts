@@ -156,16 +156,19 @@ export function statusLine(state: DescriptiveState): string {
 	const setup = setupOf(state);
 	const values = valuesNow(state);
 	const ordered = sortedValues(values);
-	const extent = `from ${withUnit(groupThousands(ordered[0]), setup)} to ${withUnit(groupThousands(ordered[ordered.length - 1]), setup)}`;
+	const lowest = withUnit(groupThousands(ordered[0]), setup);
+	const highest = withUnit(groupThousands(ordered[ordered.length - 1]), setup);
+	// "heights from 134 cm to 134 cm" reads badly when every child is the same height.
+	const heights = lowest === highest ? `all ${lowest}` : `heights from ${lowest} to ${highest}`;
 	switch (setup.kind) {
 		case 'lineup':
-			return `${values.length} children, ${state.linedUp ? 'lined up from shortest to tallest' : 'in the order they arrived'}. Heights ${extent}.`;
+			return `${values.length} children, ${state.linedUp ? 'lined up from shortest to tallest' : 'in the order they arrived'}. ${capitalize(heights)}.`;
 		case 'newcomer':
 			return `${plural(values.length, 'customer', 'customers')}' savings, in thousands of dollars${state.newcomer === null ? '' : ', with the newcomer'}.`;
 		case 'spread':
-			return `${values.length} children, heights ${extent}. Pick a child under ${CONTROL_LABELS.childToMove}, then change their ${CONTROL_LABELS.height.toLowerCase()}.`;
+			return `${values.length} children, ${heights}. Pick a child under ${CONTROL_LABELS.childToMove}, then change their ${CONTROL_LABELS.height.toLowerCase()}.`;
 		case 'box':
-			return `${values.length} children, heights ${extent}, lined up from shortest to tallest.`;
+			return `${values.length} children, ${heights}, lined up from shortest to tallest.`;
 		case 'scaling':
 			return `Two tests, 9 marks each: test A out of ${setup.testA?.outOf}, test B out of ${TEST_B.outOf}. Ana's marks are ringed.`;
 		case 'outliers':

@@ -171,7 +171,7 @@ const SETUP_LIST: readonly Setup[] = [
 	{
 		id: 'marks-scaling',
 		kind: 'scaling',
-		label: "Two tests' marks, out of 50 and out of 80, on raw, min–max and z-score scales. Ana's marks are marked.",
+		label: "Two tests' marks, out of 50 and out of 80, on raw, min–max and z-score scales. Ana's marks are ringed.",
 		words: { item: 'mark', items: 'marks', itemTitle: 'Student', valueTitle: 'Mark', values: 'marks', unit: 'marks', unitSquared: '' },
 		opening: TEST_B.values,
 		axis: { min: 0, max: 80, tickStep: 10, narrowTickStep: 20 },

@@ -3171,6 +3171,8 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	const open = dst.initialState('class-lineup');
 	assert.equal(dsay.statusLine(open), '9 children, in the order they arrived. Heights from 122 cm to 148 cm.');
 	assert.equal(dsay.statusLine(run('class-lineup', { type: 'line-up', on: true })), '9 children, lined up from shortest to tallest. Heights from 122 cm to 148 cm.');
+	// All the same height: never "heights from 134 cm to 134 cm".
+	assert.equal(dsay.statusLine(run('class-spread', { type: 'preset', id: 'everyone-134' })), '9 children, all 134 cm. Pick a child under Child to move, then change their height.');
 	assert.equal(dsay.coveredText(), 'The summary appears when you find the middle of the class.');
 	assert.equal(dsay.checkRefusal(open), 'Pick a child under Your pick for the middle first.');
 	assert.equal(dsay.announcementFor(run('class-lineup', { type: 'pick', child: 4 }), { type: 'pick', child: 4 }), 'Your pick for the middle: child 5, 148 cm.');
