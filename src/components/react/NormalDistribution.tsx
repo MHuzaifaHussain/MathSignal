@@ -4,6 +4,7 @@ import type { vec } from "mafs";
 import Board from "./Board";
 import ChalkNote from "./ChalkNote";
 import TraySlider from "./TraySlider";
+import useAnnouncer from "./guided/useAnnouncer.ts";
 import useCommittedSlider from "./guided/useCommittedSlider.ts";
 import {
   BOARD_HEIGHT,
@@ -42,7 +43,8 @@ type BellSlider = "mu" | "sigma";
 function BellBoard() {
   const [mu, setMu] = useState(INITIAL_MU);
   const [sigma, setSigma] = useState(INITIAL_SIGMA);
-  const [announcement, setAnnouncement] = useState("");
+  // The shared announcer re-announces a repeated sentence, so Reset at the start values is still heard.
+  const [announcement, say] = useAnnouncer();
   // A tray slider speaks after a pause; Reset or a handle drag since then must not be talked over (sliderGuard.ts).
   const sliderGuard = useCommittedSlider<BellSlider>();
   const valuesRef = useRef({ mu, sigma });
@@ -56,9 +58,12 @@ function BellBoard() {
   const side = sigmaSide(mu);
   const sigmaHandle: vec.Vector2 = [mu + side * sigma, gaussian(mu + sigma, mu, sigma)];
 
-  const announce = useCallback((nextMu: number, nextSigma: number) => {
-    setAnnouncement(describeState(nextMu, nextSigma));
-  }, []);
+  const announce = useCallback(
+    (nextMu: number, nextSigma: number) => {
+      say(describeState(nextMu, nextSigma));
+    },
+    [say],
+  );
 
   const handleMuMove = useCallback(
     ([x]: vec.Vector2) => {
