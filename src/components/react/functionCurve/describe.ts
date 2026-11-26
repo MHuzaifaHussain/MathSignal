@@ -342,7 +342,9 @@ export function announcementFor(state: CurveState, action: Action): string | nul
 		case 'check':
 		case 'show-answer': {
 			const refusal = state.refused ? checkRefusal(state) : null;
-			return refusal ?? feedbackLine(state)?.spoken ?? null;
+			if (refusal) return refusal;
+			// Once checked, focus moves to the verdict, which is read there (decision 0019).
+			return state.checked ? null : (feedbackLine(state)?.spoken ?? null);
 		}
 		case 'lines':
 		case 'line-slope':

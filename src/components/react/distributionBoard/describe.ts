@@ -608,11 +608,10 @@ function presetAnnouncement(state: DistributionState, name: string): string {
 }
 
 function checkAnnouncement(state: DistributionState): string {
+	// A match or a shown answer moves focus to the verdict, which is read there (decision 0019); only the new goal,
+	// a paragraph of its own, is announced.
+	if (state.checked) return goalLine(state) ?? '';
 	const line = feedbackLine(state) ?? '';
-	if (state.feedback?.kind === 'match' || state.feedback?.kind === 'shown') {
-		const goal = goalLine(state);
-		return goal ? `${line} ${goal}` : line;
-	}
 	// The second wrong Check reveals "Show the answer"; saying so also keeps it from repeating the first.
 	return state.failedChecks === CHECKS_BEFORE_ANSWER ? `${line} You can now show the answer.` : line;
 }
@@ -630,7 +629,8 @@ export function announcementFor(state: DistributionState, action: Action): strin
 		case 'show-answer':
 			return checkAnnouncement(state);
 		case 'check-goal':
-			return goalLine(state) ?? '';
+			// A passed goal moves focus to the goal line, which is read there.
+			return state.goal === 'passed' ? '' : (goalLine(state) ?? '');
 		case 'stage': {
 			const symbols = symbolLines(state);
 			return symbols.length > 0 ? symbols.join(' ') : `Showing ${STAGE_LABELS[state.stage].toLowerCase()}.`;
@@ -638,7 +638,8 @@ export function announcementFor(state: DistributionState, action: Action): strin
 		case 'pencil':
 			return pencilLine(state) ?? `${capitalize(describePencil(setup, state.pencil))}.`;
 		case 'balance':
-			return balanceLine(state) ?? '';
+			// Balance it moves focus to the balance sentence, which is read there.
+			return state.revealed ? '' : (balanceLine(state) ?? '');
 		case 'spread':
 			return action.on ? spreadLines(state).join(' ') : 'Spread hidden.';
 		case 'table':

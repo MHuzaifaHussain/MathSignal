@@ -991,10 +991,13 @@ export function announcementFor(state: DescriptiveState, action: Action): string
 			return statusLine(state);
 		case 'pick':
 			return `${CONTROL_LABELS.pick}: child ${action.child + 1}, ${state.values[action.child]} cm.`;
+		// A passed Check and a shown answer move focus to the verdict, which is read there; saying it here too would
+		// read it twice (decision 0019). A wrong Check leaves focus on Check, so its verdict is announced.
 		case 'check':
-			return state.refusal ? (checkRefusal(state) ?? '') : checkAnnouncement(state);
+			if (state.refusal) return checkRefusal(state) ?? '';
+			return state.checked ? '' : checkAnnouncement(state);
 		case 'show-answer':
-			return feedbackLine(state) ?? '';
+			return '';
 		case 'select':
 			return `Moving child ${state.selected + 1}, ${state.values[state.selected]} cm.`;
 		case 'set-value':

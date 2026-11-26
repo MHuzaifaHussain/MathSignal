@@ -1364,7 +1364,9 @@ function announcementText(state: VectorState, action: Action): string {
 			return radiusAnnouncement(state);
 		case 'check':
 		case 'show-answer':
-			return state.refusal ? refusalText(state, state.refusal) : (feedbackLine(state) ?? '');
+			if (state.refusal) return refusalText(state, state.refusal);
+			// Once checked, focus moves to the verdict, which is read there (decision 0019).
+			return state.checked ? '' : (feedbackLine(state) ?? '');
 		case 'preset':
 			return setupOf(state).kind === 'norms' ? normsPresetAnnouncement(state) : readoutLines(state).join(' ');
 		case 'stage':

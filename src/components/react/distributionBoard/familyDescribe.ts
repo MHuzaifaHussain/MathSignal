@@ -408,7 +408,8 @@ export function familyAnnouncement(previous: FamilyState, state: FamilyState, ac
 		case 'guess':
 			return '';
 		case 'check':
-			return verdictLine(state) ?? '';
+			// Check moves focus to the verdict, which is read there (decision 0019).
+			return state.checked ? '' : (verdictLine(state) ?? '');
 		case 'preset':
 			return presetSentence(previous, state, action.name);
 		case 'spread':

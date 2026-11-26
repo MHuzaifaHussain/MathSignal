@@ -424,12 +424,14 @@ function announcementText(state: EventSpaceState, action: Action): string {
 			return withVerdict(state, eventChange(state, count));
 		}
 		case 'check': {
+			// A passed Check moves focus to the verdict, which is read there (decision 0019).
+			if (state.checked) return '';
 			const line = feedbackLine(state) ?? '';
 			// The second wrong Check reveals "Show the answer"; saying so also keeps it from repeating the first.
 			return state.feedback?.kind !== 'correct' && state.failedChecks === CHECKS_BEFORE_ANSWER ? `${line} You can now show the answer.` : line;
 		}
 		case 'show-answer':
-			return feedbackLine(state) ?? '';
+			return state.checked ? '' : (feedbackLine(state) ?? '');
 		case 'preset': {
 			if (isLocked(state)) return 'Check your answer first.';
 			const members = state.events[action.event];

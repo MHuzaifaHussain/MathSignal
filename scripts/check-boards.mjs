@@ -240,7 +240,8 @@ assert.equal(shown.checked, true);
 assert.deepEqual([...shown.events.A], ['HH', 'HT', 'TH']);
 // A shown answer isn't praised with "Yes".
 assert.equal(describe.feedbackLine(shown), 'The answer: HH, HT and TH. 3 of 4 squares, so P(A) = 3/4 = 0.75.');
-assert.equal(describe.announcementFor(shown, { type: 'show-answer' }), 'The answer: HH, HT and TH. 3 of 4 squares, so P of A = 3/4 = 0.75.');
+// Focus moves to the shown answer, which is read there, so the live region stays quiet (decision 0019).
+assert.equal(describe.announcementFor(shown, { type: 'show-answer' }), '');
 
 // editing B leaves A alone.
 const operations = initialState('dice-operations');
@@ -1381,7 +1382,8 @@ assert.equal(distSay.announcementFor(dist.reducer(buildFresh, { type: 'preset', 
 // The second wrong Check says the answer can now be shown; a match also states the new goal.
 const twoWrong = distRun('candy-build', { type: 'check' }, { type: 'check' });
 assert.equal(distSay.announcementFor(twoWrong, { type: 'check' }), "Not yet. Faces 4, 5 and 6 don't match the card. You can now show the answer.");
-assert.equal(distSay.announcementFor(cardMatched, { type: 'check' }), `${distSay.feedbackLine(cardMatched)} New goal: make P(X = 1) = 1/2.`);
+// A match moves focus to the verdict, which is read there; only the new goal, a paragraph of its own, is announced.
+assert.equal(distSay.announcementFor(cardMatched, { type: 'check' }), 'New goal: make P(X = 1) = 1/2.');
 assert.equal(distSay.announcementFor(goalMissed, { type: 'check-goal' }), distSay.goalLine(goalMissed));
 assert.equal(distSay.announcementFor(symbolsView, { type: 'stage', stage: 'symbols' }), distSay.symbolLines(symbolsView).join(' '));
 assert.equal(distSay.announcementFor(dist.reducer(cardMatched, { type: 'stage', stage: 'pictures' }), { type: 'stage', stage: 'pictures' }), 'Showing pictures.');
@@ -1493,7 +1495,8 @@ assert.equal(
 	'Pencil at 1.50: the bars pull 7/6 − 1.50 ≈ −0.33 candies from it, so the plank tips left.',
 );
 assert.equal(distSay.announcementFor(balancedAt('One big prize', 9), { type: 'pencil', k: 9 }), distSay.pencilLine(balancedAt('One big prize', 9)));
-assert.equal(distSay.announcementFor(balancedAt('One big prize', 9), { type: 'balance' }), distSay.balanceLine(balancedAt('One big prize', 9)));
+// Balance it moves focus to the balance sentence, which is read there.
+assert.equal(distSay.announcementFor(balancedAt('One big prize', 9), { type: 'balance' }), '');
 
 // candy-spread: μ from the start, the spread on request, and the ghost of the previous σ.
 const spreadFresh = dist.initialState('candy-spread');
@@ -2170,7 +2173,7 @@ const bigChoose = (n, k) => {
 		const before = famRun('coins-binomial', { type: 'guess', guess });
 		const after = famState.familyReducer(before, { type: 'check' });
 		assert.equal(famSay.verdictLine(after), verdict);
-		assert.equal(famSay.familyAnnouncement(before, after, { type: 'check' }), verdict);
+		assert.equal(famSay.familyAnnouncement(before, after, { type: 'check' }), '', 'the verdict takes focus and is read there, not twice');
 		assert.ok(after.checked && after.n === 10 && after.read === 6 && !famState.isCovered(after), guess);
 		assert.equal(verdict.startsWith('Yes'), guess === 'one-in-five');
 		assert.equal(after.failedChecks, guess === 'one-in-five' ? 0 : 1);
@@ -3193,6 +3196,9 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	assert.equal(dsay.announcementFor(missTwice, { type: 'check' }), `${dsay.feedbackLine(missTwice)} You can now show the answer.`);
 	const found = run('class-lineup', { type: 'pick', child: 0 }, { type: 'check' });
 	assert.equal(dsay.feedbackLine(found), 'Yes. Child 1 (133 cm) has 4 children shorter and 4 taller, so the median height is 133 cm.');
+	// A passed Check and a shown answer move focus to the verdict, which is read there, not twice (decision 0019).
+	assert.equal(dsay.announcementFor(found, { type: 'check' }), '');
+	assert.equal(dsay.announcementFor(dst.reducer(missTwice, { type: 'show-answer' }), { type: 'show-answer' }), '');
 	assert.deepEqual(dsay.readoutLines(found), [
 		'Mean: (122 + 125 + 128 + 131 + 133 + 137 + 140 + 142 + 148) / 9 = 1,206 / 9 = 134 cm. The tallest children stand further above the median than the shortest stand below it, so the mean sits 1 cm higher.',
 		'No height repeats, so this class has no mode.',
@@ -4080,6 +4086,9 @@ const labelsOverlap = (first, second, size) => {
 	assert.ok(shownTrip.checked);
 	assert.ok(vd.feedbackLine(shownTrip).startsWith('Here it is.'));
 	assert.ok(!vd.feedbackLine(shownTrip).includes('Yes'));
+	// Focus moves to the verdict once checked, so neither a pass nor a shown answer is announced (decision 0019).
+	assert.equal(vd.announcementFor(shownTrip, { type: 'show-answer' }), '');
+	assert.equal(vd.announcementFor(twoMisses, { type: 'check' }), vd.feedbackLine(twoMisses));
 	// Moving the guess clears a stale verdict.
 	assert.equal(vd.feedbackLine(vst.reducer(checkTrip([5, 4]), moveTo('guess', [4, 4]))), null);
 
@@ -6750,7 +6759,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		const passed = fcRun(R2T, ...PASS_R2T);
 		assert.deepEqual(fcSay.feedbackLine(passed), { visible: `Yes, 2. ${evidence}`, spoken: `Yes, 2. ${evidence}` });
 		assert.equal(fcSay.statusLine(passed), null);
-		assert.equal(fcSay.announcementFor(passed, { type: 'check' }), `Yes, 2. ${evidence}`);
+		assert.equal(fcSay.announcementFor(passed, { type: 'check' }), null, 'the verdict takes focus and is read there, not twice');
 		// Every one of the 16 wrong guesses, its second miss, and the answer shown after two misses.
 		for (let index = 0; index <= 16; index += 1) {
 			if (index === 8) continue;
