@@ -8,7 +8,7 @@ type: B
 objectives:
   - Recognize a binomial setting, a fixed number of independent trials with the same chance of success, and say when it fails (draws without replacement, streaks, a chance that changes).
   - Compute P(X = k) = C(n, k) pᵏ(1 − p)ⁿ⁻ᵏ by counting the sequences with k successes and multiplying their equal chances.
-  - Use the mean np and the variance np(1 − p) to predict where the bars sit and how far they spread, and explain why the spread is largest at p = 1/2.
+  - Use the mean np and the variance np(1 − p) to predict where the bars sit and how far they spread, and explain how the spread depends on p.
   - Treat a test-set accuracy, a dropout mask and a binary label as Bernoulli or binomial variables, and estimate how much a test accuracy can move from the test set alone.
 takeaways:
   - One yes-or-no trial with chance p of success is a Bernoulli variable, 1 with probability p and 0 with probability 1 − p. Its mean is p and its variance is p(1 − p), largest at p = 1/2.
@@ -67,7 +67,7 @@ import DistributionBoard from "../../../components/react/DistributionBoard.tsx";
 
 You tip 10 coins out of a cup onto the table and count the heads. Do it again and you get a different count. How often do exactly 6 heads turn up? List every way the 10 coins can land, reading from the first coin to the last: HHHHHHTTTT is one way, TTHHTHHHTH another. There are 1,024 ways, and for fair coins they are all equally likely. So the answer is "how many of those ways have 6 heads, out of 1,024". The coins don't care about order, but listing the orders is what makes the counting easy.
 
-Fair coins hide one thing: every way is equally likely only because heads and tails are. Take a free throw that goes in 3 times out of 10, taken 10 times, or a quiz of 10 questions where each guess is right with chance 1/4. Now the ways are not equally likely. A way with more successes is rarer when success is rare. But every way with the same number of successes still has the same chance, and that is all the counting needs.
+Fair coins hide one thing: every way is equally likely only because heads and tails are. Shoot 10 free throws that each go in 3 times out of 10, or guess on a 10-question quiz where each guess is right with chance 1/4. Now the ways are not equally likely. A way with more successes is rarer when success is rare. But every way with the same number of successes still has the same chance, and that is all the counting needs.
 
 </Analogy>
 
@@ -93,7 +93,7 @@ Your task: pick an answer under Your guess for 6 heads in 10 flips, press Check,
   <DistributionBoard client:visible setup="coins-binomial" />
 </div>
 
-About 1 time in 5. Check moves the board to 10 coins and the bar for 6 heads, and says "Yes, about 1 time in 5. C(10, 6) = 210 of the 1,024 equally likely sequences have exactly 6 heads, so P(X = 6) = 210/1024 = 105/512 ≈ 0.21." C(10, 6), read "10 choose 6", counts the ways to pick which 6 of the 10 coins land heads. A different pick starts with "Not quite:" and says by how much it was off, then gives the same count. The Tallest bar readout answers the deeper question: "Tallest bar: 5 heads, P(X = 5) = 252/1024 = 63/256 ≈ 0.25." So even the most likely count is less likely than not. About three times in four (193/256 ≈ 0.75), 10 flips give something other than 5 heads.
+About 1 time in 5. Check moves the board to 10 coins and the bar for 6 heads, and says "Yes, about 1 time in 5. C(10, 6) = 210 of the 1,024 equally likely sequences have exactly 6 heads, so P(X = 6) = 210/1024 = 105/512 ≈ 0.21." C(10, 6), read "10 choose 6", counts the ways to pick which 6 of the 10 coins land heads. A different pick starts with "Not quite:" and says by how much it was off, then gives the same count. The Tallest bar readout shows how likely the most likely count is: "Tallest bar: 5 heads, P(X = 5) = 252/1024 = 63/256 ≈ 0.25." So even the most likely count is less likely than not. About three times in four (193/256 ≈ 0.75), 10 flips give something other than 5 heads.
 
 Each bar counts sequences, like the two-coin [head-count board](/probability/random-variables-and-distributions/#count-the-heads-on-two-coins) with more coins. The rest of the page turns the count into a formula for any number of trials and any chance of success.
 
@@ -103,13 +103,7 @@ The chance of exactly k successes in n independent trials with the same chance p
 
 ### One trial: the Bernoulli distribution
 
-A single yes-or-no trial is a Bernoulli variable: it is 1 (a success) with chance p and 0 with chance 1 − p. Its mean is 0 × (1 − p) + 1 × p = p. Since 0² = 0 and 1² = 1, X² is X itself, so 𝔼[X²] = p and the [shortcut](/probability/expectation-and-variance/#the-shortcut-mean-of-the-square-minus-square-of-the-mean) gives the variance p − p² = p(1 − p). A fair coin has variance 1/4; a question you answer right 9 times in 10 has 9/100. Deisenroth and coauthors derive the same mean and variance in their Example 6.8 <Cite id="deisenroth2020" />.
-
-<Simpler label="why the variance is biggest at one half">
-
-A yes-or-no question you are nearly sure about, with p near 0 or 1, has almost no spread: the answer is nearly always the same. A coin you can't call at all has the most. For p = 0.1, 0.3, 0.5, 0.7 and 0.9, p(1 − p) is 0.09, 0.21, 0.25, 0.21 and 0.09, the same on both sides of one half.
-
-</Simpler>
+A single yes-or-no trial is a Bernoulli variable: it is 1 (a success) with chance p and 0 with chance 1 − p. Its mean is 0 × (1 − p) + 1 × p = p. Since 0² = 0 and 1² = 1, X² is X itself, so 𝔼[X²] = p and the [shortcut](/probability/expectation-and-variance/#the-shortcut-mean-of-the-square-minus-square-of-the-mean) gives the variance p − p² = p(1 − p). For p = 3/4, for example, the variance is 3/4 × 1/4 = 3/16. Deisenroth and coauthors give the same mean and variance in their Example 6.8 <Cite id="deisenroth2020" />.
 
 ### Every sequence with k successes has the same chance
 
@@ -179,7 +173,13 @@ The variance works the same way, with one extra condition: variances add for ind
 
 ### The spread is np(1 − p)
 
-The variance of the number of successes is np(1 − p), so <Var name="sigma" /> = √(np(1 − p)). For a fixed number of trials it is largest at p = 1/2, where it is n/4, because p(1 − p) = 1/4 − (p − 1/2)² is largest when p = 1/2. That is the board's lesson: Right 9 in 10 has 0.9 against the fair coin's 2.5.
+The variance of the number of successes is np(1 − p), so <Var name="sigma" /> = √(np(1 − p)). For a fixed number of trials the variance is largest at p = 1/2, where it is n/4, because p(1 − p) = 1/4 − (p − 1/2)² is largest when p = 1/2. That is the board's lesson: Right 9 in 10 has variance 0.9 against the fair coin's 2.5.
+
+<Simpler label="how the variance changes with p">
+
+A yes-or-no question you are nearly sure about, with p near 0 or 1, has almost no spread: the answer is nearly always the same. A coin you can't call at all has the most. For p = 0.1, 0.3, 0.5, 0.7 and 0.9, p(1 − p) is 0.09, 0.21, 0.25, 0.21 and 0.09, the same on both sides of one half.
+
+</Simpler>
 
 The variance grows in step with n, so <Var name="sigma" /> grows like √n: 10 fair flips give <Var name="sigma" /> ≈ 1.58 and 40 give √10 ≈ 3.16. Dividing a count by n divides its variance by n², so the share of successes X/n has variance np(1 − p)/n² = p(1 − p)/n, which shrinks as n grows. A test accuracy is such a share.
 
@@ -238,7 +238,7 @@ $$
 
 and $P(X = k) = 0$ for every other $k$. We write $X \sim \operatorname{Bin}(n, p)$.
 
-Conventions: $0^0 = 1$, so $p = 0$ gives $P(X = 0) = 1$ and $p = 1$ gives $P(X = n) = 1$, both with variance 0. The case $n = 1$ is the Bernoulli distribution. Here $p$ is a chance, not a mean; Deisenroth and coauthors call it $\mu$ (Example 6.9) <Cite id="deisenroth2020" />.
+Conventions: $0^0 = 1$, so $p = 0$ gives $P(X = 0) = 1$ and $p = 1$ gives $P(X = n) = 1$, both with variance 0. The case $n = 1$ is the Bernoulli distribution. Here $p$ is the chance of success on one trial (the Bernoulli mean), not the binomial mean $np$; Deisenroth and coauthors call it $\mu$ (Example 6.9) <Cite id="deisenroth2020" />.
 
 Boundary cases and facts. For $0 < p < 1$ the tallest bar is at $\lfloor (n + 1)p \rfloor$, tied with the bar below it when $(n + 1)p$ is a whole number. If $X \sim \operatorname{Bin}(n, p)$, then $n - X \sim \operatorname{Bin}(n, 1 - p)$. If $X \sim \operatorname{Bin}(n, p)$ and $Y \sim \operatorname{Bin}(m, p)$ are independent, then $X + Y \sim \operatorname{Bin}(n + m, p)$; the code checks $n = 2$, $m = 3$. Without independence, or with $p$ changing from trial to trial, the theorem no longer applies and the count need not be binomial.
 
