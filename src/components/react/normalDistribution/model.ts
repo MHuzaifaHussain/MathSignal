@@ -22,8 +22,10 @@ export const UNIT_ROW_Y = -0.045;
 export const Z_ROW_Y = -0.095;
 /** Where each row's caption ("cm", "z") sits, left of the −3 tick. */
 export const ROW_CAPTION_X = -3.75;
-/** The ruler labels' text size in px. */
+/** The ruler labels' text size in px at the base size, multiplied by useBoardScale() (decision 0025). */
 export const RULER_LABEL_SIZE = 14;
+/** The value marker, the board's one ochre element, in px at the base size. */
+export const VALUE_WEIGHT = 3;
 /**
  * The μ and σ labels sit where no marker can reach: μ above the peak, σ beside the span's right end, where the curve
  * is already under the glyph. Each label's box is LABEL_HALF_SIZE around its point, swept in check-boards.

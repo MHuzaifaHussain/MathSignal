@@ -4,6 +4,7 @@ import type { vec } from "mafs";
 import Board from "./Board";
 import ChalkNote from "./ChalkNote";
 import { formatNumber, plotColors } from "./plotColors";
+import useBoardScale from "./useBoardScale.ts";
 
 const INITIAL_POINTS: vec.Vector2[] = [
   [1, 2],
@@ -17,7 +18,9 @@ const INITIAL_POINTS: vec.Vector2[] = [
   [9, 8.5],
 ];
 const VIEW: vec.Vector2 = [-1, 10];
+/** Px at the base size, multiplied by useBoardScale() (decision 0025). */
 const BOARD_HEIGHT = 380;
+const FIT_LINE_WEIGHT = 2.5;
 /** Below this, the x values are effectively identical and the slope is undefined. */
 const VERTICAL_LINE_EPSILON = 1e-10;
 const HANDLE_LABELS = INITIAL_POINTS.map((_, i) => `Data point ${i + 1} of ${INITIAL_POINTS.length}`);
@@ -60,6 +63,7 @@ function describeFit(fit: Fit | null): string {
 export default function LinearRegression() {
   const [points, setPoints] = useState<vec.Vector2[]>(INITIAL_POINTS);
   const [announcement, setAnnouncement] = useState("");
+  const scale = useBoardScale();
   const fit = useMemo(() => leastSquares(points), [points]);
 
   const movePoint = useCallback((index: number, next: vec.Vector2) => {
@@ -89,9 +93,9 @@ export default function LinearRegression() {
       onInteractionEnd={() => setAnnouncement(describeFit(fit))}
       handleLabels={HANDLE_LABELS}
     >
-      <Mafs height={BOARD_HEIGHT} viewBox={{ x: VIEW, y: VIEW, padding: 0 }} preserveAspectRatio={false} pan={false} zoom={false}>
+      <Mafs height={BOARD_HEIGHT * scale} viewBox={{ x: VIEW, y: VIEW, padding: 0 }} preserveAspectRatio={false} pan={false} zoom={false}>
         <Coordinates.Cartesian xAxis={{ lines: 1 }} yAxis={{ lines: 1 }} />
-        {fit && <Line.PointSlope point={[0, fit.intercept]} slope={fit.slope} color={plotColors.ink} weight={2.5} />}
+        {fit && <Line.PointSlope point={[0, fit.intercept]} slope={fit.slope} color={plotColors.ink} weight={FIT_LINE_WEIGHT * scale} />}
         {points.map((point, i) => (
           <MovablePoint key={i} point={point} constrain={keepInView} onMove={(next) => movePoint(i, next)} color={plotColors.attention} />
         ))}

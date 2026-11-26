@@ -8,12 +8,16 @@ import useAnnouncer from "./guided/useAnnouncer.ts";
 import useCommittedSlider from "./guided/useCommittedSlider.ts";
 import {
   BOARD_HEIGHT,
+  CURVE_WEIGHT,
+  GLYPH_SIZE,
   INITIAL_MU,
   INITIAL_SIGMA,
   LABEL_OFFSET,
+  MU_GUIDE_WEIGHT,
   MU_RANGE,
   MU_STEP,
   SIGMA_RANGE,
+  SIGMA_SPAN_WEIGHT,
   SIGMA_STEP,
   VIEW_X,
   VIEW_Y,
@@ -22,6 +26,7 @@ import {
 } from "./normalDistribution/bell.ts";
 import { resolveNormalProps, type ZSetupId } from "./normalDistribution/props.ts";
 import { formatNumber, plotColors } from "./plotColors";
+import useBoardScale from "./useBoardScale.ts";
 
 /** Its own chunk, so the published bell pages don't load the z mode (decision 0019). */
 const ZBoard = lazy(() => import("./normalDistribution/ZBoard.tsx"));
@@ -45,6 +50,7 @@ function BellBoard() {
   const [sigma, setSigma] = useState(INITIAL_SIGMA);
   // The shared announcer re-announces a repeated sentence, so Reset at the start values is still heard.
   const [announcement, say] = useAnnouncer();
+  const scale = useBoardScale();
   // A tray slider speaks after a pause; Reset or a handle drag since then must not be talked over (sliderGuard.ts).
   const sliderGuard = useCommittedSlider<BellSlider>();
   const valuesRef = useRef({ mu, sigma });
@@ -160,7 +166,7 @@ function BellBoard() {
           read as loose text, so the whole canvas is hidden. Its handles are already out of the tab order. */}
       <div aria-hidden="true">
         <Mafs
-          height={BOARD_HEIGHT}
+          height={BOARD_HEIGHT * scale}
           viewBox={{ x: VIEW_X, y: VIEW_Y, padding: 0 }}
           preserveAspectRatio={false}
           pan={false}
@@ -169,18 +175,18 @@ function BellBoard() {
           <Coordinates.Cartesian xAxis={{ lines: 1, labels: edgeSafeLabel }} yAxis={false} />
 
           <Plot.Inequality y={{ "<": curve, ">": () => 0 }} color={plotColors.mu} fillOpacity={0.12} strokeOpacity={0} />
-          <Plot.OfX y={curve} color={plotColors.mu} weight={2.5} />
+          <Plot.OfX y={curve} color={plotColors.mu} weight={CURVE_WEIGHT * scale} />
 
           {/* μ guide from the axis to the peak */}
-          <Line.Segment point1={[mu, 0]} point2={[mu, peakY]} color={plotColors.mu} style="dashed" weight={1} />
+          <Line.Segment point1={[mu, 0]} point2={[mu, peakY]} color={plotColors.mu} style="dashed" weight={MU_GUIDE_WEIGHT * scale} />
 
           {/* σ span from the mean to the inflection point */}
-          <Line.Segment point1={[mu, sigmaHandle[1]]} point2={sigmaHandle} color={plotColors.sigma} weight={2} />
+          <Line.Segment point1={[mu, sigmaHandle[1]]} point2={sigmaHandle} color={plotColors.sigma} weight={SIGMA_SPAN_WEIGHT * scale} />
 
-          <Text x={mu} y={-LABEL_OFFSET} size={16} color={plotColors.mu}>
+          <Text x={mu} y={-LABEL_OFFSET} size={GLYPH_SIZE * scale} color={plotColors.mu}>
             μ
           </Text>
-          <Text x={mu + (side * sigma) / 2} y={sigmaHandle[1] + LABEL_OFFSET} size={16} color={plotColors.sigma}>
+          <Text x={mu + (side * sigma) / 2} y={sigmaHandle[1] + LABEL_OFFSET} size={GLYPH_SIZE * scale} color={plotColors.sigma}>
             σ
           </Text>
 

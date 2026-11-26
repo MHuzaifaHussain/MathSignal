@@ -9,6 +9,7 @@ import TableFold from "./guided/TableFold.tsx";
 import { tableFoldAnnouncement } from "./guided/tableFold.ts";
 import useAnnouncer from "./guided/useAnnouncer.ts";
 import { formatNumber, plotColors } from "./plotColors";
+import useBoardScale from "./useBoardScale.ts";
 import { BAYES_SCENARIOS, computePosterior, resolveScenarios, type BayesScenarioId, type BayesValues } from "./bayesTheorem/scenarios.ts";
 import { tableSummary } from "./bayesTheorem/table.ts";
 import CountTable from "./bayesTheorem/CountTable.tsx";
@@ -16,7 +17,13 @@ import { labelPositions } from "./bayesTheorem/labels.ts";
 
 const PROBABILITY_RANGE: vec.Vector2 = [0.01, 0.99];
 const PROBABILITY_STEP = 0.01;
+/** Px at the base size, multiplied by useBoardScale() (decision 0025). */
 const BOARD_HEIGHT = 340;
+/** The areas' outlines: Mafs' default polygon stroke. */
+const AREA_OUTLINE_WEIGHT = 2;
+/** "A" and "not A" name the columns; the two B areas' names are a size smaller. */
+const COLUMN_LABEL_SIZE = 14;
+const AREA_LABEL_SIZE = 13;
 
 const rectangle = (x0: number, x1: number, y0: number, y1: number): vec.Vector2[] => [
   [x0, y0],
@@ -53,6 +60,7 @@ export default function BayesTheorem({ scenarios, initialScenario }: BayesTheore
   const [falsePositive, setFalsePositive] = useState(initial.values.falsePositive);
   const [tableShown, setTableShown] = useState(false);
   const [announcement, announce] = useAnnouncer();
+  const scale = useBoardScale();
   const scenario = BAYES_SCENARIOS[scenarioId];
 
   const { evidence, posterior } = useMemo(
@@ -159,26 +167,26 @@ export default function BayesTheorem({ scenarios, initialScenario }: BayesTheore
       {/* No handles here: the readout, the announcements and Table view are the areas' equivalent, so the canvas and
           its loose labels are hidden. */}
       <div aria-hidden="true">
-        <Mafs height={BOARD_HEIGHT} viewBox={{ x: [-0.05, 1.05], y: [-0.08, 1.05], padding: 0 }} preserveAspectRatio={false} pan={false} zoom={false}>
+        <Mafs height={BOARD_HEIGHT * scale} viewBox={{ x: [-0.05, 1.05], y: [-0.08, 1.05], padding: 0 }} preserveAspectRatio={false} pan={false} zoom={false}>
           {/* The whole population */}
-          <Polygon points={rectangle(0, 1, 0, 1)} color={plotColors.axis} fillOpacity={0.06} strokeOpacity={0.6} />
+          <Polygon points={rectangle(0, 1, 0, 1)} color={plotColors.axis} fillOpacity={0.06} strokeOpacity={0.6} weight={AREA_OUTLINE_WEIGHT * scale} />
           {/* A: column whose width is the prior */}
-          <Polygon points={rectangle(0, prior, 0, 1)} color={plotColors.ink} fillOpacity={0.08} strokeOpacity={0.5} />
+          <Polygon points={rectangle(0, prior, 0, 1)} color={plotColors.ink} fillOpacity={0.08} strokeOpacity={0.5} weight={AREA_OUTLINE_WEIGHT * scale} />
           {/* B and A: the numerator, highlighted */}
-          <Polygon points={rectangle(0, prior, 0, likelihood)} color={plotColors.attention} fillOpacity={0.45} />
+          <Polygon points={rectangle(0, prior, 0, likelihood)} color={plotColors.attention} fillOpacity={0.45} weight={AREA_OUTLINE_WEIGHT * scale} />
           {/* B and not A: false positives */}
-          <Polygon points={rectangle(prior, 1, 0, falsePositive)} color={plotColors.ink} fillOpacity={0.28} />
+          <Polygon points={rectangle(prior, 1, 0, falsePositive)} color={plotColors.ink} fillOpacity={0.28} weight={AREA_OUTLINE_WEIGHT * scale} />
 
-          <Text {...labels.aName} size={14} color={plotColors.ink}>
+          <Text {...labels.aName} size={COLUMN_LABEL_SIZE * scale} color={plotColors.ink}>
             A
           </Text>
-          <Text {...labels.notAName} size={14} color={plotColors.inkMuted}>
+          <Text {...labels.notAName} size={COLUMN_LABEL_SIZE * scale} color={plotColors.inkMuted}>
             not A
           </Text>
-          <Text {...labels.bAndA} size={13} color={plotColors.ink}>
+          <Text {...labels.bAndA} size={AREA_LABEL_SIZE * scale} color={plotColors.ink}>
             B and A
           </Text>
-          <Text {...labels.bAndNotA} size={13} color={plotColors.ink}>
+          <Text {...labels.bAndNotA} size={AREA_LABEL_SIZE * scale} color={plotColors.ink}>
             B and not A
           </Text>
         </Mafs>

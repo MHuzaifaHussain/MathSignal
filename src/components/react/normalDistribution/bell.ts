@@ -12,7 +12,14 @@ export const SIGMA_STEP = 0.05;
 export const VIEW_X: vec.Vector2 = [-5, 5];
 /** Tall enough for the narrowest bell: peak = 1 / (σ√2π) ≈ 1.0 at σ = 0.4. */
 export const VIEW_Y: vec.Vector2 = [-0.12, 1.1];
+/** Px at the base size; the boards multiply every one by useBoardScale() (decision 0025). */
 export const BOARD_HEIGHT = 360;
+/** The bell (and the z mode's standard normal), the dashed μ guide and the σ span. */
+export const CURVE_WEIGHT = 2.5;
+export const MU_GUIDE_WEIGHT = 1;
+export const SIGMA_SPAN_WEIGHT = 2;
+/** The μ and σ glyphs on the plot. */
+export const GLYPH_SIZE = 16;
 export const LABEL_OFFSET = 0.07;
 
 export function gaussian(x: number, mu: number, sigma: number): number {

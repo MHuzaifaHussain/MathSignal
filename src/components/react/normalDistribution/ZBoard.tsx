@@ -15,6 +15,8 @@ import useAnnouncer from "../guided/useAnnouncer.ts";
 import useCommittedSlider from "../guided/useCommittedSlider.ts";
 import { Segment } from "../planeLines";
 import { plotColors } from "../plotColors";
+import useBoardScale from "../useBoardScale.ts";
+import { CURVE_WEIGHT, GLYPH_SIZE, MU_GUIDE_WEIGHT, SIGMA_SPAN_WEIGHT } from "./bell.ts";
 import ZTable from "./ZTable.tsx";
 import {
   BOARD_LABEL,
@@ -36,6 +38,7 @@ import {
   RULER_LABEL_SIZE,
   SIGMA_LABEL_AT,
   UNIT_ROW_Y,
+  VALUE_WEIGHT,
   Z_BOARD_HEIGHT,
   Z_ROW_Y,
   Z_VIEW_X,
@@ -67,6 +70,7 @@ const INFLECTION = standardNormalDensity(1);
 export default function ZBoard({ setup: setupId }: { setup: ZSetupId }) {
   const [state, dispatch] = useReducer(zReducer, setupId, initialState);
   const [announcement, announce] = useAnnouncer();
+  const scale = useBoardScale();
   const sliderGuard = useCommittedSlider<"value">();
   const checkReasonId = useId();
   const stateRef = useRef(state);
@@ -230,43 +234,43 @@ export default function ZBoard({ setup: setupId }: { setup: ZSetupId }) {
     <Board label={BOARD_LABEL} tray={tray} onReset={() => send({ type: "reset" })} announcement={announcement} onInteractionEnd={endInteraction}>
       <div className="ms-normal-z" aria-hidden="true">
         {note && <ChalkNote long={note.long} short={note.short} />}
-        <Mafs height={Z_BOARD_HEIGHT} viewBox={{ x: Z_VIEW_X, y: Z_VIEW_Y, padding: 0 }} preserveAspectRatio={false} pan={false} zoom={false}>
+        <Mafs height={Z_BOARD_HEIGHT * scale} viewBox={{ x: Z_VIEW_X, y: Z_VIEW_Y, padding: 0 }} preserveAspectRatio={false} pan={false} zoom={false}>
           <Coordinates.Cartesian xAxis={{ lines: 1, labels: false }} yAxis={false} />
 
           {shown && state.shading && <Polygon points={shadePolygon(z)} color={plotColors.ink} fillOpacity={0.2} strokeOpacity={0} />}
-          <Plot.OfX y={standardNormalDensity} color={plotColors.ink} weight={2.5} />
+          <Plot.OfX y={standardNormalDensity} color={plotColors.ink} weight={CURVE_WEIGHT * scale} />
 
           {/* μ: a dashed guide up to the peak, labeled above it. */}
-          <Segment from={[0, 0]} to={[0, PEAK]} color={plotColors.mu} weight={1} lineStyle="dashed" />
-          <Text x={MU_LABEL_AT[0]} y={MU_LABEL_AT[1]} size={16} color={plotColors.mu}>
+          <Segment from={[0, 0]} to={[0, PEAK]} color={plotColors.mu} weight={MU_GUIDE_WEIGHT * scale} lineStyle="dashed" />
+          <Text x={MU_LABEL_AT[0]} y={MU_LABEL_AT[1]} size={GLYPH_SIZE * scale} color={plotColors.mu}>
             μ
           </Text>
           {/* σ: a solid span from the mean to the inflection point, labeled beside its right end. */}
-          <Segment from={[0, INFLECTION]} to={[1, INFLECTION]} color={plotColors.sigma} weight={2} />
-          <Text x={SIGMA_LABEL_AT[0]} y={SIGMA_LABEL_AT[1]} size={16} color={plotColors.sigma}>
+          <Segment from={[0, INFLECTION]} to={[1, INFLECTION]} color={plotColors.sigma} weight={SIGMA_SPAN_WEIGHT * scale} />
+          <Text x={SIGMA_LABEL_AT[0]} y={SIGMA_LABEL_AT[1]} size={GLYPH_SIZE * scale} color={plotColors.sigma}>
             σ
           </Text>
 
           {/* The ruler in the group's units, nearest the axis; the z ruler under it once the reader has committed. */}
           {preset.unit && (
-            <Text x={ROW_CAPTION_X} y={UNIT_ROW_Y} size={RULER_LABEL_SIZE} color={plotColors.ink}>
+            <Text x={ROW_CAPTION_X} y={UNIT_ROW_Y} size={RULER_LABEL_SIZE * scale} color={plotColors.ink}>
               {preset.unit}
             </Text>
           )}
           {shown && (
-            <Text x={ROW_CAPTION_X} y={Z_ROW_Y} size={RULER_LABEL_SIZE} color={plotColors.inkMuted}>
+            <Text x={ROW_CAPTION_X} y={Z_ROW_Y} size={RULER_LABEL_SIZE * scale} color={plotColors.inkMuted}>
               z
             </Text>
           )}
           {rulerTicks(preset).map((tick) => (
             <g key={tick.z}>
               {tick.unitLabel && (
-                <Text x={tick.z} y={UNIT_ROW_Y} size={RULER_LABEL_SIZE} color={plotColors.ink}>
+                <Text x={tick.z} y={UNIT_ROW_Y} size={RULER_LABEL_SIZE * scale} color={plotColors.ink}>
                   {tick.unitLabel}
                 </Text>
               )}
               {shown && (
-                <Text x={tick.z} y={Z_ROW_Y} size={RULER_LABEL_SIZE} color={plotColors.inkMuted}>
+                <Text x={tick.z} y={Z_ROW_Y} size={RULER_LABEL_SIZE * scale} color={plotColors.inkMuted}>
                   {tick.zLabel}
                 </Text>
               )}
@@ -274,7 +278,7 @@ export default function ZBoard({ setup: setupId }: { setup: ZSetupId }) {
           ))}
 
           {/* The value: the board's one ochre element, the marker and its handle. */}
-          <Segment from={[z, 0]} to={[z, standardNormalDensity(z)]} color={plotColors.attention} weight={3} />
+          <Segment from={[z, 0]} to={[z, standardNormalDensity(z)]} color={plotColors.attention} weight={VALUE_WEIGHT * scale} />
           <MovablePoint point={[z, 0]} constrain={constrainHandle} onMove={dragHandle} color={plotColors.attention} />
         </Mafs>
       </div>
