@@ -11,7 +11,7 @@ import { capitalize, groupThousands, joinWords, plural } from '../boardText.ts';
 import { CHECKS_BEFORE_ANSWER } from '../guided/guided.ts';
 import { tableFoldAnnouncement } from '../guided/tableFold.ts';
 import { formatNumber } from '../plotColors.ts';
-import { CAFE_SAVINGS, TEST_B } from './datasets.ts';
+import { CAFE_SAVINGS, TEST_B, pumpkins } from './datasets.ts';
 import {
 	FENCE_FACTOR,
 	fences,
@@ -169,7 +169,7 @@ export function statusLine(state: DescriptiveState): string {
 		case 'scaling':
 			return `Two tests, 9 marks each: test A out of ${setup.testA?.outOf}, test B out of ${TEST_B.outOf}. Ana's marks are ringed.`;
 		case 'outliers':
-			return `${values.length} pumpkins at the village fair. ${state.giants === 2 ? `The two giants weigh ${state.giant} kg each.` : `The giant weighs ${state.giant} kg.`}`;
+			return `${values.length} pumpkins at the village fair. ${outlierWeightSentence(state)}`;
 	}
 }
 
@@ -563,6 +563,20 @@ function giantTried(state: DescriptiveState): boolean {
 	return state.giants === 2 || state.giant !== opening[opening.length - 1];
 }
 
+/** Before a giant is in, the ninth pumpkin is an ordinary 8 kg one, so the status line doesn't call it a giant. */
+function outlierWeightSentence(state: DescriptiveState): string {
+	if (state.giants === 2) return `The two giants weigh ${state.giant} kg each.`;
+	return giantTried(state) ? `The giant weighs ${state.giant} kg.` : `The ninth pumpkin weighs ${state.giant} kg.`;
+}
+
+/**
+ * Two giants mask each other only when one giant of that weight, on its own, would pass |z| > 2. At 8 kg neither
+ * would, so there is nothing to hide and the board doesn't claim masking.
+ */
+function loneGiantPassesTwo(giant: number): boolean {
+	return rootNumber(zScore(giant, pumpkins(giant, 1))) > 2;
+}
+
 function outlierLines(state: DescriptiveState): string[] {
 	const values = state.values;
 	const { q1, q3 } = quartiles(values);
@@ -581,7 +595,7 @@ function outlierLines(state: DescriptiveState): string[] {
 	const zFlagText = z > 3 ? 'flagged at |z| > 2 and at |z| > 3' : z > 2 ? 'flagged at |z| > 2, not at |z| > 3' : 'not flagged at |z| > 2 or at |z| > 3';
 	const lines = [fenceLine];
 	if (state.giants === 2) {
-		const zVerdict = z > 2 ? `Both pass |z| > 2${z > 3 ? ' and |z| > 3' : ''}.` : 'Neither passes |z| > 2: the two giants hide each other.';
+		const zVerdict = z > 2 ? `Both pass |z| > 2${z > 3 ? ' and |z| > 3' : ''}.` : `Neither passes |z| > 2${loneGiantPassesTwo(giant) ? ': the two giants hide each other' : ''}.`;
 		lines.push(`${meanText}, each z ${zText}. ${zVerdict} ${iqrFlagged ? 'The IQR rule still flags both.' : 'The IQR rule flags neither.'}`);
 	} else if (!iqrFlagged && z <= 2 && !onFence) {
 		const largest = Math.max(...values.map((value) => Math.abs(rootNumber(zScore(value, values)))));

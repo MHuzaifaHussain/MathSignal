@@ -3459,6 +3459,17 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 		dsay.readoutLines(run('pumpkin-outliers', { type: 'preset', id: 'two-giants' }))[1],
 		'Mean 11 kg, σ ≈ 10.19 kg, each z ≈ 1.87. Neither passes |z| > 2: the two giants hide each other. The IQR rule still flags both.',
 	);
+	// Masking needs something to hide: one 8 kg giant isn't flagged (z ≈ 1.73), so two of them don't "hide each other";
+	// one 9 kg giant is (z ≈ 2.11), so two of them do.
+	assert.equal(
+		dsay.readoutLines(run('pumpkin-outliers', { type: 'preset', id: 'two-giants' }, { type: 'set-value', value: 8 }))[1],
+		'Mean ≈ 6.11 kg, σ ≈ 1.29 kg, each z ≈ 1.47. Neither passes |z| > 2. The IQR rule flags neither.',
+	);
+	assert.match(dsay.readoutLines(run('pumpkin-outliers', { type: 'preset', id: 'two-giants' }, { type: 'set-value', value: 9 }))[1], /Neither passes \|z\| > 2: the two giants hide each other\./);
+	// Before a giant is in, the ninth pumpkin is ordinary and isn't called a giant.
+	assert.equal(dsay.statusLine(dst.initialState('pumpkin-outliers')), '9 pumpkins at the village fair. The ninth pumpkin weighs 8 kg.');
+	assert.equal(dsay.statusLine(run('pumpkin-outliers', { type: 'preset', id: 'one-giant' })), '9 pumpkins at the village fair. The giant weighs 30 kg.');
+	assert.equal(dsay.statusLine(run('pumpkin-outliers', { type: 'preset', id: 'two-giants' })), '9 pumpkins at the village fair. The two giants weigh 30 kg each.');
 	assert.equal(dsay.readoutLines(dst.initialState('pumpkin-outliers'))[1], 'Every pumpkin is inside the fences (2 kg to 10 kg) and every |z| is at most ≈ 1.73: nothing is flagged.');
 	assert.equal(dsay.readoutLines(run('pumpkin-outliers', { type: 'set-value', value: 10 }))[1], "On the fence is not past it: the IQR rule doesn't flag 10 kg, but z ≈ 2.34 passes |z| > 2.");
 	assert.equal(dsay.describeGiant(run('pumpkin-outliers', { type: 'preset', id: 'two-giants' }), 30), 'both giant pumpkins, 30 kg');

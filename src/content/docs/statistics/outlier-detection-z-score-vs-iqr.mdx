@@ -7,8 +7,8 @@ topic: statistics/outlier-detection-z-score-vs-iqr
 type: D
 objectives:
   - Apply the z-score rule (|z| > 2 or > 3) and the IQR rule (beyond Q₁ − 1.5 IQR or Q₃ + 1.5 IQR) to a short list by hand.
-  - Explain masking, where one or two extreme values keep their own z-scores small, and why the quartiles resist them.
-  - Say when each rule misleads. The z-score rule fails on small samples and with several outliers. The IQR rule fails on skewed data, with many outliers, or under a different quartile method.
+  - Explain masking and test whether the quartiles resist it.
+  - Say when each rule misleads, and why.
   - Choose a rule for a data-cleaning or monitoring task, and treat a flag as a question, not a deletion.
 takeaways:
   - The z-score rule measures distance in standard deviations from the mean. The IQR rule measures distance past the middle half of the data. A value exactly on a fence is not flagged.
@@ -81,7 +81,7 @@ Judge Average uses the z-score rule: a pumpkin's [z-score](/statistics/z-scores-
 
 Decide first, because the board shows each verdict as soon as you move the giant or press a preset. A 30 kg giant joins eight pumpkins of 4 to 7 kg. Will |z| > 3 flag it? If a second 30 kg giant replaces a 7 kg pumpkin, will |z| > 2 flag either giant? How heavy must one giant be before |z| > 3 flags it?
 
-The Giant pumpkin slider sets the giant from 8 to 60 kg (arrow keys 1 kg, Page Up and Page Down 5 kg). Flag when |z| is above sets the cutoff, 2 or 3. The presets are No giant (8 kg), One giant (30 kg) and Two giants (30 kg each). The IQR rule's flag is a solid ring tagged "IQR", the z-score rule's a dashed ring tagged "z". Table view shows the data as tables.
+The "Giant pumpkin" slider sets the giant from 8 to 60 kg (arrow keys 1 kg, Page Up and Page Down 5 kg). The "Flag when |z| is above" choice sets the cutoff, 2 or 3. The presets are No giant (8 kg), One giant (30 kg) and Two giants (30 kg each). The IQR rule's flag is a solid ring tagged "IQR", the z-score rule's a dashed ring tagged "z". Table view shows the data as tables.
 
 Your task: find a giant weight that only the z-score rule flags, then one that only the IQR rule flags. For the second, you may change the cutoff or the number of giants.
 
@@ -109,7 +109,7 @@ On normal data the rules nearly agree. Q₃ sits 0.6745 standard deviations abov
 
 The giant is included in the mean and <Var name="sigma" /> that judge it, so the heavier it gets, the more it stretches its own ruler. Rousseeuw and Hubert call this masking: outliers can pull classical estimates so far that they no longer stand out <Cite id="rousseeuw2017" />. The [median is not pulled this way](/statistics/mean-vs-median-vs-mode/). The variance page shows [masking with a typo in five measurements](/statistics/variance-and-standard-deviation/#research-frontier).
 
-The giant's z-score creeps toward a ceiling of √(n − 1) = √8 ≈ 2.83 that it never reaches (the fold below proves it). pandas' `std` divides by n − 1 by default <Cite id="pandas-std" />. With that s, every z-score shrinks by √((n − 1)/n) = √(8/9) ≈ 0.943, so the giant scores ≈ 2.65 and the ceiling is (n − 1)/√n = 8/3 ≈ 2.67. NIST warns that z-scores mislead on small samples because no z-score can pass (n − 1)/√n <Cite id="nist-outlier-detection" />. Two equal giants share the stretch: their ceiling is √((9 − 2)/2) = √3.5 ≈ 1.871, just above their z of ≈ 1.865 at 30 kg, so |z| > 2 never flags them, at any weight.
+With n values, the giant's z-score creeps toward a ceiling of √(n − 1) = √8 ≈ 2.83 that it never reaches (the fold below proves it). pandas' `std` divides by n − 1 by default <Cite id="pandas-std" />, and that s lowers every z-score a little more; NIST warns that z-scores mislead on small samples for this reason <Cite id="nist-outlier-detection" />. Two equal giants share the stretch: their ceiling is √((9 − 2)/2) = √3.5 ≈ 1.871, just above their z of ≈ 1.865 at 30 kg, so |z| > 2 never flags them, at any weight.
 
 <GoDeeper id="most-z-can-reach" label="how far can a z-score go? a full proof">
 
@@ -120,7 +120,8 @@ The giant's z-score creeps toward a ceiling of √(n − 1) = √8 ≈ 2.83 that
 3. The mean of squares is at least the square of the mean, so their squares add up to at least $(kd)^2/(n - k)$.
 4. So $n\vsigma^2 \ge kd^2 + k^2d^2/(n - k) = kd^2\,n/(n - k)$.
 5. Divide: $z^2 = d^2/\vsigma^2 \le (n - k)/k$, with equality only when the other values are all equal.
-6. $k = 1$ gives $\sqrt{n - 1}$, which is $\sqrt{8}$ for 9 pumpkins; $k = 2$ gives $\sqrt{3.5}$. With $s$, multiply by $\sqrt{(n - 1)/n}$: for $k = 1$ that is NIST's $(n - 1)/\sqrt{n}$.
+6. $k = 1$ gives $\sqrt{n - 1}$, which is $\sqrt{8}$ for 9 pumpkins; $k = 2$ gives $\sqrt{3.5}$.
+7. With $s$, multiply by $\sqrt{(n - 1)/n} = \sqrt{8/9} \approx 0.943$: for $k = 1$ the ceiling becomes NIST's $(n - 1)/\sqrt{n} = 8/3 \approx 2.67$, and the 30 kg giant scores $\approx 2.65$.
 
 </StepThrough>
 
@@ -132,17 +133,17 @@ The eight ordinary pumpkins are not all equal, so the bound is never reached, wh
 
 The quartiles resist a few outliers, not many, and assume a symmetric middle.
 
-**Too many outliers.** Make both 7 kg pumpkins giants too: 4, 5, 5, 6, 6, 6, 30, 30, 30. Now Q₃ = 30, IQR = 25 and the upper fence is 67.5 kg, so nothing is flagged. The board holds two giants at most; the code checks this case. Rousseeuw and Hubert give the IQR a [breakdown value](/statistics/descriptive-statistics-cheat-sheet/#one-bad-value-which-summaries-survive) of 25%, the share of outliers that can carry it arbitrarily far <Cite id="rousseeuw2017" />: 2 giants of 9 (22%) are survived, 3 of 9 (33%) are not.
+**Too many outliers.** Make both 7 kg pumpkins giants too: 4, 5, 5, 6, 6, 6, 30, 30, 30. Now Q₃ = 30, IQR = 25 and the upper fence is 67.5 kg, so nothing is flagged. The board holds two giants at most; the code checks this case. Rousseeuw and Hubert give the IQR a [breakdown value](/statistics/descriptive-statistics-cheat-sheet/#one-bad-value-which-summaries-survive) of 25%, the smallest share of outliers that can carry it arbitrarily far <Cite id="rousseeuw2017" />: it survives 2 giants of 9 (22%) but not 3 (33%).
 
 **Skewed data.** The IQR rule is how a box plot marks outliers, and the box plot assumes symmetry, so on skewed data it flags many regular points; Rousseeuw and Hubert point to a box plot adjusted for skewness <Cite id="rousseeuw2017" />. For exponential data, a common right-skewed shape for waiting times, about 4.81% of values are flagged, all past the upper fence (the lower fence is below 0), against 0.70% for normal data, 0.35% on each side.
 
-**The quartile method.** NumPy numbers nine quantile methods in Hyndman and Fan's order, with 'linear', number 7, as the default, and adds four variations of it <Cite id="numpy-percentile" />. With one giant the five methods the second program checks all give the pumpkins 5 and 7, but worked example 2 shows a list where the verdict changes.
+**The quartile method.** NumPy offers Hyndman and Fan's nine quantile methods, numbered in their order, with 'linear' (number 7) as the default, plus four variations of it <Cite id="numpy-percentile" />. With one giant the five methods the NumPy program below checks all give the pumpkins 5 and 7, but worked example 2 shows a list where the verdict changes.
 
 <Simpler label="the same idea with two giants side by side">
 
-Read the σ column: the second giant makes σ the culprit.
+Watch the <Var name="sigma" /> column: the second giant stretches <Var name="sigma" /> so far that neither giant reaches |z| > 2.
 
-| Giants | Mean | σ | z of a giant | \|z\| > 2? | IQR rule? |
+| Giants | Mean | <Var name="sigma" /> | z of a giant | \|z\| > 2? | IQR rule? |
 | --- | --- | --- | --- | --- | --- |
 | 1 | ≈ 8.44 | ≈ 7.68 | ≈ 2.81 | yes | yes |
 | 2 | 11 | ≈ 10.19 | ≈ 1.87 | no | yes |
@@ -153,14 +154,14 @@ A third rule, the modified z-score, keeps the z-score's shape with robust parts:
 
 | Property | z-score rule | IQR rule |
 | --- | --- | --- |
-| Center and yardstick | Mean μ and standard deviation σ | Quartiles Q₁, Q₃ and the IQR |
+| Center and yardstick | Mean <Var name="mu" /> and standard deviation <Var name="sigma" /> | Quartiles Q₁, Q₃ and the IQR |
 | Flag when | \|z\| > 3 (or 2, 2.5) | Below Q₁ − 1.5 IQR or above Q₃ + 1.5 IQR |
-| Outlier inside its own yardstick? | Yes, it moves μ and σ | Barely, until about a quarter of the data are outliers |
+| Outlier inside its own yardstick? | Yes, it moves <Var name="mu" /> and <Var name="sigma" /> | Barely, until about a quarter of the data are outliers |
 | One 30 kg pumpkin among 9 | z ≈ 2.81: flagged at 2, not at 3 | Past the 10 kg fence: flagged |
 | Two 30 kg pumpkins | z ≈ 1.87 each: never flagged | Both flagged |
 | Three 30 kg pumpkins | z ≈ 1.41 each: never flagged | Fence at 67.5 kg: nothing flagged |
-| Largest possible \|z\| with 9 values | √8 ≈ 2.83 with σ, 8/3 ≈ 2.67 with s | No ceiling |
-| Share of normal data flagged | 0.27% at 3, 4.55% at 2 | About 0.70% (fence ≈ 2.70σ) |
+| Largest possible \|z\| with 9 values | √8 ≈ 2.83 with <Var name="sigma" />, 8/3 ≈ 2.67 with s | No ceiling |
+| Share of normal data flagged | 0.27% at 3, 4.55% at 2 | About 0.70% (fence ≈ 2.70 <Var name="sigma" />) |
 | Assumes | Roughly normal data, n large enough | A symmetric middle and a stated quartile method |
 | Robust upgrade | Median and MAD (the modified z-score) | A box plot adjusted for skewness |
 
@@ -175,7 +176,7 @@ With one, two or three giants the pumpkins' median stays 6 and their MAD stays 1
 ### When to use which
 
 - **Large, roughly symmetric data, one suspect at most:** |z| > 3 is fine.
-- **Small samples or several suspects:** use the IQR rule or the modified z-score. The ceiling passes 3 only from 11 values on, so with 10 or fewer |z| > 3 never fires, with <Var name="sigma" /> or s.
+- **Small samples or several suspects:** use the IQR rule or the modified z-score. The ceiling passes 3 only from 11 values on, so with 10 or fewer values the rule |z| > 3 never fires, whether you use <Var name="sigma" /> or s.
 - **Skewed features such as latencies:** log-transform first, or use an adjusted box plot.
 - **Always:** a flag starts a check. Outliers may be errors, or "valuable nuggets of information" <Cite id="rousseeuw2017" />.
 
