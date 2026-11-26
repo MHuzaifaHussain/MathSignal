@@ -2468,8 +2468,8 @@ const bigChoose = (n, k) => {
 
 // ---- DistributionBoard density mode (decision 0018) ----
 // Numbers land with the module: areas, bins, means and variances are exact Fractions, asserted here. The sentences
-// stay provisional until the PDF page has had its review, so they are checked for their numbers and their
-// no-spoiler words, not yet word for word.
+// the probability density page quotes are pinned word for word; the rest are checked for their numbers and their
+// no-spoiler words.
 const dens = await import('../src/components/react/distributionBoard/density.ts');
 const densSetups = await import('../src/components/react/distributionBoard/densitySetups.ts');
 const densState = await import('../src/components/react/distributionBoard/densityState.ts');
@@ -2621,19 +2621,36 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	assert.throws(() => densState.densityReducer(densState.initialDensityState('sand-pour'), { type: 'from', quarters: 1 }), /needs a setup with an interval/);
 	assert.throws(() => densState.densityReducer(densState.initialDensityState('sand-pour'), { type: 'spread', on: true }), /needs a setup with the switch/);
 }
-// The sentences carry the right numbers (word-for-word pins wait for the PDF page's review).
+// The sentences carry the right numbers; the ones the probability density page quotes are pinned word for word.
 {
 	const pour = (name, perCm) => densRun('sand-pour', { type: 'preset', name }, { type: 'bin-width', binsPerCm: perCm });
 	const tallest = (name, perCm) => densSay.tallestLine(pour(name, perCm));
 	assert.ok(tallest('Even sand', 1).includes('1/4 ÷ 1 = 1/4 per cm'));
 	assert.ok(tallest('Sand heap', 4).includes('15/128') && tallest('Sand heap', 4).includes('15/32 per cm'));
-	assert.ok(tallest('Narrow sand', 2).includes('1 ÷ 0.5 = 2 per cm, taller than 1'));
 	assert.ok(!tallest('Narrow sand', 1).includes('taller'));
 	const interval = (...actions) => densSay.intervalLine(densRun('sand-interval', ...actions));
-	assert.ok(interval().visible.includes('P(1 ≤ X ≤ 2) = 1/4 = 0.25'));
-	assert.ok(interval({ type: 'preset', name: 'Lopsided heap' }).visible.includes('= 5/12 ≈ 0.42') && interval({ type: 'preset', name: 'Lopsided heap' }).spoken.includes('5/12, or about 0.42'));
-	assert.ok(interval({ type: 'preset', name: 'Lopsided heap' }, { type: 'to', quarters: 16 }).visible.includes('3/4 = 0.75'));
-	assert.ok(interval({ type: 'preset', name: 'Lopsided heap' }, { type: 'to', quarters: 4 }).visible.includes('P(X = 1) = 0, although the curve is 1/2 per cm tall there'));
+	const lopsided = { type: 'preset', name: 'Lopsided heap' };
+	assert.ok(interval(lopsided).visible.includes('= 5/12 ≈ 0.42') && interval(lopsided).spoken.includes('5/12, or about 0.42'));
+	const spreadOf = (name) => densSay.spreadLines(densRun('sand-interval', { type: 'preset', name }, { type: 'spread', on: true }));
+	// Every board sentence the page quotes, so the page and the board can't drift apart.
+	const quoted = [
+		[tallest('Narrow sand', 2), 'The tallest bar, 0 to 0.5 cm, holds all the sand. Height = 1 ÷ 0.5 = 2 per cm, taller than 1.'],
+		[tallest('Narrow sand', 4), 'The tallest bars, 0 to 0.25 cm and 0.25 to 0.5 cm, hold 1/2 of the sand each. Height = 1/2 ÷ 0.25 = 2 per cm, taller than 1.'],
+		[densSay.curveLine(densRun('sand-pour', { type: 'preset', name: 'Sand heap' }, { type: 'stage', stage: 'curve' })), "The curve is the pile's height at each point: it rises from 0 at 0 cm to 1/2 per cm at 2 cm and falls back to 0 at 4 cm."],
+		[interval().visible, 'From 1 to 2 cm: the shaded area is 1/4 of the sand, so P(1 ≤ X ≤ 2) = 1/4 = 0.25.'],
+		[interval(lopsided, { type: 'from', quarters: 0 }, { type: 'to', quarters: 4 }).visible, 'From 0 to 1 cm: the shaded area is 1/4 of the sand, so P(0 ≤ X ≤ 1) = 1/4 = 0.25.'],
+		[interval(lopsided, { type: 'to', quarters: 16 }).visible, 'From 1 to 4 cm: the shaded area is 3/4 of the sand, so P(1 ≤ X ≤ 4) = 3/4 = 0.75.'],
+		[interval(lopsided, { type: 'to', quarters: 4 }).visible, 'From 1 to 1 cm: no width, so no area. P(X = 1) = 0, although the curve is 1/2 per cm tall there.'],
+		[spreadOf('Even sand')[1], 'Variance: 4/3 ≈ 1.33 cm². Standard deviation: σ = √(4/3) ≈ 1.15 cm.'],
+		[spreadOf('Lopsided heap')[0], 'The mean is μ = 5/3 ≈ 1.67 cm: the pile balances there.'],
+	];
+	const { readFileSync } = await import('node:fs');
+	const densityPage = readFileSync('src/content/docs/probability/probability-density-functions.mdx', 'utf8');
+	for (const [said, pinned] of quoted) {
+		assert.equal(said, pinned);
+		assert.ok(densityPage.includes(`"${pinned}"`), `the density page no longer quotes "${pinned}"`);
+	}
+	assert.ok(spreadOf('Sand heap')[1].startsWith('Variance: 2/3 ≈ 0.67 cm². ') && densityPage.includes('"Variance: 2/3 ≈ 0.67 cm²"'));
 	assert.ok(interval({ type: 'preset', name: 'Sand heap' }, { type: 'from', quarters: 0 }, { type: 'to', quarters: 0 }).visible.includes('the curve is 0 there too'));
 	assert.ok(interval({ type: 'to', quarters: 16 }, { type: 'from', quarters: 0 }).visible.includes('all the sand') && interval({ type: 'to', quarters: 16 }, { type: 'from', quarters: 0 }).visible.endsWith('= 1.'));
 	const spread = (name) => densSay.spreadLines(densRun('sand-interval', { type: 'preset', name }, { type: 'spread', on: true })).join(' ');
