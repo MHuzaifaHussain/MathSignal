@@ -22,7 +22,7 @@ references:
   - lee2021
   - sklearn-feature-hashing
 author: Muhammad Huzaifa Hussain
-reviewedAt: 2026-11-25
+reviewedAt: 2026-11-26
 aiAssisted: true
 primaryQuery: birthday problem
 searchIntent: solve
@@ -116,9 +116,16 @@ $$
 
 So each new person multiplies the chance by one more factor: $q_{n+1} = q_n (1 - n/d)$, and the factors shrink as the calendar fills. A match becomes more likely than not near $n \approx 1.18\sqrt{d}$, about 22.5 for 365 days (the fold below shows why). The chance of a match climbs quickly:
 
-| People | 10 | 20 | 23 | 30 | 40 | 50 | 57 | 70 |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Chance of a match | 0.1169 | 0.4114 | 0.5073 | 0.7063 | 0.8912 | 0.9704 | 0.9901 | 0.9992 |
+| People | Chance of a match |
+| --- | --- |
+| 10 | 0.1169 |
+| 20 | 0.4114 |
+| 23 | 0.5073 |
+| 30 | 0.7063 |
+| 40 | 0.8912 |
+| 50 | 0.9704 |
+| 57 | 0.9901 |
+| 70 | 0.9992 |
 
 Apart from 23 and 57, the values are 1 minus Grinstead and Snell's Table 3.2 (p. 79) <Cite id="grinstead2003" />.
 
