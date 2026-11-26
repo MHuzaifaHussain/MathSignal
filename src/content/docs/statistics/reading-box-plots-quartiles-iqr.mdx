@@ -140,7 +140,7 @@ A dot is a value past a fence: drawn, not deleted, and not proven wrong. Wickham
 
 ### Which quartile? Tools disagree
 
-There is no single agreed formula for quartiles, so two tools can report different values for the same list; this page uses NumPy's default. NIST's handbook says no interpolation is universally accepted, and its own default differs from NumPy's <Cite id="nist-percentiles" />. Hyndman and Fan found packages using one definition for a quantile and another for the box plot <Cite id="hyndman1996" />. NumPy offers nine methods numbered as Hyndman and Fan number them, type 1 to type 9, and its default, `linear`, is type 7 <Cite id="numpy-quantile" />. Tukey's hinges take Q1 and Q3 as the medians of the lower and upper halves of the sorted list, each half including the middle value when n is odd.
+There is no single agreed formula for quartiles, so two tools can report different values for the same list; this page uses NumPy's default. NIST's handbook says no interpolation is universally accepted, and its own default differs from NumPy's <Cite id="nist-percentiles" />. Hyndman and Fan found packages using one definition for a quantile and another for the box plot <Cite id="hyndman1996" />. NumPy numbers nine of its methods as Hyndman and Fan do, type 1 to type 9; its default, `linear`, is type 7 <Cite id="numpy-quantile" />. Tukey's hinges take Q1 and Q3 as the medians of the lower and upper halves of the sorted list, each half including the middle value when n is odd.
 
 | Method | Q1 | Q3 | IQR | Upper fence | 162 cm drawn as a dot? |
 | --- | --- | --- | --- | --- | --- |
