@@ -161,6 +161,7 @@ export const NOTATION = [
 	},
 	{
 		key: 'fences',
+		wraps: true,
 		tex: 'Q_1 - 1.5\\,\\operatorname{IQR},\\; Q_3 + 1.5\\,\\operatorname{IQR}',
 		say: '"the lower and upper fences"',
 		meaning: 'Tukey\'s fences: a value strictly beyond one is flagged by the IQR rule',
@@ -327,6 +328,7 @@ export const NOTATION = [
 	},
 	{
 		key: 'preimage',
+		wraps: true,
 		tex: '\\{X = x\\} = \\{\\omega \\in \\Omega : X(\\omega) = x\\}',
 		say: '"the event X equals x"',
 		meaning: 'The set of outcomes that X sends to x; P(X = x) is the probability of this event',
@@ -718,6 +720,7 @@ export const NOTATION = [
 	},
 	{
 		key: 'linear-combination',
+		wraps: true,
 		tex: 'c_1\\mathbf{v}_1 + c_2\\mathbf{v}_2 + \\cdots + c_k\\mathbf{v}_k',
 		say: '"c one v one plus c two v two, up to c k v k"',
 		meaning: 'A linear combination: scale each vector by a number, its weight, and add the results',
@@ -732,12 +735,14 @@ export const NOTATION = [
 	},
 	{
 		key: 'set-builder',
+		wraps: true,
 		tex: '\\{\\, c\\,\\mathbf{a} + d\\,\\mathbf{b} : c, d \\in \\mathbb{R} \\,\\}',
 		say: '"the set of all c a plus d b, for every real c and d"',
 		meaning: 'A set described by a rule: everything of the form before the colon, for every choice allowed after it',
 	},
 	{
 		key: 'standard-basis',
+		wraps: true,
 		tex: '\\mathbf{e}_1 = (1, 0),\\ \\mathbf{e}_2 = (0, 1)',
 		say: '"e one and e two"',
 		meaning: 'The unit steps along the axes: e₁ is one step east, e₂ one step north',
@@ -752,6 +757,7 @@ export const NOTATION = [
 	},
 	{
 		key: 'matrix-vector-product',
+		wraps: true,
 		tex: '\\mathbf{W}\\mathbf{x} = x_1\\,\\mathbf{W}_{:,1} + \\cdots + x_n\\,\\mathbf{W}_{:,n}',
 		say: '"W times x"',
 		meaning: 'A matrix times a vector: the linear combination of the columns of W, weighted by the entries of x',

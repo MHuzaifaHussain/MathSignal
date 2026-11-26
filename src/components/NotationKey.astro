@@ -16,7 +16,7 @@ const rows = symbols.map((key) => {
 });
 ---
 
-<table class="notation-key">
+<table class="notation-key" aria-label="Notation">
 	<thead>
 		<tr>
 			<th scope="col">Symbol</th>
@@ -28,7 +28,7 @@ const rows = symbols.map((key) => {
 		{
 			rows.map((row) => (
 				<tr>
-					<td class="symbol" set:html={row.html} />
+					<td class:list={['symbol', { 'symbol-wraps': row.wraps }]} set:html={row.html} />
 					<td>{row.say}</td>
 					<td>
 						{row.meaning}
@@ -41,8 +41,9 @@ const rows = symbols.map((key) => {
 </table>
 
 <style>
-	/* A symbol never breaks across lines; on narrow screens Starlight lets the table scroll instead. */
-	.symbol {
+	/* A symbol stays on one line unless its entry says it wraps (a long one, such as the pre-image), which breaks after
+	 * its relations. A table still wider than a phone scrolls, focusable and named (decision 0024). */
+	.symbol:not(.symbol-wraps) {
 		white-space: nowrap;
 	}
 

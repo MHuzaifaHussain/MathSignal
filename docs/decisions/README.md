@@ -29,3 +29,4 @@ Format: context, decision, consequences, alternatives considered. Number them in
 | [0021](0021-norm-balls-and-normball-model.md) | Norm balls on VectorBoard2D, and the NormBall model | Accepted; amends [0014](0014-vector-board.md); copy provisional, NormBall's UI follows its page specs |
 | [0022](0022-regression-board-model.md) | The regression board, rebuilt on an exact model | Accepted for the model and data sets; the UI follows its page specs |
 | [0023](0023-page-footer-and-properties-table.md) | The full page footer and PropertiesTable | Accepted; extends [0009](0009-single-sources-of-truth.md) |
+| [0024](0024-focusable-scroll-boxes.md) | Wide tables and formulas scroll in focusable, named boxes | Accepted |

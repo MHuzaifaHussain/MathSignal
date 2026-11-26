@@ -7373,4 +7373,16 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	assert.deepEqual(dens.areaBetween(heap, fraction(2, 1), fraction(2, 1)), fraction(0, 1));
 }
 
+// ---- Page components: names of wide tables and formulas (decision 0024) ----
+
+{
+	const { FORMULA_SCROLL_LABEL, TABLE_SCROLL_FALLBACK_LABEL, tableScrollLabel } = await import('../src/components/scrollBoxes/labels.ts');
+	assert.equal(FORMULA_SCROLL_LABEL, 'Formula, scrolls sideways');
+	assert.equal(tableScrollLabel(['Property', 'Mean', 'Median', 'Mode']), 'Table: Property, Mean, Median, Mode, scrolls sideways');
+	// A markdown table's empty corner and stray whitespace never reach the name.
+	assert.equal(tableScrollLabel(['', ' z-score\n rule ', 'IQR rule']), 'Table: z-score rule, IQR rule, scrolls sideways');
+	assert.equal(tableScrollLabel([]), TABLE_SCROLL_FALLBACK_LABEL);
+	assert.equal(tableScrollLabel(['  ', '']), 'Table, scrolls sideways');
+}
+
 console.log('Board check passed.');

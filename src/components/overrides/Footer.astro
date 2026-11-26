@@ -2,6 +2,7 @@
 // Starlight Footer override: Starlight's own footer (previous/next, last updated) plus who wrote the
 // page, the licenses, and a prefilled "Report an error" link. Concept pages (frontmatter `topic`) also get
 // "How this page was made" and "Cite this page" (decision 0023). Recheck on every Starlight upgrade.
+// It is on every page, so it also loads the script that makes wide tables and formulas focusable (decision 0024).
 import DefaultFooter from '@astrojs/starlight/components/Footer.astro';
 import { Code } from '@astrojs/starlight/components';
 import { AUTHOR_NAME, REPOSITORY_URL, SITE_URL, TEXT_LICENSE_URL } from '../../seo/site.mjs';
@@ -57,6 +58,10 @@ const howMade = isConceptPage ? howMadeDetail(entry.data.aiAssisted) : undefined
 	</p>
 </div>
 {citation && <p class="page-cite-print">{citePrintLine(citation)}</p>}
+
+<script>
+	import '../scrollBoxes/focusableScrollBoxes.ts';
+</script>
 
 <style>
 	.page-credits {
