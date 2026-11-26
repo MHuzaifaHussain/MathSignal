@@ -7,9 +7,9 @@ topic: linear-algebra/linear-combinations-and-span
 type: B
 objectives:
   - Write a point as a linear combination of two vectors, and find the weights for a point in the plane by solving two small equations.
-  - Describe the span of one vector, of two vectors in the plane and of two vectors in space, as a point, a line, a plane or all of R².
+  - Describe the span of one vector, of two vectors in the plane and of two vectors in space, as a point, a line, a plane in space or the whole plane.
   - Tell from two vectors in R² whether their span is a line or the whole plane, including vectors that nearly line up.
-  - Explain why a linear layer's outputs, an attention output and a LoRA update each lie in the span of a fixed set of vectors.
+  - Explain why a linear layer's outputs and a LoRA update each lie in the span of a fixed set of vectors, and an attention output in the span of its sequence's values.
 takeaways:
   - A linear combination scales vectors and adds them, as in 1 × (2, 1) + 2 × (1, 2) = (4, 5). The numbers 1 and 2 are its weights.
   - The span of some vectors is every linear combination of them, with any real weights, negatives and fractions included. It always contains the zero vector.
@@ -59,7 +59,7 @@ import VectorBoard2D from "../../../components/react/VectorBoard2D.tsx";
 
 ## In everyday terms
 
-<Analogy breaks='Whole steps reach every grid spot only by luck of the east and north cards. With the cards “1 east, 1 north” and “1 west, 2 north”, the spot 1 east needs two thirds of the first card and minus one third of the second: a span uses every real number of steps. And backward walking is not optional; without it, two cards reach only a wedge of the field.'>
+<Analogy breaks='Real trips come in whole or half steps, but a span allows any real number of each card, fractions and negatives included.'>
 
 On the playground grid from the vectors page, you start at the gate with two trip cards: "1 step east" and "1 step north". You may walk each card as many times as you like, part of a time, or backward. To reach the bench 4 east and 5 north, walk the east card 4 times and the north card 5 times. Every spot can be reached this way, and the two counts are the spot's coordinates.
 
@@ -70,7 +70,7 @@ The field hides one thing. A drone in a sports hall with only the controls "forw
 </Analogy>
 
 <WhyThisMatters>
-A layer of a neural network multiplies its input by a weight matrix, and that product is a linear combination of the matrix's columns, with the input's entries as the weights. So every output the layer can produce lies in the span of those columns, and a layer with 2 inputs and 3 outputs can only ever produce points of one plane in R³. Fine-tuning methods such as LoRA (low-rank adaptation) use the same fact on purpose: they let a layer's weights change only within the span of a few vectors, which cuts how many numbers have to be trained.
+A layer of a neural network multiplies its input by a weight matrix, and that product is a linear combination of the matrix's columns, with the input's entries as the weights. So every output the layer can produce lies in the span of those columns, and a layer with 2 inputs and 3 outputs can only ever produce points of one plane in three-dimensional space. Fine-tuning methods such as LoRA (low-rank adaptation) use the same fact on purpose: they let a layer's weights change only within the span of a few vectors, which cuts how many numbers have to be trained.
 </WhyThisMatters>
 
 ## Reach the flag with two trips
@@ -89,7 +89,7 @@ c = 1 and d = 2. Check says "Yes. 1 × a + 2 × b = (2, 1) + (2, 4) = (4, 5), th
 
 After Check the readout adds "a and b point along different lines, so their span is the whole plane." (The span is every point c **a** + d **b** can reach.) That answers the deeper question: every point can be reached, but not always with the slider's half steps. The point (1, 0) needs c = 2/3 and d = −1/3: 2/3 × (2, 1) − 1/3 × (1, 2) = (1, 0). Of the 121 whole-number points from (−5, −5) to (5, 5), the half-step sliders reach only 41.
 
-Now try the presets. East and north ends "The flag is 4 × a + 5 × b.": with east and north steps, the weights are the coordinates. A step back opens its readout with "c = −1, d = 1. c a + d b = (−1, 1). The flag is at (4, 5)." Both trips head east, so a point to the west needs a negative weight. Under Show as, Lists writes the same sum as numbers. Leave Same line until after the second board.
+Now try the presets. Press East and north: its readout ends "The flag is 4 × a + 5 × b." With east and north steps, the weights are the coordinates. Press A step back: its readout opens with "c = −1, d = 1. c a + d b = (−1, 1). The flag is at (4, 5)." Both trips head east, so a point to the west needs a negative weight. Under Show as, choose Lists to see the same sum written as numbers. Leave the Same line preset until after the second board.
 
 ## Scale, then add: a linear combination
 
@@ -137,7 +137,7 @@ Your task: under "Your guess: the span of a and b is", choose Only the origin, A
 
 A line. Check says "Yes. b = −2 × a, so a and b lie on one line through the origin, and every c a + d b stays on it. The span is that line." and draws that line in ochre. The guess The whole plane gets "Not quite. b = −2 × a points exactly opposite a, so every c a + d b = (c − 2d) × a stays on the line through a. The span is that line." Two arrows pointing opposite ways share one line.
 
-Now press Nearly lined up: **a** = (4, 2) and **b** = (3, 2). The readout says "a and b point along different lines, so their span is the whole plane." The span doesn't shrink a little as the arrows close in. It stays the whole plane until they line up exactly, and then it jumps to a line. Both zero ends "a and b are both the zero vector, so every c a + d b is (0, 0). The span is just the origin." On the first board, Same line sets **b** = (4, 2) and ends "The flag is off that line, so no c and d reach it."
+Now press Nearly lined up: **a** = (4, 2) and **b** = (3, 2). The readout says "a and b point along different lines, so their span is the whole plane." The span doesn't shrink a little as the arrows close in. It stays the whole plane until they line up exactly, and then it jumps to a line. Press Both zero: its readout ends "a and b are both the zero vector, so every c a + d b is (0, 0). The span is just the origin." On the first board, the Same line preset sets **b** = (4, 2), and its readout ends "The flag is off that line, so no c and d reach it."
 
 So two vectors in the plane span a line, not the plane, exactly when one is a multiple of the other. Sanderson gives the same three cases: for most pairs the span is the whole plane, it is a line when the two line up, and only the origin when both are zero <Cite id="sanderson2016span" />.
 
@@ -167,7 +167,7 @@ Take **u** = (1, 0, 1) and **v** = (0, 1, 1). Then 2 **u** + 3 **v** = (2, 3, 5)
 
 ## Notation
 
-<NotationKey symbols={["vector", "scalar", "zero-vector", "linear-combination", "span", "set-builder", "standard-basis", "matrix", "matrix-vector-product"]} />
+<NotationKey symbols={["vector", "scalar", "zero-vector", "linear-combination", "span", "real-space", "set-builder", "standard-basis", "matrix", "matrix-vector-product"]} />
 
 <PreciseStatement>
 
@@ -223,7 +223,7 @@ The same argument works for any vector $\mathbf{w}$ in the span: replace $\mathb
 3. Multiply the first equation by $b_2$, the second by $b_1$, and subtract: $c\,(a_1 b_2 - a_2 b_1) = x b_2 - y b_1$, so $c = (x b_2 - y b_1)/D$.
 4. Likewise, multiplying by $a_2$ and $a_1$ gives $d = (a_1 y - a_2 x)/D$.
 5. Substituting back gives $(x, y)$ exactly, so every point is reached: $\operatorname{span}\{\mathbf{a}, \mathbf{b}\} = \mathbb{R}^2$.
-6. The converse, as a sketch: if $D = 0$, then $a_1 b_2 = a_2 b_1$, so $\mathbf{a}$ and $\mathbf{b}$ are multiples of one vector (or zero), and every combination stays on that line. Check: $\mathbf{a} = (2, 1)$, $\mathbf{b} = (1, 2)$ give $D = 3$, $c = (2x - y)/3$ and $d = (2y - x)/3$, the formula from the fold above.
+6. The converse, as a sketch: if $D = 0$, then $a_1 b_2 = a_2 b_1$, so $\mathbf{a}$ and $\mathbf{b}$ are multiples of one vector (or zero), and every combination stays on that line. Check: $\mathbf{a} = (2, 1)$, $\mathbf{b} = (1, 2)$ give $D = 3$, $c = (2x - y)/3$ and $d = (2y - x)/3$, the formula in the fold "a formula for every point" under Scale, then add.
 
 </StepThrough>
 
@@ -239,7 +239,7 @@ We need $c\,(1, 2) + d\,(3, 1) = (7, 4)$, so $c + 3d = 7$ and $2c + d = 4$. The 
 
 <WorkedExample number={2} title="In the span or not, in three dimensions">
 
-Let $\mathbf{u} = (1, 0, 1)$ and $\mathbf{v} = (0, 1, 1)$. Is $(2, 3, 5)$ in their span? The first entry of $c\,\mathbf{u} + d\,\mathbf{v}$ is $c$, so $c = 2$; the second is $d$, so $d = 3$; the third is $c + d = 5$, which matches. Yes: $2\,\mathbf{u} + 3\,\mathbf{v}$. Is $(1, 1, 0)$? The first two entries give $c = 1$ and $d = 1$, and then the third entry is 2, not 0. No. Two of the equations fix the weights, and the third is the test.
+Let $\mathbf{u} = (1, 2, 1)$ and $\mathbf{v} = (1, -1, 2)$. Is $(1, 5, 0)$ in their span? The first two entries of $c\,\mathbf{u} + d\,\mathbf{v}$ give $c + d = 1$ and $2c - d = 5$. Adding them gives $3c = 6$, so $c = 2$ and $d = -1$. The third entry is $c + 2d = 2 - 2 = 0$, which matches. Yes: $2\,\mathbf{u} - \mathbf{v}$. Is $(1, 5, 1)$? The same two entries force $c = 2$ and $d = -1$, and then the third entry is 0, not 1. No. Two of the equations fix the weights, and the third is the test.
 
 </WorkedExample>
 
@@ -257,7 +257,7 @@ The output is $(x_1,\ 2x_1 + x_2,\ x_2)$. For $(2, 5, 1)$: the first entry gives
 
 ## Where spans show up in machine learning
 
-Every output of a linear layer, every attention output and every low-rank weight update is a linear combination of a fixed set of vectors, so it lies in their span.
+Every output of a linear layer and every low-rank weight update is a linear combination of a fixed set of vectors, so it lies in their span. An attention output is a linear combination of the value vectors computed from its own input sequence, so it lies in their span.
 
 ### A layer's outputs live in the span of its columns
 
@@ -269,7 +269,7 @@ $$
 
 Here $\mathbf{W}$ has $m$ rows and $n$ columns, and $\mathbf{W}_{:,j}$ is its $j$-th column.
 
-With the columns (1, 0, 1) and (0, 1, 1) of worked example 2, the input (2, 3) gives (2, 3, 5), and no input gives (1, 1, 0). The equation $\mathbf{W}\mathbf{x} = \mathbf{y}$ has a solution exactly when $\mathbf{y}$ is in the span of the columns, the column space, and reaching every $\mathbf{y}$ in $\mathbb{R}^m$ needs at least $m$ columns (p. 36) <Cite id="goodfellow2016linalg" />.
+With the columns (1, 0, 1) and (0, 1, 1) of the three-dimensional example above, the input (2, 3) gives (2, 3, 5), and no input gives (1, 1, 0). The equation $\mathbf{W}\mathbf{x} = \mathbf{y}$ has a solution exactly when $\mathbf{y}$ is in the span of the columns, the column space, and reaching every $\mathbf{y}$ in $\mathbb{R}^m$ needs at least $m$ columns (p. 36) <Cite id="goodfellow2016linalg" />.
 
 So a linear layer from 2 inputs to 3 outputs can only produce points of one plane, whatever the input. Goodfellow et al. make the same point with a matrix of 3 rows and 2 columns: changing its 2-entry input traces out at best a 2-D plane within R³ (p. 36) <Cite id="goodfellow2016linalg" />. A bias moves that plane parallel to itself, usually off the origin, and an activation function after the layer bends it.
 
@@ -285,7 +285,7 @@ Read with spans: $\mathbf{A}\mathbf{x}$ is a list of just $r$ numbers, so $\math
 
 <Simpler label="the update with four numbers a side" id="lora-by-hand">
 
-A small illustration of our own: take $d = k = 4$ and $r = 1$, with $\mathbf{B} = (1, 2, 0, 1)$ as a column, $\mathbf{A} = (1, 0, -1, 2)$ as a row and $\mathbf{x} = (1, 1, 1, 1)$. Then $\mathbf{A}\mathbf{x} = 1 + 0 - 1 + 2 = 2$, and $\mathbf{B}\mathbf{A}\mathbf{x} = (2, 4, 0, 2)$, which is $2\,\mathbf{B}$. Any other input gives some other multiple of $\mathbf{B}$: the update always lies on the line that $\mathbf{B}$ spans. Training $\Delta\mathbf{W}$ directly would mean 16 numbers; $\mathbf{B}$ and $\mathbf{A}$ hold 8. At full size, for a matrix of 4,096 by 4,096 with $r = 8$ (again our own arithmetic), the update has 65,536 numbers to train instead of 16,777,216, 256 times fewer.
+A small illustration of our own: take $d = k = 4$ and $r = 1$, with $\mathbf{B} = (1, 2, 0, 1)$ as a column, $\mathbf{A} = (1, 0, -1, 2)$ as a row and $\mathbf{x} = (1, 1, 1, 1)$. Then $\mathbf{A}\mathbf{x} = 1 + 0 - 1 + 2 = 2$, and $\mathbf{B}\mathbf{A}\mathbf{x} = (2, 4, 0, 2)$, which is $2\,\mathbf{B}$. Any other input gives some other multiple of $\mathbf{B}$: the update always lies on the line that $\mathbf{B}$ spans. Training $\Delta\mathbf{W}$ directly would mean 16 numbers; $\mathbf{B}$ and $\mathbf{A}$ hold 8. At full size, for a matrix of 4,096 by 4,096 with $r = 8$ (again our own arithmetic), the update has 65,536 numbers to train instead of 16,777,216: 256 times fewer.
 
 </Simpler>
 
@@ -408,6 +408,9 @@ while tested < 1000:
 u, v = (1, 0, 1), (0, 1, 1)
 assert comb(2, u, 3, v) == (2, 3, 5)
 assert comb(1, u, 1, v) == (1, 1, 2) != (1, 1, 0)
+u_2, v_2 = (1, 2, 1), (1, -1, 2)
+assert weights((1, 5), (1, 2), (1, -1)) == (2, -1)
+assert comb(2, u_2, -1, v_2) == (1, 5, 0) != (1, 5, 1)
 
 # Worked examples.
 assert comb(1, (1, 2), 2, (3, 1)) == (7, 4) and det2((1, 2), (3, 1)) == -5
