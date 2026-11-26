@@ -17,6 +17,40 @@ async function mdxFiles(directory) {
 	return files.flat();
 }
 
+/** Import name -> Pyodide package name ("sklearn" -> "scikit-learn"), from the lockfile loadPackagesFromImports reads. */
+function packageNamesByImport(pyodide) {
+	const names = new Map();
+	for (const entry of Object.values(pyodide.lockfile.packages)) {
+		for (const importName of entry.imports) names.set(importName, entry.name);
+	}
+	return names;
+}
+
+/** The Pyodide packages `code` imports; the standard library and unknown modules are skipped, as loadPackagesFromImports does. */
+function packagesImportedBy(code, findImports, packageNames) {
+	const found = findImports(code);
+	try {
+		return [...new Set(found.toJs().filter((name) => packageNames.has(name)).map((name) => packageNames.get(name)))];
+	} finally {
+		found.destroy();
+	}
+}
+
+/**
+ * Loads each package explicitly and fails loudly. loadPackage only logs a failed download, so on a cold cache the
+ * example would die later on a bare ModuleNotFoundError; this names the page and the package instead.
+ */
+async function loadPackagesFor(pyodide, packages, label) {
+	if (packages.length === 0) return;
+	const errors = [];
+	await pyodide.loadPackage(packages, { messageCallback: () => undefined, errorCallback: (message) => errors.push(message) });
+	const missing = packages.filter((name) => !(name in pyodide.loadedPackages));
+	if (missing.length > 0 || errors.length > 0) {
+		const detail = errors.length > 0 ? ` ${errors.join(' ')}` : '';
+		throw new Error(`${label} imports ${packages.join(', ')}, but Pyodide could not load ${missing.length > 0 ? missing.join(', ') : 'them cleanly'}.${detail}`);
+	}
+}
+
 async function main() {
 	const examples = [];
 	for (const file of await mdxFiles(DOCS_DIR)) {
@@ -31,11 +65,13 @@ async function main() {
 	}
 
 	const pyodide = await loadPyodide();
+	const packageNames = packageNamesByImport(pyodide);
+	const findImports = pyodide.pyimport('pyodide.code').find_imports;
 	const failures = [];
 	for (const [index, example] of examples.entries()) {
 		const label = `${example.page} (example ${index + 1})`;
 		try {
-			await pyodide.loadPackagesFromImports(example.code, { messageCallback: () => undefined });
+			await loadPackagesFor(pyodide, packagesImportedBy(example.code, findImports, packageNames), label);
 			// Each example runs in a fresh namespace so one page can't leak variables into the next.
 			const namespace = pyodide.globals.get('dict')();
 			await pyodide.runPythonAsync(example.code, { globals: namespace });
