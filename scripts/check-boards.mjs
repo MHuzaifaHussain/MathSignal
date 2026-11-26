@@ -4126,6 +4126,41 @@ const labelsOverlap = (first, second, size) => {
 	assert.deepEqual(vd.chalkNote(tripPreset('square-corner')), { long: "the trips add, the lengths don't", short: "trips add, lengths don't" });
 	assert.equal(vd.ochreElement(tripPreset('there-and-back')), null);
 	assert.ok(vd.planeLabels(tripPreset('there-and-back')).some((label) => label.text === 'zero vector'));
+	// Trips and cart notes sit in the lower-left quadrant, clear of the north label and the y-axis's top number; the
+	// other kinds keep the top-left. No opening or preset puts an arrow tip or a label there. The note's box, at most
+	// three 24px lines from 12px over the bottom of a 270px plane and kept left of the y-axis, is x < −0.8, y < −1.8.
+	{
+		const { getSetup: vectorSetup } = await import('../src/components/react/vectorBoard/setups.ts');
+		const inNoteBox = ([x, y]) => x < -0.8 && y < -1.8;
+		const checkedStates = {
+			'trips-add': [tripsDone, tripsArrows].flatMap((state) => [state, ...vectorSetup('trips-add').presets.map((preset) => vst.reducer(state, { type: 'preset', id: preset.id }))]),
+			'cart-push': (() => {
+				const shown = runVec('cart-push', { type: 'check' }, { type: 'check' }, { type: 'show-answer' });
+				assert.ok(shown.checked, 'the cart board is past Check');
+				return [shown, ...vectorSetup('cart-push').presets.map((preset) => vst.reducer(shown, { type: 'preset', id: preset.id }))];
+			})(),
+		};
+		for (const [id, states] of Object.entries(checkedStates)) {
+			// "There and back" has no note (its sum is zero), so its b may run into the corner.
+			const noted = states.filter((state) => vd.chalkNote(state) !== null);
+			assert.ok(noted.length >= 4, `${id}: the note shows on most presets`);
+			for (const state of noted) {
+				assert.equal(vd.chalkNoteCorner(state), 'bottom-left', `${id} draws its note bottom-left`);
+				for (const point of [state.a, state.b, [state.a[0] + state.b[0], state.a[1] + state.b[1]]]) {
+					assert.ok(!inNoteBox(point), `${id}: (${point}) reaches the chalk note at a = (${state.a}), b = (${state.b})`);
+				}
+				for (const label of vd.planeLabels(state)) {
+					for (const size of PLANE_SIZES) {
+						const box = labelBox(label, size);
+						assert.ok(!(box.left < -0.8 && box.bottom < -1.8), `${id}: "${label.text}" reaches the chalk note at a = (${state.a}), b = (${state.b}) on a ${size}px plane`);
+					}
+				}
+			}
+		}
+		for (const id of ['trips-scale', 'align', 'span-reach', 'span-shape']) assert.equal(vd.chalkNoteCorner(vst.initialState(id)), 'top-left', `${id} keeps the top-left note`);
+		const { readFileSync } = await import('node:fs');
+		assert.ok(readFileSync('src/components/react/VectorBoard2D.tsx', 'utf8').includes('corner={chalkNoteCorner(state)}'), 'VectorBoard2D places its note through chalkNoteCorner');
+	}
 	// When b runs straight back along a, their labels sit on opposite sides of the shared line.
 	const backLabels = vd.planeLabels(tripPreset('there-and-back'));
 	const labelAt = (labels, id) => labels.find((label) => label.id === id).at;

@@ -1026,6 +1026,18 @@ export function chalkNote(state: VectorState): ChalkText | null {
 	}
 }
 
+/** Where the chalk note sits on the plane. */
+export type ChalkCorner = 'top-left' | 'bottom-left';
+
+/**
+ * The top-left corner holds the north label on trips boards and the y-axis's top number and "length 5" on the cart,
+ * so those notes move to the lower-left quadrant, which none of their openings or presets that show a note reaches.
+ */
+export function chalkNoteCorner(state: VectorState): ChalkCorner {
+	const kind = setupOf(state).kind;
+	return kind === 'add' || kind === 'cart' ? 'bottom-left' : 'top-left';
+}
+
 // ---- The coordinate table ----
 
 export interface TableRow {

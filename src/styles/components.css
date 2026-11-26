@@ -77,6 +77,14 @@
 	display: none;
 }
 
+/* In the lower-left quadrant, kept to the left half so it never reaches the y-axis or its numbers. */
+.ms-chalk-note.is-bottom-left {
+	inset-block-start: auto;
+	inset-block-end: 0.75rem;
+	max-inline-size: calc(50% - 1.5rem);
+	text-wrap: balance;
+}
+
 @container (max-width: 559px) {
 	.ms-chalk-note-long {
 		display: none;

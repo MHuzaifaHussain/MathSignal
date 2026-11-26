@@ -25,6 +25,7 @@ import {
   announcementFor,
   boardLabel,
   chalkNote,
+  chalkNoteCorner,
   checkRefusal,
   columnVectors,
   feedbackLine,
@@ -296,7 +297,7 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
         <div className="ms-vec-body">
           <div ref={planeRef} className="ms-vec-plane">
             <VectorPlane state={state} linkedId={linkedId} size={planeSize} onMove={moveHandle} />
-            {note && <ChalkNote long={note.long} short={note.short} />}
+            {note && <ChalkNote long={note.long} short={note.short} corner={chalkNoteCorner(state)} />}
           </div>
           <div className="ms-vec-side">
             <div className="ms-vec-readouts">
