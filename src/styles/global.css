@@ -341,6 +341,13 @@ mark {
 	font-family: var(--ms-font-ui);
 }
 
+/* ── Wrapped code never scrolls sideways (math-plots-code.md) ──
+ * Expressive Code keeps a wrapped line at least 20ch wide; with the line numbers and the copy button's room that is
+ * wider than a 320px phone's column, so the block would scroll. Below that floor the line just wraps sooner. */
+:root .expressive-code pre.wrap .ec-line .code {
+	min-width: 0;
+}
+
 /* ── Code copy button in forced colors ──
  * Expressive Code paints the copy icon as a masked background-color, which forced colors repaint as Canvas, so the
  * button would show as an empty box. `:root` outranks Expressive Code's own rule whatever the stylesheet order. */
