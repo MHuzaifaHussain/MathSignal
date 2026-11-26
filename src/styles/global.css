@@ -341,6 +341,16 @@ mark {
 	font-family: var(--ms-font-ui);
 }
 
+/* ── Code copy button in forced colors ──
+ * Expressive Code paints the copy icon as a masked background-color, which forced colors repaint as Canvas, so the
+ * button would show as an empty box. `:root` outranks Expressive Code's own rule whatever the stylesheet order. */
+@media (forced-colors: active) {
+	:root .expressive-code .copy button::after {
+		forced-color-adjust: none;
+		background-color: ButtonText;
+	}
+}
+
 /* ── Motion ── */
 @view-transition {
 	navigation: auto;
