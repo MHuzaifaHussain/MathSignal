@@ -2,6 +2,7 @@
 // before every build. Node 24 runs the TypeScript modules directly, so no test framework is needed.
 // Each section names the behavior it pins; the exact values come from the board's design doc.
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { fraction, formatFraction, addFractions, subtractFractions, divideFractions, multiplyFractions, compareFractions, toNumber, isPerfectSquare, squareRoot, absoluteFraction, fractionSign, maxFraction } from '../src/components/react/boardMath.ts';
 import { joinWords, plural, equalsDecimal, fractionText, terminatesWithin, decimalText, amountText } from '../src/components/react/boardText.ts';
 import { probability, checkGoal, pour, intersect, union, complement, WEIGHT_TOTAL } from '../src/components/react/eventSpace/model.ts';
@@ -9,6 +10,11 @@ import { SCENARIOS, hasWordedRowHeaders } from '../src/components/react/eventSpa
 import { getSetup } from '../src/components/react/eventSpace/setups.ts';
 import { spokenMath } from '../src/components/react/spokenMath.ts';
 import { distributionOf, distributionFromPmf, mean, variance, standardDeviation, torqueSign, classifyGuess } from '../src/components/react/distributionBoard/model.ts';
+
+// Git may check files out with CRLF (core.autocrlf on Windows); the checks below search for '\n', so they read LF text.
+function readText(path) {
+	return readFileSync(path, 'utf8').replace(/\r\n/g, '\n');
+}
 
 // ---- Shared board helpers ----
 
@@ -1755,8 +1761,7 @@ const announcerRun = () => {
 	guard.interrupt();
 	assert.equal(guard.take('p', true), false, 'a button was pressed since');
 	// The outcome board's pencil goes through the guard, not a hand-written flag.
-	const { readFileSync } = await import('node:fs');
-	const outcomeBoard = readFileSync('src/components/react/distributionBoard/OutcomeBoard.tsx', 'utf8');
+	const outcomeBoard = readText('src/components/react/distributionBoard/OutcomeBoard.tsx');
 	assert.ok(outcomeBoard.includes('useCommittedSlider') && !outcomeBoard.includes('pencilMoving'));
 }
 
@@ -1803,14 +1808,14 @@ const assertTableFoldSays = (where, announce) => {
 }
 // Text scans, like the color scans: the old name is gone, print wins the cascade, and no fold holds a control.
 {
-	const { readFileSync, readdirSync } = await import('node:fs');
+	const { readdirSync } = await import('node:fs');
 	const path = await import('node:path');
 	const filesUnder = (dir) => readdirSync(dir, { recursive: true, withFileTypes: true }).filter((entry) => entry.isFile()).map((entry) => path.join(entry.parentPath, entry.name).split(path.sep).join('/'));
 	const oldName = ['Show as', 'table'].join(' ');
 	for (const file of [...filesUnder('src/components/react'), ...filesUnder('src/content/docs')]) {
-		assert.ok(!readFileSync(file, 'utf8').includes(oldName), `${file} still names the switch "${oldName}"; it is "Table view" (decision 0017)`);
+		assert.ok(!readText(file).includes(oldName), `${file} still names the switch "${oldName}"; it is "Table view" (decision 0017)`);
 	}
-	const css = readFileSync('src/styles/components.css', 'utf8');
+	const css = readText('src/styles/components.css');
 	const screenRule = css.search(/\.ms-board-table-fold\.is-folded\s*\{\s*display:\s*none;\s*\}/);
 	const printRule = css.search(/@media print\s*\{\s*\.ms-board-table-fold\.is-folded\s*\{\s*display:\s*block;\s*\}/);
 	assert.ok(screenRule >= 0, 'components.css folds .ms-board-table-fold.is-folded with display: none');
@@ -1821,7 +1826,7 @@ const assertTableFoldSays = (where, announce) => {
 	const CONTROL_TOKENS = ['<button', '<input', '<select', '<textarea', 'tabIndex', 'onFocus', 'onKeyDown', 'onClick'];
 	const wrapped = new Set();
 	for (const file of filesUnder('src/components/react').filter((name) => name.endsWith('.tsx'))) {
-		const source = readFileSync(file, 'utf8');
+		const source = readText(file);
 		// The opening tag may hold arrow functions (onToggle={(open) => ...}), so "=>" does not end it.
 		for (const [, inner] of source.matchAll(/<TableFold\b(?:=>|[^>])*>([\s\S]*?)<\/TableFold>/g)) {
 			// Nothing but one self-closing element between the tags; a prop holding JSX would leave "}>" here instead.
@@ -1838,16 +1843,16 @@ const assertTableFoldSays = (where, announce) => {
 	}
 	assert.deepEqual([...wrapped].sort(), [...TABLE_FOLD_CHILDREN].sort(), 'every listed table is folded by some board');
 	for (const child of TABLE_FOLD_CHILDREN) {
-		const source = readFileSync(`src/components/react/${child}`, 'utf8');
+		const source = readText(`src/components/react/${child}`);
 		for (const token of CONTROL_TOKENS) assert.ok(!source.includes(token), `${child} is folded behind Table view but contains ${token}`);
 	}
 	// The shared piece is the only place the switch's name is written: TableFold.tsx shows TABLE_FOLD_LABEL, and no
 	// board code outside guided/ spells the name as a string or JSX text (comments may still mention it).
-	assert.ok(readFileSync('src/components/react/guided/TableFold.tsx', 'utf8').includes('{TABLE_FOLD_LABEL}'));
+	assert.ok(readText('src/components/react/guided/TableFold.tsx').includes('{TABLE_FOLD_LABEL}'));
 	const withoutComments = (source) => source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
 	const spelledName = new RegExp(String.raw`(['"\x60])${tableFold.TABLE_FOLD_LABEL}\1|>\s*${tableFold.TABLE_FOLD_LABEL}\s*<`);
 	for (const file of filesUnder('src/components/react').filter((name) => /\.tsx?$/.test(name) && !name.startsWith('src/components/react/guided/'))) {
-		assert.ok(!spelledName.test(withoutComments(readFileSync(file, 'utf8'))), `${file} writes "${tableFold.TABLE_FOLD_LABEL}" itself; use the shared TableFold`);
+		assert.ok(!spelledName.test(withoutComments(readText(file))), `${file} writes "${tableFold.TABLE_FOLD_LABEL}" itself; use the shared TableFold`);
 	}
 }
 
@@ -2078,8 +2083,7 @@ const bigChoose = (n, k) => {
 	assert.equal(columnAxis.tickEvery(11), 2);
 	assert.equal(columnAxis.tickEvery(4), 1);
 	// components.css copies two of these numbers by hand; tie them to columnAxis so neither side drifts alone.
-	const { readFileSync } = await import('node:fs');
-	const columnCss = readFileSync('src/styles/components.css', 'utf8');
+	const columnCss = readText('src/styles/components.css');
 	const stub = columnCss.match(/--ms-cols-stub:\s*(\d+)px;/);
 	assert.ok(stub, 'components.css no longer sets --ms-cols-stub');
 	assert.equal(Number(stub[1]), columnAxis.MIN_VISIBLE_PX, 'the CSS column stub matches MIN_VISIBLE_PX');
@@ -2674,8 +2678,7 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 		[spreadOf('Even sand')[1], 'Variance: 4/3 ≈ 1.33 cm². Standard deviation: σ = √(4/3) ≈ 1.15 cm.'],
 		[spreadOf('Lopsided heap')[0], 'The mean is μ = 5/3 ≈ 1.67 cm: the pile balances there.'],
 	];
-	const { readFileSync } = await import('node:fs');
-	const densityPage = readFileSync('src/content/docs/probability/probability-density-functions.mdx', 'utf8');
+	const densityPage = readText('src/content/docs/probability/probability-density-functions.mdx');
 	for (const [said, pinned] of quoted) {
 		assert.equal(said, pinned);
 		assert.ok(densityPage.includes(`"${pinned}"`), `the density page no longer quotes "${pinned}"`);
@@ -3337,8 +3340,7 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	// The sentences the mean-vs-median-vs-mode page quotes, so the page and the board can't drift apart.
 	const splitMode = run('cafe-millionaire', { type: 'newcomer', on: true }, { type: 'set-value', value: 4 });
 	assert.equal(lines(splitMode), '10 customers. Mean: 40 / 10 = 4. Median: (4 + 4) / 2 = 4, the average of the 5th and 6th. Mode: 4 and 5, each held by 3 customers.');
-	const { readFileSync: readPage } = await import('node:fs');
-	const centersPage = readPage('src/content/docs/statistics/mean-vs-median-vs-mode.mdx', 'utf8');
+	const centersPage = readText('src/content/docs/statistics/mean-vs-median-vs-mode.mdx');
 	for (const [said, pinned] of [
 		[lines(splitMode).slice(lines(splitMode).indexOf('Mode: ')), 'Mode: 4 and 5, each held by 3 customers.'],
 		[dsay.announcementFor(splitMode, { type: 'set-value', value: 4 }), 'The mean stayed at 4 thousand dollars; the median stayed at 4; the mode changed from 5 to 4 and 5.'],
@@ -3708,7 +3710,7 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 {
 	const dc = await import('../src/components/react/descriptiveStats/chart.ts');
 	const dst = await import('../src/components/react/descriptiveStats/state.ts');
-	const { readFileSync, readdirSync } = await import('node:fs');
+	const { readdirSync } = await import('node:fs');
 	const run = (setupId, ...actions) => actions.reduce(dst.reducer, dst.initialState(setupId));
 	const numbersStage = { type: 'stage', stage: 'numbers' };
 
@@ -3757,7 +3759,7 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	const zAndIqr = { key: 'a', x: 90, row: 0, lane: false, text: null, look: false, iqrFlag: true, zFlag: true };
 	const above = { ...zAndIqr, key: 'b', row: 1, zFlag: false };
 	assert.deepEqual(dc.flagTagsShown(zAndIqr, [zAndIqr, above]), { iqr: false, z: true }, 'each flag is judged on its own: z stays when only IQR repeats above');
-	const dotPlot = readFileSync('src/components/react/descriptiveStats/DotPlot.tsx', 'utf8');
+	const dotPlot = readText('src/components/react/descriptiveStats/DotPlot.tsx');
 	assert.ok(dotPlot.includes('const tags = flagTagsShown(dot, stack);') && dotPlot.includes('<Dot key={dot.key} dot={dot} stack={onAxis} />'), 'DotPlot draws on-axis tags through flagTagsShown');
 	const zRows = dc.chartRows(run('marks-scaling', { type: 'scale', scale: 'z' }));
 	assert.deepEqual(zRows.map((row) => row.zTicks.map((tick) => tick.kind)), [['mean', 'sigma', 'sigma'], ['mean', 'sigma', 'sigma']]);
@@ -3765,8 +3767,8 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 
 	// The board's files never render KaTeX (decision 0007).
 	const files = ['src/components/react/DescriptiveStats.tsx', ...readdirSync('src/components/react/descriptiveStats').map((name) => `src/components/react/descriptiveStats/${name}`)];
-	for (const file of files) assert.ok(!readFileSync(file, 'utf8').includes('<LaTeX'), `${file} renders KaTeX`);
-	const descBoard = readFileSync('src/components/react/DescriptiveStats.tsx', 'utf8');
+	for (const file of files) assert.ok(!readText(file).includes('<LaTeX'), `${file} renders KaTeX`);
+	const descBoard = readText('src/components/react/DescriptiveStats.tsx');
 	assert.ok(descBoard.includes('useCommittedSlider') && /const send = useCallback\(\s*\(action: Action\) => \{\s*sliderGuard\.interrupt\(\);/.test(descBoard), 'every non-slider action interrupts the shared slider guard first');
 }
 
@@ -3800,7 +3802,7 @@ const labelsOverlap = (first, second, size) => {
 	const vs = await import('../src/components/react/vectorBoard/setups.ts');
 	const vst = await import('../src/components/react/vectorBoard/state.ts');
 	const vd = await import('../src/components/react/vectorBoard/describe.ts');
-	const { readFileSync, readdirSync } = await import('node:fs');
+	const { readdirSync } = await import('node:fs');
 	const runVec = (setupId, ...actions) => actions.reduce(vst.reducer, vst.initialState(setupId));
 	const step = (id, axis, direction) => ({ type: 'step', id, axis, direction });
 	const steps = (id, axis, direction, count) => Array.from({ length: count }, () => step(id, axis, direction));
@@ -4190,8 +4192,7 @@ const labelsOverlap = (first, second, size) => {
 			}
 		}
 		for (const id of ['trips-scale', 'align', 'span-reach', 'span-shape']) assert.equal(vd.chalkNoteCorner(vst.initialState(id)), 'top-left', `${id} keeps the top-left note`);
-		const { readFileSync } = await import('node:fs');
-		assert.ok(readFileSync('src/components/react/VectorBoard2D.tsx', 'utf8').includes('corner={chalkNoteCorner(state)}'), 'VectorBoard2D places its note through chalkNoteCorner');
+		assert.ok(readText('src/components/react/VectorBoard2D.tsx').includes('corner={chalkNoteCorner(state)}'), 'VectorBoard2D places its note through chalkNoteCorner');
 	}
 	// When b runs straight back along a, their labels sit on opposite sides of the shared line.
 	const backLabels = vd.planeLabels(tripPreset('there-and-back'));
@@ -5142,18 +5143,18 @@ const labelsOverlap = (first, second, size) => {
 	// The board's files never use the μ or σ colors, and never render KaTeX.
 	const vectorFiles = ['src/components/react/VectorBoard2D.tsx', ...readdirSync('src/components/react/vectorBoard').map((name) => `src/components/react/vectorBoard/${name}`)];
 	for (const file of vectorFiles) {
-		const source = readFileSync(file, 'utf8');
+		const source = readText(file);
 		assert.ok(!/\bmu\b|sigma|--ms-mu|--ms-sigma/.test(source), `${file} uses a μ or σ color`);
 		assert.ok(!source.includes('<LaTeX'), `${file} renders KaTeX`);
 	}
 	// Dotted lines come from the one shared helper, so every plane draws them the same way.
-	const planeSource = readFileSync('src/components/react/vectorBoard/VectorPlane.tsx', 'utf8');
+	const planeSource = readText('src/components/react/vectorBoard/VectorPlane.tsx');
 	assert.ok(/import \{[^}]*[\s,]Segment[\s,][^}]*\} from "\.\.\/planeLines"/.test(planeSource), 'VectorPlane imports the shared Segment');
 	assert.ok(!/function Segment[\s({<]|const DOTTED\s|strokeDasharray/.test(planeSource), 'VectorPlane defines its own dotted line');
 	// Headless lines (span-reach's cut arrows, the span line) come only from planeLines' Segment as well.
 	assert.ok(!/Line\.Segment|<Polyline[^>]*points=\{\[\s*\[(?:from|piece|line)/.test(planeSource), 'VectorPlane draws a headless line without the shared Segment');
 	// The tray draws one slider per weight from sliderWeights, so a combine setup never gets a third slider.
-	const boardSource = readFileSync('src/components/react/VectorBoard2D.tsx', 'utf8');
+	const boardSource = readText('src/components/react/VectorBoard2D.tsx');
 	assert.ok(/sliderWeights\(setup\)\.map/.test(boardSource) && !/CONTROL_LABELS\.scale\b/.test(boardSource), 'VectorBoard2D renders its sliders outside sliderWeights');
 }
 
@@ -5458,7 +5459,7 @@ const labelsOverlap = (first, second, size) => {
 // Every number the week-9 setups will show, exact. The UI follows once those page specs exist.
 {
 	const nb = await import('../src/components/react/normBall/model.ts');
-	const { readFileSync, readdirSync } = await import('node:fs');
+	const { readdirSync } = await import('node:fs');
 	const f = (numerator, denominator = 1) => fraction(numerator, denominator);
 	const w = (a, b) => [a, b];
 	const { FENCE_LOSS, TOUCH_LOSS } = nb;
@@ -5570,7 +5571,7 @@ const labelsOverlap = (first, second, size) => {
 	assert.throws(() => nb.validateModel(broken({ touchLoss: { ...TOUCH_LOSS, curvature: w(f(2), f(2)) } })), /arrow from path point 0 ends at \(8\/1, 1\/1\), off the board/);
 	// No μ or σ colors and no KaTeX in NormBall's files.
 	for (const name of readdirSync('src/components/react/normBall')) {
-		const source = readFileSync(`src/components/react/normBall/${name}`, 'utf8');
+		const source = readText(`src/components/react/normBall/${name}`);
 		assert.ok(!/\bmu\b|sigma|--ms-mu|--ms-sigma|<LaTeX/.test(source), `normBall/${name} uses a μ or σ color or KaTeX`);
 	}
 }
@@ -5582,7 +5583,6 @@ const labelsOverlap = (first, second, size) => {
 	const rm = await import('../src/components/react/linearRegression/model.ts');
 	const rd = await import('../src/components/react/linearRegression/datasets.ts');
 	const { CLASS_HEIGHTS } = await import('../src/components/react/descriptiveStats/datasets.ts');
-	const { readFileSync } = await import('node:fs');
 	const f = (numerator, denominator = 1) => fraction(numerator, denominator);
 	const lineOf = (points) => {
 		const fit = rm.leastSquares(points);
@@ -5809,7 +5809,7 @@ const labelsOverlap = (first, second, size) => {
 	assert.deepEqual(exportedDataSets, Object.keys(presets).sort(), 'every data set in datasets.ts is in the identity sweep');
 	// The model file has no μ or σ colors and no KaTeX.
 	for (const name of ['model.ts', 'datasets.ts']) {
-		const source = readFileSync(`src/components/react/linearRegression/${name}`, 'utf8');
+		const source = readText(`src/components/react/linearRegression/${name}`);
 		assert.ok(!/\bmu\b|sigma|--ms-mu|--ms-sigma|<LaTeX/.test(source), `linearRegression/${name} uses a μ or σ color or KaTeX`);
 	}
 }
@@ -6271,20 +6271,19 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 
 // File scans: color budget, the one gate, the shared slider guard, the hook-less dispatcher and forced colors.
 {
-	const { readFileSync } = await import('node:fs');
 	const dir = 'src/components/react/normalDistribution';
-	const zBoard = readFileSync(`${dir}/ZBoard.tsx`, 'utf8');
+	const zBoard = readText(`${dir}/ZBoard.tsx`);
 	const count = (source, token) => source.split(token).length - 1;
 	for (const color of ['mu', 'sigma', 'attention']) assert.equal(count(zBoard, `plotColors.${color}`), 2, `ZBoard.tsx uses plotColors.${color} twice`);
 	assert.ok(!/#[0-9a-fA-F]{3,8}\b/.test(zBoard) && !zBoard.includes('Theme.'), 'ZBoard.tsx has no hex colors and no Mafs Theme');
 	assert.ok(zBoard.includes('aria-hidden="true"') && !zBoard.includes('handleLabels'), 'the chart is aria-hidden and its handle stays out of the tab order');
 	assert.ok(zBoard.includes('useCommittedSlider') && /const send = useCallback\(\s*\(action: ZAction\) => \{\s*sliderGuard\.interrupt\(\);/.test(zBoard), 'every non-slider action interrupts the shared slider guard first');
 	for (const file of ['ZBoard.tsx', 'ZTable.tsx', 'describe.ts']) {
-		assert.ok(!readFileSync(`${dir}/${file}`, 'utf8').includes('.checked'), `${file} reads revealed(state), never .checked`);
+		assert.ok(!readText(`${dir}/${file}`).includes('.checked'), `${file} reads revealed(state), never .checked`);
 	}
-	const dispatcher = readFileSync('src/components/react/NormalDistribution.tsx', 'utf8').split('export default function NormalDistribution')[1];
+	const dispatcher = readText('src/components/react/NormalDistribution.tsx').split('export default function NormalDistribution')[1];
 	assert.ok(dispatcher && !/\buse[A-Z]\w*\(/.test(dispatcher), 'the default export holds no hooks');
-	const css = readFileSync('src/styles/components.css', 'utf8');
+	const css = readText('src/styles/components.css');
 	const forcedStart = css.indexOf('@media (forced-colors: active) {');
 	assert.ok(forcedStart >= 0, 'components.css has a forced-colors block');
 	const forcedEnd = css.indexOf('\n}\n', forcedStart);
@@ -6299,7 +6298,6 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 // The bell's tray sliders go through the shared guard too: a commit still pending when Reset or a handle drag comes
 // stays silent, so the live region never ends on a mean or spread the board no longer shows.
 {
-	const { readFileSync } = await import('node:fs');
 	const { createSliderGuard } = await import('../src/components/react/guided/sliderGuard.ts');
 	const guard = createSliderGuard();
 	guard.moved('mu');
@@ -6311,7 +6309,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	assert.equal(guard.take('sigma', true), true, 'Mean then Spread: the Spread commit speaks');
 	guard.moved('mu');
 	assert.equal(guard.take('mu', false), false, 'a commit for a value the board no longer holds is silent');
-	const bellBoard = readFileSync('src/components/react/NormalDistribution.tsx', 'utf8').split('function BellBoard')[1].split('export default function')[0];
+	const bellBoard = readText('src/components/react/NormalDistribution.tsx').split('function BellBoard')[1].split('export default function')[0];
 	assert.ok(bellBoard.includes('useCommittedSlider<BellSlider>()'), 'the bell holds one shared slider guard');
 	assert.ok(/const handleReset = useCallback\(\(\) => \{\s*sliderGuard\.interrupt\(\);/.test(bellBoard), 'Reset interrupts the guard first');
 	for (const handler of ['handleMuMove', 'handleSigmaMove']) {
@@ -7543,10 +7541,10 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 // FunctionCurve file scans: no pink or blue, no KaTeX, no tangent defined by "staying under", no em dash, every
 // straight segment from the shared helper, and every color decision in marks.ts.
 {
-	const { readFileSync, readdirSync } = await import('node:fs');
+	const { readdirSync } = await import('node:fs');
 	const dir = 'src/components/react/functionCurve';
 	const files = [...readdirSync(dir).map((name) => `${dir}/${name}`), 'src/components/react/FunctionCurve.tsx'];
-	const sources = Object.fromEntries(files.map((file) => [file, readFileSync(file, 'utf8')]));
+	const sources = Object.fromEntries(files.map((file) => [file, readText(file)]));
 	const banned = new RegExp(['pro', 'mpt|swe', 'et'].join(''), 'i');
 	for (const [file, source] of Object.entries(sources)) {
 		for (const token of ['plotColors.mu', 'plotColors.sigma', '--ms-mu', '--ms-sigma', '<LaTeX', 'σ(', 'sigma(', 'stays under', 'under it on both sides', '—', 'Line.Segment', 'Theme.']) {
@@ -7575,7 +7573,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	assert.ok(board.includes('dispatch({ type: "point", xIndex, continues });'), 'a drag marks its later moves as continuing, so its notice lasts until the drag ends');
 	assert.ok(board.includes('return { type: "point", xIndex: value, continues };'), 'a Point slider burst marks its later moves as continuing');
 	assert.ok(board.includes('if (reason && current.refused) announce(reason);'), 'a refused Check speaks from the press only when the state will not change, so the reason is said once per press');
-	const css = readFileSync('src/styles/components.css', 'utf8');
+	const css = readText('src/styles/components.css');
 	const forced = css.slice(css.lastIndexOf('@media (forced-colors: active)'));
 	const block = forced.match(/\.ms-fncurve,\s*\.ms-fncurve-table-wrap\s*\{([^}]*)\}/);
 	assert.ok(block, 'components.css maps .ms-fncurve in forced colors');
@@ -7717,8 +7715,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		'Variance | $(b - a)^2/12$ | $2/3$ cm²',
 		'$P(X = x)$ | 0 | 0',
 	]);
-	const { readFileSync: readPage } = await import('node:fs');
-	assert.ok(readPage('src/content/docs/probability/probability-density-functions.mdx', 'utf8').includes('<PropertiesTable family="uniform" examplesHeading="Sand heap (triangle on 0 to 4 cm, top at 2 cm)" examples={{ height: "$1/2$ at 2 cm", mean: "2 cm", variance: "$2/3$ cm²", point: "0" }} />'), 'the PDF page shows the pinned Sand heap column (decision 0023)');
+	assert.ok(readText('src/content/docs/probability/probability-density-functions.mdx').includes('<PropertiesTable family="uniform" examplesHeading="Sand heap (triangle on 0 to 4 cm, top at 2 cm)" examples={{ height: "$1/2$ at 2 cm", mean: "2 cm", variance: "$2/3$ cm²", point: "0" }} />'), 'the PDF page shows the pinned Sand heap column (decision 0023)');
 
 	// Prose and math: math is split out at unescaped $, so prose wraps and reads as text.
 	assert.deepEqual(splitMath('Without replacement: $1/15$, not $0.09$', 'test'), [
@@ -7848,18 +7845,16 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	assert.equal(spanLabelAnchor(-50, 150), 'center', 'ends past both edges clamp to the row first');
 	assert.equal(spanLabelAnchor(60, 100), 'center', 'middle exactly 80%: centered is still safe');
 	assert.equal(spanLabelAnchor(100, 100), 'end', 'a zero span at the right edge');
-	const { readFileSync } = await import('node:fs');
-	const marks = readFileSync('src/components/react/chartMarks.tsx', 'utf8');
+	const marks = readText('src/components/react/chartMarks.tsx');
 	assert.ok(marks.includes('const anchor = spanLabelAnchor(from, to);'), 'SigmaSpan places every label through spanLabelAnchor');
-	const css = readFileSync('src/styles/components.css', 'utf8');
+	const css = readText('src/styles/components.css');
 	assert.ok(/\.ms-span-label\.is-start\s*\{\s*left: 0;\s*transform: none;/.test(css) && /\.ms-span-label\.is-end\s*\{\s*left: auto;\s*right: 0;\s*transform: none;/.test(css), 'edge labels line up with the span end');
 }
 
 // ---- BayesTheorem: the readout breaks between its pairs, never inside one ----
 // The pages quote "P(A | B) = 0.774   P(B) = 0.310" as one line; at 320px it may wrap, but "P(B) =" keeps its number.
 {
-	const { readFileSync } = await import('node:fs');
-	const board = readFileSync('src/components/react/BayesTheorem.tsx', 'utf8');
+	const board = readText('src/components/react/BayesTheorem.tsx');
 	// Each pair shows its symbols and gives screen readers the words ("P of A given B is 0.774.").
 	assert.ok(/<span className="ms-readout-pair">\s*<SpokenText line={{ visible: `P\(A \| B\) = \$\{posteriorText\(posterior\)\}`, spoken: `P of A given B is \$\{posteriorSpoken\(posterior\)\}\.` }} \/>\s*<\/span>\{" "\}\s*&nbsp;\{" "\}/.test(board), 'P(A | B) and its value stay together');
 	assert.ok(/<span className="ms-readout-pair">\s*<SpokenText line={{ visible: `P\(B\) = \$\{formatNumber\(evidence, 3\)\}`, spoken: `P of B is \$\{formatNumber\(evidence, 3\)\}\.` }} \/>\s*<\/span>/.test(board), 'P(B) and its value stay together');
@@ -7867,15 +7862,14 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	for (const [label, words] of [['P(A)', 'P of A'], ['P(B | A)', 'P of B given A'], ['P(B | not A)', 'P of B given not A']]) {
 		assert.ok(board.includes(`probabilitySlider("${label}", "${words}",`), `${label} slider says "${words}"`);
 	}
-	assert.ok(/\.ms-readout-pair\s*\{\s*white-space: nowrap;/.test(readFileSync('src/styles/components.css', 'utf8')), 'a readout pair never wraps');
+	assert.ok(/\.ms-readout-pair\s*\{\s*white-space: nowrap;/.test(readText('src/styles/components.css')), 'a readout pair never wraps');
 }
 
 // ---- EventSpace: the A and B tags, notes and units are drawn, not text (WCAG 2.5.3) ----
 // A cell's visible text must be where its name starts ("opens 3. … In A and B."), so the corner letters, the
 // missed note, the tallies and the units come from CSS (`content: attr(…)`) and the button holds only its label.
 {
-	const { readFileSync } = await import('node:fs');
-	const grid = readFileSync('src/components/react/eventSpace/OutcomeGrid.tsx', 'utf8');
+	const grid = readText('src/components/react/eventSpace/OutcomeGrid.tsx');
 	for (const letter of ['a', 'b']) {
 		const tag = `<span className="ms-event-tag ms-event-tag-${letter}" data-tag="${letter.toUpperCase()}" aria-hidden="true" />`;
 		assert.ok(grid.includes(tag), `the ${letter.toUpperCase()} tag is an empty span with data-tag`);
@@ -7885,8 +7879,8 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	assert.ok(grid.includes('<span className="ms-event-note" data-text={String(state.tallies[outcome.id] ?? 0)} aria-hidden="true" />'), 'the tally is drawn');
 	assert.ok(grid.includes('<span className="ms-event-units" data-text={units} aria-hidden="true" />'), 'the units are drawn');
 	assert.ok(!/className="ms-event-(note|units)".*<\/span>/.test(grid), 'no note or units text node in a cell');
-	assert.ok(/\.ms-event-note::before,\s*\.ms-event-units::before\s*\{\s*content: attr\(data-text\);/.test(readFileSync('src/styles/components.css', 'utf8')), 'components.css draws notes and units');
-	assert.ok(/\.ms-event-tag::before\s*\{\s*content: attr\(data-tag\);/.test(readFileSync('src/styles/components.css', 'utf8')), 'components.css draws the tag letter');
+	assert.ok(/\.ms-event-note::before,\s*\.ms-event-units::before\s*\{\s*content: attr\(data-text\);/.test(readText('src/styles/components.css')), 'components.css draws notes and units');
+	assert.ok(/\.ms-event-tag::before\s*\{\s*content: attr\(data-tag\);/.test(readText('src/styles/components.css')), 'components.css draws the tag letter');
 }
 
 // ---- EventSpace: every line a screen reader can browse says its symbols in words ----
@@ -8146,8 +8140,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	assert.equal(esSay.fixedCellsNote(getSetup('die-compare')), 'The events here are fixed. Use the presets to change them.');
 	assert.equal(esSay.fixedCellsNote(getSetup('monty-condition')), 'The events here are fixed. Use the presets to change them.');
 	assert.equal(esSay.fixedCellsNote(getSetup('kids-condition')), 'The events here are fixed: the outcomes can be read, not marked.');
-	const { readFileSync } = await import('node:fs');
-	const grid = readFileSync('src/components/react/eventSpace/OutcomeGrid.tsx', 'utf8');
+	const grid = readText('src/components/react/eventSpace/OutcomeGrid.tsx');
 	assert.ok(grid.includes('aria-describedby={editable ? undefined : fixedReasonId}'), 'a fixed cell points at the visible note');
 	assert.ok(grid.includes('onClick={editable ? () => onToggle(outcome.id) : onFixedPress}'), 'a press on a fixed cell is answered');
 }

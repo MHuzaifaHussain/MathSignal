@@ -173,7 +173,8 @@ function parseFrontmatter(source) {
 async function readPages() {
 	return Promise.all(
 		(await pageFiles(DOCS_DIR)).map(async (file) => {
-			const source = await readFile(file, 'utf8');
+			// LF whatever the checkout: paragraph breaks are found by searching for '\n\n'.
+			const source = (await readFile(file, 'utf8')).replace(/\r\n/g, '\n');
 			const name = relative(DOCS_DIR, file).replace(/\\/g, '/');
 			return { name, id: routeIdOf(name), source, ...parseFrontmatter(source) };
 		}),
