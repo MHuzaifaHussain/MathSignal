@@ -30,7 +30,7 @@ references:
   - lai2016
   - diakonikolas2019
 author: Muhammad Huzaifa Hussain
-reviewedAt: 2026-11-25
+reviewedAt: 2026-11-26
 aiAssisted: true
 primaryQuery: descriptive statistics
 searchIntent: learn
@@ -191,7 +191,10 @@ Descriptive statistics describe the list you have. Using a list to say something
 Let $x_1, \ldots, x_n$ be real numbers, $n \ge 1$, and let $x_{(1)} \le x_{(2)} \le \cdots \le x_{(n)}$ be the same values sorted. Then
 
 $$
-\vmu = \frac{1}{n} \sum_{i=1}^{n} x_i, \qquad \operatorname{median}(x_1, \ldots, x_n) = \begin{cases} x_{((n+1)/2)} & n \text{ odd}, \\ \tfrac{1}{2}\left(x_{(n/2)} + x_{(n/2+1)}\right) & n \text{ even}, \end{cases} \qquad \text{range} = x_{(n)} - x_{(1)}.
+\begin{gathered}
+\vmu = \frac{1}{n} \sum_{i=1}^{n} x_i, \qquad \text{range} = x_{(n)} - x_{(1)}, \\
+\operatorname{median}(x_1, \ldots, x_n) = \begin{cases} x_{((n+1)/2)} & n \text{ odd}, \\ \tfrac{1}{2}\left(x_{(n/2)} + x_{(n/2+1)}\right) & n \text{ even}. \end{cases}
+\end{gathered}
 $$
 
 With $n_v$ the number of values equal to $v$, the modes, $\operatorname{mode}(x_1, \ldots, x_n)$, are the values $v$ whose count $n_v$ is largest. By this site's convention there is no mode when the list has at least two distinct values and they all have the same count; a list whose values are all equal has that value as its mode.

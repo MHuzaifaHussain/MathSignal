@@ -24,7 +24,7 @@ references:
   - ng2001
   - niculescu2005
 author: Muhammad Huzaifa Hussain
-reviewedAt: 2026-11-25
+reviewedAt: 2026-11-26
 aiAssisted: true
 primaryQuery: naive bayes classifier
 searchIntent: apply
@@ -177,7 +177,10 @@ and under 0-1 loss the best prediction is $\arg\max_y P(y) \prod_{k} P(x_k \mid 
 3. Divide the two scores, take logs and collect the terms that multiply $x_k$:
 
 $$
-\log \frac{P(+ \mid \mathbf{x})}{P(- \mid \mathbf{x})} = b + \sum_{k=1}^{n} w_k x_k, \quad w_k = \log \frac{\theta_k (1 - \phi_k)}{\phi_k (1 - \theta_k)}, \quad b = \log \frac{P(+)}{P(-)} + \sum_{k=1}^{n} \log \frac{1 - \theta_k}{1 - \phi_k}.
+\begin{gathered}
+\log \frac{P(+ \mid \mathbf{x})}{P(- \mid \mathbf{x})} = b + \sum_{k=1}^{n} w_k x_k, \qquad w_k = \log \frac{\theta_k (1 - \phi_k)}{\phi_k (1 - \theta_k)}, \\
+b = \log \frac{P(+)}{P(-)} + \sum_{k=1}^{n} \log \frac{1 - \theta_k}{1 - \phi_k}.
+\end{gathered}
 $$
 
 4. "Log-odds > 0" is a straight cut through feature space. Domingos and Pazzani show the same for any nominal attributes in the proof of their Theorem 4 (§6) <Cite id="domingos1997" />, and Ng and Jordan write the same sum as their equation 2 <Cite id="ng2001" />.

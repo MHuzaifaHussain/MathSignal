@@ -25,7 +25,7 @@ references:
   - brown2001
   - bouthillier2021
 author: Muhammad Huzaifa Hussain
-reviewedAt: 2026-11-25
+reviewedAt: 2026-11-26
 aiAssisted: true
 primaryQuery: binomial distribution
 searchIntent: learn
@@ -230,7 +230,10 @@ In plain words: count the successes in n independent tries that each succeed wit
 Let $n \ge 1$ be an integer and $p \in [0, 1]$. Let $X_1, \ldots, X_n$ be mutually independent, each with $P(X_i = 1) = p$ and $P(X_i = 0) = 1 - p$, so that each $X_i \sim \operatorname{Bernoulli}(p)$. Then $X = X_1 + \cdots + X_n$ satisfies
 
 $$
-P(X = k) = \binom{n}{k} p^k (1 - p)^{n - k} \quad \text{for } k = 0, 1, \ldots, n, \qquad \mathbb{E}[X] = \vmu = np, \qquad \operatorname{Var}[X] = \vsigma^2 = np(1 - p),
+\begin{gathered}
+P(X = k) = \binom{n}{k} p^k (1 - p)^{n - k} \quad \text{for } k = 0, 1, \ldots, n, \\
+\mathbb{E}[X] = \vmu = np, \qquad \operatorname{Var}[X] = \vsigma^2 = np(1 - p),
+\end{gathered}
 $$
 
 and $P(X = k) = 0$ for every other $k$. We write $X \sim \operatorname{Bin}(n, p)$.

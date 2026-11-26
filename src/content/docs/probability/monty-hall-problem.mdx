@@ -22,7 +22,7 @@ references:
   - rosenthal2008
   - zadrozny2004
 author: Muhammad Huzaifa Hussain
-reviewedAt: 2026-11-25
+reviewedAt: 2026-11-26
 aiAssisted: true
 primaryQuery: monty hall problem
 searchIntent: solve
@@ -141,7 +141,10 @@ If the host, given a choice, opens door 3 with probability q, the likelihoods of
 You pick door 1. An outcome $\omega = (c, o) \in \Omega$ records the car's door $c \in \{1, 2, 3\}$ and the door $o \in \{2, 3\}$ the host opens; $C_i = \{c = i\}$ and $O_j = \{o = j\}$. Assume (i) $P(C_i) = 1/3$; (ii) the host never opens door 1 or the car's door, and always offers the switch; (iii) when $c = 1$, he opens door 3 with probability $q \in [0, 1]$. Writing $P(c, o)$ for $P(\{(c, o)\})$, $P(1, 2) = (1 - q)/3$, $P(1, 3) = q/3$, $P(2, 3) = P(3, 2) = 1/3$, and
 
 $$
-P(C_2 \mid O_3) = \frac{1}{1 + q}, \quad P(C_1 \mid O_3) = \frac{q}{1 + q}, \quad P(C_3 \mid O_2) = \frac{1}{2 - q}, \quad P(C_1 \mid O_2) = \frac{1 - q}{2 - q}.
+\begin{gathered}
+P(C_2 \mid O_3) = \frac{1}{1 + q}, \quad P(C_1 \mid O_3) = \frac{q}{1 + q}, \\
+P(C_3 \mid O_2) = \frac{1}{2 - q}, \quad P(C_1 \mid O_2) = \frac{1 - q}{2 - q}.
+\end{gathered}
 $$
 
 Boundary cases. $P(O_3) = (1 + q)/3$ and $P(O_2) = (2 - q)/3$ are at least $1/3$, so both conditionals exist. With $q = 1/2$, switching wins $2/3$, as the board's count shows; with $q = 1$, $O_3$ leaves $1/2$ each; with $q = 0$, $O_3$ makes $C_2$ certain. If the host doesn't know where the car is, (ii) fails: given that an accidental door 3 shows a goat, $C_1$ and $C_1^\complement$ have $1/2$ each.

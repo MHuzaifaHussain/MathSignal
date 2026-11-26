@@ -25,7 +25,7 @@ references:
   - williams1992
   - mohamed2019
 author: Muhammad Huzaifa Hussain
-reviewedAt: 2026-11-25
+reviewedAt: 2026-11-26
 aiAssisted: true
 primaryQuery: expected value of a random variable
 searchIntent: learn
@@ -223,7 +223,10 @@ $$
 the second form on a countable sample space. For $g\colon \mathbb{R} \to \mathbb{R}$ with $\sum_i |g(x_i)|\, p_i < \infty$, $\mathbb{E}[g(X)] = \sum_i g(x_i)\, p_i$. If $\mathbb{E}[X^2] < \infty$, the variance and standard deviation are
 
 $$
-\operatorname{Var}[X] = \mathbb{E}\big[(X - \vmu)^2\big] = \mathbb{E}[X^2] - \vmu^2, \qquad \vsigma = \sqrt{\operatorname{Var}[X]}, \qquad \text{with } \vmu = \mathbb{E}[X].
+\begin{gathered}
+\operatorname{Var}[X] = \mathbb{E}\big[(X - \vmu)^2\big] = \mathbb{E}[X^2] - \vmu^2, \\
+\vsigma = \sqrt{\operatorname{Var}[X]}, \qquad \text{with } \vmu = \mathbb{E}[X].
+\end{gathered}
 $$
 
 Conventions: $\vmu$ and $\vsigma^2$ describe the distribution, so there is no $n - 1$. Square brackets on $\mathbb{E}$ follow Goodfellow and coauthors, and this page uses them on $\operatorname{Var}$ too; Grinstead and Snell write $E(X)$, $V(X)$ and $D(X)$. Boundary cases: a constant $X = a$ has $\mathbb{E}[X] = a$ and $\operatorname{Var}[X] = 0$; $\operatorname{Var}[X] = 0$ exactly when $X = \vmu$ with probability 1; $\mathbb{E}[X]$ may be a value $X$ never takes; without absolute convergence there is no expected value (St. Petersburg). Scope: discrete $X$. For a density, sums become integrals, Goodfellow and coauthors' equation (3.10) <Cite id="goodfellow2016prob" />; that case gets its own page.
@@ -522,7 +525,7 @@ assert abs(sum(plays) / len(plays) + 0.5) < 0.16
 
 **Subtracting a term whose average is zero.** Williams's REINFORCE updates a weight by $\Delta w = \alpha (r - b)\, e$: the reward $r$ minus a baseline $b$, times an eligibility $e$ (§4, p. 234). His Theorem 1 says that, for any baseline conditionally independent of the unit's output given the weights and the input, the average update never points downhill on expected reward <Cite id="williams1992" />. The reason is not that subtracting a constant leaves an expected value unchanged; this page's own rule says $\mathbb{E}[X - d] = \mathbb{E}[X] - d$. The baseline multiplies the eligibility, whose expected value is 0, so the extra term averages to 0, as Mohamed and coauthors explain for the score-function estimator (§4.2, equation (14), p. 12) <Cite id="mohamed2019" />. Williams found that a running-average baseline can "greatly enhance convergence speed", but his analysis gives no basis for choosing one, and the baseline that minimizes the variance is not the mean reward (§8.3, pp. 245–246) <Cite id="williams1992" />.
 
-**Control variates.** Mohamed and coauthors' survey states the general method: to estimate $\mathbb{E}[f(x)]$, average $f(x) - \beta\,(h(x) - \mathbb{E}[h(x)])$ instead, for any $h$ whose expected value is known. The estimate stays unbiased, the best $\beta$ is how $f$ and $h$ move together divided by the variance of $h$, and the variance is then multiplied by $1 - \operatorname{Corr}(f, h)^2$ (§7.4, equations (52)–(58), pp. 34–35); a baseline is this method with the score function as $h$ (§7.4.3, equation (61), p. 36) <Cite id="mohamed2019" />. On a plain die, estimate $\mathbb{E}[X^2] = 91/6$ by rolling, with $h = X$, whose expected value $7/2$ is known. The best $\beta$ is $(245/12)/(35/12) = 7$, so you average $X^2 - 7(X - 7/2)$ instead of $X^2$. Its six values are $37/2, 29/2, 25/2, 25/2, 29/2, 37/2$: the same expected value, but variance $56/9 \approx 6.22$ instead of $5369/36 \approx 149.1$: multiplied by $1 - \operatorname{Corr}^2 = 32/767$, about 24 times smaller. In practice $\beta$ is estimated from the same samples, which adds a small bias (§7.4.1, p. 35) <Cite id="mohamed2019" />.
+**Control variates.** Mohamed and coauthors' survey states the general method: to estimate $\mathbb{E}[f(x)]$, average $f(x) - \beta\,(h(x) - \mathbb{E}[h(x)])$ instead, for any $h$ whose expected value is known. The estimate stays unbiased, the best $\beta$ is how $f$ and $h$ move together divided by the variance of $h$, and the variance is then multiplied by $1 - \operatorname{Corr}(f, h)^2$ (§7.4, equations (52)–(58), pp. 34–35); a baseline is this method with the score function as $h$ (§7.4.3, equation (61), p. 36) <Cite id="mohamed2019" />. On a plain die, estimate $\mathbb{E}[X^2] = 91/6$ by rolling, with $h = X$, whose expected value $7/2$ is known. The best $\beta$ is $(245/12)/(35/12) = 7$, so you average $X^2 - 7(X - 7/2)$ instead of $X^2$. Its six values are $37/2$, $29/2$, $25/2$, $25/2$, $29/2$, $37/2$: the same expected value, but variance $56/9 \approx 6.22$ instead of $5369/36 \approx 149.1$: multiplied by $1 - \operatorname{Corr}^2 = 32/767$, about 24 times smaller. In practice $\beta$ is estimated from the same samples, which adds a small bias (§7.4.1, p. 35) <Cite id="mohamed2019" />.
 
 **What is open.** The survey's future-work section says that "New tools for variance reduction are needed", especially for complex systems such as Markov processes, and lists non-linear control covariates among the questions that remain open (§10.2, p. 53) <Cite id="mohamed2019" />.
 

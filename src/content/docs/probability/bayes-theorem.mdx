@@ -518,7 +518,10 @@ With 100,000 simulated people the counted shares land within 0.01 of the formula
 **A posterior over a network's weights.** Bayes' theorem applies to a whole model. Take the weights $w$ as the hypothesis and the training data $D$, pairs $(x_i, y_i)$, as the evidence. The weights are continuous, so the theorem is written with densities:
 
 $$
-p(w \mid D) = \frac{p(D \mid w)\,p(w)}{p(D)}, \qquad p(D) = \int p(D \mid w)\,p(w)\,dw, \qquad p(D \mid w) = \prod_i P(y_i \mid x_i, w).
+\begin{gathered}
+p(w \mid D) = \frac{p(D \mid w)\,p(w)}{p(D)}, \qquad p(D) = \int p(D \mid w)\,p(w)\,dw, \\
+p(D \mid w) = \prod_i P(y_i \mid x_i, w).
+\end{gathered}
 $$
 
 The product assumes the training examples are independent given the weights, with the inputs taken as given. Instead of one best set of weights, this gives a probability distribution (a density) over weight settings, which says how uncertain the model is. It is conditioning on a random variable, the case the [conditional probability frontier](/probability/conditional-probability/#research-frontier) describes. Blundell and coauthors open by noting that plain networks often make overly confident decisions, and that exact Bayesian inference on a network's weights is intractable, because there are very many weights and the network's form does not allow the integrals to be done exactly. They therefore fit a variational approximation $q(w \mid \theta)$, a simpler distribution over the weights chosen to be close to the true posterior, and train it with backpropagation; they call the method Bayes by Backprop (Section 1) <Cite id="blundell2015" />.

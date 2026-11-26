@@ -21,7 +21,7 @@ references:
   - grinstead2003
   - deisenroth2020
 author: Muhammad Huzaifa Hussain
-reviewedAt: 2026-11-25
+reviewedAt: 2026-11-26
 aiAssisted: true
 primaryQuery: law of total probability
 searchIntent: solve
@@ -127,7 +127,10 @@ Not B adds up the same way, which gives a check. The bus is on time on 70% of ra
 Let $(\Omega, \mathcal{F}, P)$ be a probability space, and let $H_1, \ldots, H_m \in \mathcal{F}$ be pairwise disjoint with $H_1 \cup \cdots \cup H_m = \Omega$. For every event $B \in \mathcal{F}$,
 
 $$
-P(B) = \sum_{k=1}^{m} P(B \cap H_k) = \sum_{k \,:\, P(H_k) > 0} P(B \mid H_k)\,P(H_k), \qquad \sum_{k=1}^{m} P(H_k) = 1.
+\begin{gathered}
+P(B) = \sum_{k=1}^{m} P(B \cap H_k) = \sum_{k \,:\, P(H_k) > 0} P(B \mid H_k)\,P(H_k), \\
+\sum_{k=1}^{m} P(H_k) = 1.
+\end{gathered}
 $$
 
 Terms with $P(H_k) = 0$ are 0 and are dropped. The same holds for countably many cases, by [countable additivity](/probability/probability-axioms/#countable-additivity). Boundary cases: overlapping cases count shared outcomes twice, cases with gaps miss outcomes, and with one case, $H_1 = \Omega$, the law says $P(B) = P(B)$.
