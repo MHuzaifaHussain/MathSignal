@@ -9,7 +9,7 @@ objectives:
   - Choose cases that split every outcome exactly once, and check that their probabilities add up to 1.
   - Find P(B) for two, three or more cases by multiplying each case's weight by the chance of B within it and adding.
   - Check an answer by confirming it lies between the smallest and largest within-case chance.
-  - Spot three slips in someone else's working, namely averaging without weights, pooling groups not picked in proportion to their size, and overlapping cases.
+  - "Spot three slips in someone else's work: averaging without weights, pooling groups that were not picked in proportion to their size, and overlapping cases."
   - Predict how a classifier's flag rate changes with the share of positive cases, and recognize the same sum in a mixture model's likelihood.
 takeaways:
   - Split the world into cases that share no outcome and cover everything, then P(B) = Σ P(B | Hₖ) P(Hₖ). The case weights must add up to 1.
@@ -96,7 +96,7 @@ Good cases put every outcome in exactly one case, so their weights add up to 1. 
 
 ### Weight, chance, multiply, add
 
-Each case contributes its weight times the event's chance inside it, and P(B) is the total. For the bags:
+Each case contributes its weight times the event's chance inside it, and P(B) is the total. The big bag's chance of red is 3/12 = 1/4, so for the bags:
 
 P(red) = 3/4 × 1/3 + 1/4 × 2/3 = 1/4 + 1/6 = 5/12 ≈ 0.417.
 
@@ -195,7 +195,7 @@ A bag holds 2 four-sided, 3 six-sided and 5 ten-sided dice. You pick one at rand
 
 <div slot="solution">
 
-The chances are $1/4$, $1/6$ and $1/10$, and every product is $1/20$: $2/10 \times 1/4 = 3/10 \times 1/6 = 5/10 \times 1/10 = 1/20$. So $P(1) = 3/20 = 0.15$, and $1/10 \le 3/20 \le 1/4$. The more common a kind of die, the more faces it has, so each kind contributes the same $1/20$.
+The chances are $1/4$, $1/6$ and $1/10$, and every product is $1/20$: $2/10 \times 1/4 = 3/10 \times 1/6 = 5/10 \times 1/10 = 1/20$. So $P(1) = 3/20 = 0.15$, and $1/10 \le 3/20 \le 1/4$. Each kind has exactly half as many dice as faces (2 against 4, 3 against 6, 5 against 10), so each kind contributes the same $1/20$.
 
 </div>
 
@@ -424,7 +424,7 @@ assert abs(pooled_red / games - float(F(3, 8))) < 0.01
 
 ## Check yourself
 
-<CheckYourself level="intuition" question="Two bags each hold half red marbles, and a lopsided die picks the bag. Does the die matter?">
+<CheckYourself level="intuition" question="Two bags are each half red, and a lopsided die picks the bag. Does the die matter?">
 No. $P(\text{red}) = 1/2 \times w + 1/2 \times (1 - w) = 1/2$ for any weight $w$: the answer lies between the smallest and largest within-case chance, and both are $1/2$.
 </CheckYourself>
 
