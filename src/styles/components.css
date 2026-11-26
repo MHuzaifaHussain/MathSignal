@@ -2504,6 +2504,13 @@
 	font-weight: 600;
 }
 
+/* The chalk note sits above the plane, not on it: every corner of the plane holds an axis number, a label or the
+ * curve on some preset, so on the plane it covered them. */
+.ms-fncurve > .ms-chalk-note {
+	position: static;
+	margin-block-end: 0.5rem;
+}
+
 /* Square, so the equal-scale views draw one unit across as long as one unit up; the CSS reserves the height before
  * hydration. One column on every width, as on VectorBoard2D. */
 .ms-fncurve-plane {

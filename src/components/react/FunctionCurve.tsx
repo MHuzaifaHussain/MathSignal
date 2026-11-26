@@ -305,9 +305,9 @@ export default function FunctionCurve({ setup: setupId }: FunctionCurveProps) {
             <SpokenText line={verdict} />
           </p>
         )}
+        {note && <ChalkNote long={note.long} short={note.short} />}
         <div ref={planeRef} className="ms-fncurve-plane">
           <CurvePlane state={state} size={planeSize} onMovePoint={movePoint} />
-          {note && <ChalkNote long={note.long} short={note.short} />}
         </div>
         {state.stage === "slope-curve" && !isCovered && (
           <div className="ms-fncurve-strip">
