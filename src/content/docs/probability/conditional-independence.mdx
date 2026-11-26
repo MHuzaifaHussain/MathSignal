@@ -13,7 +13,7 @@ objectives:
 takeaways:
   - A and B are independent given C when P(A ∩ B | C) = P(A | C) P(B | C). When P(B ∩ C) > 0 that is the same as P(A | B ∩ C) = P(A | C).
   - Ice cream and sunburn are independent on hot days and on cool days, yet still dependent over the summer, where P(I ∩ S) = 0.17 but P(I) P(S) = 0.13.
-  - A common cause that moves both events links them overall. With two groups, the gap P(A ∩ B) − P(A) P(B) is P(C) P(not C) times how much C changes the rate of each.
+  - A common cause that moves both events links them overall. With two groups, when A and B are independent given C and given not C, the gap P(A ∩ B) − P(A) P(B) is P(C) P(not C) times how much C changes the rate of each.
   - Conditioning can also create a link. Two fair coins are independent, but once you know at least one landed heads, learning the second is tails makes the first certain to be heads.
   - Naive Bayes and the two-test update assume conditional independence. When it fails, the same evidence is counted twice and the answer is too confident.
 references:
@@ -58,7 +58,7 @@ import WorkedExample from "../../../components/WorkedExample.astro";
 
 Does a day with high ice-cream sales tell you anything about sunburn at the clinic? Ice cream burns nobody, but both might follow the weather. Ask a narrower question: on hot days only, does knowing about ice cream tell you anything extra about sunburn? Repeat for cool days. If the answer is no both times, the two events are independent given the weather. That is conditional independence.
 
-Learning something can also create a link. Two coin tosses are unrelated. Wire a light that turns on when [either lands heads](#learning-about-a-common-effect-can-create-a-link), see it lit, and the coins become linked.
+Learning something can also create a link. Two coin tosses are unrelated. Wire a light that turns on when either lands heads, see it lit, and the coins become linked (see [how a common effect creates a link](#learning-about-a-common-effect-can-create-a-link)).
 
 </Analogy>
 
@@ -120,7 +120,7 @@ Boundary cases. If $P(C) = 0$ the definition doesn't apply. "Given a variable" m
 
 ## Check it inside each group
 
-To check whether A and B are independent given C, fix one value of C, compute P(A | C), P(B | C) and P(A ∩ B | C) from that group's counts alone, and compare the product with the joint. Then repeat for every other value of C. The method has three steps, and the hot days take them like this:
+To check whether A and B are independent given C, fix one value of C, compute P(A | C), P(B | C) and P(A ∩ B | C) from that group's counts alone, and compare the product with the joint. Then repeat for every other value of C. Here are the three steps on the hot days:
 
 <StepThrough title="Hot days: are ice cream and sunburn independent given H?" rigor="full">
 
@@ -180,7 +180,7 @@ A Bayesian network draws each variable as a node and arrows from causes to effec
 - **Cascade** $X \rightarrow Z \rightarrow Y$: the same pattern, because $Z$ carries everything $X$ passes to $Y$.
 - **V-structure** $X \rightarrow Z \leftarrow Y$ (the coins and the light): $X$ and $Y$ are independent, and can become dependent given $Z$, or given any descendant of $Z$.
 
-A path is active when every three-node stretch along it passes: the middle of a common parent or cascade is unobserved, and the middle of a v-structure is observed or has an observed descendant. Two sets of nodes are d-separated when no path between them is active. Graphs with the same skeleton (links, ignoring direction) and the same v-structures encode the same independencies <Cite id="kuleshov-ermon-cs228" />. So conditional independencies alone can't tell a chain from a fork over the same three nodes, but can pick out a collider.
+A path is active when every three-node stretch along it lets dependence through: a common parent or cascade does when its middle node is unobserved, and a v-structure does when its middle node, or one of its descendants, is observed. Two sets of nodes are d-separated when no path between them is active. Graphs with the same skeleton (links, ignoring direction) and the same v-structures encode the same independencies <Cite id="kuleshov-ermon-cs228" />. So conditional independencies alone can't tell a chain from a fork over the same three nodes, but can pick out a collider.
 
 </GoDeeper>
 
