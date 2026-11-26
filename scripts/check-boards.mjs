@@ -3419,6 +3419,10 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 			"One mark of 10 moved both scores for test B: min–max rose from ≈ 0.77 to 48/54 = 8/9 ≈ 0.89, the z-score fell from 1 to ≈ 0.76. Ana's 58 did not change.",
 		);
 	}
+	assert.equal(
+		lines(dst.reducer(low, { type: 'scale', scale: 'minmax' })),
+		'Test A: (36 − 21) / (39 − 21) = 15/18 = 5/6 ≈ 0.83. Test B: (58 − 10) / (64 − 10) = 48/54 = 8/9 ≈ 0.89. Min–max says test B.',
+	);
 	assert.equal(lines(dst.reducer(low, { type: 'scale', scale: 'z' })), 'Test A: (36 − 30) / 6 = 1. Test B: mean ≈ 46.89, σ ≈ 14.70, so z = (58 − 46.89) / 14.70 ≈ 0.76. z says test A.');
 
 	// pumpkin-outliers.
