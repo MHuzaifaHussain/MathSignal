@@ -2145,8 +2145,15 @@
 		--ms-event-header: 24px;
 	}
 
+	/* Cells shrink toward 36px here, too small for a tag and a centered label to share the top. The label moves into
+	 * the band under the tags, and the tags shrink to 10px, so "A B" never covers "6,1". */
 	.ms-event-cell {
+		padding-block-start: 10px;
 		font-size: 0.8125rem;
+	}
+
+	.ms-event-tag {
+		font-size: 10px;
 	}
 
 	/* Narrow boards: the steppers keep 44px height and give up width, never under 36px. */
