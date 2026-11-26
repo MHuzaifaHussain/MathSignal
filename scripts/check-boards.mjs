@@ -3692,6 +3692,27 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	for (const file of files) assert.ok(!readFileSync(file, 'utf8').includes('<LaTeX'), `${file} renders KaTeX`);
 }
 
+// ---- VectorBoard2D plane labels, shared by both VectorBoard2D sections ----
+// Labels are checked at the narrowest plane (about 270px on a 320px phone) and the widest (440px), as fitLabel draws them.
+const PLANE_SIZES = [270, 440];
+const vectorModel = await import('../src/components/react/vectorBoard/model.ts');
+/** The box a plane label covers once fitLabel has placed it, in grid units. */
+const labelBox = (label, size) => {
+	const fitted = vectorModel.fitLabel(label.at, label.away, label.text, size);
+	const [left, right] = vectorModel.fittedLabelSpan(fitted, label.text, size);
+	const [, halfHeight] = vectorModel.labelHalfSize(label.text, size);
+	return { left, right, bottom: fitted.at[1] - halfHeight, top: fitted.at[1] + halfHeight };
+};
+const labelFits = (label, size) => {
+	const box = labelBox(label, size);
+	const reach = vectorModel.labelReach(size) + 1e-9;
+	return box.left >= -reach && box.right <= reach && box.bottom >= -reach && box.top <= reach;
+};
+const labelsOverlap = (first, second, size) => {
+	const [one, two] = [labelBox(first, size), labelBox(second, size)];
+	return one.left < two.right && two.left < one.right && one.bottom < two.top && two.bottom < one.top;
+};
+
 // ---- VectorBoard2D (decision 0014) ----
 // Whole-number vectors make every sum, scaling, dot product and exact angle an integer fact. These asserts pin the
 // copy word for word and the rule that nothing gives an answer away before the reader commits.
@@ -4270,16 +4291,8 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	assert.deepEqual(vst.reducer(alignDone, moveTo('b', [5, 5])).b, [4, 4]);
 	assert.equal(vd.refusalText(alignDone, { kind: 'limit', id: 'b', axis: 'y', direction: 1 }), "b can't go further north: its entries stay between −4 and 4.");
 
-	// Plane labels stay inside the plane at every position the handles can reach, at the narrowest plane (about 270px
-	// on a 320px phone) and the widest (440px). fitLabel moves a label that would cross the edge, never the arrow it names.
-	const PLANE_SIZES = [270, 440];
-	const labelFits = (label, size) => {
-		const fitted = vm.fitLabel(label.at, label.away, label.text, size);
-		const [left, right] = vm.fittedLabelSpan(fitted, label.text, size);
-		const [, halfHeight] = vm.labelHalfSize(label.text, size);
-		const reach = vm.labelReach(size) + 1e-9;
-		return left >= -reach && right <= reach && Math.abs(fitted.at[1]) + halfHeight <= reach;
-	};
+	// Plane labels stay inside the plane at every position the handles can reach, on every PLANE_SIZES plane. fitLabel
+	// moves a label that would cross the edge, never the arrow it names.
 	const grid = (limit) => Array.from({ length: 2 * limit + 1 }, (_, index) => index - limit).flatMap((x) => Array.from({ length: 2 * limit + 1 }, (_, index) => [x, index - limit]));
 	/** Every a, b, guess and c the setup's boxes allow, before and after Check, on every stage it offers. */
 	function* reachableStates(id) {
@@ -5020,6 +5033,33 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	);
 	assert.equal(vd.readoutLines(checked({ type: 'measure', measure: 'all' }, { type: 'radius', value: 5 }))[3].split('. ').at(-1), 'Your pin is outside the diamond, on the circle and inside the square.');
 	assert.equal(vd.readoutLines(checked({ type: 'measure', measure: 'all' }, pinAt([1, 1])))[3].split('. ').at(-1), 'Your pin is inside all three.');
+	// The plane labels, at every stage, shape and length r on the narrowest and widest planes: each inside the plane,
+	// and no two of the fixed ones (east, north, home and the shapes) meeting. v follows the pin, which the reader can
+	// drag onto any label, so it is held apart only at the opening pin and the presets' pins.
+	{
+		const presetPins = vs.getSetup('city-walk').presets.map((preset) => preset.a);
+		let swept = 0;
+		for (const stage of [[], [numbers]]) {
+			for (const measure of ['l1', 'l2', 'linf', 'all']) {
+				for (let radius = 1; radius <= 5; radius += 1) {
+					for (const pin of [[3, 4], ...presetPins, [0, 0], [-5, -5], [-5, 5], [5, -5]]) {
+						const state = checked(...stage, pinAt(pin), { type: 'measure', measure }, { type: 'radius', value: radius });
+						const labels = vd.planeLabels(state);
+						const held = presetPins.some((preset) => preset[0] === pin[0] && preset[1] === pin[1]) || (pin[0] === 3 && pin[1] === 4) ? labels : labels.filter((label) => label.id !== 'a');
+						const where = `city-walk ${state.stage} ${measure} r = ${radius} pin (${pin})`;
+						for (const size of PLANE_SIZES) {
+							for (const label of labels) assert.ok(labelFits(label, size), `${where}: "${label.text}" leaves a ${size}px plane`);
+							for (const [index, first] of held.entries()) {
+								for (const second of held.slice(index + 1)) assert.ok(!labelsOverlap(first, second, size), `${where}: "${first.text}" meets "${second.text}" on a ${size}px plane`);
+							}
+						}
+						swept++;
+					}
+				}
+			}
+		}
+		assert.equal(swept, 2 * 4 * 5 * 9);
+	}
 
 	// Presets: each sets the pin, the shape and the length. The readouts add the preset's lesson; a press says the
 	// preset's whole sentence.

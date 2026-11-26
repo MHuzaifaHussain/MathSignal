@@ -323,15 +323,24 @@ export function cornerDots(state: VectorState): readonly Vec2[] {
 	return latticeOnBall(state.measure, state.radius, VIEW_LIMIT);
 }
 
+/** The diagonal each shape's label sits on: one quadrant each, none of them the presets' (all four pins are upper right). */
+const SHAPE_LABEL_DIAGONALS: Readonly<Record<Measure, Vec2>> = { l1: [-1, -1], l2: [-1, 1], linf: [1, -1] };
+/** How far out the diamond's label sits at least, so it stays below the Blocks "home" label at (−0.8, −0.45). */
+const WALK_LABEL_MIN_ALONG = 1.5;
+
 /**
- * Where each shape's label sits: down the lower-left diagonal, away from the presets' pins, with the diamond's just
- * inside its edge and the circle's and square's just outside theirs, so the three stay apart at every length.
+ * Where each shape's label sits: on its own diagonal, so no two labels meet at any length. The diamond's sits just
+ * inside its edge (pushed out past "home" at short lengths), the circle's and the square's just outside theirs.
+ * check-boards sweeps every stage, shape and length on the narrowest and widest planes.
  */
 export function shapeLabels(state: VectorState): readonly { id: string; text: string; at: Vec2 }[] {
 	const names = isBlocks(state) ? BLOCKS_PLANE_NAMES : NUMBERS_PLANE_NAMES;
 	const r = state.radius;
-	const along: Readonly<Record<Measure, number>> = { l1: r / 2 - 0.35, l2: r * Math.SQRT1_2 + 0.35, linf: r + 0.35 };
-	return drawnMeasures(state).map((measure) => ({ id: `ball-${measure}`, text: names[measure], at: [-along[measure], -along[measure]] }));
+	const along: Readonly<Record<Measure, number>> = { l1: Math.max(r / 2 - 0.35, WALK_LABEL_MIN_ALONG), l2: r * Math.SQRT1_2 + 0.35, linf: r + 0.35 };
+	return drawnMeasures(state).map((measure) => {
+		const [x, y] = SHAPE_LABEL_DIAGONALS[measure];
+		return { id: `ball-${measure}`, text: names[measure], at: [x * along[measure], y * along[measure]] };
+	});
 }
 
 // ---- The folded table ----
