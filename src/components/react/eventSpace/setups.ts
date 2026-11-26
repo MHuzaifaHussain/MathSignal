@@ -115,6 +115,7 @@ const SETUPS: Record<SetupId, Setup> = {
 		scenario: 'two-dice',
 		mode: 'condition',
 		shrinkSwitch: true,
+		holdOverlap: true,
 		label: 'The 36 outcomes of rolling two dice, with event A and the event B you can shrink the world to.',
 		events: {
 			A: { editable: true, initial: 'sum-at-least-10', presets: ['sum-at-least-10', CLEAR_PRESET] },
@@ -127,6 +128,7 @@ const SETUPS: Record<SetupId, Setup> = {
 		scenario: 'kids',
 		mode: 'condition',
 		shrinkSwitch: true,
+		holdOverlap: true,
 		label: 'A class of 12 children, one picked at random. A: wears a scarf. B: wears a hat.',
 		events: {
 			A: { editable: false, initial: 'scarf', presets: [] },

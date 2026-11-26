@@ -74,9 +74,9 @@ Many of the numbers a trained model reports are conditional probabilities, or es
 
 Before you touch anything: pick one child at random from a class of 12. Among the children who wear a hat, is a scarf more or less likely than in the whole class? And what fraction exactly? The board lets you count before you guess.
 
-The board lists the 12 children, numbered 1 to 12 in rows of four. Event A is "wears a scarf" and event B is "wears a hat". A child in A has a solid border and an "A" tag, a child in B a dashed outline and a "B" tag. The class is fixed data, so tapping a child changes nothing. Under the list the board reads out each event, starting with "A = wears a scarf: 4 of 12 = 1/3 (≈ 0.33)", and which children are in both. Count first: 5 children carry a "B" tag, so how many of those 5 also carry an "A" tag? Make your guess from that count.
+The board lists the 12 children, numbered 1 to 12 in rows of four. Event A is "wears a scarf" and event B is "wears a hat". A child in A has a solid border and an "A" tag, a child in B a dashed outline and a "B" tag. The class is fixed data, so tapping a child changes nothing. Under the list the board reads out each event, starting with "A = wears a scarf: 4 of 12 = 1/3 (≈ 0.33)". Count first: 5 children carry a "B" tag, so how many of those 5 also carry an "A" tag? Make your guess from that count.
 
-Your task: press Shrink the world to B and read the line that replaces those readouts. The switch, Shrink the world to B, keeps only the outcomes in B (the hat-wearers).
+Your task: press Shrink the world to B, which keeps only the hat-wearers, and read the line that replaces those readouts.
 
 <div class="not-content">
   <EventSpace client:visible setup="kids-condition" />
@@ -258,7 +258,7 @@ Accuracy on a subgroup of the data is a conditional probability, and it can sit 
 
 ### The next token
 
-A language model estimates the probability of each possible next token, a word or a piece of a word, given the context, the text so far: P(next token | context). It writes a whole sequence one token at a time, so by the chain rule (the multiplication rule applied once per token), its estimate for a sequence that ends with an end-of-text token is the product of these conditional probabilities, each one given everything before it. The top-$k$ sampling step on [sample spaces and events](/probability/sample-spaces-and-events/), which picks the next token only from the $k$ most likely ones, is conditioning too: keeping only the $k$ most likely tokens $V_k$ and dividing by $P(V_k)$ gives each kept token $\omega$ the probability $P(\{\omega\} \mid V_k) = P(\{\omega\})/P(V_k)$.
+A language model estimates the probability of each possible next token, a word or a piece of a word, given the context, the text so far: P(next token | context). It writes a whole sequence one token at a time, so by the chain rule (the multiplication rule applied once per token), its estimate for a sequence that ends with an end-of-text token is the product of these conditional probabilities, each one given everything before it. [Top-$k$ sampling](/probability/sample-spaces-and-events/#next-token-prediction), which picks the next token only from the $k$ most likely ones, $V_k$, is conditioning too. Dividing by $P(V_k)$ gives each kept token $\omega$ the probability $P(\{\omega\} \mid V_k) = P(\{\omega\})/P(V_k)$.
 
 ## Shrink the world in code
 
@@ -390,6 +390,7 @@ for _ in range(rolls):
 estimate = high / kept
 print(f"kept {kept} of {rolls} rolls (doubles); P(sum >= 10 | doubles) is about {estimate:.3f}")
 assert abs(kept / rolls - 1 / 6) < 0.01
+assert round(kept, -2) == 16_700
 assert abs(estimate - 1 / 3) < 0.02
 `}
 />
@@ -440,7 +441,7 @@ If every outcome of $B$ is in $A$, then $A \cap B = B$. So $P(A \mid B) = P(A \c
     That is $P(\text{scarf} \cap \text{hat})$, the chance that a random child wears both. Given a hat, the children without hats are ruled out, so divide by the 5 hat-wearers: $2/5$. Dividing by the whole sample space instead of $|B|$ forgets the information you were given.
   </Mistake>
   <Mistake wrong="Learning that B happened always changes the probability of A.">
-    Not always. On two dice, $P(\text{first die is 6} \mid \text{second die is 6}) = 1/6$, the same as $P(\text{first die is 6})$: one die tells you nothing about the other. When knowing B (for B with $P(B) > 0$) leaves the probability of A unchanged, A and B are called independent (the usual definition is $P(A \cap B) = P(A)\,P(B)$, which also covers $P(B) = 0$). The [independence](/probability/independence/) page covers it, including why independent is not the same as [mutually exclusive](/probability/independence-vs-mutual-exclusivity/).
+    Not always. On two dice, $P(\text{first die is 6} \mid \text{second die is 6}) = 1/6$, the same as $P(\text{first die is 6})$: one die tells you nothing about the other. When B has positive probability and knowing it leaves the probability of A unchanged, A and B are called independent. The usual definition, $P(A \cap B) = P(A)\,P(B)$, also covers $P(B) = 0$. The [independence](/probability/independence/) page covers it, including why independent is not the same as [mutually exclusive](/probability/independence-vs-mutual-exclusivity/).
   </Mistake>
   <Mistake wrong="If B can't happen, then P(A | B) = 0.">
     It is undefined, not 0. The definition divides by $P(B)$, and dividing by 0 gives no value, whether B is empty or merely has probability 0; the dice board refuses with "Undefined: B can't happen (probability 0)." For measurements, where single values have probability 0, the research frontier above explains what replaces the definition.

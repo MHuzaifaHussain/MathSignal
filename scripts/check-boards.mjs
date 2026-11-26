@@ -257,7 +257,8 @@ assert.deepEqual(describe.readoutLines(operations), [
 assert.equal(describe.statusLine(operations), '36 equally likely outcomes. Editing A.');
 // An empty A ∩ B is worded, not drawn as "{}", on every two-event setup.
 assert.equal(describe.readoutLines(run('dice-operations', { type: 'preset', event: 'B', preset: 'clear' }))[3], 'A and B: no shared outcome, 0 of 36');
-assert.equal(describe.readoutLines(run('dice-condition', { type: 'preset', event: 'A', preset: 'clear' }))[2], 'A and B: no shared outcome, 0 of 36');
+// dice-condition holds its "A and B" line before shrinking (holdOverlap), so an empty A ∩ B shows no line there.
+assert.equal(describe.readoutLines(run('dice-condition', { type: 'preset', event: 'A', preset: 'clear' })).length, 2);
 
 // pour refusals keep the weights and say why.
 const pourFresh = initialState('die-pour');
@@ -362,12 +363,14 @@ assert.deepEqual(model.conditionalProbability(ids(kids, 'scarf'), ids(kids, 'hat
 assert.deepEqual(model.conditionalProbability(ids(dice, 'sum-at-least-10'), ids(dice, 'double')), fraction(1, 3));
 assert.equal(model.conditionalProbability(ids(dice, 'sum-7'), new Set()), null); // undefined, not 0
 
+// The page asks for a prediction first, so the "A and B" line is held until the world is shrunk: 2 of 36 beside
+// 6 of 36 would answer it.
 const conditionFresh = initialState('dice-condition');
+assert.equal(getSetup('dice-condition').holdOverlap, true);
 assert.equal(describe.statusLine(conditionFresh), '36 equally likely outcomes. Editing A.');
 assert.deepEqual(describe.readoutLines(conditionFresh), [
 	'A = sum is at least 10: 6 of 36 = 1/6 (≈ 0.17)',
 	'B = doubles: 6 of 36 = 1/6 (≈ 0.17)',
-	'A and B = {(5,5), (6,6)}: 2 of 36',
 ]);
 const shrunk = reducer(conditionFresh, { type: 'shrink', on: true });
 const shrunkLine = 'Inside B: 6 outcomes, 2 of them also in A, {(5,5), (6,6)}. P(A | B) = 2/6 = 1/3 ≈ 0.33, while P(A) = 6/36 = 1/6 ≈ 0.17.';
@@ -405,8 +408,12 @@ assert.equal(reducer(operations, { type: 'shrink', on: true }), operations);
 assert.equal(reducer(shrunk, { type: 'reset' }).shrink, false);
 
 // The class of children is fixed data: named in the status line, not editable.
+// The reader counts the tags in B before shrinking, so the "A and B" line is held too.
 const kidsFresh = initialState('kids-condition');
+assert.equal(getSetup('kids-condition').holdOverlap, true);
 assert.equal(describe.statusLine(kidsFresh), '12 equally likely outcomes. A: wears a scarf. B: wears a hat.');
+assert.deepEqual(describe.readoutLines(kidsFresh), ['A = wears a scarf: 4 of 12 = 1/3 (≈ 0.33)', 'B = wears a hat: 5 of 12 = 5/12 (≈ 0.42)']);
+assert.deepEqual(describe.readoutLines(reducer(reducer(kidsFresh, { type: 'shrink', on: true }), { type: 'shrink', on: false })), describe.readoutLines(kidsFresh));
 assert.equal(reducer(kidsFresh, { type: 'toggle', id: 'child-1' }), kidsFresh);
 assert.deepEqual(describe.readoutLines(reducer(kidsFresh, { type: 'shrink', on: true })), [
 	'Inside B: 5 outcomes, 2 of them also in A, {2, 7}. P(A | B) = 2/5 = 0.40, while P(A) = 4/12 = 1/3 ≈ 0.33.',
@@ -486,8 +493,6 @@ assert.deepEqual(reducer(montyRun(shrinkOn, montyA('car-2')), { type: 'reset' })
 // Only condition setups can hold the line, and a chalk note never carries a number.
 assert.throws(() => validateSetup({ ...getSetup('dice-operations'), holdOverlap: true }), /count setup "dice-operations" can't hold the "A and B" line/);
 assert.throws(() => validateSetup({ ...montySetup, chalkNote: { long: 'switch wins 2/3', short: 'switch' } }), /setup "monty-condition" has a number in its chalk note/);
-// Setups without holdOverlap keep the line before shrinking (pinned above for dice-condition and kids-condition).
-assert.equal(getSetup('dice-condition').holdOverlap, undefined);
 
 // ---- Compare mode: independence and mutual exclusivity (v1.3) ----
 const setupsModule = await import('../src/components/react/eventSpace/setups.ts');
