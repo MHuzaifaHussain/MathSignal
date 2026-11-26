@@ -14,7 +14,7 @@ objectives:
 takeaways:
   - Naive Bayes is Bayes' theorem plus one assumption, that the features are independent once the class is known, so P(y | x) is proportional to P(y) times the product of the P(xₖ | y). In the fruit bowl, "yellow" and "long" give banana 40/43 ≈ 0.930.
   - Training is counting. Add-one smoothing stops a single unseen word from ruling a class out. "win money now" is spam with probability 3/4 when smoothed, and exactly 1 without smoothing.
-  - Work in logs. Multiplying 1,000 probabilities of 0.001 underflows to 0.0 in floating point, while the sum of their logs is -6907.76.
+  - Work in logs. Multiplying 1,000 probabilities of 0.001 underflows to 0.0 in floating point, while the sum of their logs is −6907.76.
   - A correlated clue is counted more than once. With one clue seen 5 times, mean confidence rises from 0.784 to 0.970 while accuracy falls from 0.784 to 0.700. The right class often survives; the probabilities do not.
   - In log-odds, naive Bayes is a linear classifier. Logistic regression fits the same form directly; its error with unlimited data is never higher, while naive Bayes can approach its own limit with far fewer examples (Ng and Jordan).
 references:
@@ -75,11 +75,11 @@ Naive Bayes is a standard first baseline for text classification. It trains in o
 
 ## Count the same clue twice
 
-Make the board count one clue twice, and see whether the verdict changes. Before you touch anything: on the Wet lawn example, read the board's B, "the lawn is wet", as "the front half is wet". Then you see the back half is wet too. Both halves always get wet together, so the back half tells you nothing new. Treat it as a second clue anyway: does rain become more likely than not? Sharper: the odds of rain are P(rain) / P(no rain); by what factor do they change?
+Make the board count one clue twice, and see whether the verdict changes. Before you touch anything: on the Wet lawn example, read the board's B, "the lawn is wet", as "the front half is wet". Then you see the back half is wet too. Both halves always get wet together, so the back half tells you nothing new. Treat it as a second clue anyway: does rain become more likely than not? And by what factor do the odds of rain, P(rain) / P(no rain), change?
 
 Arrow keys move the sliders in steps of 0.01.
 
-1. Press Wet lawn. The readout says "P(A | B) = 0.429   P(B) = 0.420", which is 3/7.
+1. Press Wet lawn. The readout says "P(A | B) = 0.429   P(B) = 0.420"; the posterior 0.429 is 3/7.
 2. Naive Bayes treats the back half as a new clue with the same rates, P(B | A) = 0.9 and P(B | not A) = 0.3, so leave those two sliders alone. Its starting point is now what you just learned, 3/7. Set the P(A) slider to 0.43, the nearest step to 3/7.
 3. Read P(A | B).
 
@@ -87,7 +87,7 @@ Arrow keys move the sliders in steps of 0.01.
   <BayesTheorem client:visible scenarios={["any-events", "wet-lawn"]} />
 </div>
 
-Naive Bayes says yes: "P(A | B) = 0.694   P(B) = 0.558". The odds of rain triple. Computed exactly: 3/7 is odds of 3:4, the second clue multiplies them by the likelihood ratio 0.9/0.3 = 3 to give 9:4, and odds of 9:4 are a probability of 9/13 ≈ 0.692. The board shows 0.694 because 0.43 is a little above 3/7. The truth is still 3/7 ≈ 0.429, yet counting the clue twice crossed 0.5. Tests whose errors really are independent given the condition do multiply, as in [updating twice](/probability/bayes-theorem/#updating-twice).
+Naive Bayes says yes: "P(A | B) = 0.694   P(B) = 0.558". The odds of rain triple. Computed exactly: 3/7 is odds of 3:4, the second clue multiplies them by the likelihood ratio 0.9/0.3 = 3 to give 9:4, and odds of 9:4 are a probability of 9/13 ≈ 0.692. The board shows 0.694 because 0.43 is a little above 3/7. The truth is still 3/7 ≈ 0.429, yet counting the clue twice crossed 0.5. Clues whose errors really are independent given the class do multiply, as in [updating twice](/probability/bayes-theorem/#updating-twice).
 
 ## From Bayes' theorem to one multiplication per feature
 
@@ -113,7 +113,7 @@ Of the 41 yellow, long fruits, 38 are bananas: exactly 38/41 ≈ 0.927, against 
 
 To train naive Bayes, count each class's share of the training set and how often each feature appears within each class: the maximum-likelihood estimates (§2.3, equations 6 and 8) <Cite id="mitchell2020" />.
 
-One count of 0 vetoes a class: the apple's "long" rate of 0 makes its product 0 whatever else is seen. Add-one (Laplace) smoothing adds 1 to every count and adds the number of possible values to the total, here 2 (yes or no). The apple's "long" rate becomes (0 + 1)/(20 + 2) = 1/22 instead of 0, and the banana's "yellow" rate becomes (40 + 1)/(50 + 2) = 41/52. The 1 is called α. With α = 1 the bowl gives banana ≈ 0.909, lemon ≈ 0.086, apple ≈ 0.005 <Cite id="mitchell2020" />.
+One count of 0 vetoes a class: the apple's "long" rate of 0 makes its product 0 whatever else is seen. Add-one (Laplace) smoothing adds 1 to every count and adds the number of possible values to the total, here 2 (yes or no) (§2.3, equation 7) <Cite id="mitchell2020" />. The apple's "long" rate becomes (0 + 1)/(20 + 2) = 1/22 instead of 0, and the banana's "yellow" rate becomes (40 + 1)/(50 + 2) = 41/52. The 1 is called α. With α = 1 the bowl gives banana ≈ 0.909, lemon ≈ 0.086, apple ≈ 0.005.
 
 ## Add logs instead of multiplying
 
@@ -134,7 +134,7 @@ Accuracy is how often the chosen class is right. Mean confidence is the probabil
 | 3 times | 0.742 | 0.885 | 0.600 | 0.189 | 0.847 |
 | 5 times | 0.700 | 0.970 | 0.998 | 0.262 | 0.842 |
 
-Seen twice, accuracy does not move: the only patterns whose class changes are the ties (two yeses, two nos), where the truth is exactly 1/2. Naive Bayes now picks a side there and is right half the time, the same as the coin. Confidence, log loss, Brier score and AUC all get worse. Accuracy first drops at three copies; AUC (ranking) falls with every copy. Take the pattern (yes, no, no, no). Its true P(+) is 9/58 ≈ 0.155, which naive Bayes matches when feature 1 is seen once. It says 3/10 at two copies, 1/2 at three, and 49/58 ≈ 0.845 at five: the wrong class. Calibration, or dropping redundant features, helps.
+Seen twice, accuracy does not move: the only patterns whose class changes are the ties (two yeses, two nos), where the truth is exactly 1/2. Naive Bayes now picks a side there and is right half the time, the same as the coin. Confidence rises past accuracy, and log loss, Brier score and AUC all get worse. Accuracy first drops at three copies; AUC (ranking) falls with every copy. Take the pattern (yes, no, no, no). Its true P(+) is 9/58 ≈ 0.155, which naive Bayes matches when feature 1 is seen once. It says 3/10 at two copies, 1/2 at three, and 49/58 ≈ 0.845 at five: the wrong class. [Calibration](#calibrating-its-scores), or dropping redundant features, helps.
 
 ## Notation
 
@@ -223,11 +223,11 @@ The scores are banana $9/25$, lemon $27/1000$ and apple 0, totaling $387/1000$: 
 
 <WorkedExample number={2} title="A five-email spam filter, with and without smoothing">
 
-Spam: "win money now", "win prize now". Ham: "meeting now", "lunch money", "meeting notes". So $P(\text{spam}) = 2/5$ and $P(\text{ham}) = 3/5$. Spam counts win 2, money 1, now 2, prize 1; ham counts meeting 2, now 1, lunch 1, money 1, notes 1. Each class has 6 words and the vocabulary has 7 different words. With $\alpha = 1$ each word's count gets +1 and each total gets $1 \times 7$, so every denominator is $6 + 7 = 13$ and "win" in spam is $(2 + 1)/13 = 3/13$.
+Spam: "win money now", "win prize now". Ham: "meeting now", "lunch money", "meeting notes". So $P(\text{spam}) = 2/5$ and $P(\text{ham}) = 3/5$. Spam counts win 2, money 1, now 2, prize 1; ham counts meeting 2, now 1, lunch 1, money 1, notes 1. Each class has 6 words and the vocabulary has 7 different words. Here a feature is which word appears, with 7 possible values instead of 2, so with $\alpha = 1$ each word's count gets +1 and each total gets $1 \times 7$: every denominator is $6 + 7 = 13$ and "win" in spam is $(2 + 1)/13 = 3/13$.
 
-For "win money now", spam scores $\frac{2}{5} \cdot \frac{3}{13} \cdot \frac{2}{13} \cdot \frac{3}{13} = 36/10985$ and ham $\frac{3}{5} \cdot \frac{1}{13} \cdot \frac{2}{13} \cdot \frac{2}{13} = 12/10985$, so $P(\text{spam}) = 3/4$. In logs, $-5.7208$ against $-6.8194$, a gap of $\log 3 = 1.0986$. Unsmoothed, ham never saw "win" and scores 0 against spam's $1/135$, so $P(\text{spam}) = 1$.
+For "win money now", spam scores $\frac{2}{5} \cdot \frac{3}{13} \cdot \frac{2}{13} \cdot \frac{3}{13} = 36/10985$ and ham $\frac{3}{5} \cdot \frac{1}{13} \cdot \frac{2}{13} \cdot \frac{2}{13} = 12/10985$, so $P(\text{spam} \mid \text{"win money now"}) = 3/4$. In logs, $-5.7208$ against $-6.8194$, a gap of $\log 3 = 1.0986$. Unsmoothed, ham never saw "win" and scores 0 against spam's $1/135$, so $P(\text{spam} \mid \text{"win money now"}) = 1$.
 
-For "win prize meeting", unsmoothed, spam never saw "meeting" and ham never saw "win", so both score 0 and the posterior is $0/0$, undefined. Smoothed, $12/10985$ against $9/10985$: $P(\text{spam}) = 4/7 \approx 0.571$.
+For "win prize meeting", unsmoothed, spam never saw "meeting" and ham never saw "win", so both score 0 and the posterior is $0/0$, undefined. Smoothed, $12/10985$ against $9/10985$: $P(\text{spam} \mid \text{"win prize meeting"}) = 4/7 \approx 0.571$.
 
 </WorkedExample>
 
@@ -237,7 +237,7 @@ Banana lengths are normal with mean 18 cm and standard deviation 2 cm, lemon len
 
 <div slot="solution">
 
-Banana has $z = (12 - 18)/2 = -3$ and lemon $z = (12 - 8)/1 = 4$ (how many standard deviations 12 cm is from each mean), giving densities $0.002216$ and $0.0001338$. The scores are $0.5 \times 0.8 \times 0.002216 = 0.000886$ and $0.3 \times 0.9 \times 0.0001338 = 0.0000361$. In the ratio of densities the $\sqrt{2\pi}$ cancels, the standard deviations give $1/2$, and the exponents give $e^{-(-3)^2/2 + 4^2/2} = e^{-4.5 + 8}$, so the ratio is $\tfrac{1}{2} e^{3.5}$, so the odds are $\tfrac{20}{27} e^{3.5} \approx 24.53$, the log-odds $\log(20/27) + 3.5 \approx 3.1999$, and $P(\text{banana}) \approx 0.9608$.
+Banana has $z = (12 - 18)/2 = -3$ and lemon $z = (12 - 8)/1 = 4$ (how many standard deviations 12 cm is from each mean), giving densities $0.002216$ and $0.0001338$. The scores are $0.5 \times 0.8 \times 0.002216 = 0.000886$ and $0.3 \times 0.9 \times 0.0001338 = 0.0000361$. In the ratio of densities the $\sqrt{2\pi}$ cancels, the standard deviations give $1/2$, and the exponents give $e^{-(-3)^2/2 + 4^2/2} = e^{-4.5 + 8}$. The density ratio is $\tfrac{1}{2} e^{3.5}$. Times the prior-and-yellow ratio $0.40/0.27 = 40/27$, the odds are $\tfrac{20}{27} e^{3.5} \approx 24.53$, the log-odds $\log(20/27) + 3.5 \approx 3.1999$, and $P(\text{banana}) \approx 0.9608$.
 
 </div>
 
@@ -261,13 +261,13 @@ $$
 
 ### A linear classifier and its discriminative partner
 
-Logistic regression fits the same linear log-odds form,
+With two classes, naive Bayes's log-odds is a constant b plus one weight $w_k$ per feature, both worked out from counts. Logistic regression fits the same linear log-odds form,
 
 $$
 \log \frac{P(+ \mid \mathbf{x})}{P(- \mid \mathbf{x})} = b + \sum_{k=1}^{n} w_k x_k,
 $$
 
-choosing b and the $w_k$ directly instead of from counts (§2, equation 3). Naive Bayes is generative (it models how each class produces features); logistic regression is discriminative (it models P(y | x) directly) (§1) <Cite id="ng2001" />. Its limiting error is never higher (Proposition 1), and it needs on the order of n examples to approach it (Proposition 2); naive Bayes's parameters settle after on the order of log n (Lemma 3), and under stated conditions its error follows (Theorem 4, Corollary 6) <Cite id="ng2001" />. On 15 UCI datasets naive Bayes usually led with few examples and logistic regression caught up or overtook it later; the few datasets where it never caught up were mostly very small (§4, Figure 1) <Cite id="ng2001" />. Gaussian naive Bayes in which each feature has the same variance in every class gives exactly the logistic form (§3.1) <Cite id="mitchell2020" />.
+choosing b and the $w_k$ directly instead of from counts (§2, equation 3). Naive Bayes is generative (it models how each class produces features); logistic regression is discriminative, modeling P(y | x) directly (§1) <Cite id="ng2001" />. Logistic regression's error with unlimited data is never higher (Proposition 1), and it needs on the order of n examples to approach that limit (Proposition 2). Naive Bayes's estimates settle within on the order of log n examples (Lemma 3), and under stated conditions its error then approaches its own limit (Theorem 4, Corollary 6) <Cite id="ng2001" />. On 15 UCI datasets naive Bayes usually led with few examples and logistic regression caught up or overtook it later; the few datasets where it never caught up were mostly very small (§4, Figure 1) <Cite id="ng2001" />. Gaussian naive Bayes in which each feature has the same variance in every class gives exactly the logistic form (§3.1) <Cite id="mitchell2020" />.
 
 ### Calibrating its scores
 
@@ -537,6 +537,7 @@ assert abs(banana_density - 0.0022159) < 1e-7 and abs(lemon_density - 0.0001338)
 banana_score, lemon_score = 0.5 * 0.8 * banana_density, 0.3 * 0.9 * lemon_density
 assert f"{banana_score:.6f}" == "0.000886" and f"{lemon_score:.7f}" == "0.0000361"
 odds = banana_score / lemon_score
+assert Fraction(5, 10) * Fraction(8, 10) / (Fraction(3, 10) * Fraction(9, 10)) == Fraction(40, 27)
 assert abs(odds - 20 / 27 * math.exp(3.5)) < 1e-9 and abs(odds - 24.53) < 0.01
 assert abs(odds / (1 + odds) - 0.9608) < 1e-4
 assert abs(math.log(odds) - (math.log(20 / 27) + 3.5)) < 1e-12 and abs(math.log(odds) - 3.1999) < 1e-4
