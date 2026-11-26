@@ -30,3 +30,4 @@ Format: context, decision, consequences, alternatives considered. Number them in
 | [0022](0022-regression-board-model.md) | The regression board, rebuilt on an exact model | Accepted for the model and data sets; the UI follows its page specs |
 | [0023](0023-page-footer-and-properties-table.md) | The full page footer and PropertiesTable | Accepted; extends [0009](0009-single-sources-of-truth.md) |
 | [0024](0024-focusable-scroll-boxes.md) | Wide tables and formulas scroll in focusable, named boxes | Accepted |
+| [0025](0025-large-screen-scaling.md) | The site grows on very large screens | Accepted |

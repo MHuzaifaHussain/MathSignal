@@ -322,5 +322,6 @@ The sidebar is narrowed to the active subject by Starlight route middleware (`sr
 - Read tokens with `var(--ms-*)`; never write a hex value in a component.
 - Don't use heading elements for UI labels (use `<p>` or `<span>`); Starlight renders the page h1 and prose owns h2–h6.
 - Interactive targets are at least 44px tall.
-- Use `useCallback` for Mafs handlers and constraint functions.
+- Size in rem, never px, except 1px hairlines, radii, outlines and the 44px tap target, so the component grows on large screens ([foundations.md](foundations.md#large-screens)).
+- Use `useCallback` for Mafs handlers and constraint functions. Scale every px passed to Mafs by `useBoardScale()` ([math-plots-code.md](math-plots-code.md#sizes-on-large-screens)).
 - Add the component to this file in the same change.

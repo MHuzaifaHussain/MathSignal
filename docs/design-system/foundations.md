@@ -13,7 +13,7 @@ All values below come from `src/design/palette.mjs`. Use the CSS custom property
 | Side note | Asides (`SideNote`), inline in the reading column with a hairline on the left (the page margin holds Starlight's "On this page" list) | Paper, smaller serif | Paper, smaller serif |
 | Sunk (`--ms-surface-sunk`) | Quiet backgrounds such as the definition panel | `#f4f6f5` | `#1f2423` |
 
-Board limits: at most two boards per page, each at most about 480px tall. A board always has its frame (`--ms-board-edge`). In dark mode the frame is what separates the board from the page.
+Board limits: at most two boards per page, each at most about 480px tall at the base size (see [Large screens](#large-screens)). A board always has its frame (`--ms-board-edge`). In dark mode the frame is what separates the board from the page.
 
 ## Color roles
 
@@ -51,6 +51,8 @@ Variables other than μ and σ (for example a slope or a prior) are written in i
 | Code | Atkinson Hyperlegible Mono | `--ms-font-mono` | Code blocks, inline code, numeric readouts |
 | Handwriting | Kalam | `--ms-font-hand` | Board notes only, 20px minimum |
 
+Sizes below are at the base size, on screens up to 1920px wide; above that everything grows together ([Large screens](#large-screens)).
+
 | Element | Size / line height | Weight |
 |---|---|---|
 | Body | 18px / 1.65, measure ≤ 66ch | 400 |
@@ -71,6 +73,15 @@ Typographic rules:
 ## Spacing
 
 Use a 4px scale (0.25rem steps) and Starlight's layout utilities (`sl-flex`, `sl-hidden`, `md:sl-flex`). There is no utility-class framework: component styles live in scoped Astro `<style>` blocks or `src/styles/components.css`. Vertical rhythm on paper is based on the body line height: 0.75em between paragraphs, 2.5em above h2.
+
+## Large screens
+
+On screens wider than 1920px the root font size grows, from 100% at 1920px to 150% at 3840px and no further, so text, the column, the sidebars and the boards grow together on 4K monitors and TVs ([decision 0025](../decisions/0025-large-screen-scaling.md)). Phones, laptops and 1920px screens are unchanged, and browser zoom still enlarges text.
+
+- Size things in rem, so they follow. 1rem is 16px at the base size; convert exactly (399px is 24.9375rem).
+- Px stay px only for 1px hairlines, border radii, outline widths and offsets, focus halos and the 44px minimum tap target.
+- Container queries in rem measure against the initial font size, so a board's breakpoints don't move as the root grows.
+- Mafs boards multiply every px they pass to Mafs by `useBoardScale()` ([math-plots-code.md](math-plots-code.md#plots-mafs-boards)).
 
 ## Focus
 

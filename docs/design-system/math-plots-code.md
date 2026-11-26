@@ -65,6 +65,14 @@ import { plotColors } from './plotColors';
 
 Never use `Theme.blue` or other Mafs defaults for meaning: they are not the design system's colors.
 
+### Sizes on large screens
+
+Boards grow with the page above 1920px ([decision 0025](../decisions/0025-large-screen-scaling.md)). Mafs takes px numbers, so every Mafs board calls `useBoardScale()` (1 up to 1920px, 1.5 at 3840px) and multiplies every px design constant by it: the plot `height`, `Text` `size`, line `weight` and any stroke width. Name the constant (`BOARD_HEIGHT`, `LABEL_SIZE`) and scale it where it is passed, `height={BOARD_HEIGHT * scale}`; values in grid units (positions, ring radii, label offsets) are never scaled. `npm run check:boards` fails on a Mafs `height`, `size` or `weight` that isn't scaled.
+
+- What props can't reach (the point and handle radii, the hitbox, the text halo, dash patterns, the axis numbers' gap) is set in rem in `components.css` under `.ms-board .MafsView`.
+- A label layout measured in px at the base size (FunctionCurve, VectorBoard2D) runs on `layoutPlaneSize(planeSize, scale)`, the plane's base size, and its text is drawn at its base size × scale, so the layout lands on the same grid positions at every scale.
+- Plane caps and any other CSS sizes are in rem.
+
 Never use Mafs `<LaTeX>` in a board. KaTeX is kept out of island bundles ([decision 0007](../decisions/0007-no-katex-in-islands.md)); use `<Text>` for labels and put formulas in the page's MDX.
 
 ### Known Mafs issue: `vec.lerp` and identical points
@@ -73,7 +81,7 @@ Mafs 0.21's `vec.lerp` (and `vec.midpoint`) return `[NaN, NaN]` when both points
 
 ### Board behavior
 
-- Drags start only on a handle's hitbox (Mafs draws it at a fixed 30px radius). The board sets `touch-action: pan-y` on the plot so touch scrolling still works on empty space; handles keep Mafs' own `touch-action: none`, so touching a handle drags it.
+- Drags start only on a handle's hitbox (Mafs draws it at a 30px radius at the base size; `components.css` scales it with the page). The board sets `touch-action: pan-y` on the plot so touch scrolling still works on empty space; handles keep Mafs' own `touch-action: none`, so touching a handle drags it.
 - Every handle has a keyboard path. Either the tray has a slider for it (with `aria-valuetext` in words) and the handle is hidden from the tab order, or the board passes `handleLabels` so the handle itself is focusable, named and moved with the arrow keys (used by `LinearRegression`, which has nine points).
 - A live region announces the new values when a drag, an arrow-key move or a slider change ends, never on every frame.
 - Handwritten notes (`ChalkNote`) sit at the board's top-left, or its lower-left where the top-left holds labels (beside the grid, in normal flow, on an HTML board) and switch to their `short` text when the board is under 560px wide.
