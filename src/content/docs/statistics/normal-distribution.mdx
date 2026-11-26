@@ -29,7 +29,7 @@ references:
   - rasmussen2006
   - deisenroth2020
 author: Muhammad Huzaifa Hussain
-reviewedAt: 2026-11-23
+reviewedAt: 2026-11-26
 aiAssisted: true
 primaryQuery: normal distribution
 searchIntent: learn
@@ -69,7 +69,7 @@ import NormalDistribution from "../../../components/react/NormalDistribution.tsx
 
 <Analogy breaks="Heights can never be negative, yet the bell's tails stretch forever in both directions, so the bell is an approximation that works well near the middle. Mix two groups with different average heights, such as children and adults, and you get two humps instead of one bell.">
 
-Line up everyone in a class by height. A few are very short, a few are very tall, and most stand somewhere in the middle. Count how many people fall into each 5 cm step and stack them into columns, and the columns rise in the middle and fall away evenly on both sides. With enough people, that outline becomes a smooth bell. That bell is the normal distribution.
+Line up everyone in a class by height. A few are very short, a few are very tall, and most stand somewhere in the middle. [Count how many people fall into each 5 cm step and stack them into columns](/statistics/descriptive-statistics/#histograms), and the columns rise in the middle and fall away evenly on both sides. With enough people, that outline becomes a smooth bell. That bell is the normal distribution.
 
 A peg board shows why it happens. Drop a ball through rows of pegs and it bounces left or right at each one. Most balls collect a mix of lefts and rights and land near the middle; only a lucky few go left every time. Many small, independent nudges added together produce the bell.
 
@@ -111,7 +111,7 @@ The 68-95-99.7 rule says how much of a normal distribution lies within one, two 
 - about **95%** (95.45%) lies within 2σ
 - about **99.7%** (99.73%) lies within 3σ
 
-The exact band that holds 95% is ±1.96σ, which is why 1.96 appears in so many confidence intervals. A value more than 3σ from the mean happens about 3 times in 1,000, so it is either rare or a sign that something unusual is going on.
+The exact band that holds 95% is ±1.96σ, which is why 1.96 appears in so many confidence intervals. A value more than 3σ from the mean happens about 3 times in 1,000, so it is either rare or a sign that something unusual is going on. On real data, flagging values this way has pitfalls, which the page on [outlier detection with z-scores and the IQR rule](/statistics/outlier-detection-z-score-vs-iqr/) covers.
 
 <GoDeeper label="where the three numbers come from">
 
@@ -141,13 +141,13 @@ You will also see it called the Gaussian distribution, after Carl Friedrich Gaus
 
 <PreciseStatement>
 
-For any real $\vmu$ and any $\vsigma > 0$, a random variable $X \sim \mathcal{N}(\vmu, \vsigma^2)$ has density
+For any real $\vmu$ and any $\vsigma > 0$, a [random variable](/probability/random-variables-and-distributions/) $X \sim \mathcal{N}(\vmu, \vsigma^2)$ has density
 
 $$
 f(x) = \frac{1}{\vsigma\sqrt{2\pi}} \exp\!\left(-\frac{(x - \vmu)^2}{2\vsigma^2}\right), \qquad x \in \mathbb{R},
 $$
 
-with $\mathbb{E}[X] = \vmu$ and $\operatorname{Var}[X] = \vsigma^2$. The case $\vsigma = 0$ is excluded: it would put all the probability on the single point $\vmu$, which has no density.
+with [expected value](/probability/expectation-and-variance/) $\mathbb{E}[X] = \vmu$ and $\operatorname{Var}[X] = \vsigma^2$. The case $\vsigma = 0$ is excluded: it would put all the probability on the single point $\vmu$, which has no density.
 
 </PreciseStatement>
 
@@ -159,7 +159,7 @@ $$
 Z = \frac{X - \vmu}{\vsigma} \sim \mathcal{N}(0, 1)
 $$
 
-This is the **z-score**. It lets one reference table, or `scipy.stats.norm`, serve every normal distribution.
+This is the **z-score**, which the [z-scores worked example](/statistics/z-scores-worked-example/) computes step by step. It lets one reference table, or `scipy.stats.norm`, serve every normal distribution.
 
 <StepThrough title="Why the constant is 1/√(2π)">
 
@@ -179,7 +179,7 @@ This is the **z-score**. It lets one reference table, or `scipy.stats.norm`, ser
 
 </StepThrough>
 
-<PropertiesTable family="normal" />
+<PropertiesTable family="normal" rowLinks={{ center: "/statistics/mean-vs-median-vs-mode/" }} />
 
 </FormalDefinition>
 
@@ -241,7 +241,7 @@ Variational autoencoders place a $\mathcal{N}(0, I)$ prior on the latent space. 
 
 ### Gaussian processes
 
-A Gaussian process is a distribution over functions <Cite id="rasmussen2006" />. Writing $f \sim \mathcal{GP}(m, k)$ means that for any inputs $x_1, \dots, x_n$, the values $(f(x_1), \dots, f(x_n))$ are jointly normal with mean vector $m$ and covariance matrix $K_{ij} = k(x_i, x_j)$. Gaussian processes give predictions with uncertainty attached, which is well calibrated when the kernel and noise model fit the data, and makes them useful for Bayesian optimization and active learning.
+A Gaussian process is a distribution over functions <Cite id="rasmussen2006" />. Writing $f \sim \mathcal{GP}(m, k)$ means that for any inputs $x_1, \dots, x_n$, the values $(f(x_1), \dots, f(x_n))$ are jointly normal with mean [vector](/linear-algebra/vectors/) $m$ and covariance matrix $K_{ij} = k(x_i, x_j)$. Gaussian processes give predictions with uncertainty attached, which is well calibrated when the kernel and noise model fit the data, and makes them useful for Bayesian optimization and active learning.
 
 ## Check the 68-95-99.7 rule in code
 
@@ -354,7 +354,7 @@ Write $\mathbb{E}[X] - \vmu = \int (x - \vmu) f(x)\,dx$ and substitute $y = x - 
     It is a lower one. The area under the curve is always 1, so when $\vsigma$ grows the peak $1/(\vsigma\sqrt{2\pi})$ has to fall. Try it on the board above.
   </Mistake>
   <Mistake wrong="Standard deviation and variance are interchangeable.">
-    They're related ($\operatorname{Var} = \vsigma^2$) but have different units: variance is in squared units, standard deviation in the original ones. Libraries differ too: $\mathcal{N}(\mu, \sigma^2)$ notation uses the variance, while `numpy.random.normal` and `torch.distributions.Normal` take the standard deviation. Check which one a function expects.
+    They're related ($\operatorname{Var} = \vsigma^2$) but have different units: [variance](/statistics/variance-and-standard-deviation/) is in squared units, standard deviation in the original ones. Libraries differ too: $\mathcal{N}(\mu, \sigma^2)$ notation uses the variance, while `numpy.random.normal` and `torch.distributions.Normal` take the standard deviation. Check which one a function expects.
   </Mistake>
   <Mistake wrong="The curve touches zero at ±3σ.">
     It doesn't. The normal distribution extends from $-\infty$ to $+\infty$; the density at $\pm 3\vsigma$ is small but not zero. This matters for tail risk and anomaly detection.

@@ -3,7 +3,6 @@ title: "Permutations and combinations for probability"
 description: "Count line-ups and choices with factorials, permutations and combinations, then turn the counts into exact probabilities for coins, marbles and teams."
 sidebar:
   order: 15
-draft: true
 topic: probability/counting-for-probability
 type: C
 objectives:
@@ -22,7 +21,7 @@ references:
   - schapire2003-cos511
   - sklearn-leavepout
 author: Muhammad Huzaifa Hussain
-reviewedAt: 2026-11-25
+reviewedAt: 2026-11-26
 aiAssisted: true
 primaryQuery: permutations and combinations probability
 searchIntent: solve
@@ -59,7 +58,7 @@ import WorkedExample from "../../../components/WorkedExample.astro";
 
 <Analogy breaks="The three friends are all different. If two of them were twins in matching clothes, some photos would look the same and the count would drop. And a count only becomes a chance if every photo is equally likely, as when the order is drawn from a hat.">
 
-Ana, Ben and Cai want a photo of the three of them standing in a row. Swap any two of them and you get a different photo. How many different photos can they take? Then the coach needs two of them for a team. A team of Ana and Ben is the same team as Ben and Ana. How many different teams are there? Hold both answers in your head.
+Ana, Ben and Cai want a photo of the three of them standing in a row. Swap any two of them and you get a different photo. How many different photos can they take? Then the coach needs two of them for a team. A team of Ana and Ben is the same team as Ben and Ana. How many different teams are there?
 
 </Analogy>
 
@@ -133,7 +132,7 @@ Draw 3 branches, one per friend on the left; from each, 2 for the middle; then 1
 
 ### When order matters: permutations
 
-A permutation is an arrangement in order: $n$ different items line up in $n!$ ways, and an ordered pick of $k$ of them can be made in $(n)_k = n!/(n-k)!$ ways. Five children line up in 5! = 120 ways, and first and second place can go 5 × 4 = 20 = 5!/3! ways. Grinstead and Snell prove both counts in §3.1 and write $(n)_k$, read "n down k" <Cite id="grinstead2003" />. And 0! = 1: there is one way to line up nobody.
+A permutation is an arrangement in order: $n$ different items line up in $n!$ ways, and an ordered pick of $k$ of them can be made in $(n)_k = n!/(n-k)!$ ways. Five children line up in 5! = 120 ways, and first and second place can go 5 × 4 = 20 = 5!/3! ways. The [birthday problem](/probability/birthday-problem/) puts $(n)_k$ to work. Grinstead and Snell prove both counts in §3.1 and write $(n)_k$, read "n down k" <Cite id="grinstead2003" />. And 0! = 1: there is one way to line up nobody.
 
 ### When order doesn't matter: combinations
 
@@ -235,7 +234,7 @@ Flip 4 fair coins: 2⁴ = 16 equally likely sequences. Exactly 2 heads means cho
 
 <div slot="solution">
 
-$\binom{4}{2} = 6$: HHTT, HTHT, HTTH, THHT, THTH, TTHH. So 6/16 = 3/8. The row for 0 to 4 heads is 1, 4, 6, 4, 1, and at least one head is 1 − 1/16 = 15/16. Two coins give 1, 2, 1 out of 4, the chances on the [random variables page](/probability/random-variables-and-distributions/#equally-likely-outcomes-unequal-values). Unfair coins need more than counting.
+$\binom{4}{2} = 6$: HHTT, HTHT, HTTH, THHT, THTH, TTHH. So 6/16 = 3/8. The row for 0 to 4 heads is 1, 4, 6, 4, 1, and at least one head is 1 − 1/16 = 15/16. Two coins give 1, 2, 1 out of 4, the chances on the [random variables page](/probability/random-variables-and-distributions/#equally-likely-outcomes-unequal-values). Unfair coins need the [binomial distribution](/probability/binomial-distribution/).
 
 </div>
 

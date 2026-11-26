@@ -3,7 +3,6 @@ title: "Dot product"
 description: "The dot product multiplies matching entries of two vectors and adds them. Drag arrows to see how it measures alignment, then meet it in neurons and attention."
 sidebar:
   order: 2
-draft: true
 topic: linear-algebra/dot-product
 type: B
 objectives:
@@ -25,7 +24,7 @@ references:
   - johnson2017
   - bruch2024
 author: Muhammad Huzaifa Hussain
-reviewedAt: 2026-11-25
+reviewedAt: 2026-11-26
 aiAssisted: true
 primaryQuery: dot product
 searchIntent: learn
@@ -293,7 +292,7 @@ $$
 \operatorname{Attention}(\mathbf{Q}, \mathbf{K}, \mathbf{V}) = \operatorname{softmax}\!\left(\frac{\mathbf{Q}\mathbf{K}^\top}{\sqrt{d_k}}\right) \mathbf{V},
 $$
 
-their equation (1) in §3.2.1, where $d_k$ is the number of entries in each query and key <Cite id="vaswani2017" />. They write plain $Q$, $K$ and $V$; this site writes matrices in bold capitals. The softmax turns each row of scores into weights that add up to 1, so a key with a larger dot product with the query gets more weight.
+their equation (1) in §3.2.1, where $d_k$ is the number of entries in each query and key <Cite id="vaswani2017" />. They write plain $Q$, $K$ and $V$; this site writes matrices in bold capitals. The softmax turns each row of scores into weights that add up to 1, so a key with a larger dot product with the query gets more weight. Each query's output is then a weighted sum of the value vectors, a [linear combination](/linear-algebra/linear-combinations-and-span/#an-attention-output-is-a-weighted-sum-of-values).
 
 <GoDeeper label="why attention divides by the square root of d_k" id="attention-scale">
 
@@ -464,7 +463,7 @@ print("q . k: mean", mean, " variance", variance, " after dividing by 8:", varia
 `}
 />
 
-The last block checks the claim in the fold on why attention divides by the square root of $d_k$, and it needs no simulation. With entries of $+1$ or $-1$, each product $q_i k_i$ is $+1$ or $-1$ with equal chance, so the dot product depends only on how many of the 64 products are $+1$, and the binomial counts give its distribution exactly: mean 0 and variance 64, and variance 1 after dividing by 8.
+The last block checks the claim in the fold on why attention divides by the square root of $d_k$, and it needs no simulation. With entries of $+1$ or $-1$, each product $q_i k_i$ is $+1$ or $-1$ with equal chance, so the dot product depends only on how many of the 64 products are $+1$, and [the binomial counts](/probability/binomial-distribution/) give its distribution exactly: mean 0 and variance 64, and variance 1 after dividing by 8.
 
 ## Research frontier
 

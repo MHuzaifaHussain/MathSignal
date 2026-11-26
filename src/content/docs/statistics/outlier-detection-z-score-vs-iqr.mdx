@@ -3,7 +3,6 @@ title: "Outlier detection: z-score vs IQR rule"
 description: "Flag unusual values with z-scores or with IQR fences. See why giant values can hide from z-scores but not from quartiles, and when to use each rule."
 sidebar:
   order: 8
-draft: true
 topic: statistics/outlier-detection-z-score-vs-iqr
 type: D
 objectives:
@@ -26,7 +25,7 @@ references:
   - sklearn-outlier-detection
   - pandas-std
 author: Muhammad Huzaifa Hussain
-reviewedAt: 2026-11-25
+reviewedAt: 2026-11-26
 aiAssisted: true
 primaryQuery: outlier detection z score vs iqr
 searchIntent: compare
@@ -78,7 +77,7 @@ Before training, data are checked for values that look wrong: a sensor that repo
 
 ## Weigh the giant pumpkin
 
-Judge Average uses the z-score rule: a pumpkin's z-score is its distance from the mean in standard deviations; |z| drops the sign. Judge Middle uses the IQR rule: the interquartile range, IQR, is the width of the middle half, and the rule flags anything more than 1.5 IQR past it.
+Judge Average uses the z-score rule: a pumpkin's [z-score](/statistics/z-scores-worked-example/) is its distance from the mean in standard deviations; |z| drops the sign. Judge Middle uses the IQR rule: the interquartile range, IQR, is the width of the middle half, and the rule flags anything more than 1.5 IQR past it.
 
 Decide first, because the board shows each verdict as soon as you move the giant or press a preset. A 30 kg giant joins eight pumpkins of 4 to 7 kg. Will |z| > 3 flag it? If a second 30 kg giant replaces a 7 kg pumpkin, will |z| > 2 flag either giant? How heavy must one giant be before |z| > 3 flags it?
 
@@ -133,7 +132,7 @@ The eight ordinary pumpkins are not all equal, so the bound is never reached, wh
 
 The quartiles resist a few outliers, not many, and assume a symmetric middle.
 
-**Too many outliers.** Make both 7 kg pumpkins giants too: 4, 5, 5, 6, 6, 6, 30, 30, 30. Now Q₃ = 30, IQR = 25 and the upper fence is 67.5 kg, so nothing is flagged. The board holds two giants at most; the code checks this case. Rousseeuw and Hubert give the IQR a breakdown value of 25%, the share of outliers that can carry it arbitrarily far <Cite id="rousseeuw2017" />: 2 giants of 9 (22%) are survived, 3 of 9 (33%) are not.
+**Too many outliers.** Make both 7 kg pumpkins giants too: 4, 5, 5, 6, 6, 6, 30, 30, 30. Now Q₃ = 30, IQR = 25 and the upper fence is 67.5 kg, so nothing is flagged. The board holds two giants at most; the code checks this case. Rousseeuw and Hubert give the IQR a [breakdown value](/statistics/descriptive-statistics-cheat-sheet/#one-bad-value-which-summaries-survive) of 25%, the share of outliers that can carry it arbitrarily far <Cite id="rousseeuw2017" />: 2 giants of 9 (22%) are survived, 3 of 9 (33%) are not.
 
 **Skewed data.** The IQR rule is how a box plot marks outliers, and the box plot assumes symmetry, so on skewed data it flags many regular points; Rousseeuw and Hubert point to a box plot adjusted for skewness <Cite id="rousseeuw2017" />. For exponential data, a common right-skewed shape for waiting times, about 4.81% of values are flagged, all past the upper fence (the lower fence is below 0), against 0.70% for normal data, 0.35% on each side.
 

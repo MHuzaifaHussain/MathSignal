@@ -3,7 +3,6 @@ title: "Variance and standard deviation"
 description: "Measure how far values spread from their mean, see why the distances are squared, and learn why NumPy divides by n while pandas divides by n − 1."
 sidebar:
   order: 3
-draft: true
 topic: statistics/variance-and-standard-deviation
 type: B
 objectives:
@@ -28,7 +27,7 @@ references:
   - sklearn-standardscaler
   - pytorch-batchnorm
 author: Muhammad Huzaifa Hussain
-reviewedAt: 2026-11-25
+reviewedAt: 2026-11-26
 aiAssisted: true
 primaryQuery: variance and standard deviation
 searchIntent: learn
@@ -217,7 +216,7 @@ The shortcut is fine on paper and risky in a computer. Take the four values $10^
 2. Square and add: $\sum_{i=1}^{n} (x_i - c)^2 = \sum_{i=1}^{n} (x_i - \vmu)^2 + 2(\vmu - c)\sum_{i=1}^{n} (x_i - \vmu) + n(\vmu - c)^2$.
 3. The middle sum is 0 by the first derivation, so $\sum_{i=1}^{n} (x_i - c)^2 = \sum_{i=1}^{n} (x_i - \vmu)^2 + n(\vmu - c)^2$.
 4. The last term is never negative and is 0 only when $c = \vmu$. So no point gives a smaller total of squared distances than the mean.
-5. Our class: from $c = 134$ the total is 576; from the median, $c = 133$, it is $576 + 9 = 585$; from $c = 140$ it is $576 + 9 \times 36 = 900$.
+5. Our class: from $c = 134$ the total is 576; from [the median](/statistics/mean-vs-median-vs-mode/#formal-definition), $c = 133$, it is $576 + 9 = 585$; from $c = 140$ it is $576 + 9 \times 36 = 900$.
 
 </StepThrough>
 

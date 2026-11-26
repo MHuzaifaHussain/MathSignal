@@ -3,7 +3,6 @@ title: "How to read a box plot: quartiles and the IQR"
 description: "Find quartiles, the IQR and any percentile by hand, read every part of a box plot, and see why two tools can report different quartiles for the same data."
 sidebar:
   order: 4
-draft: true
 topic: statistics/reading-box-plots-quartiles-iqr
 type: C
 objectives:
@@ -28,7 +27,7 @@ references:
   - sklearn-robustscaler
   - masson2019
 author: Muhammad Huzaifa Hussain
-reviewedAt: 2026-11-25
+reviewedAt: 2026-11-26
 aiAssisted: true
 primaryQuery: how to read a box plot
 searchIntent: solve
@@ -141,7 +140,7 @@ A dot is a value past a fence: drawn, not deleted, and not proven wrong. Wickham
 
 ### Which quartile? Tools disagree
 
-There is no single agreed formula for quartiles, so two tools can report different values for the same list; this page uses NumPy's default. NIST's handbook says no interpolation is universally accepted, and its own default differs from NumPy's <Cite id="nist-percentiles" />. Hyndman and Fan found packages using one definition for a quantile and another for the box plot <Cite id="hyndman1996" />. NumPy numbers nine of its methods as Hyndman and Fan do, type 1 to type 9; its default, `linear`, is type 7 <Cite id="numpy-quantile" />. Tukey's hinges take Q1 and Q3 as the medians of the lower and upper halves of the sorted list, each half including the middle value when n is odd.
+There is no single agreed formula for quartiles, so [two tools can report different values for the same list](/statistics/descriptive-statistics-cheat-sheet/#library-defaults-that-change-the-answer); this page uses NumPy's default. NIST's handbook says no interpolation is universally accepted, and its own default differs from NumPy's <Cite id="nist-percentiles" />. Hyndman and Fan found packages using one definition for a quantile and another for the box plot <Cite id="hyndman1996" />. NumPy numbers nine of its methods as Hyndman and Fan do, type 1 to type 9; its default, `linear`, is type 7 <Cite id="numpy-quantile" />. Tukey's hinges take Q1 and Q3 as the medians of the lower and upper halves of the sorted list, each half including the middle value when n is odd.
 
 | Method | Q1 | Q3 | IQR | Upper fence | 162 cm drawn as a dot? |
 | --- | --- | --- | --- | --- | --- |
