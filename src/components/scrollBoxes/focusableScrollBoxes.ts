@@ -2,10 +2,11 @@
 // table rule, `.katex-display` in global.css). This makes each one focusable and named while, and only while, it
 // overflows, so a keyboard reader can scroll it with the arrow keys and a screen reader hears what it is (decision
 // 0024). Expressive Code does the same for code blocks. Boxes that fit get no extra tab stop.
-import { FORMULA_SCROLL_LABEL, tableScrollLabel } from './labels.ts';
+import { FORMULA_SCROLL_LABEL, tableScrollLabels, type ContentTable } from './labels.ts';
 
 const TABLE_SELECTOR = '.sl-markdown-content table:not(:where(.not-content *))';
 const FORMULA_SELECTOR = '.sl-markdown-content .katex-display';
+const HEADING_SELECTOR = '.sl-markdown-content :is(h2, h3, h4)';
 /** Marks a box this script changed, holding what it added, so it can undo exactly that when the box fits again. */
 const ADDED_ATTRIBUTE = 'data-ms-scroll-box';
 /** Sub-pixel rounding can leave scrollWidth one pixel over clientWidth on a box that fits. */
@@ -18,9 +19,32 @@ function headerText(cell: Element): string {
 	return copy.textContent ?? '';
 }
 
+/** The text of the last heading before `table` in document order, or null. */
+function headingAbove(table: Element, headings: readonly Element[]): string | null {
+	const above = headings.filter((heading) => heading.compareDocumentPosition(table) & Node.DOCUMENT_POSITION_FOLLOWING);
+	return above.at(-1)?.textContent ?? null;
+}
+
+/** Every content table's name, worked out once for the whole page so repeated headers can be told apart. */
+function tableNames(): Map<Element, string> {
+	const tables = [...document.querySelectorAll(TABLE_SELECTOR)];
+	const headings = [...document.querySelectorAll(HEADING_SELECTOR)];
+	const described: ContentTable[] = tables.map((table) => ({
+		headers: [...table.querySelectorAll('thead th')].map(headerText),
+		heading: headingAbove(table, headings),
+	}));
+	const names = tableScrollLabels(described);
+	return new Map(tables.map((table, index) => [table, names[index]]));
+}
+
+let namesOfTables: Map<Element, string> | null = null;
+
 function labelFor(box: HTMLElement): string {
-	if (box.matches('table')) return tableScrollLabel([...box.querySelectorAll('thead th')].map(headerText));
-	return FORMULA_SCROLL_LABEL;
+	if (!box.matches('table')) return FORMULA_SCROLL_LABEL;
+	namesOfTables ??= tableNames();
+	const name = namesOfTables.get(box);
+	if (name === undefined) throw new Error('focusableScrollBoxes: a content table has no name.');
+	return name;
 }
 
 function markScrollable(box: HTMLElement) {

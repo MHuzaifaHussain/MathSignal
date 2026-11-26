@@ -7771,13 +7771,30 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 // ---- Page components: names of wide tables and formulas (decision 0024) ----
 
 {
-	const { FORMULA_SCROLL_LABEL, TABLE_SCROLL_FALLBACK_LABEL, tableScrollLabel } = await import('../src/components/scrollBoxes/labels.ts');
+	const { FORMULA_SCROLL_LABEL, TABLE_SCROLL_FALLBACK_LABEL, tableScrollLabel, tableScrollLabels } = await import('../src/components/scrollBoxes/labels.ts');
 	assert.equal(FORMULA_SCROLL_LABEL, 'Formula, scrolls sideways');
-	assert.equal(tableScrollLabel(['Property', 'Mean', 'Median', 'Mode']), 'Table: Property, Mean, Median, Mode, scrolls sideways');
+	// No "Table": the screen reader says the role after the name.
+	assert.equal(tableScrollLabel(['Property', 'Mean', 'Median', 'Mode']), 'Property, Mean, Median, Mode, scrolls sideways');
 	// A markdown table's empty corner and stray whitespace never reach the name.
-	assert.equal(tableScrollLabel(['', ' z-score\n rule ', 'IQR rule']), 'Table: z-score rule, IQR rule, scrolls sideways');
+	assert.equal(tableScrollLabel(['', ' z-score\n rule ', 'IQR rule']), 'z-score rule, IQR rule, scrolls sideways');
 	assert.equal(tableScrollLabel([]), TABLE_SCROLL_FALLBACK_LABEL);
-	assert.equal(tableScrollLabel(['  ', '']), 'Table, scrolls sideways');
+	assert.equal(tableScrollLabel(['  ', '']), 'Scrolls sideways');
+	assert.equal(tableScrollLabel(['Rule', 'Formula'], ' Rules for\n one event '), 'Rules for one event: Rule, Formula, scrolls sideways');
+	// Repeated headers on one page are led by the heading above each table; unique headers are not.
+	const rules = ['Rule', 'Formula', 'Needs', 'In the bag', 'Explained on'];
+	const named = tableScrollLabels([
+		{ headers: ['Symbol', 'Read as'], heading: 'Notation' },
+		{ headers: rules, heading: 'Rules for one event' },
+		{ headers: rules, heading: '“Or”: the addition rules' },
+		{ headers: rules, heading: null },
+	]);
+	assert.deepEqual(named, [
+		'Symbol, Read as, scrolls sideways',
+		'Rules for one event: Rule, Formula, Needs, In the bag, Explained on, scrolls sideways',
+		'“Or”: the addition rules: Rule, Formula, Needs, In the bag, Explained on, scrolls sideways',
+		'Rule, Formula, Needs, In the bag, Explained on, scrolls sideways',
+	]);
+	assert.equal(new Set(named.slice(1, 3)).size, 2, 'tables with the same headers get different names');
 }
 
 console.log('Board check passed.');
