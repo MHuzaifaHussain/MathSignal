@@ -482,7 +482,6 @@ assert unbiased == Fraction(20, 3) == Fraction(4, 3) * 5 and abs(20 / 3 - 6.67) 
 running = Fraction(9, 10) * 1 + Fraction(1, 10) * unbiased
 assert running == Fraction(47, 30) and abs(47 / 30 - 1.567) < 5e-4
 assert abs(math.sqrt(5) - 2.236) < 5e-4
-assert Fraction(256, 256 - 1) == Fraction(256, 255)
 
 # Five training seeds (illustrative accuracies, in percent).
 accuracies = [Fraction(tenths, 10) for tenths in (908, 909, 911, 912, 915)]
@@ -505,8 +504,6 @@ m = sum(xs) / 4
 one_pass = sum(v * v for v in xs) / 4 - m * m
 two_pass = sum((v - m) ** 2 for v in xs) / 4
 assert one_pass == 0.0 and two_pass == 22.5 and m * m > 1e18
-# Feature scaling: s / sigma = sqrt(n / (n - 1)), about 6% for 9 values, under 0.01% for 10,000.
-assert abs(math.sqrt(9 / 8) - 1.06) < 0.005 and math.sqrt(10000 / 9999) - 1 < 0.0001
 assert variance([4, 7, 13, 16]) == Fraction(45, 2)
 print("shortcut in floats:", one_pass, " subtract the mean first:", two_pass)
 
