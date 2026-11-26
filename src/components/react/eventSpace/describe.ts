@@ -4,6 +4,7 @@ import { compareFractions, formatFraction, fraction, type Fraction } from '../bo
 import { approx, capitalize, equalsDecimal, joinWords, plural } from '../boardText.ts';
 import { CHECKS_BEFORE_ANSWER } from '../guided/guided.ts';
 import type { SpokenLine } from '../guided/spokenLine.ts';
+import { spokenFractions } from '../spokenMath.ts';
 import { compareEvents, complement, conditionalProbability, eventSize, intersect, probability, union, WEIGHT_TOTAL, type EventComparison, type Outcome, type OutcomeId } from './model.ts';
 import { eventMembers, type Scenario } from './scenarios.ts';
 import { CLEAR_PRESET, type Setup } from './setups.ts';
@@ -416,8 +417,9 @@ const SPOKEN_SYMBOLS: readonly (readonly [RegExp, string])[] = [
 	[/Ω/g, 'omega'],
 ];
 
+/** The symbols in words, then fractions said "6 over 12" rather than "6 slash 12". */
 export function spokenSymbols(line: string): string {
-	return SPOKEN_SYMBOLS.reduce((text, [symbol, words]) => text.replace(symbol, words), line);
+	return spokenFractions(SPOKEN_SYMBOLS.reduce((text, [symbol, words]) => text.replace(symbol, words), line));
 }
 
 /** A visible line with its symbols said in words, for SpokenText: the verdict, readouts and sets lines in browse mode. */

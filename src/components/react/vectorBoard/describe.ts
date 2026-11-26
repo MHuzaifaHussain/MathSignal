@@ -7,6 +7,7 @@ import { isPerfectSquare, toNumber, type Fraction } from '../boardMath.ts';
 import { capitalize, fractionText, joinWords, plural } from '../boardText.ts';
 import { canShowAnswer } from '../guided/guided.ts';
 import type { SpokenLine } from '../guided/spokenLine.ts';
+import { spokenFractions } from '../spokenMath.ts';
 import { tableFoldAnnouncement } from '../guided/tableFold.ts';
 import { formatNumber } from '../plotColors.ts';
 import {
@@ -1318,10 +1319,11 @@ const SENTENCE_START_THE = /(^|\. )the (?=(?:L1 norm|L2 norm|L-infinity norm|len
 /**
  * The live region's wording of the board's symbols. Screen readers at their default punctuation level skip ‖ and ·,
  * which would turn "a · b ÷ ‖a‖" into "a b divided by a", so announcements say them as the notation registry does:
- * "a dot b", "the length of a", "u hat", "theta". The visible text keeps the symbols.
+ * "a dot b", "the length of a", "u hat", "theta". ÷ and fractions such as "7/8" are said "divided by" and "7 over 8".
+ * The visible text keeps the symbols.
  */
 export function spoken(text: string): string {
-	return text
+	return spokenFractions(text)
 		.replace(/‖v‖₁/g, 'the L1 norm of v')
 		.replace(/‖v‖₂/g, 'the L2 norm of v')
 		.replace(/‖v‖∞/g, 'the L-infinity norm of v')

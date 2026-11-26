@@ -1,3 +1,5 @@
+import SpokenText from "../guided/SpokenText.tsx";
+import { spokenLine } from "./describe.ts";
 import { poolTiles } from "./model.ts";
 import type { Scenario } from "./scenarios.ts";
 import type { EventSpaceState } from "./state.ts";
@@ -24,7 +26,9 @@ export default function WrongModelTiles({ state, scenario }: WrongModelTilesProp
           </li>
         ))}
       </ul>
-      <figcaption className="ms-event-status">{scenario.wrongModel.caption}</figcaption>
+      <figcaption className="ms-event-status">
+        <SpokenText line={spokenLine(scenario.wrongModel.caption)} />
+      </figcaption>
     </figure>
   );
 }

@@ -338,7 +338,7 @@ assert.equal(reducer(tossedTwice, { type: 'reset' }).tossCount, 0);
 const setsView = reducer(passed, { type: 'stage', stage: 'sets' });
 assert.equal(describe.setsLine(setsView), 'Ω = {HH, HT, TH, TT}. A = {HH, HT, TH}. P(A) = |A| / |Ω| = 3/4');
 assert.equal(describe.setsLine(passed), null); // only in the Sets view
-assert.equal(describe.announcementFor(setsView, { type: 'stage', stage: 'sets' }), 'omega = {HH, HT, TH, TT}. A = {HH, HT, TH}. P of A = the size of A over the size of omega = 3/4');
+assert.equal(describe.announcementFor(setsView, { type: 'stage', stage: 'sets' }), 'omega = {HH, HT, TH, TT}. A = {HH, HT, TH}. P of A = the size of A over the size of omega = 3 over 4');
 const lockedSets = reducer(fresh, { type: 'stage', stage: 'sets' });
 assert.equal(lockedSets.stage, 'sets'); // the view can be chosen before Check…
 assert.equal(describe.setsLine(lockedSets), null); // …but the symbolic line waits for Check
@@ -392,9 +392,9 @@ assert.deepEqual(describe.readoutLines(shrunk), [shrunkLine]);
 assert.equal(describe.statusLine(shrunk), '36 equally likely outcomes. Editing A. Shrunk to B: 6 outcomes left.');
 // Speech matches the screen while shrunk: a change to A or B is announced as the new P(A | B).
 const shrunkToggle = reducer(shrunk, { type: 'toggle', id: '4-4' });
-assert.equal(describe.announcementFor(shrunkToggle, { type: 'toggle', id: '4-4' }), 'Inside B: 6 outcomes, 3 of them also in A, {(4,4), (5,5), (6,6)}. P of A given B = 3/6 = 1/2 = 0.50, while P of A = 7/36 ≈ 0.19.');
+assert.equal(describe.announcementFor(shrunkToggle, { type: 'toggle', id: '4-4' }), 'Inside B: 6 outcomes, 3 of them also in A, {(4,4), (5,5), (6,6)}. P of A given B = 3 over 6 = 1 over 2 = 0.50, while P of A = 7 over 36 ≈ 0.19.');
 const shrunkPreset = reducer(shrunk, { type: 'preset', event: 'A', preset: 'clear' });
-assert.equal(describe.announcementFor(shrunkPreset, { type: 'preset', event: 'A', preset: 'clear' }), 'Inside B: 6 outcomes, none of them also in A. P of A given B = 0/6 = 0, while P of A = 0/36 = 0.');
+assert.equal(describe.announcementFor(shrunkPreset, { type: 'preset', event: 'A', preset: 'clear' }), 'Inside B: 6 outcomes, none of them also in A. P of A given B = 0 over 6 = 0, while P of A = 0 over 36 = 0.');
 // A setup that would need unbuilt conditioning features fails loudly.
 const conditionSetup = getSetup('dice-condition');
 assert.throws(() => validateSetup({ ...conditionSetup, events: { A: conditionSetup.events.A } }), /needs an event B/);
@@ -486,7 +486,7 @@ assert.equal(describe.statusLine(montyShrunk), '6 equally likely outcomes. A: ca
 assert.deepEqual(describe.readoutLines(montyShrunk), ['Inside B: 3 outcomes, 1 of them also in A, {(car 1, tails)}. P(A | B) = 1/3 ≈ 0.33, while P(A) = 2/6 = 1/3 ≈ 0.33.']);
 assert.deepEqual(describe.readoutLines(montyRun(shrinkOn, montyA('car-2'))), ['Inside B: 3 outcomes, 2 of them also in A, {(car 2, heads), (car 2, tails)}. P(A | B) = 2/3 ≈ 0.67, while P(A) = 2/6 = 1/3 ≈ 0.33.']);
 assert.deepEqual(describe.readoutLines(montyRun(shrinkOn, montyA('car-3'))), ['Inside B: 3 outcomes, none of them also in A. P(A | B) = 0/3 = 0, while P(A) = 2/6 = 1/3 ≈ 0.33.']);
-assert.equal(describe.announcementFor(montyRun(shrinkOn, montyA('car-2')), montyA('car-2')), 'Inside B: 3 outcomes, 2 of them also in A, {(car 2, heads), (car 2, tails)}. P of A given B = 2/3 ≈ 0.67, while P of A = 2/6 = 1/3 ≈ 0.33.');
+assert.equal(describe.announcementFor(montyRun(shrinkOn, montyA('car-2')), montyA('car-2')), 'Inside B: 3 outcomes, 2 of them also in A, {(car 2, heads), (car 2, tails)}. P of A given B = 2 over 3 ≈ 0.67, while P of A = 2 over 6 = 1 over 3 ≈ 0.33.');
 // The second preset for B: the host opens door 2.
 assert.deepEqual(describe.readoutLines(montyRun(montyB('opens-2'), shrinkOn)), ['Inside B: 3 outcomes, 1 of them also in A, {(car 1, heads)}. P(A | B) = 1/3 ≈ 0.33, while P(A) = 2/6 = 1/3 ≈ 0.33.']);
 assert.deepEqual(describe.readoutLines(montyRun(montyB('opens-2'), shrinkOn, montyA('car-3'))), ['Inside B: 3 outcomes, 2 of them also in A, {(car 3, heads), (car 3, tails)}. P(A | B) = 2/3 ≈ 0.67, while P(A) = 2/6 = 1/3 ≈ 0.33.']);
@@ -615,7 +615,7 @@ assert.deepEqual(describe.compareLines(coinDieCompared), [...coinDieVerdict, 'P(
 // Spoken, the symbols become words: "P of A and B", not "P left paren A and B".
 assert.equal(
 	describe.announcementFor(coinDieCompared, { type: 'compare', on: true }),
-	'Independent: yes. Mutually exclusive: no, A and B share 1 outcome, {H6}. P of A and B = 1/12, and P of A times P of B = 1/6 times 1/2 = 1/12: equal.',
+	'Independent: yes. Mutually exclusive: no, A and B share 1 outcome, {H6}. P of A and B = 1 over 12, and P of A times P of B = 1 over 6 times 1 over 2 = 1 over 12: equal.',
 );
 
 // Shrink, once Compare is on: "Inside B" replaces the readouts, and the conditional line is left out as repeated.
@@ -623,18 +623,18 @@ const coinDieShrunk = reducer(coinDieCompared, { type: 'shrink', on: true });
 assert.equal(coinDieShrunk.shrink, true);
 assert.deepEqual(describe.readoutLines(coinDieShrunk), ['Inside B: 6 outcomes, 1 of them also in A, {H6}. P(A | B) = 1/6 ≈ 0.17, while P(A) = 2/12 = 1/6 ≈ 0.17.']);
 assert.deepEqual(describe.compareLines(coinDieShrunk), coinDieVerdict);
-assert.equal(describe.announcementFor(coinDieShrunk, { type: 'shrink', on: true }), 'Inside B: 6 outcomes, 1 of them also in A, {H6}. P of A given B = 1/6 ≈ 0.17, while P of A = 2/12 = 1/6 ≈ 0.17.');
+assert.equal(describe.announcementFor(coinDieShrunk, { type: 'shrink', on: true }), 'Inside B: 6 outcomes, 1 of them also in A, {H6}. P of A given B = 1 over 6 ≈ 0.17, while P of A = 2 over 12 = 1 over 6 ≈ 0.17.');
 
 // Precedence with Compare and Shrink both on: the new P(A | B), then the verdict in short.
 const evenShrunk = reducer(coinDieShrunk, { type: 'preset', event: 'A', preset: 'die-even' });
 assert.equal(
 	describe.announcementFor(evenShrunk, { type: 'preset', event: 'A', preset: 'die-even' }),
-	'Inside B: 6 outcomes, 3 of them also in A, {H2, H4, H6}. P of A given B = 3/6 = 1/2 = 0.50, while P of A = 6/12 = 1/2 = 0.50. Independent: yes. Mutually exclusive: no.',
+	'Inside B: 6 outcomes, 3 of them also in A, {H2, H4, H6}. P of A given B = 3 over 6 = 1 over 2 = 0.50, while P of A = 6 over 12 = 1 over 2 = 0.50. Independent: yes. Mutually exclusive: no.',
 );
 const toggledShrunk = reducer(coinDieShrunk, { type: 'toggle', id: 'H1' });
 assert.equal(
 	describe.announcementFor(toggledShrunk, { type: 'toggle', id: 'H1' }),
-	'Inside B: 6 outcomes, 2 of them also in A, {H1, H6}. P of A given B = 2/6 = 1/3 ≈ 0.33, while P of A = 3/12 = 1/4 = 0.25. Independent: no. Mutually exclusive: no.',
+	'Inside B: 6 outcomes, 2 of them also in A, {H1, H6}. P of A given B = 2 over 6 = 1 over 3 ≈ 0.33, while P of A = 3 over 12 = 1 over 4 = 0.25. Independent: no. Mutually exclusive: no.',
 );
 // Emptying B while shrunk un-shrinks, says why, and still gives the verdict.
 const emptiedB = reducer(coinDieShrunk, { type: 'preset', event: 'B', preset: 'clear' });
@@ -645,7 +645,7 @@ assert.equal(
 );
 // Compare on, not shrunk: the count, then the verdict in short.
 const toggledCompared = reducer(coinDieCompared, { type: 'toggle', id: 'H1' });
-assert.equal(describe.announcementFor(toggledCompared, { type: 'toggle', id: 'H1' }), 'A: 3 of 12 outcomes, P of A = 1/4. Independent: no. Mutually exclusive: no.');
+assert.equal(describe.announcementFor(toggledCompared, { type: 'toggle', id: 'H1' }), 'A: 3 of 12 outcomes, P of A = 1 over 4. Independent: no. Mutually exclusive: no.');
 // Turning Compare off hides the verdict and the A ∩ B line again, and un-shrinks, so the held lines stay held.
 const comparedOff = reducer(coinDieShrunk, { type: 'compare', on: false });
 assert.deepEqual([comparedOff.compare, comparedOff.shrink], [false, false]);
@@ -721,7 +721,7 @@ assert.equal(stateModule.shrinkBlocked(noBCompared), 'b-empty');
 assert.equal(describe.announcementFor(reducer(noBCompared, { type: 'shrink', on: true }), { type: 'shrink', on: true }), "Undefined: B can't happen (probability 0).");
 // A burst of toggles while Compare is on ends in one announcement with the verdict.
 const sum8Toggled = run('dice-independence', { type: 'compare', on: true }, presetA('sum-8'), ...toggles('1-1', '1-1'));
-assert.equal(describe.announcementFor(sum8Toggled, { type: 'toggle', id: '1-1' }), 'A: 5 of 36 outcomes, P of A = 5/36. Independent: no. Mutually exclusive: no.');
+assert.equal(describe.announcementFor(sum8Toggled, { type: 'toggle', id: '1-1' }), 'A: 5 of 36 outcomes, P of A = 5 over 36. Independent: no. Mutually exclusive: no.');
 // The comparison page quotes its pairs the other way round (A = first die 6, B = sum 7, and so on). Swapping A and B
 // changes no number and no verdict the board shows, and each swapped pair loads from presets. Its fourth pair, first
 // die 6 with second die 6, is left out on purpose: neither event is an A preset and A is at the four-preset cap
@@ -780,7 +780,7 @@ assert.deepEqual(describe.compareLines(dieCompared), [
 ]);
 assert.equal(
 	describe.announcementFor(dieCompared, { type: 'compare', on: true }),
-	'Independent: no. Mutually exclusive: yes, A and B share no outcome. P of A and B = 0, but P of A times P of B = 1/3 times 1/3 = 1/9 (≈ 0.11): not equal.',
+	'Independent: no. Mutually exclusive: yes, A and B share no outcome. P of A and B = 0, but P of A times P of B = 1 over 3 times 1 over 3 = 1 over 9 (≈ 0.11): not equal.',
 );
 const dieWith = (...actions) => describe.compareLines(run('die-compare', { type: 'compare', on: true }, ...actions));
 const loaded = { type: 'weight-preset', name: 'Loaded toward six' };
@@ -4382,8 +4382,8 @@ const labelsOverlap = (first, second, size) => {
 	// Announcements say the symbols the way the notation registry does, so a screen reader can't drop ‖ or ·; the
 	// visible readouts keep the symbols.
 	const spokenPreset = vd.announcementFor(vst.reducer(alignDone, { type: 'preset', id: 'short-b' }), { type: 'preset', id: 'short-b' });
-	assert.ok(spokenPreset.includes('Shadow of b along a: a dot b ÷ the length of a = 5 ÷ √10 ≈ 1.58.'), spokenPreset);
-	assert.ok(!/[‖·θû]/.test(spokenPreset));
+	assert.ok(spokenPreset.includes('Shadow of b along a: a dot b divided by the length of a = 5 divided by √10 ≈ 1.58.'), spokenPreset);
+	assert.ok(!/[‖·θû÷]/.test(spokenPreset));
 	assert.equal(vd.announcementFor(alignOpen, { type: 'sign', sign: 'zero' }), 'Your guess: a dot b is zero.');
 	assert.equal(vd.spoken('Along the track: a · û = 3. θ'), 'Along the track: a dot u hat = 3. theta');
 	for (const id of Object.keys(vs.SETUPS)) {
@@ -4453,12 +4453,22 @@ const labelsOverlap = (first, second, size) => {
 			}
 		}
 	}
+	// NVDA reads "7/8" as "7 slash 8" and ÷ as "divide by". Lines shown through SpokenText are heard as spoken() makes
+	// them; the column vectors, table cells and handle names are heard as written.
+	const unsaid = /÷|\d\/\d/;
+	const assertFractionsSaid = (id, state) => {
+		const said = [vd.boardLabel(state), vd.statusLine(state), vd.feedbackLine(state), vd.listsLine(state), ...vd.readoutLines(state), ...vd.tableRows(state).map((row) => row.name)];
+		for (const line of said.filter(Boolean)) assert.ok(!unsaid.test(vd.spoken(line)), `${id}: "${vd.spoken(line)}" says a fraction or ÷ as a symbol`);
+		const plain = [...vd.tableRows(state).flatMap((row) => [row.x, row.y, row.length, row.spoken]), ...vd.columnVectors(state).map((column) => column.spoken), ...vd.handlesFor(state).map((handle) => handle.label)];
+		for (const text of plain) assert.ok(!unsaid.test(text), `${id}: "${text}" is read as written and has a fraction or ÷`);
+	};
 	for (const id of Object.keys(vs.SETUPS)) {
 		let count = 0;
 		for (const state of reachableStates(id)) {
 			for (const label of vd.planeLabels(state)) {
 				for (const size of PLANE_SIZES) assert.ok(labelFits(label, size), `${id}: "${label.text}" leaves a ${size}px plane at a = (${state.a}), b = (${state.b}), guess = (${state.guess}), c = ${state.scalar}`);
 			}
+			assertFractionsSaid(id, state);
 			count++;
 		}
 		assert.ok(count > 0, `${id}: no states swept`);
@@ -7889,7 +7899,8 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	const esState = await import('../src/components/react/eventSpace/state.ts');
 	const esSay = await import('../src/components/react/eventSpace/describe.ts');
 	const ids = ['coins-build', 'dice-count', 'dice-operations', 'die-pour', 'dice-condition', 'kids-condition', 'coin-die-independence', 'dice-independence', 'weather-exclusive', 'die-compare', 'monty-condition'];
-	const symbols = /[|Ω∩∪]|P\(/;
+	// Fractions and ÷ too: NVDA reads "6/12" as "6 slash 12" and ÷ as "divide by".
+	const symbols = /[|Ω∩∪÷]|P\(|\d\/\d/;
 	const tail = [
 		{ type: 'look', lookAt: 'A and B' },
 		{ type: 'look', lookAt: 'A or B' },
@@ -7910,8 +7921,21 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		for (const event of ['A', 'B']) {
 			for (const preset of setup.events[event]?.presets ?? []) states.push((state = esState.reducer(state, { type: 'preset', event, preset })));
 		}
-		for (const action of tail) states.push((state = esState.reducer(state, action)));
+		const scenario = SCENARIOS[setup.scenario];
+		const toss = { type: 'toss', results: Object.fromEntries(scenario.outcomes.map((outcome, index) => [outcome.id, index + 1])) };
+		for (const action of [...tail, toss, { type: 'wrong-model', on: true }]) {
+			const previous = state;
+			states.push((state = esState.reducer(state, action)));
+			// An action the setup doesn't offer changes nothing and is never announced.
+			if (state === previous) continue;
+			const announced = esSay.announcementFor(state, action);
+			assert.ok(!symbols.test(announced), `${id}: announcing ${action.type} says "${announced}", with a symbol a screen reader skips`);
+		}
+		if (scenario.wrongModel) assert.ok(!symbols.test(esSay.spokenLine(scenario.wrongModel.caption).spoken), `${id}: the wrong-model caption keeps a symbol`);
 		for (const at of states) {
+			// Read as they are, with no spoken form: the status line and the cells' and cups' names.
+			const plain = [esSay.statusLine(at), ...scenario.outcomes.flatMap((outcome) => [esSay.cellName(at, outcome), esSay.cupName(at, outcome)])];
+			for (const text of plain) assert.ok(!symbols.test(text), `${id}: "${text}" is read as written and has a symbol a screen reader skips`);
 			const lines = [esSay.feedbackLine(at), esSay.markedLine(at), esSay.setsLine(at), esSay.tossLine(at), ...esSay.readoutLines(at), ...(esSay.compareLines(at) ?? [])];
 			if (setup.mode === 'weights') lines.push(esSay.jugLine(at), esSay.totalLine(at), esSay.additivityLine(at));
 			for (const line of lines.filter(Boolean)) {
@@ -7923,9 +7947,9 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	}
 	assert.deepEqual(esSay.spokenLine('Ω = {HH, HT, TH, TT}. A = {HH, HT, TH}. P(A) = |A| / |Ω| = 3/4'), {
 		visible: 'Ω = {HH, HT, TH, TT}. A = {HH, HT, TH}. P(A) = |A| / |Ω| = 3/4',
-		spoken: 'omega = {HH, HT, TH, TT}. A = {HH, HT, TH}. P of A = the size of A over the size of omega = 3/4',
+		spoken: 'omega = {HH, HT, TH, TT}. A = {HH, HT, TH}. P of A = the size of A over the size of omega = 3 over 4',
 	});
-	assert.equal(esSay.spokenSymbols('P(even) = 6/12 = 0.50.'), 'P of even = 6/12 = 0.50.');
+	assert.equal(esSay.spokenSymbols('P(even) = 6/12 = 0.50.'), 'P of even = 6 over 12 = 0.50.');
 }
 
 // ---- VectorBoard2D: lines a screen reader can browse say ‖ ‖, ·, û and θ in words ----
@@ -7935,13 +7959,18 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	const vecSay = await import('../src/components/react/vectorBoard/describe.ts');
 	const vecNorms = await import('../src/components/react/vectorBoard/normsDescribe.ts');
 	const vecSetups = await import('../src/components/react/vectorBoard/setups.ts');
-	const skipped = /[‖·ûθ|]|max\(/;
+	// Fractions and ÷ too: NVDA reads "7/8" as "7 slash 8" and ÷ as "divide by".
+	const skipped = /[‖·ûθ|÷]|max\(|\d\/\d/;
 	for (const id of Object.keys(vecSetups.SETUPS)) {
 		const setup = vecSetups.getSetup(id);
 		let state = vecState.initialState(id);
 		const states = [state];
-		for (const action of [{ type: 'check' }, { type: 'check' }, { type: 'show-answer' }]) states.push((state = vecState.reducer(state, action)));
-		for (const option of vecSay.stageOptions(setup)) states.push((state = vecState.reducer(state, { type: 'stage', stage: option.value })));
+		const actions = [{ type: 'check' }, { type: 'check' }, { type: 'show-answer' }, ...vecSay.stageOptions(setup).map((option) => ({ type: 'stage', stage: option.value })), ...setup.presets.map((preset) => ({ type: 'preset', id: preset.id }))];
+		for (const action of actions) {
+			states.push((state = vecState.reducer(state, action)));
+			const announced = vecSay.announcementFor(state, action);
+			assert.ok(!skipped.test(announced), `${id}: announcing ${action.type} says "${announced}", with a symbol a screen reader skips`);
+		}
 		for (const at of states) {
 			const lines = [vecSay.statusLine(at), vecSay.feedbackLine(at), vecSay.listsLine(at), vecSay.boardLabel(at), ...vecSay.readoutLines(at)];
 			if (setup.kind === 'norms') lines.push(vecNorms.NORM_TABLE_HEADERS.caption, ...vecNorms.normRows(at).flatMap((row) => [row.name, row.how]));
@@ -7955,7 +7984,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	}
 	assert.deepEqual(vecSay.spokenLine('Shadow of b along a: a · b ÷ ‖a‖ = −1 ÷ √17 ≈ −0.24.'), {
 		visible: 'Shadow of b along a: a · b ÷ ‖a‖ = −1 ÷ √17 ≈ −0.24.',
-		spoken: 'Shadow of b along a: a dot b ÷ the length of a = −1 ÷ √17 ≈ −0.24.',
+		spoken: 'Shadow of b along a: a dot b divided by the length of a = −1 divided by √17 ≈ −0.24.',
 	});
 	assert.equal(vecSay.spoken(vecSay.CONTROL_LABELS.signLegend), 'Your guess: a dot b is');
 	assert.equal(vecSay.spoken('‖v‖₁ = |−3| + |4| = 7. ‖v‖∞ = max(|−3|, |4|) = 4.'), 'The L1 norm of v = the size of −3 + the size of 4 = 7. The L-infinity norm of v = the larger of the size of −3, the size of 4 = 4.');
