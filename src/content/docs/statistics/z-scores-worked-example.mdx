@@ -83,11 +83,11 @@ Your task: answer the board's question and press Check. Then press Eleven-year-o
   <NormalDistribution client:visible mode="z" setup="taller-for-age" />
 </div>
 
-**The answer.** The nine-year-old. After Check the board adds a z ruler under the centimeters, and its verdict, whatever you picked, gives "z = 6 / 8 = 0.75 for the nine-year-old and only z = 6 / 12 = 0.5 for the eleven-year-old." The same 6 cm divided by a smaller standard deviation gives a z-score 0.75 / 0.5 = 3/2 times as big. In centimeters the eleven-year-old is still taller.
+**The answer.** The nine-year-old. After Check the board adds a z ruler under the centimeters, and its verdict, whatever you picked, gives "z = 6 / 8 = 0.75 for the nine-year-old and only z = 6 / 12 = 0.5 for the eleven-year-old." The same 6 cm divided by a smaller standard deviation gives a z-score 0.75 / 0.5 = 1.5 times as big. In centimeters the eleven-year-old is still taller.
 
 **The shares.** With Shade the share below on, the board reads "If heights in this group follow a normal curve, about 77.3% are below 140 cm: Φ(0.75) ≈ 0.7734." Φ is the share of a standard normal, the normal curve with mean 0 and standard deviation 1, at or below a given z. For the eleven-year-old it reads "about 69.1% are below 150 cm: Φ(0.5) ≈ 0.6915", a smaller area for a smaller z.
 
-**Same shape, new ruler.** Press Standard normal, z = 0.75. The centimeter ruler goes, and the shaded area stays exactly the nine-year-old's: "About 77.3% of a standard normal is below 0.75: Φ(0.75) ≈ 0.7734." Standardizing, turning every value into its z-score, only relabels the ruler, from centimeters to standard deviations.
+**Same shape, new ruler.** Press Standard normal, z = 0.75. The centimeter labels disappear, and the shaded area is exactly the nine-year-old's again: "About 77.3% of a standard normal is below 0.75: Φ(0.75) ≈ 0.7734." Standardizing, turning every value into its z-score, only relabels the ruler, from centimeters to standard deviations.
 
 ## Notation
 
@@ -101,7 +101,7 @@ $$
 z_i = \frac{x_i - \vmu}{\vsigma}, \qquad x = \vmu + z\,\vsigma.
 $$
 
-The $z_i$ have no units, average 0 and have standard deviation 1. The same holds for a random variable $X$, such as a randomly chosen child's height, with $\mathbb{E}[X] = \vmu$ and $\operatorname{Var}[X] = \vsigma^2 > 0$, the variable $Z = (X - \vmu)/\vsigma$ has mean 0 and variance 1, and if $X \sim \mathcal{N}(\vmu, \vsigma^2)$, then $Z \sim \mathcal{N}(0, 1)$ and $F_X(x) = \Phi\big((x - \vmu)/\vsigma\big)$.
+The $z_i$ have no units, average 0 and have standard deviation 1. The same holds for a random variable $X$, such as a randomly chosen child's height: if $\mathbb{E}[X] = \vmu$ and $\operatorname{Var}[X] = \vsigma^2 > 0$, then $Z = (X - \vmu)/\vsigma$ has mean 0 and variance 1. If $X \sim \mathcal{N}(\vmu, \vsigma^2)$, then $Z \sim \mathcal{N}(0, 1)$ and $F_X(x) = \Phi\big((x - \vmu)/\vsigma\big)$.
 
 Boundary case: if $\vsigma = 0$, every value is equal and no z-score exists. Convention: some tools divide by $n - 1$, using $s$ in place of $\vsigma$; this page uses $\vsigma$ unless it says otherwise.
 
@@ -244,7 +244,7 @@ What went wrong in each?
 
 (b) Used the other class's mean. Measure each child against their own: (140 − 134)/8 = 0.75.
 
-(c) A different convention, not an error. `from_samples` divides by n − 1, so the divisor is s = √72 ≈ 8.49 and 6/√72 = 1/√2 ≈ 0.7071. `scipy.stats.zscore`, whose default is `ddof=0` <Cite id="scipy-zscore" />, and `StandardScaler` divide by n and give 0.75. Say which you used; the variance page explains the [two versions](/statistics/variance-and-standard-deviation/#two-versions-the-whole-group-or-a-sample).
+(c) Calling 0.75 wrong is the slip: 0.7071 comes from a different convention. `from_samples` divides by n − 1, so the divisor is s = √72 ≈ 8.49 and 6/√72 = 1/√2 ≈ 0.7071. `scipy.stats.zscore`, whose default is `ddof=0` <Cite id="scipy-zscore" />, and `StandardScaler` divide by n and give 0.75. Say which you used; the variance page explains the [two versions](/statistics/variance-and-standard-deviation/#two-versions-the-whole-group-or-a-sample).
 
 (d) That table gives the area between 0 and z: 0.5 + 0.2734 = 0.7734, about 77%.
 
