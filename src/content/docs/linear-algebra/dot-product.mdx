@@ -60,13 +60,13 @@ import VectorBoard2D from "../../../components/react/VectorBoard2D.tsx";
 
 ## In everyday terms
 
-<Analogy breaks="The cart picture works only when the track arrow has length 1. With a longer track arrow the dot product grows with it, though the cart moves no further. The picture also gives the push and the track different jobs, while the dot product treats its two vectors the same way: a · b always equals b · a.">
+<Analogy breaks="The cart picture works only when the track arrow has length 1. With a longer track arrow the dot product grows with it, though the cart moves no further. The picture also gives the push and the track different jobs, while the dot product treats its two vectors the same way: (4, 3) · (1, 0) equals (1, 0) · (4, 3).">
 
-A cart sits on a straight track that runs east across a sheet of squared paper. You push it with an arrow that goes 3 squares east and 4 squares north, a push of length 5. Only the east part, 3 squares, moves the cart. The north part presses into the rails and does nothing. Turn your push to point straight along the track and all 5 count.
+A cart sits on a straight track that runs east across a sheet of squared paper. You push it with an arrow that goes 4 squares east and 3 squares north, a push of length 5. Only the east part, 4 squares, moves the cart. The north part presses into the rails and does nothing. Turn your push to point straight along the track and all 5 count.
 
 A shopping bill shows the same sum without any angles. You buy 2 apples, 3 loaves and 1 carton of milk, at 0.5, 2 and 1.5 dollars. The bill is 2 × 0.5 + 3 × 2 + 1 × 1.5 = 8.5 dollars: multiply each count by its price, then add. Swap the roles of the two lists and the bill is the same, and doubling every price doubles the bill.
 
-In symbols, the cart works the same way: write the push as (3, 4) and the track direction, one square east, as (1, 0). Multiply matching entries and add: (3, 4) · (1, 0) = 3 × 1 + 4 × 0 = 3, the part that moves the cart.
+In symbols, the cart works the same way: write the push as (4, 3) and the track direction, one square east, as (1, 0). Multiply matching entries and add: (4, 3) · (1, 0) = 4 × 1 + 3 × 0 = 4, the part that moves the cart.
 
 </Analogy>
 
@@ -76,7 +76,7 @@ Each unit in a fully connected layer starts by computing a dot product of its we
 
 ## Push a cart along a track
 
-Before you touch anything: besides (3, 4), is there another push of length 5 that gives the cart exactly 3? Going further: what number does (−3, 4), a push that leans back toward the west, give?
+Before you touch anything: is there a push of length 5 that gives the cart exactly 3, and is there more than one? Going further: what number does (−3, 4), a push that leans back toward the west, give?
 
 The board draws the track direction as a dashed arrow labeled "û, length 1", pointing east. **û** (read "u hat") is the usual name for an arrow of length 1 that only gives a direction; when the track arrow is longer, the board calls it **b** instead. Your push **a** is a solid arrow from the origin, starting at (5, 0). A dotted circle marks every push of length 5. Drag the tip of your push; it snaps to whole-number grid points. From the keyboard, use the − and + buttons under the plane, such as "Move your push 1 east". Your task: keep your push at length 5 and tilt it until the cart gets exactly 3, then press Check.
 
@@ -84,7 +84,7 @@ The board draws the track direction as a dashed arrow labeled "û, length 1", po
   <VectorBoard2D client:visible setup="cart-push" />
 </div>
 
-Yes: the mirror image (3, −4) also has length 5 and gives 3. For (3, 4), Check says "Yes. (3, 4) has length 5, since 3 × 3 + 4 × 4 = 25, and 3 of it points along the track." Then the board draws the part that moves the cart as an ochre segment labeled "moves the cart" and writes the sum out: "Along the track: a · û = 3 × 1 + 4 × 0 = 3. The cart gets 3 of your push." The other part goes into the rails: "Into the rails: 4. That part doesn't move the cart." A push of (4, 3) also has length 5, but 4 of it points along the track.
+Yes, two: (3, 4) and its mirror image (3, −4) both have length 5 and give 3. For (3, 4), Check says "Yes. (3, 4) has length 5, since 3 × 3 + 4 × 4 = 25, and 3 of it points along the track." Then the board draws the part that moves the cart as an ochre segment labeled "moves the cart" and writes the sum out: "Along the track: a · û = 3 × 1 + 4 × 0 = 3. The cart gets 3 of your push." The other part goes into the rails: "Into the rails: 4. That part doesn't move the cart."
 
 Now try the presets. Sideways, (0, 5), gives "The cart doesn't move: your whole push goes into the rails." That is the right angle, where the cart gets nothing. Backward, (−3, 4), gives "Along the track: a · û = (−3) × 1 + 4 × 0 = −3. The cart rolls backward." Any push that leans past the right angle gives a negative number. The last two presets break the picture on purpose. Longer track arrow keeps the push at (3, 4) but makes the track arrow **b** = (2, 0), and the board says "a · b = 3 × 2 + 4 × 0 = 6. That is twice the part along the track, 3, because b has length 2." Tilted track puts your push back at (5, 0) and turns the track to **b** = (4, 3), which has length 5. The board says "a · b = 5 × 4 + 0 × 3 = 20. That is 5 times the part along the track, 4, because b has length 5." The dot product equals the part along the track only when the track arrow has length 1.
 
@@ -135,7 +135,7 @@ Negative, though only just. The board shows "a · b = 4 × (−1) + 1 × 3 = −
 
 Short b and Long b answer the second question. Both have **a** = (3, 1) and an angle of exactly 45 degrees. Short b has **b** = (1, 2) and **a** · **b** = 5. Long b doubles **b** to (2, 4), and the board says "Before: a · b = 5 at exactly 45°. Same angle, b twice as long, so a · b doubled." The angle stays the same and the dot product doubles, so the size of **a** · **b** mixes the angle with the lengths.
 
-The other presets cover the two extreme cases. Perpendicular, **a** = (3, 1) and **b** = (−1, 3), gives "a · b = 3 × (−1) + 1 × 3 = 0." and "Exactly 90°: a and b are perpendicular.", and the board draws a right-angle mark. Opposite, **a** = (2, 1) and **b** = (−4, −2), gives −10 at "Exactly 180°: b points the opposite way."
+The other presets cover the two extreme cases. For Perpendicular, **a** = (3, 1) and **b** = (−1, 3), the board shows "a · b = 3 × (−1) + 1 × 3 = 0." It also says "Exactly 90°: a and b are perpendicular." and draws a right-angle mark. Opposite, **a** = (2, 1) and **b** = (−4, −2), gives −10, and the board says "Exactly 180°: b points the opposite way."
 
 Then build the running pair by hand: drag **a** to (3, 4) and **b** to (4, 3). The board reads "a · b = 3 × 4 + 4 × 3 = 24." and "Angle: about 16.3°." Now look for every **b** that gives 0 with this **a**. Apart from the zero vector there are two on the board, (−4, 3) and (4, −3), the two directions at a right angle to **a**. They lie on one line through the origin, and every **b** on the side of that line away from **a** gives a negative number. Among the **b** of length 5 the most negative is −25, at (−3, −4), which points straight back.
 
@@ -143,9 +143,9 @@ Then build the running pair by hand: drag **a** to (3, 4) and **b** to (4, 3). T
 
 Two nonzero vectors are perpendicular exactly when their dot product is 0. For **a** = (3, 4) and **b** = (−4, 3), **a** · **b** = 3 × (−4) + 4 × 3 = −12 + 12 = 0. Margalit and Rabinoff take this as the definition: vectors are orthogonal, or perpendicular, when their dot product is 0, written with the symbol ⊥ <Cite id="margalit-ila" />. By that definition the zero vector is perpendicular to every vector, since 0 times anything is 0, but it has no direction and so no angle. Drag **b** to (0, 0) and the board says "a · b = 0 because b is the zero vector. The angle is undefined: b has no direction."
 
-## Size: lengths times the cosine
+## Lengths times the cosine
 
-The size of **a** · **b** is the product of the two lengths and the cosine of the angle between the arrows:
+The value of **a** · **b** is the product of the two lengths and the cosine of the angle between the arrows:
 
 **a** · **b** = ‖**a**‖ ‖**b**‖ cos θ,
 
@@ -275,7 +275,7 @@ $\mathbf{w} \cdot \mathbf{x}' = 0.8 \times 1 + (-0.5) \times 3 + 0.3 \times 0 = 
 A unit in a fully connected layer computes the dot product of its weight vector with its input and adds a number, its bias: $z = \mathbf{w} \cdot \mathbf{x} + b$, where $b$ here is a plain number, not a vector. The sign of $\mathbf{w} \cdot \mathbf{x}$ says whether the input leans toward the weights or away from them. A linear classifier with one weight vector $\mathbf{w}_i$ per class predicts the class whose dot product with the input is largest. Papers often write the dot product $\mathbf{x} \cdot \mathbf{w}_i$ as $\mathbf{x}^\top \mathbf{w}_i$ ("x transpose w i"); it is the same number. And $\arg\max$ picks the class $i$ whose score is largest:
 
 $$
-y = \arg\max_{i} \; \mathbf{x}^\top \mathbf{w}_i,
+y = \arg\max_{i} \; \mathbf{x}^\top \mathbf{w}_i.
 $$
 
 This is how Shrivastava and Li write it, as their equation (6) for multi-class SVMs and logistic regression, noting that the weight vectors do not all have the same length (§1.4) <Cite id="shrivastava2014" />. So a class can win because its weight vector is long, not only because it points along the input.
