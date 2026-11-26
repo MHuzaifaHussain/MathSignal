@@ -68,15 +68,17 @@ export default function TraySlider({
         max={max}
         step={step}
         largeStep={largeStep ?? defaultLargeStep(min, max, step)}
-        aria-labelledby={labelId}
         onValueChange={(next) => onValueChange(next)}
         onValueCommitted={(next, details) => handleCommit(next, details.reason)}
       >
         <Slider.Control className="ms-slider-control">
           <Slider.Track className="ms-slider-track">
             <Slider.Indicator className="ms-slider-indicator" />
+            {/* The label names the slider input only. On Root it would also name Root's group, so a screen reader
+                heard the label twice ("Height grouping, Height slider"). */}
             <Slider.Thumb
               className="ms-slider-thumb"
+              aria-labelledby={labelId}
               getAriaValueText={(_formatted, current) => (describe ? describe(current) : format(current))}
             />
           </Slider.Track>
