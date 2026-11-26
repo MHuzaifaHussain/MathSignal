@@ -391,7 +391,6 @@ survives(lambda xs: q7(xs, 0.75), 2, 122, 148)
 survives(iqr, 2, 0, 26)
 survives(median, 4, 122, 148)
 survives(mad, 4, 0, 26)
-assert Fraction(3, 9) == Fraction(1, 3)
 
 # Spreads can also collapse: set 4 other children to 133; with child 1 already at 133, five values sit at the median.
 assert mad(replaced([1, 2, 3, 4], [133] * 4)) == 0
