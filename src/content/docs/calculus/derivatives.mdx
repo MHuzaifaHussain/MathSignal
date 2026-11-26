@@ -27,7 +27,7 @@ references:
   - bolte2020
   - bertoin2021
 author: Muhammad Huzaifa Hussain
-reviewedAt: 2026-11-25
+reviewedAt: 2026-11-26
 aiAssisted: true
 primaryQuery: derivatives for machine learning
 searchIntent: learn
@@ -219,8 +219,8 @@ Conventions: $h$ may be negative; $h = 0$ is never used. Boundary cases: if the 
 
 <StepThrough title="Any whole power n ≥ 1" rigor="sketch">
 
-1. Expand $(x + h)^n$, for a whole number $n \ge 1$, with the binomial theorem: $x^n + n x^{n-1} h + (\text{terms with } h^2 \text{ or a higher power})$.
-2. Subtract $x^n$ and divide by $h$: $n x^{n-1} + (\text{terms with } h \text{ or a higher power})$.
+1. Expand $(x + h)^n$, for a whole number $n \ge 1$, with the binomial theorem: $x^n + n x^{n-1} h$, plus terms with $h^2$ or a higher power.
+2. Subtract $x^n$ and divide by $h$: $n x^{n-1}$, plus terms with $h$ or a higher power.
 3. Every term but the first goes to 0 with $h$, so the derivative is $n x^{n-1}$. Deisenroth and coauthors work this out as their Example 5.2 (p. 142) <Cite id="deisenroth2020" />.
 
 </StepThrough>
