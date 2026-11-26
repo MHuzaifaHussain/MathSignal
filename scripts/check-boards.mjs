@@ -3310,6 +3310,20 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	const neighbor = run('cafe-millionaire', { type: 'preset', id: 'neighbor' });
 	assert.equal(lines(neighbor), '10 customers. Mean: 42 / 10 = 4.2. Median: (4 + 5) / 2 = 4.5, the average of the 5th and 6th. Mode: still 5.');
 	assert.equal(dsay.newcomerChange(neighbor), 'The mean moved from 4 to 4.2 thousand dollars; the median moved from 4 to 4.5; the mode stayed at 5.');
+	// The sentences the mean-vs-median-vs-mode page quotes, so the page and the board can't drift apart.
+	const splitMode = run('cafe-millionaire', { type: 'newcomer', on: true }, { type: 'set-value', value: 4 });
+	assert.equal(lines(splitMode), '10 customers. Mean: 40 / 10 = 4. Median: (4 + 4) / 2 = 4, the average of the 5th and 6th. Mode: 4 and 5, each held by 3 customers.');
+	const { readFileSync: readPage } = await import('node:fs');
+	const centersPage = readPage('src/content/docs/statistics/mean-vs-median-vs-mode.mdx', 'utf8');
+	for (const [said, pinned] of [
+		[lines(splitMode).slice(lines(splitMode).indexOf('Mode: ')), 'Mode: 4 and 5, each held by 3 customers.'],
+		[dsay.announcementFor(splitMode, { type: 'set-value', value: 4 }), 'The mean stayed at 4 thousand dollars; the median stayed at 4; the mode changed from 5 to 4 and 5.'],
+		[dsay.announcementFor(neighbor, { type: 'preset', id: 'neighbor' }), 'A neighbor (6). The mean moved from 4 to 4.2 thousand dollars; the median moved from 4 to 4.5; the mode stayed at 5.'],
+		[dsay.announcementFor(rich, { type: 'newcomer', on: true }), 'The mean jumped from 4 to 103.6 thousand dollars; the median moved from 4 to 4.5; the mode stayed at 5.'],
+	]) {
+		assert.equal(said, pinned);
+		assert.ok(centersPage.includes(`"${pinned}"`), `the mean-vs-median-vs-mode page no longer quotes "${pinned}"`);
+	}
 	assert.equal(dsay.describeSavings(1000), 'newcomer has 1,000 thousand dollars, a million');
 	assert.equal(dsay.describeSavings(6), 'newcomer has 6 thousand dollars');
 	assert.equal(dsay.formatSavings(1000), '1,000');
