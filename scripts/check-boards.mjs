@@ -290,6 +290,12 @@ assert.equal(describe.announcementFor(onePoured, { type: 'pour', id: '1', direct
 assert.equal(describe.announcementFor(reducer(onePoured, { type: 'pour', id: '2', direction: -1 }), { type: 'pour', id: '2', direction: -1 }), 'Cup 2: 1 of 12 units. 2 units left in the jug.');
 // With water left in the jug the cups aren't a probability yet, so the sum isn't written as P(...).
 assert.equal(describe.additivityLine(eightPoured), 'Even holds 1/12 + 1/12 + 2/12 = 4/12 of the jug.');
+// A one-cup event writes its single term once, not "2/12 = 2/12".
+const sixPreset = { type: 'preset', event: 'A', preset: 'six' };
+assert.equal(describe.additivityLine(run('die-pour', sixPreset)), 'P(six) = 2/12 ≈ 0.17.');
+assert.equal(describe.additivityLine(run('die-pour', sixPreset, { type: 'weight-preset', name: 'Loaded toward six' })), 'P(six) = 7/12 ≈ 0.58.');
+assert.equal(describe.additivityLine(run('die-pour', sixPreset, { type: 'pour', id: '1', direction: -1 })), 'Six holds 2/12 of the jug.');
+assert.equal(describe.additivityLine(run('die-pour', { type: 'preset', event: 'A', preset: 'at-most-2' })), 'P(at most 2) = 2/12 + 2/12 = 4/12 ≈ 0.33.');
 
 // ---- Tosses and the wrong three-outcome model (v1.1) ----
 const model = await import('../src/components/react/eventSpace/model.ts');

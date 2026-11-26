@@ -371,8 +371,10 @@ export function additivityLine(state: EventSpaceState): string {
 	const sum = units.reduce((total, value) => total + value, 0);
 	const name = eventText(scenario, state.events.A);
 	const terms = units.map((value) => `${value}/${WEIGHT_TOTAL}`).join(' + ') || '0';
-	if (unitsPoured(state) !== WEIGHT_TOTAL) return `${capitalize(name)} holds ${terms} = ${sum}/${WEIGHT_TOTAL} of the jug.`;
-	return `P(${name}) = ${terms} = ${sum}/${WEIGHT_TOTAL} ${equalsDecimal(sum, WEIGHT_TOTAL)}.`;
+	// A one-cup event's single term is already its sum; writing "= sum" again would repeat the fraction.
+	const sumWritten = units.length === 1 ? terms : `${terms} = ${sum}/${WEIGHT_TOTAL}`;
+	if (unitsPoured(state) !== WEIGHT_TOTAL) return `${capitalize(name)} holds ${sumWritten} of the jug.`;
+	return `P(${name}) = ${sumWritten} ${equalsDecimal(sum, WEIGHT_TOTAL)}.`;
 }
 
 export function cupName(state: EventSpaceState, outcome: Outcome): string {
