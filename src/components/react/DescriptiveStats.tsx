@@ -6,9 +6,11 @@ import CheckButtons from "./guided/CheckButtons.tsx";
 import PresetButtons from "./guided/PresetButtons.tsx";
 import TableFold from "./guided/TableFold.tsx";
 import { RefusalNote } from "./guided/refusal.tsx";
+import SpokenText from "./guided/SpokenText.tsx";
 import StageChoice from "./guided/StageChoice.tsx";
 import useAnnouncer from "./guided/useAnnouncer.ts";
 import useCommittedSlider from "./guided/useCommittedSlider.ts";
+import { spokenMathLine } from "./spokenMath.ts";
 import { usePointerScrub } from "./usePointerScrub.ts";
 import { chartRows } from "./descriptiveStats/chart.ts";
 import DotPlot from "./descriptiveStats/DotPlot.tsx";
@@ -63,6 +65,11 @@ function sliderValue(state: DescriptiveState): number | null {
 interface DescriptiveStatsProps {
   /** Which configuration to show; see src/components/react/descriptiveStats/setups.ts. */
   setup: SetupId;
+}
+
+/** A board line that shows its symbols ("σ = 8 cm", "|z| > 2") and gives screen readers the words. */
+function Said({ text }: { text: string }) {
+  return <SpokenText line={spokenMathLine(text)} />;
 }
 
 /**
@@ -245,7 +252,7 @@ export default function DescriptiveStats({ setup: setupId }: DescriptiveStatsPro
       {setup.kind === "scaling" && <TrayChoice legend={CONTROL_LABELS.scale} options={SCALE_OPTIONS} value={state.scale} onChange={(scale) => send({ type: "scale", scale })} />}
       {setup.kind === "outliers" && (
         <TrayChoice
-          legend={CONTROL_LABELS.cutoff}
+          legend={spokenMathLine(CONTROL_LABELS.cutoff)}
           options={CUTOFF_OPTIONS}
           value={String(state.cutoff) as "2" | "3"}
           onChange={(cutoff) => send({ type: "cutoff", cutoff: cutoff === "3" ? 3 : 2 })}
@@ -269,11 +276,19 @@ export default function DescriptiveStats({ setup: setupId }: DescriptiveStatsPro
   return (
     <Board label={boardLabel(setup)} tray={tray} onReset={() => send({ type: "reset" })} announcement={announcement}>
       <div className={`ms-desc is-${setup.kind}`}>
-        <p className="ms-desc-status">{statusLine(state)}</p>
+        <p className="ms-desc-status">
+          <Said text={statusLine(state)} />
+        </p>
         {goal && (
           <div className="ms-desc-goal">
-            <p className="ms-desc-goal-line">{goal}</p>
-            {goalNow && <p className="ms-board-readout">{goalNow}</p>}
+            <p className="ms-desc-goal-line">
+              <Said text={goal} />
+            </p>
+            {goalNow && (
+              <p className="ms-board-readout">
+                <Said text={goalNow} />
+              </p>
+            )}
           </div>
         )}
         {showPictures ? <LineUp state={state} /> : <DotPlot rows={chartRows(state)} scrub={setup.kind === "spread" ? scrub : undefined} />}
@@ -289,7 +304,7 @@ export default function DescriptiveStats({ setup: setupId }: DescriptiveStatsPro
         )}
         {verdict && (
           <p ref={feedbackRef} className="ms-desc-feedback" tabIndex={-1}>
-            {verdict}
+            <Said text={verdict} />
           </p>
         )}
         {(readouts.length > 0 || covered) && (
@@ -298,7 +313,7 @@ export default function DescriptiveStats({ setup: setupId }: DescriptiveStatsPro
             {covered && <p className="ms-board-readout">{coveredText()}</p>}
             {readouts.map((line) => (
               <p key={line} className="ms-board-readout">
-                {line}
+                <Said text={line} />
               </p>
             ))}
           </div>

@@ -1,3 +1,6 @@
+import SpokenText from "../guided/SpokenText.tsx";
+import { spokenMathLine } from "../spokenMath.ts";
+
 interface ZTableProps {
   caption: string;
   /** Header then cell, from describe.ts's tableRows. */
@@ -15,8 +18,13 @@ export default function ZTable({ caption, rows }: ZTableProps) {
       <tbody>
         {rows.map(([header, cell]) => (
           <tr key={header}>
-            <th scope="row">{header}</th>
-            <td>{cell}</td>
+            {/* Symbols on screen, words for screen readers: "z-score, (x − mu) divided by sigma". */}
+            <th scope="row">
+              <SpokenText line={spokenMathLine(header)} />
+            </th>
+            <td>
+              <SpokenText line={spokenMathLine(cell)} />
+            </td>
           </tr>
         ))}
       </tbody>

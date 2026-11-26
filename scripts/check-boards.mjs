@@ -3391,14 +3391,14 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	]);
 	assert.equal(
 		dsay.announcementFor(sample, { type: 'sample', on: true }),
-		'As a sample of a bigger group, the same mean is written x̄ = 134 cm. Sample variance: 576 / 8 = 72 cm². s = √72 ≈ 8.49 cm.',
+		'As a sample of a bigger group, the same mean is written x bar = 134 cm. Sample variance: 576 divided by 8 = 72 square centimeters. s = the square root of 72 ≈ 8.49 cm.',
 	);
 	assert.equal(dsay.announcementFor(dst.reducer(sample, { type: 'sample', on: false }), { type: 'sample', on: false }), 'Sample versions hidden.');
 	// With σ = 0 the sample lines still appear, and their switch still speaks.
 	const sameSample = run('class-spread', { type: 'preset', id: 'everyone-134' }, { type: 'sample', on: true });
 	assert.deepEqual(dsay.sampleLines(sameSample), ['As a sample of a bigger group, the same mean is written x̄ = 134 cm.', 'Sample variance: 0 / 8 = 0 cm². s = √0 = 0 cm.']);
 	assert.deepEqual(dsay.readoutLines(sameSample).slice(0, 3), ['Every child is 134 cm: every distance is 0, so the variance is 0 and σ = 0 cm.', ...dsay.sampleLines(sameSample)]);
-	assert.equal(dsay.announcementFor(sameSample, { type: 'sample', on: true }), dsay.sampleLines(sameSample).join(' '));
+	assert.equal(dsay.announcementFor(sameSample, { type: 'sample', on: true }), spokenMath(dsay.sampleLines(sameSample).join(' ')));
 	assert.equal(dsay.readoutLines(run('class-spread', { type: 'sample', on: true }, { type: 'preset', id: 'tight-class' }))[3], 'Sample variance: 144 / 8 = 18 cm². s = √18 ≈ 4.24 cm.');
 	assert.equal(
 		dsay.symbolLines(run('class-spread', { type: 'stage', stage: 'symbols' })).at(-1).text,
@@ -3426,7 +3426,7 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	assert.equal(dsay.describeHeight(run('class-spread', { type: 'select', child: 3 }), 131), 'child 4, 131 cm');
 	assert.equal(
 		dsay.announcementFor(oneMove, { type: 'set-value', value: 145 }),
-		'Child 5 is now 145 cm. Mean ≈ 133.67 cm, σ ≈ 7.45 cm. The mean is now ≈ 133.67 cm. Move another child to bring it back to 134 cm.',
+		'Child 5 is now 145 cm. Mean ≈ 133.67 cm, sigma ≈ 7.45 cm. The mean is now ≈ 133.67 cm. Move another child to bring it back to 134 cm.',
 	);
 
 	// class-box: the three steps.
@@ -3567,7 +3567,7 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	]);
 	assert.equal(
 		dsay.announcementFor(run('pumpkin-outliers', cutoff3), cutoff3),
-		'Flagging when |z| is above 3. Q1 = 5 kg, Q3 = 7 kg, IQR = 2 kg, so the upper fence is 7 + 3 = 10 kg. Every pumpkin is inside the fences (2 kg to 10 kg) and every |z| is at most ≈ 1.73: nothing is flagged.',
+		'Flagging when the size of z is above 3. Q1 = 5 kg, Q3 = 7 kg, IQR = 2 kg, so the upper fence is 7 + 3 = 10 kg. Every pumpkin is inside the fences (2 kg to 10 kg) and every z, ignoring its sign, is at most ≈ 1.73: nothing is flagged.',
 	);
 	const ceiling = 'With 9 pumpkins no z-score can reach √8 ≈ 2.83, however heavy the giant, so |z| > 3 can never flag anything here.';
 	const twoCeiling = "With 9 pumpkins and two equal giants, neither giant's z-score can reach √3.5 ≈ 1.87, however heavy they are, so |z| > 3 can never flag anything here.";
@@ -7950,6 +7950,57 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	assert.equal(spokenMath('5 successes: C(10, 5) × 0.5⁵ × 0.5⁵ ≈ 0.25.'), '5 successes: 10 choose 5 times 0.5 to the power 5 times 0.5 to the power 5 ≈ 0.25.');
 	assert.equal(spokenMath('Face 1 wins 1 candy. P(X = 1) = 3/6.'), 'Face 1 wins 1 candy. The chance that X is 1 = 3/6.');
 	assert.equal(spokenMath('Plain words stay as they are.'), 'Plain words stay as they are.');
+}
+
+// ---- DescriptiveStats: every line a screen reader can reach says |z|, ², √, / and x̄ in words ----
+
+{
+	const descState = await import('../src/components/react/descriptiveStats/state.ts');
+	const descSay = await import('../src/components/react/descriptiveStats/describe.ts');
+	const descSetups = await import('../src/components/react/descriptiveStats/setups.ts');
+	const { spokenMathLine } = await import('../src/components/react/spokenMath.ts');
+	const notation = /[|²√σμ>]|̄| \/ /;
+	const assertWords = (where, text) => {
+		if (!text) return;
+		const { visible, spoken } = spokenMathLine(text);
+		assert.equal(visible, text);
+		assert.ok(!notation.test(spoken), `${where}: "${spoken}" still has notation a screen reader skips or misreads`);
+	};
+	for (const id of descSetups.SETUP_IDS) {
+		const setup = descSetups.getSetup(id);
+		let state = descState.initialState(id);
+		const actions = [
+			{ type: 'line-up', on: true }, { type: 'pick', child: 0 }, { type: 'check' },
+			{ type: 'distances', on: true }, { type: 'sample', on: true }, { type: 'newcomer', on: true },
+			{ type: 'scale', scale: 'minmax' }, { type: 'scale', scale: 'z' }, { type: 'cutoff', cutoff: 3 }, { type: 'cutoff', cutoff: 2 },
+			{ type: 'select', child: 2 }, { type: 'set-value', value: setup.kind === 'outliers' ? 60 : 140 },
+			...descSay.stageOptions(setup).map((option) => ({ type: 'stage', stage: option.value })),
+			...setup.presets.map((preset) => ({ type: 'preset', id: preset.id })),
+		];
+		const states = [state];
+		for (const action of actions) {
+			const next = descState.reducer(state, action);
+			if (next === state) continue;
+			states.push((state = next));
+			assertWords(`${id} ${action.type} announcement`, descSay.announcementFor(state, action));
+		}
+		for (const at of states) {
+			for (const line of [descSay.statusLine(at), descSay.feedbackLine(at), descSay.goalLine(at), descSay.goalStatus(at), ...descSay.readoutLines(at)]) assertWords(id, line);
+			for (const table of [descSay.dataTable(at), descSay.summaryTable(at)]) {
+				for (const text of [table.caption, ...table.headers, ...table.rows.flatMap((row) => [row.header, ...row.cells])]) assertWords(`${id} table`, text);
+			}
+		}
+	}
+	// The cutoff legend keeps |z| on screen and says the absolute value.
+	assert.deepEqual(spokenMathLine(descSay.CONTROL_LABELS.cutoff), { visible: 'Flag when |z| is above', spoken: 'Flag when the size of z is above' });
+	assert.equal(spokenMath('Mean ≈ 11.78 kg, σ ≈ 17.07 kg, so its z-score is ≈ 2.82: flagged at |z| > 2, not at |z| > 3.'), 'Mean ≈ 11.78 kg, sigma ≈ 17.07 kg, so its z-score is ≈ 2.82: flagged at the size of z above 2, not at the size of z above 3.');
+	assert.equal(spokenMath('Variance: 576 / 9 = 64 cm². Standard deviation: √64 = 8 cm.'), 'Variance: 576 divided by 9 = 64 square centimeters. Standard deviation: the square root of 64 = 8 cm.');
+	assert.equal(spokenMath('As a sample of a bigger group, the same mean is written x̄ = 134 cm.'), 'As a sample of a bigger group, the same mean is written x bar = 134 cm.');
+	assert.equal(spokenMath('Variance, σ²'), 'Variance, sigma squared');
+	assert.equal(spokenMath('Sample variance, s²'), 'Sample variance, s squared');
+	// The z table's row headers (normalDistribution/ZTable.tsx).
+	assert.equal(spokenMath('z-score, (x − μ) / σ'), 'z-score, (x − mu) divided by sigma');
+	assert.equal(spokenMath('Share below, Φ(z)'), 'Share below, Phi of z');
 }
 
 // ---- Page components: names of wide tables and formulas (decision 0024) ----

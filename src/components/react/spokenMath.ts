@@ -17,6 +17,7 @@ const SPOKEN_MATH: readonly (readonly [RegExp, string | ((match: string, ...grou
 	[/P\(X = ([^()]+)\)/g, 'the chance that X is $1'],
 	[/\beach P = /g, 'each with a chance of '],
 	[/X\(([^()]+)\)/g, 'X of $1'],
+	[/Φ\(([^()]+)\)/g, 'Phi of $1'],
 	[/\bnp\(1 − p\)/g, 'n p times 1 minus p'],
 	[/\bnp\b/g, 'n p'],
 	[/√\(([^()]+)\)/g, 'the square root of $1'],

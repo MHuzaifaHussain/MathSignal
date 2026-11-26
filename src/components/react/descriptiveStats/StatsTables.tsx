@@ -1,14 +1,21 @@
+import SpokenText from "../guided/SpokenText.tsx";
+import { spokenMathLine } from "../spokenMath.ts";
 import type { TableData } from "./describe.ts";
+
+/** Table text shows its symbols ("Variance, σ²", "64 cm²") and gives screen readers the words. */
+const Said = ({ text }: { text: string }) => <SpokenText line={spokenMathLine(text)} />;
 
 function Table({ table }: { table: TableData }) {
   return (
     <table className="ms-desc-table">
-      <caption>{table.caption}</caption>
+      <caption>
+        <Said text={table.caption} />
+      </caption>
       <thead>
         <tr>
           {table.headers.map((header) => (
             <th key={header} scope="col">
-              {header}
+              <Said text={header} />
             </th>
           ))}
         </tr>
@@ -16,9 +23,13 @@ function Table({ table }: { table: TableData }) {
       <tbody>
         {table.rows.map((row) => (
           <tr key={row.header}>
-            <th scope="row">{row.header}</th>
+            <th scope="row">
+              <Said text={row.header} />
+            </th>
             {row.cells.map((cell, index) => (
-              <td key={index}>{cell}</td>
+              <td key={index}>
+                <Said text={cell} />
+              </td>
             ))}
           </tr>
         ))}

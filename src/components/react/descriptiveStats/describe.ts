@@ -8,6 +8,7 @@
 // "≈" appears only when the decimal is rounded.
 import { compareFractions, formatFraction, fraction, multiplyFractions, toNumber, type Fraction } from '../boardMath.ts';
 import { capitalize, groupThousands, joinWords, plural } from '../boardText.ts';
+import { spokenMath } from '../spokenMath.ts';
 import { CHECKS_BEFORE_ANSWER } from '../guided/guided.ts';
 import { tableFoldAnnouncement } from '../guided/tableFold.ts';
 import { formatNumber } from '../plotColors.ts';
@@ -984,8 +985,12 @@ export function alreadyShowingLine(state: DescriptiveState, presetId: string): s
 	return `Already showing ${preset.label}.`;
 }
 
-/** What the live region says when an interaction ends: the sentence that answers it. */
+/** What the live region says when an interaction ends: the sentence that answers it, notation in words. */
 export function announcementFor(state: DescriptiveState, action: Action): string {
+	return spokenMath(announcementText(state, action));
+}
+
+function announcementText(state: DescriptiveState, action: Action): string {
 	const setup = setupOf(state);
 	const readouts = readoutLines(state).join(' ');
 	const goal = goalStatus(state);
