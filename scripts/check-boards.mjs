@@ -4792,7 +4792,9 @@ const labelsOverlap = (first, second, size) => {
 		];
 		for (const state of reached) {
 			assert.deepEqual(vd.stepperRows(state), vd.tableRows(state).filter((tableRow) => tableRow.stepId !== null), id);
-			assert.deepEqual(vd.stepperHeaders(state), { x: vd.tableHeaders(state).x, y: vd.tableHeaders(state).y }, id);
+			// city-walk folds NormTable, not the coordinate table, so asking for its headers fails loudly.
+			if (setup.kind === 'norms') assert.throws(() => vd.tableHeaders(state), /no coordinate table/, id);
+			else assert.deepEqual(vd.stepperHeaders(state), { x: vd.tableHeaders(state).x, y: vd.tableHeaders(state).y }, id);
 			// No reachable state throws from the switch.
 			assertTableFoldSays(`VectorBoard2D ${id}`, (open) => vd.announcementFor(state, { type: 'table', open }));
 		}
@@ -4898,6 +4900,7 @@ const labelsOverlap = (first, second, size) => {
 	assert.equal(vd.ochreElement(walk(pinAt([0, 0]))), null);
 	assert.deepEqual(vd.stepperRows(open).map((row) => [row.name, row.x, row.y, row.spoken]), [['Your pin', '3', '4', 'Your pin: 3 blocks east, 4 blocks north.']]);
 	assert.deepEqual(vd.stepperHeaders(open), { x: 'Blocks east', y: 'Blocks north' });
+	assert.deepEqual(vd.stepperHeaders(checked(numbers)), { x: 'x (east)', y: 'y (north)' });
 	assert.equal(vd.stepperName(open, 'a', 'x', 1), 'Move your pin 1 east');
 	assert.equal(vd.stepperGroupName(open, 'a', 'y'), 'Move your pin north or south');
 	assert.deepEqual(nd.normRows(open), [{ measure: 'l1', name: 'Walk (L1)', how: '|3| + |4|', length: '7' }]);

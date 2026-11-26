@@ -1041,12 +1041,16 @@ export interface TableRow {
 	stepId: VectorId | null;
 }
 
+const COORDINATE_COLUMNS = { x: 'x (east)', y: 'y (north)' } as const;
+/** city-walk's Blocks stage counts the pin's blocks, not a trip's steps. */
+const BLOCKS_COLUMNS = { x: 'Blocks east', y: 'Blocks north' } as const;
+
+/** The coordinate table's headers. city-walk has no coordinate table: it folds NormTable (NORM_TABLE_HEADERS) instead. */
 export function tableHeaders(state: VectorState) {
-	const norms = setupOf(state).kind === 'norms';
-	if (norms && isTrips(state)) return { caption: 'Your pin', vector: 'Pin', x: 'Blocks east', y: 'Blocks north', length: 'Walk' };
+	if (setupOf(state).kind === 'norms') throw new Error('VectorBoard2D: city-walk has no coordinate table; its strip uses stepperHeaders and its fold NORM_TABLE_HEADERS.');
 	if (isTrips(state)) return { caption: 'Where each trip goes', vector: 'Trip', x: 'Steps east', y: 'Steps north', length: 'Length' };
 	const caption = setupOf(state).kind === 'cart' ? `Your push a and the track ${trackName(state)}` : 'The vectors on the board';
-	return { caption, vector: 'Vector', x: 'x (east)', y: 'y (north)', length: 'Length' };
+	return { caption, vector: 'Vector', ...COORDINATE_COLUMNS, length: 'Length' };
 }
 
 function row(state: VectorState, id: TableRow['id'], name: string, v: Vec2, stepId: VectorId | null): TableRow {
@@ -1098,8 +1102,12 @@ export function stepperRows(state: VectorState): readonly (TableRow & { stepId: 
 	return tableRows(state).filter((tableRow): tableRow is TableRow & { stepId: VectorId } => tableRow.stepId !== null);
 }
 
-/** The strip's column words over the two stepper columns, the table's own headers: "Steps east", "x (east)". */
+/**
+ * The strip's column words over the two stepper columns: the coordinate table's own headers ("Steps east", "x (east)"),
+ * or on city-walk, which has no coordinate table, "Blocks east" in Blocks and the plain coordinates in Numbers.
+ */
 export function stepperHeaders(state: VectorState): { x: string; y: string } {
+	if (setupOf(state).kind === 'norms') return isTrips(state) ? BLOCKS_COLUMNS : COORDINATE_COLUMNS;
 	const { x, y } = tableHeaders(state);
 	return { x, y };
 }
