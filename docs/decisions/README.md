@@ -22,7 +22,7 @@ Format: context, decision, consequences, alternatives considered. Number them in
 | [0014](0014-vector-board.md) | VectorBoard2D, a Mafs board for vectors | Accepted; amended by [0017](0017-table-view-fold.md) and [0021](0021-norm-balls-and-normball-model.md) |
 | [0015](0015-descriptive-stats-board.md) | DescriptiveStats, the third HTML board | Accepted; amended 2026-11-25 (line-up presets, answer gating) and by [0017](0017-table-view-fold.md) |
 | [0016](0016-bayes-board-presets-and-table.md) | Page presets and a count table on the BayesTheorem board | Accepted; amended by [0017](0017-table-view-fold.md) |
-| [0017](0017-table-view-fold.md) | A "Table view" fold for tall boards | Accepted |
+| [0017](0017-table-view-fold.md) | A "Table view" fold for tall boards | Accepted; amended 2026-11-26 (BayesTheorem heights) |
 | [0018](0018-distribution-families-and-density.md) | DistributionBoard families and density mode | Accepted; amends [0012](0012-distribution-board.md) |
 | [0019](0019-normal-distribution-z-mode.md) | NormalDistribution z mode | Accepted |
 | [0020](0020-function-curve-board.md) | FunctionCurve, a Mafs board for slopes, rulers and corners | Accepted; the drawing is provisional until its browser pass |
