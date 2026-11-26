@@ -1371,7 +1371,7 @@ assert.equal(distSay.refusalText(distSetups.getSetup('candy-spread'), { kind: 'n
 const stepAction = { type: 'step', id: '4', direction: 1 };
 assert.equal(distSay.announcementFor(dist.reducer(buildFresh, stepAction), stepAction), 'Face 4 wins 1 candy.');
 const uncoveredStep = dist.reducer({ ...cardMatched, values: faceValues([0, 0, 0, 0, 1, 5]) }, stepAction);
-assert.equal(distSay.announcementFor(uncoveredStep, stepAction), 'Face 4 wins 1 candy. The 1-candy bar now holds faces 4 and 5. The chance that X is 1 = 2/6 = 1/3.');
+assert.equal(distSay.announcementFor(uncoveredStep, stepAction), 'Face 4 wins 1 candy. The 1-candy bar now holds faces 4 and 5. The chance that X is 1 = 2 over 6 = 1 over 3.');
 const coinStep = { type: 'step', id: 'HT', direction: 1 };
 assert.equal(distSay.announcementFor(dist.reducer(coinsFresh, coinStep), coinStep), 'X = 1 for HT.');
 // A refused action says only why.
@@ -1384,7 +1384,7 @@ assert.equal(distSay.announcementFor(dist.reducer(buildFresh, { type: 'preset', 
 const twoWrong = distRun('candy-build', { type: 'check' }, { type: 'check' });
 assert.equal(distSay.announcementFor(twoWrong, { type: 'check' }), "Not yet. Faces 4, 5 and 6 don't match the card. You can now show the answer.");
 // A match moves focus to the verdict, which is read there; only the new goal, a paragraph of its own, is announced.
-assert.equal(distSay.announcementFor(cardMatched, { type: 'check' }), 'New goal: make the chance that X is 1 = 1/2.');
+assert.equal(distSay.announcementFor(cardMatched, { type: 'check' }), 'New goal: make the chance that X is 1 = 1 over 2.');
 assert.equal(distSay.announcementFor(goalMissed, { type: 'check-goal' }), spokenMath(distSay.goalLine(goalMissed)));
 assert.equal(distSay.announcementFor(symbolsView, { type: 'stage', stage: 'symbols' }), spokenMath(distSay.symbolLines(symbolsView).join(' ')));
 assert.equal(distSay.announcementFor(dist.reducer(cardMatched, { type: 'stage', stage: 'pictures' }), { type: 'stage', stage: 'pictures' }), 'Showing pictures.');
@@ -2184,17 +2184,17 @@ const bigChoose = (n, k) => {
 	// Announcements.
 	const checked = famRun('coins-binomial', { type: 'guess', guess: 'one-in-five' }, { type: 'check' });
 	const say = (previous, action) => famSay.familyAnnouncement(previous, famState.familyReducer(previous, action), action);
-	assert.equal(say({ ...checked, read: 5 }, { type: 'n', n: 10 }), '10 coins. Reading the bar for 5 heads: the chance that X is 5 = 63/256, about 0.25.');
-	assert.equal(say(checked, { type: 'n', n: 10 }), '10 coins. Reading the bar for 6 heads: the chance that X is 6 = 105/512, about 0.21.');
-	assert.equal(say(checked, { type: 'n', n: 2 }), '2 coins. Reading the bar for 2 heads, the most 2 coins can show: the chance that X is 2 = 1/4 = 0.25.');
+	assert.equal(say({ ...checked, read: 5 }, { type: 'n', n: 10 }), '10 coins. Reading the bar for 5 heads: the chance that X is 5 = 63 over 256, about 0.25.');
+	assert.equal(say(checked, { type: 'n', n: 10 }), '10 coins. Reading the bar for 6 heads: the chance that X is 6 = 105 over 512, about 0.21.');
+	assert.equal(say(checked, { type: 'n', n: 2 }), '2 coins. Reading the bar for 2 heads, the most 2 coins can show: the chance that X is 2 = 1 over 4 = 0.25.');
 	// A read bar clamped inside a burst still says it moved, without claiming the most the final n can show.
-	assert.equal(famBurst(checked, 3, 10), '10 coins. Now reading the bar for 3 heads: the chance that X is 3 = 15/128, about 0.12.');
-	assert.equal(famBurst(checked, 2, 3), '3 coins. Now reading the bar for 2 heads: the chance that X is 2 = 3/8, about 0.38.');
-	assert.equal(famBurst(checked, 3, 2), '2 coins. Reading the bar for 2 heads, the most 2 coins can show: the chance that X is 2 = 1/4 = 0.25.');
-	assert.equal(say({ ...checked, read: 1 }, { type: 'n', n: 1 }), '1 coin. Reading the bar for 1 head: the chance that X is 1 = 1/2 = 0.50.');
-	assert.equal(say({ ...checked, read: 0 }, { type: 'n', n: 10 }), '10 coins. Reading the bar for 0 heads: the chance that X is 0 = 1/1024, under 0.01.');
+	assert.equal(famBurst(checked, 3, 10), '10 coins. Now reading the bar for 3 heads: the chance that X is 3 = 15 over 128, about 0.12.');
+	assert.equal(famBurst(checked, 2, 3), '3 coins. Now reading the bar for 2 heads: the chance that X is 2 = 3 over 8, about 0.38.');
+	assert.equal(famBurst(checked, 3, 2), '2 coins. Reading the bar for 2 heads, the most 2 coins can show: the chance that X is 2 = 1 over 4 = 0.25.');
+	assert.equal(say({ ...checked, read: 1 }, { type: 'n', n: 1 }), '1 coin. Reading the bar for 1 head: the chance that X is 1 = 1 over 2 = 0.50.');
+	assert.equal(say({ ...checked, read: 0 }, { type: 'n', n: 10 }), '10 coins. Reading the bar for 0 heads: the chance that X is 0 = 1 over 1024, under 0.01.');
 	assert.equal(say(open, { type: 'n', n: 4 }), '4 coins. The chart is covered until you lock in your guess.');
-	assert.equal(say(checked, { type: 'preset', name: '1 coin' }), '1 coin. Reading the bar for 1 head, the most 1 coin can show: the chance that X is 1 = 1/2 = 0.50.');
+	assert.equal(say(checked, { type: 'preset', name: '1 coin' }), '1 coin. Reading the bar for 1 head, the most 1 coin can show: the chance that X is 1 = 1 over 2 = 0.50.');
 	assert.equal(say(checked, { type: 'preset', name: '10 coins' }), '10 coins is already showing.');
 	assert.equal(say(open, { type: 'preset', name: '3 coins' }), 'Lock in your guess first.', 'refused before Check, even the preset showing');
 	assert.equal(say(open, { type: 'preset', name: '10 coins' }), 'Lock in your guess first.');
@@ -3457,7 +3457,7 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	for (const scale of ['minmax', 'z']) {
 		assert.equal(
 			dsay.announcementFor(run('marks-scaling', { type: 'scale', scale }, { type: 'preset', id: 'low-mark' }), { type: 'preset', id: 'low-mark' }),
-			"One mark of 10 moved both scores for test B: min–max rose from ≈ 0.77 to 48/54 = 8/9 ≈ 0.89, the z-score fell from 1 to ≈ 0.76. Ana's 58 did not change.",
+			"One mark of 10 moved both scores for test B: min–max rose from ≈ 0.77 to 48 over 54 = 8 over 9 ≈ 0.89, the z-score fell from 1 to ≈ 0.76. Ana's 58 did not change.",
 		);
 	}
 	assert.equal(
@@ -7982,7 +7982,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	const denSetupModule = await import('../src/components/react/distributionBoard/densitySetups.ts');
 	const { spokenMathLine, spokenMathTwin } = await import('../src/components/react/spokenMath.ts');
 	// ≈ is left: screen readers say it ("almost equal to") at their default level.
-	const notation = /[|²³⁴⁵⁶⁷⁸⁹√σμ≤×{}]|P\(|C\(|X\(| \/ |\bnp\b/;
+	const notation = /[|²³⁴⁵⁶⁷⁸⁹√σμ≤×{}÷]|P\(|C\(|X\(| \/ |\d\/\d|\bnp\b/;
 	const spokenOf = (line) => (typeof line === 'string' ? spokenMathLine(line) : spokenMathTwin(line)).spoken;
 	const assertWords = (where, line) => {
 		if (!line) return;
@@ -8051,14 +8051,22 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		for (const at of states) for (const line of [denDescribe.statusLine(at), ...denDescribe.readoutLines(at)]) assertWords(id, line);
 	}
 	// The words themselves, for the forms the pages teach.
-	assert.equal(spokenMath('6 heads: C(10, 6) = 210 of 1,024 sequences, so P(X = 6) = 210/1024.'), '6 heads: 10 choose 6 = 210 of 1,024 sequences, so the chance that X is 6 = 210/1024.');
+	assert.equal(spokenMath('6 heads: C(10, 6) = 210 of 1,024 sequences, so P(X = 6) = 210/1024.'), '6 heads: 10 choose 6 = 210 of 1,024 sequences, so the chance that X is 6 = 210 over 1024.');
 	assert.equal(spokenMath('X(1) = 0, X(2) = 1.'), 'X of 1 = 0, X of 2 = 1.');
-	assert.equal(spokenMath('The event X = 1 is the set {1, 4, 5}, so P(X = 1) = P({1, 4, 5}) = 3/6.'), 'The event X = 1 is the set 1, 4, 5, so the chance that X is 1 = the chance of the set 1, 4, 5 = 3/6.');
-	assert.equal(spokenMath('Variance: 4/3 ≈ 1.33 cm². Standard deviation: σ = √(4/3) ≈ 1.15 cm.'), 'Variance: 4/3 ≈ 1.33 square centimeters. Standard deviation: sigma = the square root of 4/3 ≈ 1.15 cm.');
-	assert.equal(spokenMath('Variance: np(1 − p) = 9 × 0.55 × 0.45 = 891/400.'), 'Variance: n p times 1 minus p = 9 times 0.55 times 0.45 = 891/400.');
+	assert.equal(spokenMath('The event X = 1 is the set {1, 4, 5}, so P(X = 1) = P({1, 4, 5}) = 3/6.'), 'The event X = 1 is the set 1, 4, 5, so the chance that X is 1 = the chance of the set 1, 4, 5 = 3 over 6.');
+	assert.equal(spokenMath('Variance: 4/3 ≈ 1.33 cm². Standard deviation: σ = √(4/3) ≈ 1.15 cm.'), 'Variance: 4 over 3 ≈ 1.33 square centimeters. Standard deviation: sigma = the square root of 4 over 3 ≈ 1.15 cm.');
+	assert.equal(spokenMath('Variance: np(1 − p) = 9 × 0.55 × 0.45 = 891/400.'), 'Variance: n p times 1 minus p = 9 times 0.55 times 0.45 = 891 over 400.');
 	assert.equal(spokenMath('5 successes: C(10, 5) × 0.5⁵ × 0.5⁵ ≈ 0.25.'), '5 successes: 10 choose 5 times 0.5 to the power 5 times 0.5 to the power 5 ≈ 0.25.');
-	assert.equal(spokenMath('Face 1 wins 1 candy. P(X = 1) = 3/6.'), 'Face 1 wins 1 candy. The chance that X is 1 = 3/6.');
+	assert.equal(spokenMath('Face 1 wins 1 candy. P(X = 1) = 3/6.'), 'Face 1 wins 1 candy. The chance that X is 1 = 3 over 6.');
 	assert.equal(spokenMath('Plain words stay as they are.'), 'Plain words stay as they are.');
+	// Fractions and ÷, which NVDA reads as "slash" and "divide by". The minus sign stays: screen readers say "minus".
+	assert.equal(spokenMath('1/4'), '1 over 4');
+	assert.equal(spokenMath('−3/8'), '−3 over 8');
+	assert.equal(spokenMath('√(13/18)'), 'The square root of 13 over 18');
+	assert.equal(spokenMath('1/4 ÷ 1'), '1 over 4 divided by 1');
+	assert.equal(spokenMath('1,024/2,048 = 1/2.'), '1,024 over 2,048 = 1 over 2.');
+	assert.equal(spokenMath('1,024 and 2.5 stay whole.'), '1,024 and 2.5 stay whole.');
+	assert.equal(spokenMath('Every bar holds 1/4 of the sand. Height = sand ÷ width = 1/4 ÷ 1 = 1/4 per cm.'), 'Every bar holds 1 over 4 of the sand. Height = sand divided by width = 1 over 4 divided by 1 = 1 over 4 per cm.');
 }
 
 // ---- DescriptiveStats: every line a screen reader can reach says |z|, ², √, / and x̄ in words ----
@@ -8068,7 +8076,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	const descSay = await import('../src/components/react/descriptiveStats/describe.ts');
 	const descSetups = await import('../src/components/react/descriptiveStats/setups.ts');
 	const { spokenMathLine } = await import('../src/components/react/spokenMath.ts');
-	const notation = /[|²√σμ>]|̄| \/ /;
+	const notation = /[|²√σμ>÷]|̄| \/ |\d\/\d/;
 	const assertWords = (where, text) => {
 		if (!text) return;
 		const { visible, spoken } = spokenMathLine(text);

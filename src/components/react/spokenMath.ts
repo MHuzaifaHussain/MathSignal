@@ -1,8 +1,10 @@
 // The words a screen reader hears for the statistics and probability boards' notation (DistributionBoard,
 // DescriptiveStats, the z table). Screen readers at their default punctuation level drop parentheses, braces and bars
-// and say √, ² or / by symbol name, so "C(10, 6)" came out as "C 10 6", "√(4/3)" as "square root 4 slash 3" and
-// "|z|" as "z". The visible lines keep the symbols; SpokenText and the announcements use these words. Pure, so
-// `npm run check:boards` checks that no symbol is left in any line a reader can reach.
+// and say √, ², / or ÷ by symbol name, so "C(10, 6)" came out as "C 10 6", "√(4/3)" as "square root 4 slash 3",
+// "sand ÷ width" as "sand divide by width" and "|z|" as "z". A fraction such as "13/18" is said "13 over 18", as the
+// boards already say "1 over n", and ÷ is "divided by". The visible lines keep the symbols; SpokenText and the
+// announcements use these words. Pure, so `npm run check:boards` checks that no symbol is left in any line a reader
+// can reach.
 import type { SpokenLine } from './guided/spokenLine.ts';
 
 const SUPERSCRIPT_DIGITS: Readonly<Record<string, string>> = { '⁰': '0', '¹': '1', '²': '2', '³': '3', '⁴': '4', '⁵': '5', '⁶': '6', '⁷': '7', '⁸': '8', '⁹': '9' };
@@ -36,6 +38,9 @@ const SPOKEN_MATH: readonly (readonly [RegExp, string | ((match: string, ...grou
 	[/σ/g, 'sigma'],
 	[/ × /g, ' times '],
 	[/ \/ /g, ' divided by '],
+	// A fraction of numbers, "13/18" or "1,024/2,048"; the guard keeps a thousands group or decimal whole.
+	[/(?<!\d|\d[.,])(\d{1,3}(?:,\d{3})+|\d+)\/(\d{1,3}(?:,\d{3})+|\d+)(?!\d|[.,]\d)/g, '$1 over $2'],
+	[/ *÷ */g, ' divided by '],
 	// A sentence that now starts with a replacement: "…5. P(X = 1)" became "…5. the chance".
 	[/(^|[.!?] )the /g, '$1The '],
 ];
