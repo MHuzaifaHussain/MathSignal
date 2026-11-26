@@ -69,7 +69,8 @@ export const CURVE_VIEWS: Readonly<Record<CurveId, CurveView>> = {
 	// 10, not 12: 12 sits too near the top edge for its number to fit on a phone.
 	cube: { view: { x: range(f(-2, 1), f(2, 1)), y: range(f(-4, 1), f(4, 1)) }, equalScale: false, xLines: 1, yLines: 2, axisNames: null, xIndexRange: [-3, 3], strip: { y: [-1, 13], labels: [0, 10], leftNumbers: [] } },
 	loss: {
-		view: { x: range(f(-1, 2), f(13, 2)), y: range(f(-1, 2), f(21, 2)) },
+		// The view reaches 1.5 below the axis, about 34px on a 270px plane, so the w numbers (22px below the axis) fit.
+		view: { x: range(f(-1, 2), f(13, 2)), y: range(f(-3, 2), f(21, 2)) },
 		equalScale: false,
 		xLines: 1,
 		yLines: 2,

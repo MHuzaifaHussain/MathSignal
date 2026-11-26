@@ -43,8 +43,19 @@ export interface PlacedLabel {
 	collisions: readonly string[];
 }
 
+/** The axis values the plane numbers, across and up. */
+export interface AxisValues {
+	x: readonly number[];
+	y: readonly number[];
+}
+
+export interface NamedBox {
+	name: string;
+	box: LabelBox;
+}
+
 interface Obstacles {
-	boxes: { name: string; box: LabelBox }[];
+	boxes: NamedBox[];
 	dots: { name: string; at: Vec; radius: number }[];
 	lines: { name: string; points: Vec[] }[];
 }
@@ -61,15 +72,15 @@ const multiplesInside = (low: number, high: number, step: number): number[] => {
  * The axis values the plane numbers: every grid line inside the view but 0. Where the axes are named, the top y
  * number gives way to the name ("loss" sits where 10 would).
  */
-export function numberedValues(curveView: CurveView): { x: readonly number[]; y: readonly number[] } {
+export function numberedValues(curveView: CurveView): AxisValues {
 	const { x, y } = viewNumbers(curveView.view);
 	const ys = multiplesInside(y[0], y[1], curveView.yLines);
 	return { x: multiplesInside(x[0], x[1], curveView.xLines), y: curveView.axisNames ? ys.slice(0, -1) : ys };
 }
 
-function axisNumberBoxes(curveView: CurveView, planeSize: number): Obstacles['boxes'] {
+/** The boxes Mafs' numbers at these axis values cover on a plane this size, ink and halo (the extents above). */
+export function axisNumberBoxes(curveView: CurveView, planeSize: number, values: AxisValues): NamedBox[] {
 	const scale = planeScale(curveView.view, planeSize);
-	const values = numberedValues(curveView);
 	const width = (value: number) => Array.from(axisNumber(value)).length * AXIS_NUMBER_CHARACTER_WIDTH;
 	const xBoxes = values.x.map((value) => ({
 		name: `x-axis number ${axisNumber(value)}`,
@@ -123,7 +134,7 @@ function obstaclesFor(state: CurveState, marks: readonly Mark[], planeSize: numb
 			dots.push({ name: mark.kind, at: mark.at, radius: mark.kind === 'point' && mark.movable ? HANDLE_RING_RADIUS : DOT_RADIUS });
 		}
 	}
-	return { boxes: state.stage === 'slide' ? [] : axisNumberBoxes(curveView, planeSize), dots, lines };
+	return { boxes: state.stage === 'slide' ? [] : axisNumberBoxes(curveView, planeSize, numberedValues(curveView)), dots, lines };
 }
 
 const grow = (box: LabelBox, byX: number, byY: number): LabelBox => ({ left: box.left - byX, right: box.right + byX, bottom: box.bottom - byY, top: box.top + byY });

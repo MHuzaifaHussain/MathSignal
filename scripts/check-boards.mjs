@@ -7289,6 +7289,19 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 			}
 		}
 		assert.ok(fittedLabels > 10000, `fitted ${fittedLabels} labels`);
+		// Every axis number Mafs can draw (x numbers hanging below the axis, y numbers right of it, ink and halo) fits
+		// inside every view on every plane size, with the labels' edge margin to spare.
+		for (const [curve, curveView] of Object.entries(fcSetups.CURVE_VIEWS)) {
+			const { x, y } = fcModel.viewNumbers(curveView.view);
+			for (const size of FC_PLANE_SIZES) {
+				const marginX = (fcModel.LABEL_EDGE_MARGIN * (x[1] - x[0])) / size;
+				const marginY = (fcModel.LABEL_EDGE_MARGIN * (y[1] - y[0])) / size;
+				for (const { name, box } of fcLayout.axisNumberBoxes(curveView, size, fcLayout.numberedValues(curveView))) {
+					const inside = box.left >= x[0] + marginX && box.right <= x[1] - marginX && box.bottom >= y[0] + marginY && box.top <= y[1] - marginY;
+					assert.ok(inside, `the ${name} fits the ${curve} view on a ${size}px plane`);
+				}
+			}
+		}
 		// labelBox puts a label's box 6px from its anchor on the attach side ('se' 6/√2 px each way), with the ink and halo
 		// measured in Chromium: 8.5px each way of a centered line, 17px from the baseline's 4.5px below to 12.5px above, and
 		// from a hanging line's 0.5px above to 16.5px below. The text is drawn at labelTextPoint with attachDistance 0,
