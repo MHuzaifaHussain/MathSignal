@@ -57,7 +57,7 @@ import WorkedExample from "../../../components/WorkedExample.astro";
 
 <Analogy breaks="The calendar assumes every day is equally likely and that there are no twins. Real birthdays cluster in some months, which should make a match a little more likely, not less. And the handshakes are not fully separate chances: if Ana matches Ben and Ben matches Cy, then Ana must match Cy.">
 
-A class of 23 children pins their birthdays to a wall calendar, one card each. A shared birthday is two cards in one square. The first card can go anywhere, the second must miss one taken square, and the 23rd must miss 22.
+A class of 23 children pins their birthdays to a wall calendar, one card each. A shared birthday is two cards in one square. For no birthday to be shared, the first card can go anywhere, the second must miss one taken square, and the 23rd must miss 22.
 
 Now let every child shake hands with every other child, once. That is 253 handshakes, and each one is a chance that two birthdays match.
 
@@ -75,7 +75,7 @@ The opening line gave away one number: 23 for an even chance. Before you see why
 - How many people does it take before a shared birthday is 99% sure: about 57, about 100, about 183, or about 365?
 
 <CheckYourself level="intuition" question="Check your two guesses.">
-Less than 1/10: about 0.0586, because each of the other 22 has to land on your one day, and the next sections show the count. For 99%, 57 people are enough, far below 183 or 365. The group question is far easier to win than the personal one, because it doesn't care which two people match.
+Less than 1/10: about 0.0586. Only one of the other 22 has to land on your one day, but each of them misses it with chance 364/365. For 99%, 57 people are enough, far below 183 or 365. The group question is far easier to win than the personal one, because it doesn't care which two people match.
 </CheckYourself>
 
 ## Count the ways nobody matches
@@ -108,13 +108,13 @@ Adding a person multiplies $q$ by a number below 1, so the chance of a match onl
 $1 - q_{23} \approx 0.5073$ and $1 - q_{22} \approx 0.4757$. So 22 people fall just short of an even chance and 23 pass it: 23 is the smallest such group. The 23rd person has 22 taken days to miss, a factor of $343/365$, and that tips the balance. The answer is 23, not 183, which is half of 365 and the guess Grinstead and Snell call tempting (p. 77) <Cite id="grinstead2003" />. Their Table 3.1 lists the same all-different chances, .5243047 for 22 people and .4927028 for 23 (p. 78) <Cite id="grinstead2003" />.
 </CheckYourself>
 
-For $n$ people, divide each of the $n$ factors by one 365 from the bottom, and the chance that all $n$ differ is
+For $n$ people, the bottom $365^n$ is $n$ copies of 365. Put one under each factor on top, and the chance that all $n$ differ is
 
 $$
 q_n = \left(1 - \frac{0}{365}\right)\left(1 - \frac{1}{365}\right)\cdots\left(1 - \frac{n-1}{365}\right).
 $$
 
-So each new person multiplies the chance by one more factor: $q_{n+1} = q_n (1 - n/d)$, and the factors shrink as the calendar fills. A match becomes more likely than not near $n \approx 1.18\sqrt{d}$, about 22.5 for 365 days (the fold below shows why). The chance of a match climbs quickly:
+So each new person multiplies the chance by one more factor: $q_{n+1} = q_n (1 - n/d)$, and the factors shrink as the calendar fills. A match becomes more likely than not near $n \approx 1.18\sqrt{d}$, about 22.5 for 365 days (the square-root fold in the next section shows why). The chance of a match climbs quickly:
 
 | People | Chance of a match |
 | --- | --- |
@@ -157,7 +157,7 @@ $$
 q_n \le e^{-(0 + 1 + \cdots + (n-1))/d} = e^{-n(n-1)/(2d)}.
 $$
 
-For $n = 23$ and $d = 365$ the exponent is $-253/365$, and $253/365 \approx 0.693151$ is just above $\log 2 \approx 0.693147$. So $q_{23} < e^{-\log 2} = 1/2$, which proves that 23 people are enough without multiplying 23 fractions. While $n$ is small next to $d$, each $k/d$ is small, so $1 - k/d$ is close to $e^{-k/d}$ and the bound is close to $q_n$ itself. Setting $n^2/(2d) = \log 2$ gives the approximate rule $n \approx \sqrt{2 \log 2 \cdot d} \approx 1.18\sqrt{d}$: about 22.49 for 365 days and about 1,206 for $2^{20}$ buckets. Grinstead and Snell's Exercise 19(d) reaches the same rule through Stirling's formula, with the letters swapped (p. 91) <Cite id="grinstead2003" />.
+For $n = 23$ and $d = 365$ the exponent is $-253/365$, and $253/365 \approx 0.693151$ is just above $\log 2 \approx 0.693147$. So $q_{23} < e^{-\log 2} = 1/2$, which proves that 23 people are enough without multiplying 23 fractions. While $n$ is small next to $d$, each $k/d$ is small, so $1 - k/d$ is close to $e^{-k/d}$ and the bound is close to $q_n$ itself. Setting $n^2/(2d) = \log 2$ gives the approximate rule $n \approx \sqrt{2 \log 2 \cdot d} \approx 1.18\sqrt{d}$: about 22.49 for 365 days. Grinstead and Snell's Exercise 19(d) reaches the same rule through Stirling's formula, with the letters swapped (p. 91) <Cite id="grinstead2003" />.
 
 </GoDeeper>
 
@@ -179,7 +179,7 @@ $$
 q_n = P(A^\complement) = \frac{(d)_n}{d^n} = \prod_{k=0}^{n-1} \left(1 - \frac{k}{d}\right), \qquad P(A) = 1 - q_n.
 $$
 
-Boundary cases: $n = 0$ or $n = 1$ gives the empty product, $q_n = 1$; $n > d$ gives $q_n = 0$, because the factor for $k = d$ is 0. Grinstead and Snell's Example 3.3 writes $p_r = (365)_r/365^r$ for $r$ people (p. 78) <Cite id="grinstead2003" />, and their Exercise 19 uses $n$ days and $d$ lifeforms, the reverse of the letters here (p. 90) <Cite id="grinstead2003" />.
+Boundary cases: $n = 0$ or $n = 1$ gives the empty product, $q_n = 1$; $n > d$ gives $q_n = 0$, because the factor for $k = d$ is 0. Grinstead and Snell's Example 3.3 writes $p_r = (365)_r/365^r$ for $r$ people (p. 78) <Cite id="grinstead2003" />.
 
 </PreciseStatement>
 
@@ -248,7 +248,7 @@ Multiplying factor by factor, as the code below does, gives $q_{1205} > 1/2 > q_
 
 ### Feature hashing: collisions you put up with
 
-The hashing trick sends each word straight to one of $d$ columns of the table the model reads, so no vocabulary is stored. Weinberger and coauthors test it on spam filtering, where 3.2 million emails hold 40 million unique words after tokenization (§5) <Cite id="weinberger2009" />. With hashing, giving each user a personal classifier on top of the shared one cut the spam that got through by 30%, compared with one shared classifier on $2^{26}$ buckets that the authors treat as equivalent to no hashing, once the table had $2^{22}$ buckets, a 22-bit hash (§5) <Cite id="weinberger2009" />. Their single classifier shared by all users levels off at $2^{22}$ buckets, which, they write, suggests that collisions have no impact on classification error at that size (§5, Figure 2) <Cite id="weinberger2009" />.
+The hashing trick sends each word straight to one of $d$ columns of the table the model reads, so no vocabulary is stored. Weinberger and coauthors test it on spam filtering, where 3.2 million emails hold 40 million unique words after tokenization (§5) <Cite id="weinberger2009" />. Their baseline is one shared classifier on $2^{26}$ buckets, which the authors treat as equivalent to no hashing. With a $2^{22}$-bucket table (a 22-bit hash), adding a personal classifier for each user on top of the shared one cut the spam that got through by 30% against that baseline (§5) <Cite id="weinberger2009" />. Their single classifier shared by all users levels off at $2^{22}$ buckets, which, they write, suggests that collisions have no impact on classification error at that size (§5, Figure 2) <Cite id="weinberger2009" />.
 
 Forty million words in $2^{22} = 4{,}194{,}304$ buckets must collide. Even with 9 words in every bucket, 4,194,304 buckets hold only 37,748,736 words, fewer than 40 million, so some bucket holds at least 10. The question is whether collisions hurt, not whether they happen.
 
@@ -260,7 +260,7 @@ Lee and coauthors remove repeated and near-duplicate text from language-model tr
 
 Suppose there are a billion paragraphs. With a 64-bit hash, the union bound caps the chance of any accidental collision at $\binom{10^9}{2}/2^{64} \approx 0.0271$. With a 32-bit hash, roughly 77,000 paragraphs already make a collision more likely than not.
 
-For near-duplicates, a collision is the goal. With MinHash, Lee and coauthors use $b = 20$ and $r = 450$, which amounts to 450 groups of 20 hashes, and flag two documents whose Jaccard similarity is $s$ (shared five-word sequences as a share of all the five-word sequences in either document) as a candidate match with probability $1 - (1 - s^{20})^{450}$ (§4.2 and Appendix A) <Cite id="lee2021" />. Each hash agrees with chance $s$, so a group of 20 agrees with chance $s^{20}$ and misses with chance $1 - s^{20}$; all 450 groups miss with chance $(1 - s^{20})^{450}$. That is the complement move again: at least one shared group is 1 minus none. A pair with $s = 4/5$ is flagged with probability about 0.9946, and a pair with $s = 1/2$ with probability about 0.00043. In feature hashing a collision is an accident to keep harmless; in deduplication it is the signal that two documents match.
+For near-duplicates, a collision is the goal. Lee and coauthors use MinHash, which runs many random hash functions over a document's five-word sequences and keeps the smallest value from each. Two documents get the same smallest value from one hash function with chance $s$, their Jaccard similarity (shared five-word sequences as a share of all the five-word sequences in either document). With $b = 20$ and $r = 450$, which amounts to 450 groups of 20 hashes, they flag two documents as a candidate match with probability $1 - (1 - s^{20})^{450}$ (§4.2 and Appendix A) <Cite id="lee2021" />. So a group of 20 agrees with chance $s^{20}$ and misses with chance $1 - s^{20}$; all 450 groups miss with chance $(1 - s^{20})^{450}$. That is the complement move again: at least one shared group is 1 minus none. A pair with $s = 4/5$ is flagged with probability about 0.9946, and a pair with $s = 1/2$ with probability about 0.00043.
 
 ## Check every count in code
 
@@ -483,7 +483,7 @@ Any two: $1 - q_{50}$ with $d = 10{,}000$, about 0.1155. One given user: each of
 </CheckYourself>
 
 <CheckYourself level="proof" question="Show that qₙ₊₁ ≤ qₙ, and that qₙ = 0 once n > d.">
-Going from $n$ to $n + 1$ people multiplies $q_n$ by the chance that the new person misses the $n$ days already taken, $(d - n)/d$, which is at most 1 while $n \le d$. So $q_{n+1} = q_n (d - n)/d \le q_n$. When $n = d$, that factor is 0, so $q_{d+1} = 0$, and every later $q_n$ is a multiple of it, so it stays 0. With more people than days, two must share one.
+Going from $n$ to $n + 1$ people multiplies $q_n$ by the chance that the new person misses the $n$ days already taken, $(d - n)/d$, which lies between 0 and 1 while $n \le d$. So $q_{n+1} = q_n (d - n)/d \le q_n$. When $n = d$, that factor is 0, so $q_{d+1} = 0$, and every later $q_n$ is a multiple of it, so it stays 0. With more people than days, two must share one.
 </CheckYourself>
 
 ## Common mistakes
