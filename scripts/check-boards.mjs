@@ -6612,6 +6612,19 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 			{ id: 's-curve', label: 'S-curve: x³ at 1' },
 			{ id: 'loss', label: 'Loss: (w − 3)² at 0' },
 		]);
+		// A preset stays pressed only while the board shows its curve and point.
+		assert.equal(fcState.activePresetOf(passed), 'bowl');
+		const steppedAway = fcReduce(passed, { type: 'point', xIndex: -3 });
+		assert.equal(steppedAway.preset, 'bowl', "the curve stays the preset's");
+		assert.equal(fcState.activePresetOf(steppedAway), null, 'Bowl: x² at 1 is no longer pressed at x = −1.5');
+		assert.equal(fcState.activePresetOf(fcReduce(steppedAway, { type: 'point', xIndex: 2 })), 'bowl', 'back at 1, Bowl is pressed again');
+		assert.equal(fcState.activePresetOf(fcReduce(passed, { type: 'preset', id: 'loss' })), 'loss');
+		const cornerPassed = fcRun('corner', { type: 'choice', choice: 'two' }, { type: 'check' });
+		assert.equal(fcState.activePresetOf(cornerPassed), 'hinge');
+		const onV = fcReduce(cornerPassed, { type: 'preset', id: 'v' });
+		assert.equal(fcState.activePresetOf(onV), 'v');
+		assert.equal(fcState.activePresetOf(fcReduce(onV, { type: 'point', xIndex: 1 })), null);
+		assert.equal(fcState.activePresetOf(fcReduce(cornerPassed, { type: 'preset', id: 'smooth' })), 'smooth');
 		assert.deepEqual(fcSay.chalkNote({ ...passed, stage: 'tangent' }), { long: "shorter ruler, closer to the curve's own tilt", short: 'shorter ruler, closer tilt' });
 		for (const stage of ['slide', 'ruler', 'slope-curve']) assert.equal(fcSay.chalkNote({ ...passed, stage }), null);
 		assert.equal(fcSay.chalkNote(fcAfter('corner', { stage: 'tangent' })), null);

@@ -228,5 +228,14 @@ function sameState(a: CurveState, b: CurveState): boolean {
 	return (Object.keys(a) as (keyof CurveState)[]).every((key) => a[key] === b[key]);
 }
 
+/**
+ * The preset the board shows now, drawn pressed: one of the setup's presets with the same curve and point, or null
+ * once the reader has moved the point away from every preset.
+ */
+export function activePresetOf(state: CurveState): PresetId | null {
+	const curve = PRESETS[state.preset].curve;
+	return setupOf(state).presets.find((id) => PRESETS[id].curve === curve && PRESETS[id].xIndex === state.xIndex) ?? null;
+}
+
 /** Where the h slider sits: its position among the allowed rulers. */
 export const hPosition = (state: CurveState): number => allowedHIndices(state).indexOf(state.hIndex);

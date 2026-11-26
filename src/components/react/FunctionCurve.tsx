@@ -42,6 +42,7 @@ import {
 } from "./functionCurve/describe.ts";
 import { getSetup, viewOf, type SetupId, type Stage } from "./functionCurve/setups.ts";
 import {
+  activePresetOf,
   allowedHIndices,
   covered,
   hPosition,
@@ -264,7 +265,7 @@ export default function FunctionCurve({ setup: setupId }: FunctionCurveProps) {
       />
       {checkReason && <RefusalNote id={checkReasonId}>{checkReason}</RefusalNote>}
       {presets.length > 0 && (
-        <PresetButtons label={CONTROL_LABELS.presets} caption={CONTROL_LABELS.presetsCaption} presets={presets} activeId={state.preset} onPick={(id) => send({ type: "preset", id: id as CurveState["preset"] })} />
+        <PresetButtons label={CONTROL_LABELS.presets} caption={CONTROL_LABELS.presetsCaption} presets={presets} activeId={activePresetOf(state)} onPick={(id) => send({ type: "preset", id: id as CurveState["preset"] })} />
       )}
       {!isCovered && hasCornerLines(state.preset) && (
         <button type="button" role="switch" aria-checked={state.linesOn} className="ms-board-button ms-board-switch" onClick={() => send({ type: "lines", on: !state.linesOn })}>
