@@ -230,11 +230,11 @@ $$
 \arg\min_{f}\, \mathbb{E}\big[(y - f(x))^2\big] \text{ gives } f^*(x) = \mathbb{E}[y \mid x].
 $$
 
-Here $\mathbb{E}[y \mid x]$ is the mean of $y$ among cases with input $x$. Shrink this to a model with no inputs, the best constant guess for the 10 cafe values. The mean, 103.6, gives a mean squared error of 89,284.04, against 99,104.85 at the median. The median, 4.5, gives a mean absolute error of 100.8, against 179.28 at the mean. So training with squared error on data with far values pulls the model toward them; absolute error does not.
+Here $\mathbb{E}[y \mid x]$ is [the mean](/probability/expectation-and-variance/#the-expected-value-weight-each-value-by-its-chance) of $y$ among cases with input $x$. Shrink this to a model with no inputs, the best constant guess for the 10 cafe values. The mean, 103.6, gives a mean squared error of 89,284.04, against 99,104.85 at the median. The median, 4.5, gives a mean absolute error of 100.8, against 179.28 at the mean. So training with squared error on data with far values pulls the model toward them; absolute error does not.
 
 ### Accuracy predicts the mode
 
-A classifier scored by accuracy does best by predicting, for each input, the most likely class: the mode of the class distribution given that input. A trained model estimates it with the class it gives the highest probability. The baseline with no features predicts the training set's most common label: scikit-learn's `DummyClassifier` with `strategy="most_frequent"` <Cite id="sklearn-dummyclassifier" />.
+A classifier scored by accuracy does best by predicting, for each input, [the most likely class](/probability/naive-bayes-classifier/): the mode of the class distribution given that input. A trained model estimates it with the class it gives the highest probability. The baseline with no features predicts the training set's most common label: scikit-learn's `DummyClassifier` with `strategy="most_frequent"` <Cite id="sklearn-dummyclassifier" />.
 
 ### Filling gaps and setting baselines
 
