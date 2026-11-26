@@ -264,9 +264,18 @@ function spellingProblems(pages) {
 	});
 }
 
-/** The PropertiesTable elements on a page, with their string attributes. */
+/** The source with fenced code, code props and inline code blanked to spaces, so match indices still point into it. */
+function blankCode(source) {
+	const blank = (match) => match.replace(/[^\n]/g, ' ');
+	return source
+		.replace(/```[\s\S]*?```/g, blank)
+		.replace(/code=\{`[\s\S]*?`\}/g, blank)
+		.replace(/`[^`\n]*`/g, blank);
+}
+
+/** The PropertiesTable elements on a page, with their string attributes; a tag written as code in prose isn't one. */
 function propertiesTablesOf(source) {
-	return [...source.matchAll(/<PropertiesTable\b/g)].map((match) => Object.fromEntries(readTag(source, match.index).attributes));
+	return [...blankCode(source).matchAll(/<PropertiesTable\b/g)].map((match) => Object.fromEntries(readTag(source, match.index).attributes));
 }
 
 /** Owner pages show their family's table; table ids never collide; every family id exists (decision 0023). */
@@ -286,7 +295,8 @@ function propertiesTableProblems(pages) {
 		for (const table of tables) {
 			if (!familyIds.has(table.family)) problems.push(`${name}: <PropertiesTable family="${table.family}"> names no family in src/data/distributions.mjs (family must be a quoted id)`);
 		}
-		if (tables.filter((table) => table.id === undefined).length > 1) problems.push(`${name}: ${tables.length} PropertiesTables share the default id "properties"; give all but one their own id`);
+		const defaultIdCount = tables.filter((table) => table.id === undefined).length;
+		if (defaultIdCount > 1) problems.push(`${name}: ${defaultIdCount} PropertiesTables share the default id "properties"; give all but one their own id`);
 	}
 	return problems;
 }
@@ -307,6 +317,10 @@ function checkPropertiesTableRules() {
 		'a/b.mdx: 2 PropertiesTables share the default id "properties"; give all but one their own id',
 	]);
 	assert.deepEqual(propertiesTableProblems([page('a/b', '<PropertiesTable family="normal" />\n\n<PropertiesTable family="uniform" id="uniform-properties" />')]), []);
+	assert.deepEqual(propertiesTableProblems([page('a/b', '<PropertiesTable family="normal" />\n\n<PropertiesTable family="uniform" />\n\n<PropertiesTable family="binomial" id="binomial-properties" />')]), [
+		'a/b.mdx: 2 PropertiesTables share the default id "properties"; give all but one their own id',
+	]);
+	assert.deepEqual(propertiesTableProblems([page('a/b', 'Write `<PropertiesTable family="gamma" />` once.\n\n```mdx\n<PropertiesTable family="normal" />\n```\n\n<PropertiesTable family="normal" />')]), []);
 }
 
 function intentProblems(pages) {
