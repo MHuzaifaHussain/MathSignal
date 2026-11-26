@@ -346,18 +346,34 @@ function briefRead(state: FamilyState): string {
 	return terminatesWithin(bar.probability, SENTENCE_PLACES) ? `P(X = ${state.read}) = ${reduced} = ${decimal}` : `P(X = ${state.read}) = ${reduced}, about ${decimal}`;
 }
 
+/**
+ * How a commit moved the read bar: `kept`, `at-most` (clamped to n) or `lowered` (clamped inside a slider burst
+ * that then raised n again). The read only ever falls, through withTrials, so comparing end states catches a clamp
+ * however many steps the burst took.
+ */
+type ReadMove = 'kept' | 'at-most' | 'lowered';
+
+function readMove(previous: FamilyState, state: FamilyState): ReadMove {
+	if (state.read >= previous.read) return 'kept';
+	return state.read === state.n ? 'at-most' : 'lowered';
+}
+
 /** The coin board's n sentence after its leading count: "Reading the bar for 6 heads: …", or the cover line. */
 function coinsReadSentence(previous: FamilyState, state: FamilyState): string {
 	if (isCovered(state)) return 'The chart is covered until you lock in your guess.';
 	const words = WORDS.guess;
-	const clamped = previous.read > state.n ? `, the most ${count(words.trial, state.n)} can show` : '';
-	return `Reading the bar for ${count(words.success, state.read)}${clamped}: ${briefRead(state)}.`;
+	const move = readMove(previous, state);
+	const lead = move === 'lowered' ? 'Now reading' : 'Reading';
+	const clamped = move === 'at-most' ? `, the most ${count(words.trial, state.n)} can show` : '';
+	return `${lead} the bar for ${count(words.success, state.read)}${clamped}: ${briefRead(state)}.`;
 }
 
 function clampSentence(previous: FamilyState, state: FamilyState): string | null {
-	if (previous.read <= state.n) return null;
+	const move = readMove(previous, state);
+	if (move === 'kept') return null;
 	const words = WORDS.spread;
-	return `Now reading the bar for ${count(words.success, state.read)}, the most ${count(words.trial, state.n)} can show.`;
+	const reading = `Now reading the bar for ${count(words.success, state.read)}`;
+	return move === 'at-most' ? `${reading}, the most ${count(words.trial, state.n)} can show.` : `${reading}.`;
 }
 
 function spreadTrialsSentence(previous: FamilyState, state: FamilyState): string {

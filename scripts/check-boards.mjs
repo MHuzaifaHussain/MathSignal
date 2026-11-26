@@ -1933,6 +1933,11 @@ const famSay = await import('../src/components/react/distributionBoard/familyDes
 const numberFormat = await import('../src/components/react/distributionBoard/numberFormat.ts');
 const columnAxis = await import('../src/components/react/distributionBoard/columnAxis.ts');
 const famRun = (setupId, ...actions) => actions.reduce(famState.familyReducer, famState.initialFamilyState(setupId));
+// A slider burst (a drag, or key presses inside the keyboard commit delay) commits once, against the state before it.
+const famBurst = (previous, ...trials) => {
+	const state = trials.reduce((current, n) => famState.familyReducer(current, { type: 'n', n }), previous);
+	return famSay.familyAnnouncement(previous, state, { type: 'n', n: trials.at(-1) });
+};
 const bigChoose = (n, k) => {
 	let result = 1n;
 	for (let step = 1n; step <= BigInt(k); step += 1n) result = (result * (BigInt(n - k) + step)) / step;
@@ -2152,6 +2157,10 @@ const bigChoose = (n, k) => {
 	assert.equal(say({ ...checked, read: 5 }, { type: 'n', n: 10 }), '10 coins. Reading the bar for 5 heads: P(X = 5) = 63/256, about 0.25.');
 	assert.equal(say(checked, { type: 'n', n: 10 }), '10 coins. Reading the bar for 6 heads: P(X = 6) = 105/512, about 0.21.');
 	assert.equal(say(checked, { type: 'n', n: 2 }), '2 coins. Reading the bar for 2 heads, the most 2 coins can show: P(X = 2) = 1/4 = 0.25.');
+	// A read bar clamped inside a burst still says it moved, without claiming the most the final n can show.
+	assert.equal(famBurst(checked, 3, 10), '10 coins. Now reading the bar for 3 heads: P(X = 3) = 15/128, about 0.12.');
+	assert.equal(famBurst(checked, 2, 3), '3 coins. Now reading the bar for 2 heads: P(X = 2) = 3/8, about 0.38.');
+	assert.equal(famBurst(checked, 3, 2), '2 coins. Reading the bar for 2 heads, the most 2 coins can show: P(X = 2) = 1/4 = 0.25.');
 	assert.equal(say({ ...checked, read: 1 }, { type: 'n', n: 1 }), '1 coin. Reading the bar for 1 head: P(X = 1) = 1/2 = 0.50.');
 	assert.equal(say({ ...checked, read: 0 }, { type: 'n', n: 10 }), '10 coins. Reading the bar for 0 heads: P(X = 0) = 1/1024, under 0.01.');
 	assert.equal(say(open, { type: 'n', n: 4 }), '4 coins. The chart is covered until you lock in your guess.');
@@ -2367,6 +2376,9 @@ const bigChoose = (n, k) => {
 		say(fair, { type: 'n', n: 1 }),
 		'1 trial, a success with chance 0.5. Mean: μ = np = 1 × 0.5 = 0.5 successes. Variance: np(1 − p) = 1 × 0.5 × 0.5 = 0.25. Standard deviation: σ = √0.25 = 0.5 successes. Now reading the bar for 1 success, the most 1 trial can show.',
 	);
+	assert.equal(famBurst(open, 3, 10), '10 trials, each a success with chance 0.5. Mean: μ = np = 10 × 0.5 = 5 successes. Now reading the bar for 3 successes.');
+	assert.equal(famBurst(open, 2, 3), '3 trials, each a success with chance 0.5. Mean: μ = np = 3 × 0.5 = 1.5 successes. Now reading the bar for 2 successes.');
+	assert.equal(famBurst(open, 3, 2), '2 trials, each a success with chance 0.5. Mean: μ = np = 2 × 0.5 = 1 success. Now reading the bar for 2 successes, the most 2 trials can show.');
 	assert.equal(say(fair, { type: 'preset', name: 'Right 9 in 10' }), 'Right 9 in 10. Mean: μ = np = 10 × 0.9 = 9 successes. Before: σ ≈ 1.58 (Fair coin). Now: σ ≈ 0.95 (Right 9 in 10).');
 	assert.equal(say(open, { type: 'preset', name: 'Right 9 in 10' }), 'Right 9 in 10. Mean: μ = np = 10 × 0.9 = 9 successes.');
 	assert.equal(
