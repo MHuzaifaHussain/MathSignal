@@ -1,6 +1,6 @@
 # 0023: The full page footer and PropertiesTable
 
-Status: accepted, 2026-11-25. Extends [0009](0009-single-sources-of-truth.md).
+Status: accepted, 2026-11-25; amended 2026-11-26 (folds print open). Extends [0009](0009-single-sources-of-truth.md).
 
 ## Context
 Concept pages already required `author`, `reviewedAt` and `aiAssisted` in frontmatter, but the footer showed only the author (from a site constant, so it could disagree with the JSON-LD), the review date, the licenses and "Report an error". Nothing told the reader how the page was made, although `aiAssisted` is set on every page, and there was no way to cite a page. On 2026-11-23 the owner deferred "Cite this page" and a reviewer line until there was a second person; on 2026-11-25 the week-2 plan asked for the full footer, and the ruling was to build "Cite this page" and "How this page was made" now, since neither needs a second person, and to keep the reviewer deferred, since a reviewer line without a reviewer would be false.
@@ -48,8 +48,19 @@ Not users: the generic properties of random variables and of expectation and var
 - The footer gains about 115px at 375px with "Cite this page" closed (two lines of "How this page was made" and the 44px summary): 231px in all, against about 115px before. Open, it adds about 535px, mostly the wrapped BibTeX block (386px). Measured on the Normal page in Chrome at 375px.
 - Tables at 375px wide, measured on the lab page: Normal 444px (the old markdown table was 417px; the 27px is the caption); binomial with its example column 1,220px, inside the closed `FormalDefinition`, so it adds nothing to the first view, and it fits without scrolling; uniform with the Sand heap column 343px. At 320px the binomial region scrolls by about 53px, the width of the widest unbreakable formula and word in each column; the page itself never scrolls sideways.
 - Starlight's `Code` works inside the footer override, copy button included.
-- Closed folds don't print, so the table prints only when `FormalDefinition` is open. That is true of every fold and needs its own change.
-- The 17 hand-written markdown tables keep Starlight's block-scrolling table, with no row headers. Whether a site-wide table rule is needed is a separate question.
+- Every fold prints open (amendment below), so the table reaches paper whether or not `FormalDefinition` was open on screen.
+- The 17 hand-written markdown tables keep Starlight's block-scrolling table, with no row headers (amendment below).
+
+## Amendment (2026-11-26): folds print open
+Closed folds didn't print, so a PropertiesTable, a proof or a worked answer inside a closed `FormalDefinition`, `Fold`, `Simpler` or `GoDeeper` never reached paper.
+
+- **CSS.** In print, `.sl-markdown-content details::details-content` gets `content-visibility: visible` (`global.css`, next to the disclosure rules). Browsers with `::details-content` (Chromium 131 and later) print every fold's body without opening it, so nothing changes on screen and nothing needs restoring. The selector has no `.not-content` guard, so folds inside island wrappers print too. Summaries are already `display: flex`, which drops the toggle marker, so nothing hides it.
+- **Script.** `src/components/openFoldsForPrint.ts`, imported by `Fold` and `FormalDefinition` on the line after `openFoldForHash` (Astro bundles each once per page), covers browsers without `::details-content`. On `beforeprint` it opens every closed fold in `.sl-markdown-content` and remembers exactly those; on `afterprint` it closes them again, so a fold the reader opened stays open. A second `beforeprint` before `afterprint`, which some print previews send, adds to the list instead of replacing it. It's a sibling module, not part of `openFoldForHash.ts`, so each module keeps one job.
+- **Every fold means every fold.** Check-yourself and worked-example answers print open under their questions. On paper there is no way to reveal them later, and a printout is usually for study.
+- **Not affected.** The footer's "Cite this page" sits outside `.sl-markdown-content` and stays hidden in print (its "Cite as" line prints instead). Starlight's mobile table of contents and sidebar groups are outside it too. No fold on the site uses `name`, so opening one never closes another.
+- **Measured** in Chromium (Playwright, `chrome-win64` 153) on the built Normal and binomial pages. With `emulateMedia({ media: 'print' })` and JavaScript off, the closed `FormalDefinition` grows from 52px to 1,231px (Normal) and 1,616px (binomial), its PropertiesTable passes `checkVisibility()`, and `page.pdf()` text holds the caption "Properties of the binomial distribution" with its rows; the same for Normal. `page.pdf()` fires `beforeprint` and `afterprint` once each. Opening one fold by hand, then dispatching `beforeprint` twice and `afterprint` once, opened all 9 (Normal) and 21 (binomial) folds and then restored the earlier state exactly, the hand-opened fold still open; the same after `page.pdf()`.
+
+**Row headers in markdown tables: left as they are.** A site-wide rule would have to tell a row label from data in the first column, and the 17 tables mix both: property and rule tables and the contingency tables start with labels, while the ruler-length, group-size and Pascal's-triangle tables start with numbers. `scope="row"` is only valid on `th`, so it can't be added to a `td`, and the scroll-box script only handles overflow and shouldn't gain a second job. If row headers are wanted later, the narrow option is a build-time rehype rule that turns a first cell holding only bold text (the contingency tables' bold "Has it", "Hat" and "Heads") into `th scope="row"`; the property tables would still need an explicit marker.
 
 ## Alternatives considered
 - A new `PageFooter` component placed by each page: 17 page edits for what the override already does on every page.

@@ -161,6 +161,14 @@ starlight-toc a[aria-current='true']:hover {
 	align-items: center;
 }
 
+/* Paper can't open a fold, so every fold prints open (decision 0023). openFoldsForPrint.ts opens them on beforeprint
+ * for browsers without ::details-content. */
+@media print {
+	.sl-markdown-content details::details-content {
+		content-visibility: visible;
+	}
+}
+
 /* ── Buttons: 4px corners like every other control (no pills), 44px tall ── */
 .sl-link-button {
 	border-radius: 4px;
