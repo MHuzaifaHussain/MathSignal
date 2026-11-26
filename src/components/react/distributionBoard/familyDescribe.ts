@@ -10,7 +10,7 @@ import { tableFoldAnnouncement } from '../guided/tableFold.ts';
 import { formatNumber } from '../plotColors.ts';
 import { chanceOf, chooseCount, tallestValues } from './families.ts';
 import type { FamilySetup, GuessId } from './familySetups.ts';
-import { activePreset, familyDistribution, familyMoments, familySetupOf, isCovered, visibleGhost, type FamilyAction, type FamilyRefusal, type FamilyState } from './familyState.ts';
+import { activePreset, familyDistribution, familyMoments, familySetupOf, isCovered, presetsLocked, visibleGhost, type FamilyAction, type FamilyRefusal, type FamilyState } from './familyState.ts';
 import type { Bar } from './model.ts';
 import { chanceChain, powerText, rootText, SENTENCE_PLACES, sigmaValue, TABLE_PLACES, underText, underThreshold } from './numberFormat.ts';
 import { coinSequences, MAX_LISTED_COINS, type CoinSequence } from './sources.ts';
@@ -166,8 +166,12 @@ export function readLine(state: FamilyState): SpokenLine | null {
 	};
 }
 
+/**
+ * The tallest bar's sentence, or null before Check on a guess setup at any n (covered or not): the most likely
+ * count hints at the page's deeper question, so it waits like the presets do.
+ */
 export function tallestLine(state: FamilyState): string | null {
-	if (isCovered(state)) return null;
+	if (presetsLocked(state)) return null;
 	const values = tallestValues(state.n, state.j);
 	const d = familyDistribution(state);
 	const bar = barAt(state, values[0]);

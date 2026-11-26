@@ -2128,7 +2128,9 @@ const bigChoose = (n, k) => {
 	assert.equal(visible(at(10, 0)), '0 heads: C(10, 0) = 1 of 1,024 sequences, so P(X = 0) = 1/1024, under 0.01.');
 	assert.equal(famSay.tallestLine(at(10, 6)), 'Tallest bar: 5 heads, P(X = 5) = 252/1024 = 63/256 ≈ 0.25.');
 	assert.equal(famSay.tallestLine(at(9, 6)), 'Tallest bars: 4 and 5 heads, each P = 126/512 = 63/256 ≈ 0.25.');
-	assert.equal(famSay.tallestLine(open), 'Tallest bars: 1 and 2 heads, each P = 3/8 ≈ 0.38.');
+	assert.equal(famSay.tallestLine(open), null, 'no tallest bar before Check, even uncovered at 3 coins');
+	assert.equal(famSay.tallestLine({ ...open, guess: 'one-in-two' }), null, 'a pick is not a Check');
+	assert.equal(famSay.tallestLine(at(3, 2)), 'Tallest bars: 1 and 2 heads, each P = 3/8 ≈ 0.38.');
 	assert.equal(famSay.tallestLine(at(2, 1)), 'Tallest bar: 1 head, P(X = 1) = 2/4 = 1/2 = 0.50.');
 	assert.equal(famSay.tallestLine(at(1, 1)), 'Tallest bars: 0 and 1 heads, each P = 1/2 = 0.50.');
 	assert.equal(famSay.totalLine(open), 'The bars add up to 8/8 = 1.');
@@ -2291,13 +2293,13 @@ const bigChoose = (n, k) => {
 	};
 	const opening = walk([famState.initialFamilyState('coins-binomial')], [1, 2, 3], () => true);
 	for (const text of opening.texts) {
-		for (const token of ['1,024', '1024', '210', '105/512', '63/256', '10 fair coins']) assert.ok(!text.includes(token), `opening: "${text}" holds ${token}`);
+		for (const token of ['1,024', '1024', '210', '105/512', '63/256', '10 fair coins', 'Tallest']) assert.ok(!text.includes(token), `opening: "${text}" holds ${token}`);
 	}
 	const coveredStarts = opening.states.flatMap((state) => [4, 5, 6, 7, 8, 9, 10].map((n) => famState.familyReducer(state, { type: 'n', n })));
 	const covered = walk(coveredStarts, [4, 5, 6, 7, 8, 9, 10], famState.isCovered);
 	assert.ok(covered.states.every(famState.isCovered));
 	for (const text of covered.texts) {
-		for (const token of ['210', '105/512', '0.21', '252', '63/256', 'C(10, 6)']) assert.ok(!text.includes(token), `covered: "${text}" holds ${token}`);
+		for (const token of ['210', '105/512', '0.21', '252', '63/256', 'C(10, 6)', 'Tallest']) assert.ok(!text.includes(token), `covered: "${text}" holds ${token}`);
 	}
 	// A walk that stops early fails here. Opening: n 1..3 with read 0..n, guess null or one of 3, the table open or
 	// not, and whichever refusal the last press could leave.
