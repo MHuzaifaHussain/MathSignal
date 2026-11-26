@@ -1,9 +1,10 @@
 ---
 // A short aside: a clarification, a historical note, "you may have seen this written as".
-// Keep it under about 60 words.
+// Keep it under about 60 words. A note, not a landmark: an unnamed <aside> would repeat Starlight's sidebar
+// landmark in a screen reader's landmark list.
 ---
 
-<aside class="side-note"><slot /></aside>
+<div class="side-note" role="note"><slot /></div>
 
 <style>
 	.side-note {

@@ -80,7 +80,7 @@ The components behind the spine-and-folds template ([decision 0008](../decisions
 A variable symbol in its meaning color, for prose. `name`: `'mu' | 'sigma'`. Renders an italic serif symbol with the matching class, so it matches the KaTeX macros.
 
 ### `SideNote` (Astro)
-A short aside: a clarification, a historical note, a "you may have seen this written as". Smaller serif in muted ink, indented, with no bar, inline in the reading column. (It does not float into the page margin: Starlight's "On this page" column occupies that space.) Keep it under about 60 words.
+A short aside: a clarification, a historical note, a "you may have seen this written as". Smaller serif in muted ink, indented, with no bar, inline in the reading column. (It does not float into the page margin: Starlight's "On this page" column occupies that space.) Keep it under about 60 words. It renders `<div role="note">`, not `<aside>`: an unnamed aside is a complementary landmark that a screen reader lists next to Starlight's sidebar.
 
 ## Boards (React)
 
