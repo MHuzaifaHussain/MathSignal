@@ -26,7 +26,9 @@ export default function NormTable({ state }: { state: VectorState }) {
               <th scope="row">
                 <SpokenText line={spokenLine(row.name)} />
               </th>
-              <td>{row.how}</td>
+              <td>
+                <SpokenText line={spokenLine(row.how)} />
+              </td>
               <td>{row.length}</td>
             </tr>
           ))}

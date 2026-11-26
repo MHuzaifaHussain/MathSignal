@@ -19,7 +19,8 @@ const SPOKEN_MATH: readonly (readonly [RegExp, string | ((match: string, ...grou
 	[/X\(([^()]+)\)/g, 'X of $1'],
 	[/Φ\(([^()]+)\)/g, 'Phi of $1'],
 	[/\bnp\(1 − p\)/g, 'n p times 1 minus p'],
-	[/\bnp\b/g, 'n p'],
+	// "μ = np", not NumPy's "np.std".
+	[/\bnp\b(?!\.)/g, 'n p'],
 	[/√\(([^()]+)\)/g, 'the square root of $1'],
 	[/√([\d.]+)/g, 'the square root of $1'],
 	[/cm²/g, 'square centimeters'],

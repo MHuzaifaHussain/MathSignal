@@ -1326,6 +1326,9 @@ export function spoken(text: string): string {
 		.replace(/‖v‖₂/g, 'the L2 norm of v')
 		.replace(/‖v‖∞/g, 'the L-infinity norm of v')
 		.replace(/‖([^‖]+)‖/g, 'the length of $1')
+		// Absolute values: without the bars "|−3| + |4|" would be heard as "minus 3 + 4".
+		.replace(/\|([^|]+)\|/g, 'the size of $1')
+		.replace(/max\(([^()]+)\)/g, 'the larger of $1')
 		.replace(/ · /g, ' dot ')
 		.replace(/û/g, 'u hat')
 		.replace(/θ/g, 'theta')

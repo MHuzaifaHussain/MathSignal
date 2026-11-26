@@ -7834,7 +7834,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	const vecSay = await import('../src/components/react/vectorBoard/describe.ts');
 	const vecNorms = await import('../src/components/react/vectorBoard/normsDescribe.ts');
 	const vecSetups = await import('../src/components/react/vectorBoard/setups.ts');
-	const skipped = /[‖·ûθ]/;
+	const skipped = /[‖·ûθ|]|max\(/;
 	for (const id of Object.keys(vecSetups.SETUPS)) {
 		const setup = vecSetups.getSetup(id);
 		let state = vecState.initialState(id);
@@ -7843,7 +7843,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		for (const option of vecSay.stageOptions(setup)) states.push((state = vecState.reducer(state, { type: 'stage', stage: option.value })));
 		for (const at of states) {
 			const lines = [vecSay.statusLine(at), vecSay.feedbackLine(at), vecSay.listsLine(at), vecSay.boardLabel(at), ...vecSay.readoutLines(at)];
-			if (setup.kind === 'norms') lines.push(vecNorms.NORM_TABLE_HEADERS.caption, ...vecNorms.normRows(at).map((row) => row.name));
+			if (setup.kind === 'norms') lines.push(vecNorms.NORM_TABLE_HEADERS.caption, ...vecNorms.normRows(at).flatMap((row) => [row.name, row.how]));
 			else lines.push(vecSay.tableHeaders(at).caption, ...vecSay.tableRows(at).map((row) => row.name));
 			for (const line of lines.filter(Boolean)) {
 				const { visible, spoken } = vecSay.spokenLine(line);
@@ -7857,6 +7857,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		spoken: 'Shadow of b along a: a dot b ÷ the length of a = −1 ÷ √17 ≈ −0.24.',
 	});
 	assert.equal(vecSay.spoken(vecSay.CONTROL_LABELS.signLegend), 'Your guess: a dot b is');
+	assert.equal(vecSay.spoken('‖v‖₁ = |−3| + |4| = 7. ‖v‖∞ = max(|−3|, |4|) = 4.'), 'The L1 norm of v = the size of −3 + the size of 4 = 7. The L-infinity norm of v = the larger of the size of −3, the size of 4 = 4.');
 }
 
 // ---- DistributionBoard: every line a screen reader can reach says its notation in words ----
@@ -7999,6 +8000,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	assert.equal(spokenMath('As a sample of a bigger group, the same mean is written x̄ = 134 cm.'), 'As a sample of a bigger group, the same mean is written x bar = 134 cm.');
 	assert.equal(spokenMath('Variance, σ²'), 'Variance, sigma squared');
 	assert.equal(spokenMath('Sample variance, s²'), 'Sample variance, s squared');
+	assert.equal(spokenMath('The square root of the variance (np.std)'), 'The square root of the variance (np.std)');
 	// The z table's row headers (normalDistribution/ZTable.tsx).
 	assert.equal(spokenMath('z-score, (x − μ) / σ'), 'z-score, (x − mu) divided by sigma');
 	assert.equal(spokenMath('Share below, Φ(z)'), 'Share below, Phi of z');
