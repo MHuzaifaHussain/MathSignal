@@ -46,7 +46,16 @@ export default function CupRow({ state, scenario, send }: CupRowProps) {
             {scenario.outcomes.map((outcome) => (
               <th key={outcome.id} scope="col">
                 Cup {outcome.label}
-                {state.events.A.has(outcome.id) && <span className="ms-cup-tag"> A</span>}
+                {state.events.A.has(outcome.id) && (
+                  <>
+                    {/* A lone "A" can be heard as the article; screen readers get ", in A" instead. */}
+                    <span className="ms-cup-tag" aria-hidden="true">
+                      {" "}
+                      A
+                    </span>
+                    <span className="sr-only">, in A</span>
+                  </>
+                )}
               </th>
             ))}
           </tr>
