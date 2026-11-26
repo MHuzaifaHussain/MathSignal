@@ -7398,6 +7398,20 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	assert.deepEqual(dens.areaBetween(heap, fraction(2, 1), fraction(2, 1)), fraction(0, 1));
 }
 
+// ---- EventSpace: the A and B tags are drawn, not text (WCAG 2.5.3) ----
+// A cell's visible text must be where its name starts ("opens 3. … In A and B."), so the corner letters come from
+// CSS (`content: attr(data-tag)`) and the button holds no letter of its own.
+{
+	const { readFileSync } = await import('node:fs');
+	const grid = readFileSync('src/components/react/eventSpace/OutcomeGrid.tsx', 'utf8');
+	for (const letter of ['a', 'b']) {
+		const tag = `<span className="ms-event-tag ms-event-tag-${letter}" data-tag="${letter.toUpperCase()}" aria-hidden="true" />`;
+		assert.ok(grid.includes(tag), `the ${letter.toUpperCase()} tag is an empty span with data-tag`);
+	}
+	assert.ok(!/ms-event-tag[^>]*>[AB]</.test(grid), 'no tag letter is a text node');
+	assert.ok(/\.ms-event-tag::before\s*\{\s*content: attr\(data-tag\);/.test(readFileSync('src/styles/components.css', 'utf8')), 'components.css draws the tag letter');
+}
+
 // ---- Page components: names of wide tables and formulas (decision 0024) ----
 
 {

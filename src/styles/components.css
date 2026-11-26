@@ -651,6 +651,12 @@
 	color: var(--ms-board-ink);
 }
 
+/* The letter is generated content, not text: a speech-input user names the cell by its visible label ("opens 3"),
+ * which is how its accessible name starts; the name ends with the same membership in words ("In A and B."). */
+.ms-event-tag::before {
+	content: attr(data-tag);
+}
+
 .ms-event-tag-a {
 	inset-inline-start: 4px;
 }

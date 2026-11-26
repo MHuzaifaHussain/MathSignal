@@ -93,7 +93,7 @@ export default function OutcomeGrid({ state, scenario, describedBy, editable, on
                       onFocus={() => onCellFocus(outcome.row, outcome.col)}
                       onClick={editable ? () => onToggle(outcome.id) : undefined}
                     >
-                      {inA && <span className="ms-event-tag ms-event-tag-a" aria-hidden="true">A</span>}
+                      {inA && <span className="ms-event-tag ms-event-tag-a" data-tag="A" aria-hidden="true" />}
                       {state.stage === "picture" && scenario.pictureFaces ? (
                         <span className="ms-event-faces" aria-hidden="true">
                           {scenario.pictureFaces(outcome).map((face, index) => (
@@ -103,7 +103,7 @@ export default function OutcomeGrid({ state, scenario, describedBy, editable, on
                       ) : (
                         <span className="ms-event-label" aria-hidden="true">{outcome.label}</span>
                       )}
-                      {inB && <span className="ms-event-tag ms-event-tag-b" aria-hidden="true">B</span>}
+                      {inB && <span className="ms-event-tag ms-event-tag-b" data-tag="B" aria-hidden="true" />}
                       {missed === outcome.id && <span className="ms-event-note" aria-hidden="true">missed</span>}
                       {showTallies && <span className="ms-event-note" aria-hidden="true">{state.tallies[outcome.id] ?? 0}</span>}
                       {units && <span className="ms-event-units" aria-hidden="true">{units}</span>}
