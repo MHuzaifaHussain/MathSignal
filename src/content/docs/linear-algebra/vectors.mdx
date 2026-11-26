@@ -14,7 +14,7 @@ takeaways:
   - A vector in Rⁿ is an ordered list of n numbers. In 2D it is an arrow from the origin to the point with those coordinates.
   - Vectors add entry by entry, which is the same as placing arrows tip to tail. (3, 2) + (1, 3) = (4, 5), in either order.
   - Multiplying by a number c scales every entry. c > 1 stretches, 0 < c < 1 shrinks, c < 0 flips the direction, and c = 0 gives the zero vector.
-  - Only vectors with the same number of entries can be added. NumPy may broadcast mismatched shapes into a matrix instead of raising an error.
+  - Only vectors with the same number of entries can be added. NumPy may broadcast mismatched shapes into a larger table instead of raising an error.
   - Inputs, embeddings, bias terms and gradient steps in machine learning are all vectors, so adding and scaling are the first operations every model runs.
 references:
   - goodfellow2016linalg
@@ -73,7 +73,7 @@ A second picture covers what the playground can't. A shopping list that says "2 
 </Analogy>
 
 <WhyThisMatters>
-Every input a model sees is a vector of numbers: the pixels of an image, the features of a house, or a word turned into an embedding with hundreds of entries. A training step subtracts a scaled gradient vector from the weight vector, and a layer adds one bias vector to every example in a batch. Getting these sums right is not automatic. When two arrays of mismatched shapes are added, NumPy and PyTorch can broadcast them into a matrix without any error, and a model then trains on the wrong sum.
+Every input a model sees is a vector of numbers: the pixels of an image, the features of a house, or a word turned into an embedding with hundreds of entries. A training step subtracts a scaled gradient vector from the weight vector, and a layer adds one bias vector to every example in a batch. Getting these sums right is not automatic. When two arrays of mismatched shapes are added, NumPy and PyTorch can quietly stretch them into a table of numbers without any error, and a model then trains on the wrong sum.
 </WhyThisMatters>
 
 ## Walk two trips on a grid
@@ -88,7 +88,7 @@ Your task: move the ochre ring labeled "your guess" to where the two trips end, 
 
 You end 4 steps east and 5 steps north. Check says "Yes. East: 3 + 1 = 4. North: 2 + 3 = 5. Both trips end where one trip of 4 east and 5 north would." After two misses, a Show the answer button appears. After Check, the switch Show b first too draws the other route, **b** and then **a**, which ends on the same square.
 
-The straight-line distance is not the two lengths added. An arrow's length comes from Pythagoras: trip **a** = (3, 2) is √(3 × 3 + 2 × 2) = √13 long, trip **b** is √10 long, and the sum (4, 5) is √41 long. After Check, switch Show as to Arrows and the board reads "Length of a + b: √41 ≈ 6.40. The two trips' lengths add to √13 + √10 ≈ 6.77." The walk that turns a corner is longer. Four presets then load new trips. Same direction sets both trips to (2, 1), and here the lengths do add: √5 + √5 = √20. Square corner gives "Length of a + b: 5. The two trips' lengths add to 3 + 4 = 7." There and back ends at the start: the sum is (0, 0), the zero vector, the trip that goes nowhere, drawn as a ring labeled "zero vector".
+The straight-line distance is not the two lengths added. An arrow's length comes from Pythagoras: trip **a** = (3, 2) is √(3 × 3 + 2 × 2) = √13 long, trip **b** is √10 long, and the sum (4, 5) is √41 long. After Check, switch Show as to Arrows and the board reads "Length of a + b: √41 ≈ 6.40. The two trips' lengths add to √13 + √10 ≈ 6.77." The walk that turns a corner is longer. Three presets then load new trips, and Two trips brings back the first one. Same direction sets both trips to (2, 1), and here the lengths do add: √5 + √5 = √20. Square corner gives "Length of a + b: 5. The two trips' lengths add to 3 + 4 = 7." There and back ends at the start: the sum is (0, 0), the zero vector, the trip that goes nowhere, drawn as a ring labeled "zero vector".
 
 <SideNote>
 Adding arrows on paper is a real stumbling block. A 2003 study tested 2,031 introductory physics students. At the start of the second semester, more than a quarter of the calculus-based students and more than half of the algebra-based students could not add two vectors in a plane <Cite id="nguyen2003" />.
@@ -134,7 +134,7 @@ Now move the origin to the point (1, 0), so every coordinate drops by (1, 0). Th
 
 To add two vectors, add their matching entries; as arrows, put the tail of the second on the tip of the first. On the board, (3, 2) + (1, 3) = (3 + 1, 2 + 3) = (4, 5). The other order gives (1, 3) + (3, 2) = (4, 5) too, because adding numbers doesn't care about order. Drawn both ways, the two routes are the two sides of a parallelogram, and the sum is its diagonal.
 
-Subtraction undoes addition. Draw **a** = (3, 2) and **b** = (1, 3) both from the origin. Then **b** − **a** = (1, 3) − (3, 2) = (−2, 1) is the arrow from the tip of **a** to the tip of **b**: the trip that takes you from where **a** ends to where **b** ends. Every vector has an opposite that undoes it, −**a** = (−3, −2), and **a** + (−**a**) = (0, 0), the zero vector, the trip that goes nowhere.
+Subtraction undoes addition. Draw **a** = (3, 2) and **b** = (1, 3) both from the origin. Then **b** − **a** = (1, 3) − (3, 2) = (−2, 1) is the arrow from the tip of **a** to the tip of **b**: the trip that takes you from where **a** ends to where **b** ends.
 
 <Simpler label="shopping lists">
 
@@ -162,9 +162,9 @@ Your task: find the c that turns **a** around without changing its length, then 
 
 c = −1. Check says "Yes. −1 × a = (−2, −1): the same length as a, pointing the opposite way." A negative c always flips the direction, and the size of c sets the stretch, so −1.5 flips and stretches and −0.5 flips and shrinks. At c = 0 every entry becomes 0 and the arrow collapses to a point. After Check, the Double preset reads "2 × a = (4, 2): same direction as a, 2 times as long. Length 2 × √5 ≈ 4.47." (**a** = (2, 1) is √5 long.) Zero reads "0 × a = (0, 0): the zero vector. It has no direction."
 
-So scaling keeps an arrow on its line through the origin and only stretches, shrinks or flips it. Back on the first board's trip, now with **a** = (3, 2) again, the multiple 2 × **a** = (6, 4) is twice as long in the same direction, 0.5 × **a** = (1.5, 1) is half as long, and −1.5 × **a** = (−4.5, −3) points the other way and is 1.5 times as long. Sanderson uses the same three kinds of factor, 2, 1/3 and −1.5 <Cite id="sanderson2016" />.
+Take the first board's trip **a** = (3, 2). Then 2 × **a** = (6, 4) is twice as long in the same direction, 0.5 × **a** = (1.5, 1) is half as long, and −1.5 × **a** = (−4.5, −3) points the other way and is 1.5 times as long. Sanderson uses the same three kinds of factor, 2, 1/3 and −1.5 <Cite id="sanderson2016" />. The factor −1 gives the opposite of **a**, −**a** = (−3, −2), which undoes it: **a** + (−**a**) = (0, 0), the zero vector, the trip that goes nowhere.
 
-However you set c, c **a** never leaves the line through the origin and **a**. Scaling can't turn an arrow sideways; reaching points off that line needs a second vector, which is the subject of [linear combinations and span](/linear-algebra/linear-combinations-and-span/).
+However you set c, c **a** never leaves the line through the origin and the tip of **a**. Scaling only stretches, shrinks or flips an arrow and can't turn it sideways; reaching points off that line needs a second vector, which is the subject of [linear combinations and span](/linear-algebra/linear-combinations-and-span/).
 
 ### Only lists of the same length add
 
@@ -186,7 +186,7 @@ Polynomials of degree at most 2 are an example. (1 + 2x) + (3 − x + x²) = 4 +
 
 <PreciseStatement>
 
-In plain words: a vector is a list of n real numbers, and you add two of them and scale one entry by entry.
+In plain words: a vector is a list of n real numbers. You add two vectors entry by entry, and you scale a vector by multiplying every entry by the same number.
 
 For $n \ge 1$, a vector $\mathbf{v} \in \mathbb{R}^n$ is an ordered list of $n$ real numbers, written as a column with entries $v_1, \ldots, v_n$. For $\mathbf{u}, \mathbf{v} \in \mathbb{R}^n$ and $c \in \mathbb{R}$, and for each $i = 1, \ldots, n$,
 
@@ -200,9 +200,9 @@ The zero vector $\mathbf{0}$ has every entry $0$, the negative is $-\mathbf{v} =
 
 <FormalDefinition>
 
-Addition and scaling in $\mathbb{R}^n$ obey eight laws, for all $\mathbf{u}, \mathbf{v}, \mathbf{w} \in \mathbb{R}^n$ and all scalars $c, d \in \mathbb{R}$:
+Addition and scaling in $\mathbb{R}^n$ obey eight laws, for all $\mathbf{u}, \mathbf{v}, \mathbf{w} \in \mathbb{R}^n$ and all scalars $c, d \in \mathbb{R}$. The example column takes $\mathbf{u} = \mathbf{a} = (3, 2)$, $\mathbf{v} = \mathbf{b} = (1, 3)$, $\mathbf{w} = (0, 1)$ and $c = 2$, with $d = 1$ in "adding the scalars" and $d = 3$ in "scaling twice".
 
-| Law | Statement | With $\mathbf{a} = (3, 2)$, $\mathbf{b} = (1, 3)$ |
+| Law | Statement | Example |
 | --- | --- | --- |
 | Order doesn't matter | $\mathbf{u} + \mathbf{v} = \mathbf{v} + \mathbf{u}$ | $(4, 5) = (4, 5)$ |
 | Grouping doesn't matter | $(\mathbf{u} + \mathbf{v}) + \mathbf{w} = \mathbf{u} + (\mathbf{v} + \mathbf{w})$ | $((3, 2) + (1, 3)) + (0, 1) = (3, 2) + ((1, 3) + (0, 1)) = (4, 6)$ |
@@ -294,7 +294,7 @@ $$
 \mathbf{y} = \mathbf{x}_b - \mathbf{x}_a + \mathbf{x}_c ,
 $$
 
-where $\mathbf{x}_a$ is the vector of word $a$, scaled to length 1 first (here the subscript names a word, not an entry), and returns the word whose vector is most similar to $\mathbf{y}$, measured with cosine similarity, which the [dot product](/linear-algebra/dot-product/) page builds. In their example, "King − Man + Woman" gives a vector very close to "Queen". On their syntactic test set of 8,000 questions (Section 4.1), such as "good is to better as rough is to ?", their best word vectors, with 1,600 entries each, answered 39.6% correctly (Table 2) <Cite id="mikolov2013" />.
+where $\mathbf{x}_a$ is the vector of word $a$, scaled to length 1 first; the subscript names a word, not an entry. The method then returns the word whose vector is most similar to $\mathbf{y}$, measured with cosine similarity, which the [dot product](/linear-algebra/dot-product/) page builds. In their example, "King − Man + Woman" gives a vector very close to "Queen". On their syntactic test set of 8,000 questions (Section 4.1), such as "good is to better as rough is to ?", their best word vectors, with 1,600 entries each, answered 39.6% correctly (Table 2) <Cite id="mikolov2013" />.
 
 <GoDeeper label="why king − man + woman is not exactly queen">
 
@@ -534,8 +534,8 @@ Yes. A vector records the change from tail to tip, not where the arrow sits. The
 A 3 × 3 array of zeros, not an error and not a vector of 3. NumPy treats the first as a column of 3 and the second as a row of 3 and broadcasts both to 3 rows and 3 columns. The second program on this page asserts the shape $(3, 3)$.
 </CheckYourself>
 
-<CheckYourself level="proof" question="Using only the eight laws, show that (−1) v = −v.">
-First, $\mathbf{v} + (-1)\,\mathbf{v} = 1\,\mathbf{v} + (-1)\,\mathbf{v} = (1 + (-1))\,\mathbf{v} = 0\,\mathbf{v} = \mathbf{0}$, using "scaling by 1", "adding the scalars" and the third proof above. So $(-1)\,\mathbf{v}$ undoes $\mathbf{v}$. Second, only one vector undoes $\mathbf{v}$: if $\mathbf{v} + \mathbf{w} = \mathbf{0}$, then $\mathbf{w} = \mathbf{w} + \mathbf{0} = \mathbf{w} + (\mathbf{v} + (-\mathbf{v})) = (\mathbf{w} + \mathbf{v}) + (-\mathbf{v}) = \mathbf{0} + (-\mathbf{v}) = -\mathbf{v}$, using order and grouping. With $\mathbf{w} = (-1)\,\mathbf{v}$, this gives $(-1)\,\mathbf{v} = -\mathbf{v}$.
+<CheckYourself level="proof" question="Using only the eight laws in the formal definition above, show that (−1) v = −v.">
+First, $\mathbf{v} + (-1)\,\mathbf{v} = 1\,\mathbf{v} + (-1)\,\mathbf{v} = (1 + (-1))\,\mathbf{v} = 0\,\mathbf{v} = \mathbf{0}$, using "scaling by 1", "adding the scalars" and the third proof above. So $(-1)\,\mathbf{v}$ undoes $\mathbf{v}$. Second, only one vector undoes $\mathbf{v}$: if $\mathbf{v} + \mathbf{w} = \mathbf{0}$, then $\mathbf{w} = \mathbf{w} + \mathbf{0} = \mathbf{w} + (\mathbf{v} + (-\mathbf{v})) = (\mathbf{w} + \mathbf{v}) + (-\mathbf{v}) = \mathbf{0} + (-\mathbf{v}) = -\mathbf{v}$, using "zero changes nothing", "every vector can be undone", "grouping doesn't matter" and "order doesn't matter". With $\mathbf{w} = (-1)\,\mathbf{v}$, this gives $(-1)\,\mathbf{v} = -\mathbf{v}$.
 </CheckYourself>
 
 ## Common mistakes
