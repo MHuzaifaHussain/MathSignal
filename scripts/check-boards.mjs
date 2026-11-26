@@ -7775,6 +7775,51 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	assert.ok(/\.ms-event-tag::before\s*\{\s*content: attr\(data-tag\);/.test(readFileSync('src/styles/components.css', 'utf8')), 'components.css draws the tag letter');
 }
 
+// ---- EventSpace: every line a screen reader can browse says its symbols in words ----
+
+{
+	const esState = await import('../src/components/react/eventSpace/state.ts');
+	const esSay = await import('../src/components/react/eventSpace/describe.ts');
+	const ids = ['coins-build', 'dice-count', 'dice-operations', 'die-pour', 'dice-condition', 'kids-condition', 'coin-die-independence', 'dice-independence', 'weather-exclusive', 'die-compare', 'monty-condition'];
+	const symbols = /[|Ω∩∪]|P\(/;
+	const tail = [
+		{ type: 'look', lookAt: 'A and B' },
+		{ type: 'look', lookAt: 'A or B' },
+		{ type: 'look', lookAt: 'not A' },
+		{ type: 'pour', id: '1', direction: -1 },
+		{ type: 'weight-preset', name: 'Loaded toward six' },
+		{ type: 'compare', on: true },
+		{ type: 'shrink', on: true },
+		{ type: 'stage', stage: 'sets' },
+		{ type: 'check' },
+		{ type: 'check' },
+		{ type: 'show-answer' },
+	];
+	for (const id of ids) {
+		const setup = getSetup(id);
+		let state = esState.initialState(id);
+		const states = [state];
+		for (const event of ['A', 'B']) {
+			for (const preset of setup.events[event]?.presets ?? []) states.push((state = esState.reducer(state, { type: 'preset', event, preset })));
+		}
+		for (const action of tail) states.push((state = esState.reducer(state, action)));
+		for (const at of states) {
+			const lines = [esSay.feedbackLine(at), esSay.markedLine(at), esSay.setsLine(at), esSay.tossLine(at), ...esSay.readoutLines(at), ...(esSay.compareLines(at) ?? [])];
+			if (setup.mode === 'weights') lines.push(esSay.jugLine(at), esSay.totalLine(at), esSay.additivityLine(at));
+			for (const line of lines.filter(Boolean)) {
+				const { visible, spoken } = esSay.spokenLine(line);
+				assert.equal(visible, line);
+				assert.ok(!symbols.test(spoken), `${id}: "${spoken}" still has a symbol a screen reader skips`);
+			}
+		}
+	}
+	assert.deepEqual(esSay.spokenLine('Ω = {HH, HT, TH, TT}. A = {HH, HT, TH}. P(A) = |A| / |Ω| = 3/4'), {
+		visible: 'Ω = {HH, HT, TH, TT}. A = {HH, HT, TH}. P(A) = |A| / |Ω| = 3/4',
+		spoken: 'omega = {HH, HT, TH, TT}. A = {HH, HT, TH}. P of A = the size of A over the size of omega = 3/4',
+	});
+	assert.equal(esSay.spokenSymbols('P(even) = 6/12 = 0.50.'), 'P of even = 6/12 = 0.50.');
+}
+
 // ---- Page components: names of wide tables and formulas (decision 0024) ----
 
 {

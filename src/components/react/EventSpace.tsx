@@ -6,13 +6,14 @@ import { KEYBOARD_COMMIT_DELAY_MS } from "./boardTiming";
 import CheckButtons from "./guided/CheckButtons.tsx";
 import PresetButtons from "./guided/PresetButtons.tsx";
 import { RefusalNote, refusedBy } from "./guided/refusal.tsx";
+import SpokenText from "./guided/SpokenText.tsx";
 import StageChoice from "./guided/StageChoice.tsx";
 import useAnnouncer from "./guided/useAnnouncer.ts";
 import CupRow from "./eventSpace/CupRow.tsx";
 import OutcomeGrid from "./eventSpace/OutcomeGrid.tsx";
 import WrongModelTiles from "./eventSpace/WrongModelTiles.tsx";
 import { simulate } from "./eventSpace/model.ts";
-import { COMPARE_COVERED_NOTE, COMPARE_LABEL, STAGE_LABELS, additivityLine, announcementFor, compareLines, feedbackLine, jugLine, markedLine, presetLabel, readoutLines, setsLine, shrinkRefusalText, statusLine, tossLine, totalLine } from "./eventSpace/describe.ts";
+import { COMPARE_COVERED_NOTE, COMPARE_LABEL, STAGE_LABELS, additivityLine, announcementFor, compareLines, feedbackLine, jugLine, markedLine, presetLabel, readoutLines, setsLine, shrinkRefusalText, spokenLine, statusLine, tossLine, totalLine } from "./eventSpace/describe.ts";
 import { SCENARIOS } from "./eventSpace/scenarios.ts";
 import { canShrink, getSetup, type Setup, type SetupId } from "./eventSpace/setups.ts";
 import { activeWeightPreset, initialState, isLocked, reducer, shrinkBlocked, stageAllowed, type Action, type EventKey, type LookAt, type Stage } from "./eventSpace/state.ts";
@@ -33,6 +34,11 @@ const LOOK_AT_OPTIONS: readonly { value: LookAt; label: string }[] = [
  * The grid with the setup's handwritten note beside it, in normal flow so it never covers a cell, or the grid
  * alone when the setup has no note.
  */
+/** A board line that shows its symbols and gives screen readers the words ("P of A given B", "the size of A"). */
+function Said({ text }: { text: string }) {
+  return <SpokenText line={spokenLine(text)} />;
+}
+
 function WithChalkNote({ note, children }: { note: Setup["chalkNote"]; children: ReactNode }) {
   if (!note) return <>{children}</>;
   return (
@@ -203,7 +209,9 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
       {locked && <RefusalNote id={lockedReasonId}>{LOCKED_REASON}: presets and readouts unlock when your answer is right.</RefusalNote>}
       {setup.mode === "weights" && (
         <>
-          <p className="ms-board-readout">{jugLine(state)}</p>
+          <p className="ms-board-readout">
+            <Said text={jugLine(state)} />
+          </p>
           <PresetButtons
             label="Fill the cups"
             caption="Fill"
@@ -211,8 +219,12 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
             onPick={(name) => send({ type: "weight-preset", name })}
           />
           <div className="ms-event-readouts">
-            <p className="ms-board-readout">{totalLine(state)}</p>
-            <p className="ms-board-readout">{additivityLine(state)}</p>
+            <p className="ms-board-readout">
+              <Said text={totalLine(state)} />
+            </p>
+            <p className="ms-board-readout">
+              <Said text={additivityLine(state)} />
+            </p>
           </div>
           <p className="ms-event-note-line">{CUPS_NOTE}</p>
         </>
@@ -221,14 +233,14 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
         <div className="ms-event-readouts">
           {[...readouts, ...(tosses ? [tosses] : [])].map((line) => (
             <p key={line} className="ms-board-readout">
-              {line}
+              <Said text={line} />
             </p>
           ))}
           {comparison && (
             <div className="ms-event-compare">
               {comparison.map((line) => (
                 <p key={line} className="ms-board-readout">
-                  {line}
+                  <Said text={line} />
                 </p>
               ))}
             </div>
@@ -263,11 +275,19 @@ export default function EventSpace({ setup: setupId }: EventSpaceProps) {
             )}
           </>
         )}
-        {sets && <p className="ms-event-sets">{sets}</p>}
-        {marked && <p className="ms-event-status">{marked}</p>}
+        {sets && (
+          <p className="ms-event-sets">
+            <Said text={sets} />
+          </p>
+        )}
+        {marked && (
+          <p className="ms-event-status">
+            <Said text={marked} />
+          </p>
+        )}
         {feedback && (
           <p ref={feedbackRef} className="ms-event-feedback" tabIndex={-1}>
-            {feedback}
+            <Said text={feedback} />
           </p>
         )}
       </div>

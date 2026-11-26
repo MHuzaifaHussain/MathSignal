@@ -3,6 +3,7 @@
 import { compareFractions, formatFraction, fraction, type Fraction } from '../boardMath.ts';
 import { approx, capitalize, equalsDecimal, joinWords, plural } from '../boardText.ts';
 import { CHECKS_BEFORE_ANSWER } from '../guided/guided.ts';
+import type { SpokenLine } from '../guided/spokenLine.ts';
 import { compareEvents, complement, conditionalProbability, eventSize, intersect, probability, union, WEIGHT_TOTAL, type EventComparison, type Outcome, type OutcomeId } from './model.ts';
 import { eventMembers, type Scenario } from './scenarios.ts';
 import { CLEAR_PRESET } from './setups.ts';
@@ -398,6 +399,8 @@ const SPOKEN_SYMBOLS: readonly (readonly [RegExp, string])[] = [
 	[/P\(([AB]) \| ([AB])\)/g, 'P of $1 given $2'],
 	[/P\(([AB]) and ([AB])\)/g, 'P of $1 and $2'],
 	[/P\(([AB])\)/g, 'P of $1'],
+	// Named events on the cups board: "P(even)", "P(at most 2)".
+	[/P\(([^()|]+)\)/g, 'P of $1'],
 	[/ × /g, ' times '],
 	[/\|([AΩ])\|/g, 'the size of $1'],
 	[/ \/ /g, ' over '],
@@ -406,6 +409,11 @@ const SPOKEN_SYMBOLS: readonly (readonly [RegExp, string])[] = [
 
 export function spokenSymbols(line: string): string {
 	return SPOKEN_SYMBOLS.reduce((text, [symbol, words]) => text.replace(symbol, words), line);
+}
+
+/** A visible line with its symbols said in words, for SpokenText: the verdict, readouts and sets lines in browse mode. */
+export function spokenLine(line: string): SpokenLine {
+	return { visible: line, spoken: spokenSymbols(line) };
 }
 
 /** What the live region says after an action ends (toggles are debounced by the component). */
