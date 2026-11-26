@@ -7820,6 +7820,38 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	assert.equal(esSay.spokenSymbols('P(even) = 6/12 = 0.50.'), 'P of even = 6/12 = 0.50.');
 }
 
+// ---- VectorBoard2D: lines a screen reader can browse say ‖ ‖, ·, û and θ in words ----
+
+{
+	const vecState = await import('../src/components/react/vectorBoard/state.ts');
+	const vecSay = await import('../src/components/react/vectorBoard/describe.ts');
+	const vecNorms = await import('../src/components/react/vectorBoard/normsDescribe.ts');
+	const vecSetups = await import('../src/components/react/vectorBoard/setups.ts');
+	const skipped = /[‖·ûθ]/;
+	for (const id of Object.keys(vecSetups.SETUPS)) {
+		const setup = vecSetups.getSetup(id);
+		let state = vecState.initialState(id);
+		const states = [state];
+		for (const action of [{ type: 'check' }, { type: 'check' }, { type: 'show-answer' }]) states.push((state = vecState.reducer(state, action)));
+		for (const option of vecSay.stageOptions(setup)) states.push((state = vecState.reducer(state, { type: 'stage', stage: option.value })));
+		for (const at of states) {
+			const lines = [vecSay.statusLine(at), vecSay.feedbackLine(at), vecSay.listsLine(at), vecSay.boardLabel(at), ...vecSay.readoutLines(at)];
+			if (setup.kind === 'norms') lines.push(vecNorms.NORM_TABLE_HEADERS.caption, ...vecNorms.normRows(at).map((row) => row.name));
+			else lines.push(vecSay.tableHeaders(at).caption, ...vecSay.tableRows(at).map((row) => row.name));
+			for (const line of lines.filter(Boolean)) {
+				const { visible, spoken } = vecSay.spokenLine(line);
+				assert.equal(visible, line);
+				assert.ok(!skipped.test(spoken), `${id}: "${spoken}" still has a symbol a screen reader skips`);
+			}
+		}
+	}
+	assert.deepEqual(vecSay.spokenLine('Shadow of b along a: a · b ÷ ‖a‖ = −1 ÷ √17 ≈ −0.24.'), {
+		visible: 'Shadow of b along a: a · b ÷ ‖a‖ = −1 ÷ √17 ≈ −0.24.',
+		spoken: 'Shadow of b along a: a dot b ÷ the length of a = −1 ÷ √17 ≈ −0.24.',
+	});
+	assert.equal(vecSay.spoken(vecSay.CONTROL_LABELS.signLegend), 'Your guess: a dot b is');
+}
+
 // ---- Page components: names of wide tables and formulas (decision 0024) ----
 
 {

@@ -1,4 +1,6 @@
 import { useId } from "react";
+import SpokenText from "./guided/SpokenText.tsx";
+import type { SpokenLine } from "./guided/spokenLine.ts";
 
 interface TrayChoiceOption<T extends string> {
   value: T;
@@ -6,8 +8,8 @@ interface TrayChoiceOption<T extends string> {
 }
 
 interface TrayChoiceProps<T extends string> {
-  /** Visible name of the group, e.g. "Editing". */
-  legend: string;
+  /** Visible name of the group, e.g. "Editing", or a line whose symbols are spoken as words ("a · b", "a dot b"). */
+  legend: string | SpokenLine;
   options: readonly TrayChoiceOption<T>[];
   /** The selected option, or null while the reader hasn't picked one yet (a guess that must be made first). */
   value: T | null;
@@ -23,7 +25,7 @@ export default function TrayChoice<T extends string>({ legend, options, value, o
   const name = useId();
   return (
     <fieldset className="ms-choice">
-      <legend className="ms-choice-legend">{legend}</legend>
+      <legend className="ms-choice-legend">{typeof legend === "string" ? legend : <SpokenText line={legend} />}</legend>
       <div className="ms-choice-options">
         {options.map((option) => (
           <label key={option.value} className="ms-choice-option">

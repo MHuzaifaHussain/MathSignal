@@ -1,3 +1,5 @@
+import SpokenText from "../guided/SpokenText.tsx";
+import { spokenLine } from "./describe.ts";
 import { NORM_TABLE_HEADERS, normRows } from "./normsDescribe.ts";
 import type { VectorState } from "./state.ts";
 
@@ -21,7 +23,9 @@ export default function NormTable({ state }: { state: VectorState }) {
         <tbody>
           {normRows(state).map((row) => (
             <tr key={row.measure}>
-              <th scope="row">{row.name}</th>
+              <th scope="row">
+                <SpokenText line={spokenLine(row.name)} />
+              </th>
               <td>{row.how}</td>
               <td>{row.length}</td>
             </tr>

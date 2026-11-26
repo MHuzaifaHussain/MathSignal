@@ -6,6 +6,7 @@
 import { isPerfectSquare, toNumber, type Fraction } from '../boardMath.ts';
 import { capitalize, fractionText, joinWords, plural } from '../boardText.ts';
 import { canShowAnswer } from '../guided/guided.ts';
+import type { SpokenLine } from '../guided/spokenLine.ts';
 import { tableFoldAnnouncement } from '../guided/tableFold.ts';
 import { formatNumber } from '../plotColors.ts';
 import {
@@ -1329,6 +1330,11 @@ export function spoken(text: string): string {
 		.replace(/û/g, 'u hat')
 		.replace(/θ/g, 'theta')
 		.replace(SENTENCE_START_THE, '$1The ');
+}
+
+/** A visible line with its symbols in words for screen readers, for SpokenText: readouts, the verdict, table headers. */
+export function spokenLine(text: string): SpokenLine {
+	return { visible: text, spoken: spoken(text) };
 }
 
 /** What a handle's move says when it ends: where things are now, any edge it reached, and stacked handles. */

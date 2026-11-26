@@ -1,4 +1,5 @@
-import { tableHeaders, tableRows, type TableRow } from "./describe.ts";
+import SpokenText from "../guided/SpokenText.tsx";
+import { spokenLine, tableHeaders, tableRows, type TableRow } from "./describe.ts";
 import type { VectorState } from "./state.ts";
 
 interface CoordinateTableProps {
@@ -18,7 +19,9 @@ export default function CoordinateTable({ state, linkedId, onLink }: CoordinateT
   return (
     <div className="ms-vec-table-wrap">
       <table className="ms-vec-table">
-        <caption>{headers.caption}</caption>
+        <caption>
+          <SpokenText line={spokenLine(headers.caption)} />
+        </caption>
         <thead>
           <tr>
             <th scope="col">{headers.vector}</th>
@@ -35,7 +38,9 @@ export default function CoordinateTable({ state, linkedId, onLink }: CoordinateT
               onMouseEnter={() => onLink(row.id)}
               onMouseLeave={() => onLink(null)}
             >
-              <th scope="row">{row.name}</th>
+              <th scope="row">
+                <SpokenText line={spokenLine(row.name)} />
+              </th>
               <td>{row.x}</td>
               <td>{row.y}</td>
               <td>{row.length}</td>

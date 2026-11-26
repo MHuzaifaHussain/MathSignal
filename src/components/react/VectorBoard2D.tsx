@@ -7,6 +7,7 @@ import { KEYBOARD_COMMIT_DELAY_MS } from "./boardTiming";
 import CheckButtons from "./guided/CheckButtons.tsx";
 import PresetButtons from "./guided/PresetButtons.tsx";
 import { RefusalNote } from "./guided/refusal.tsx";
+import SpokenText from "./guided/SpokenText.tsx";
 import StageChoice from "./guided/StageChoice.tsx";
 import TableFold from "./guided/TableFold.tsx";
 import useAnnouncer from "./guided/useAnnouncer.ts";
@@ -35,6 +36,8 @@ import {
   presetsFor,
   readoutLines,
   scalarFormat,
+  spoken,
+  spokenLine,
   stageOptions,
   statusLine,
   weightDescription,
@@ -191,7 +194,7 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
     <>
       {/* The answer controls come before Check, so a keyboard reader sets the answer and then tabs on to Check. */}
       {setup.kind === "align" && !state.checked && (
-        <TrayChoice legend={CONTROL_LABELS.signLegend} options={SIGN_OPTIONS} value={state.signGuess} onChange={(sign) => send({ type: "sign", sign })} />
+        <TrayChoice legend={spokenLine(CONTROL_LABELS.signLegend)} options={SIGN_OPTIONS} value={state.signGuess} onChange={(sign) => send({ type: "sign", sign })} />
       )}
       {/* The one-shot span guess leaves once Check has answered it, as the sign guess does. */}
       {setup.kind === "span-choice" && !state.checked && (
@@ -283,7 +286,7 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
 
   return (
     <Board
-      label={boardLabel(state)}
+      label={spoken(boardLabel(state))}
       tray={tray}
       onReset={() => send({ type: "reset" })}
       announcement={announcement}
@@ -292,7 +295,7 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
     >
       <div className="ms-vec">
         <p className="ms-vec-status">
-          {statusLine(state)}
+          <SpokenText line={spokenLine(statusLine(state))} />
         </p>
         <div className="ms-vec-body">
           <div ref={planeRef} className="ms-vec-plane">
@@ -303,7 +306,7 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
             <div className="ms-vec-readouts">
               {readoutLines(state).map((line) => (
                 <p key={line} className="ms-board-readout">
-                  {line}
+                  <SpokenText line={spokenLine(line)} />
                 </p>
               ))}
             </div>
@@ -314,7 +317,11 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
                     <ColumnVector key={column.name} {...column} />
                   ))}
                 </div>
-                {lists && <p className="ms-board-readout">{lists}</p>}
+                {lists && (
+                  <p className="ms-board-readout">
+                    <SpokenText line={spokenLine(lists)} />
+                  </p>
+                )}
               </div>
             )}
             <VectorSteppers state={state} linkedId={linkedId} onLink={setLinkedId} send={send} />
@@ -322,7 +329,7 @@ export default function VectorBoard2D({ setup: setupId }: VectorBoard2DProps) {
         </div>
         {verdict && (
           <p ref={feedbackRef} className="ms-vec-feedback" tabIndex={-1}>
-            {verdict}
+            <SpokenText line={spokenLine(verdict)} />
           </p>
         )}
       </div>
