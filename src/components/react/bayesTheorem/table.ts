@@ -57,16 +57,13 @@ export function countTable({ prior, likelihood, falsePositive }: BayesValues): C
 	};
 }
 
-/** "1,000", "9,312". */
-export const formatCount = (count: number) => groupThousands(count);
-
 export interface TableCell {
 	text: string;
 	/** One of the two counts P(A | B) divides (B and A, and all of B), drawn bold. */
 	divides: boolean;
 }
 
-const cell = (count: number, divides = false): TableCell => ({ text: formatCount(count), divides });
+const cell = (count: number, divides = false): TableCell => ({ text: groupThousands(count), divides });
 
 export interface TableCopy {
 	caption: string;
@@ -89,13 +86,13 @@ export function tableCopy(values: BayesValues, scenario: BayesScenario): TableCo
 	const inA = counts.bAndA + counts.notBAndA;
 	const notInA = counts.bAndNotA + counts.notBAndNotA;
 	const noun = scenario.countNoun;
-	const total = formatCount(counts.population);
+	const total = groupThousands(counts.population);
 	const posteriorLine =
 		posterior === null
 			? { text: `P(A | B): no ${noun} in B, so it is undefined`, spoken: `P of A given B: no ${noun} in B, so it is undefined` }
 			: {
-					text: `P(A | B): ${formatCount(counts.bAndA)} of the ${formatCount(inB)} ${noun} in B, ${formatNumber(posterior, 3)}`,
-					spoken: `P of A given B: ${formatCount(counts.bAndA)} of the ${formatCount(inB)} ${noun} in B, ${formatNumber(posterior, 3)}`,
+					text: `P(A | B): ${groupThousands(counts.bAndA)} of the ${groupThousands(inB)} ${noun} in B, ${formatNumber(posterior, 3)}`,
+					spoken: `P of A given B: ${groupThousands(counts.bAndA)} of the ${groupThousands(inB)} ${noun} in B, ${formatNumber(posterior, 3)}`,
 				};
 	return {
 		caption: `The square as counts, out of ${total} ${noun}`,
@@ -108,8 +105,8 @@ export function tableCopy(values: BayesValues, scenario: BayesScenario): TableCo
 		lines: [
 			posteriorLine,
 			{
-				text: `P(B): ${formatCount(inB)} of ${total} ${noun}, ${formatNumber(evidence, 3)}`,
-				spoken: `P of B: ${formatCount(inB)} of ${total} ${noun}, ${formatNumber(evidence, 3)}`,
+				text: `P(B): ${groupThousands(inB)} of ${total} ${noun}, ${formatNumber(evidence, 3)}`,
+				spoken: `P of B: ${groupThousands(inB)} of ${total} ${noun}, ${formatNumber(evidence, 3)}`,
 			},
 		],
 	};
@@ -119,5 +116,5 @@ export function tableCopy(values: BayesValues, scenario: BayesScenario): TableCo
 export function tableSummary(values: BayesValues, scenario: BayesScenario): string {
 	const counts = countTable(values);
 	const inB = counts.bAndA + counts.bAndNotA;
-	return `Out of ${formatCount(counts.population)} ${scenario.countNoun}, ${formatCount(inB)} are in B and ${formatCount(counts.bAndA)} of those are in A.`;
+	return `Out of ${groupThousands(counts.population)} ${scenario.countNoun}, ${groupThousands(inB)} are in B and ${groupThousands(counts.bAndA)} of those are in A.`;
 }
