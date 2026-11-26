@@ -68,14 +68,14 @@ Thinking only about rain is the blind spot. Rain is not the only way to wet a la
 </Analogy>
 
 <WhyThisMatters>
-A trained classifier's output is an estimate of how likely each class is given the input, and that number depends on how common each class was in the training data, not only on what the input looks like. When a model trained on balanced data meets a world where one class is rare, or when a screening model flags rare fraud or a rare disease, Bayes' theorem says how much a positive is worth: often much less than the model's accuracy suggests. The same rule underlies naive Bayes classifiers, spam filters, and Bayesian methods that keep a probability over a model's weights instead of a single best guess.
+A trained classifier's output is an estimate of how likely each class is given the input, and that number depends on how common each class was in the training data, not only on what the input looks like. When a model trained on balanced data meets a world where one class is rare, or when a screening model flags rare fraud or a rare disease, Bayes' theorem says how much a positive is worth, and the answer turns on how common the class is as well as on the model's accuracy. The same rule underlies naive Bayes classifiers, spam filters, and Bayesian methods that keep a probability over a model's weights instead of a single best guess.
 </WhyThisMatters>
 
 ## Test positive for a rare condition
 
 Before you touch anything: 1 person in 100 has a certain condition. A test for it is right 9 times in 10, whether or not you have the condition. You take the test and it comes back positive. Is the chance that you have the condition closer to 90%, 50% or 10%? Make a guess, then test it.
 
-Three numbers decide the answer, and the board has a slider for each. P(A) is how common A is before you learn anything: the prior, also called the base rate. For the medical test, A is "has the condition" and P(A) = 0.01. P(B | A) and P(B | not A) are how often a positive shows up with and without A: the likelihoods, 0.9 and 0.1 here.
+Three numbers decide the answer, and the board has a slider for each. P(A) is how common A is before you learn anything: the prior, also called the base rate. For the medical test, A is "has the condition", B is "tests positive", and P(A) = 0.01. P(B | A) and P(B | not A) are how often a positive shows up with and without A: the likelihoods, 0.9 and 0.1 here.
 
 The board is a unit square that stands for everyone. Read it in three steps. First, find A's column on the left: its width is P(A). Second, find the highlighted block in A's column, labeled "B and A": those are the true positives, and its height is P(B | A). Third, find the shaded strip across the rest of the square, labeled "B and not A": those are the false positives, and its height is P(B | not A). Then compare the two areas. Everything in B is the two pieces together, and P(A | B) is the highlighted block's share of them.
 
@@ -95,13 +95,13 @@ Counting people shows why. Picture 1,000 people. 10 of them have the condition, 
 | **Doesn't have it** | 99 | 891 | 990 |
 | **Total** | 108 | 892 | 1,000 |
 
-"Given a positive" means: read only the Tests positive column. Its total is 108, and 9 of those have the condition.
+"Given a positive" means: read only the Tests positive column. Its total is 108, and 9 of those have the condition. The board's "Table view" shows counts like these for any slider setting.
 
 The picture shows the same thing as areas. A's column is only 0.01 wide, so thin that its labels sit beside it, and the highlighted "B and A" block is a sliver of area 0.9 × 0.01 = 0.009. The "B and not A" strip is only 0.1 tall, but it runs across the other 0.99 of the square, so its area is 0.1 × 0.99 = 0.099, eleven times the sliver. Of everything in B, the true positives are the small part.
 
 Now change only how common the condition is. Before you drag, predict: if 1 person in 10 had the condition instead of 1 in 100, with the same test, what would a positive mean? Then, still on Medical test, drag the P(A) slider from 0.01 to 0.10 and watch P(A | B). It climbs from 0.083 to 0.500. At 0.10 the true positives, 0.9 × 0.1 = 0.09, and the false positives, 0.1 × 0.9 = 0.09, are equal, so a positive is an even chance.
 
-Now press Wet lawn. The line under the presets says "A: it rained overnight. B: the lawn is wet. A sprinkler can also wet it when it did not rain." Rain happens on 2 nights in 10, so dry nights are 8 in 10. Rain wets the lawn 9 times in 10; the sprinkler wets it on 3 dry nights in 10. The readout says "P(A | B) = 0.429   P(B) = 0.420". Turning the question around: rain makes a wet lawn very likely, 0.9, but a wet lawn makes rain only 3/7 ≈ 0.429 likely. Of the 0.42, rain gives 0.9 × 0.2 = 0.18 and the sprinkler gives 0.3 × 0.8 = 0.24. A wet lawn makes rain more than twice as likely as the prior of 0.2, but rain is still less likely than not (below 0.5).
+Now press Wet lawn. The line under the presets says "A: it rained overnight. B: the lawn is wet. A sprinkler can also wet it when it did not rain." Rain happens on 2 nights in 10, so dry nights are 8 in 10. Rain wets the lawn 9 times in 10; the sprinkler wets it on 3 dry nights in 10. The readout says "P(A | B) = 0.429   P(B) = 0.420". Turning the question around: given rain, a wet lawn has probability 0.9, but given a wet lawn, rain has probability only 3/7 ≈ 0.429. Of the 0.42, rain gives 0.9 × 0.2 = 0.18 and the sprinkler gives 0.3 × 0.8 = 0.24. A wet lawn makes rain more than twice as likely as the prior of 0.2, but rain is still less likely than not (below 0.5).
 
 Last, keep Wet lawn and drag the P(A) slider from one end to the other while you watch P(A | B). At P(A) = 0.01 the readout shows 0.029, and at 0.99 it shows 0.997. The two likelihoods never changed; only how common rain is did.
 
@@ -121,7 +121,7 @@ For the medical test: P(B) = 0.9 × 0.01 + 0.1 × 0.99 = 0.009 + 0.099 = 0.108. 
 
 ### More than two ways
 
-The same rule works for any finite number of pieces, as long as they share no outcome and together cover the whole sample space: add P(B | piece) P(piece) over all of them. Grinstead and Snell give it in this form in §4.1, as their equation (4.3) <Cite id="grinstead2003" />, and Kolmogorov states it in Chapter I, §4 as the theorem on total probability <Cite id="kolmogorov1950" />. By countable additivity the same holds for a countable list of pieces, and pieces of probability 0 can be dropped, since they add nothing to P(B). The accuracy example on the [conditional probability](/probability/conditional-probability/) page used it with two groups: 0.95 × 0.9 + 0.60 × 0.1 = 0.915. The overall accuracy is a weighted average of the accuracy within each group, weighted by each group's share.
+The same rule works for any finite number of pieces, as long as they share no outcome and together cover the whole sample space: add P(B | piece) P(piece) over all of them. Grinstead and Snell give it in this form in §4.1, as their equation (4.3) <Cite id="grinstead2003" />, and Kolmogorov states it in Chapter I, §4 as the theorem on total probability <Cite id="kolmogorov1950" />. Probabilities also add over an endless list of pieces ([countable additivity](/probability/probability-axioms/#countable-additivity)), so the same holds there, and pieces of probability 0 can be dropped, since they add nothing to P(B). The accuracy example on the [conditional probability](/probability/conditional-probability/) page used it with two groups: 0.95 × 0.9 + 0.60 × 0.1 = 0.915. The overall accuracy is a weighted average of the accuracy within each group, weighted by each group's share.
 
 ## Turn the question around
 
@@ -146,7 +146,7 @@ P(A | B) = P(B | A) P(A) / (P(B | A) P(A) + P(B | not A) P(not A)).
 
 ### The base rate decides a lot
 
-The posterior is the prior times the likelihood, divided by the total over every explanation. So the prior, also called the base rate, matters as much as the test does. When A is rare, P(not A) is close to 1, and even a small P(B | not A) multiplied by it can outweigh P(B | A) P(A). With the same test, a positive means a 1/12 chance of having the condition when 1 person in 100 has it, and exactly 1/2 when 1 in 10 has it, because then the true positives, 0.9 × 0.1 = 0.09, and the false positives, 0.1 × 0.9 = 0.09, are equal. A test's accuracy alone does not say what a positive means. The [base rate fallacy in medical tests](/probability/base-rate-fallacy-medical-test/) page counts a whole population to show why.
+The posterior is the prior times the likelihood, divided by the total over every explanation. So the prior can move the answer as far as the test can. When A is rare, P(not A) is close to 1, and even a small P(B | not A) multiplied by it can outweigh P(B | A) P(A). That is why the P(A) slider alone took the medical test's posterior from 0.083 to 0.500 above. A test's accuracy alone does not say what a positive means. The [base rate fallacy in medical tests](/probability/base-rate-fallacy-medical-test/) page counts a whole population to show why.
 
 ### A second test: the posterior becomes the prior
 
@@ -496,20 +496,24 @@ def simulate(prior, likelihood, false_positive, people, rng):
         if rng.random() < (likelihood if in_a else false_positive):
             in_b += 1
             in_a_and_b += in_a
-    return in_b / people, in_a_and_b / in_b
+    return in_b, in_a_and_b
 
 
 rng = random.Random(0)
 people = 100_000
 for name, values in (("Any two events", any_events), ("Medical test", medical), ("Wet lawn", wet_lawn)):
-    share_b, share_a_in_b = simulate(*(float(value) for value in values), people, rng)
+    in_b, in_a_and_b = simulate(*(float(value) for value in values), people, rng)
+    if name == "Medical test":
+        assert (in_b, in_a_and_b) == (10712, 946)
+        assert evidence(*values) * people == 10800 and posterior(*values) * evidence(*values) * people == 900
+    share_b, share_a_in_b = in_b / people, in_a_and_b / in_b
     print(f"{name}: counted P(B) = {share_b:.3f}, P(A | B) = {share_a_in_b:.3f}; formula {float(posterior(*values)):.3f}")
     assert abs(share_b - float(evidence(*values))) < 0.01
     assert abs(share_a_in_b - float(posterior(*values))) < 0.01
 `}
 />
 
-With 100,000 simulated people the counted shares land within 0.01 of the formula for all three presets. For the medical test, the formula expects about 10,800 positives and about 900 of them with the condition, the 1,000-person picture a hundred times over. This seeded run counts about 10,700 positives and about 940 with the condition, a few more than expected but within the tolerance.
+With 100,000 simulated people the counted shares land within 0.01 of the formula for all three presets. For the medical test, the formula expects about 10,800 positives and about 900 of them with the condition, the 1,000-person picture a hundred times over. This seeded run counts 10,712 positives and 946 with the condition, within the tolerance.
 
 ## Research frontier
 
@@ -566,12 +570,12 @@ Call the common value $q$. The law of total probability gives $P(B) = q\,P(A) + 
 
 <CommonMistakes>
   <Mistake wrong="The test is right 90% of the time, so a positive means a 90% chance of having the condition.">
-    That swaps the two directions. 90% is $P(\text{positive} \mid \text{has it})$; the question asks for $P(\text{has it} \mid \text{positive})$, which here is $1/12$. The same swap happens in court when "the evidence would be very unlikely if the person were innocent" is read as "the person is very unlikely to be innocent". The first is P(evidence | innocent), the second P(innocent | evidence), and they can be far apart, as the [conditional probability](/probability/conditional-probability/) page showed with hats and scarves.
+    That swaps the two directions. 90% is $P(\text{positive} \mid \text{has it})$; the question asks for $P(\text{has it} \mid \text{positive})$, which here is $1/12$. The same swap happens in court when "the evidence would be very unlikely if the person were innocent" is read as "the person is very unlikely to be innocent". The first is P(evidence | innocent), the second P(innocent | evidence), and they can differ, as the [conditional probability](/probability/conditional-probability/) page showed with hats and scarves. This page's medical test shows how far: 0.9 against 1/12.
   </Mistake>
   <Mistake wrong="Only the test's accuracy matters; how common the condition is doesn't change what a positive means.">
     The base rate changes it a lot. The same test, right 9 times in 10, gives a positive a $1/12$ chance when 1 person in 100 has the condition and exactly $1/2$ when 1 in 10 does. Ignoring the prior is the most common way to misread a positive result.
   </Mistake>
-  <Mistake wrong="P(B) is just P(B | A): how often the test comes back positive for people who have the condition.">
+  <Mistake wrong="P(B) is just the true positives, P(B | A) P(A): the people who have the condition and test positive.">
     P(B) counts every positive, including the false ones. Leave out the false-positive term $P(B \mid A^\complement)\,P(A^\complement)$ and the medical test's P(B) becomes $0.009$ instead of $0.108$, so the "posterior" comes out as $0.009/0.009 = 1$. The law of total probability adds every way B can happen.
   </Mistake>
   <Mistake wrong="After Bayes' theorem, I know whether A is true.">
