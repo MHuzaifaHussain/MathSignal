@@ -424,7 +424,8 @@ def steps_to_one_percent(k):
 
 assert [steps_to_one_percent(kappa[name]) for name in ("raw", "min-max", "standardized")] == [2876, 7, 1]
 assert 1 - 1 / kappa["raw"] == Fraction(624, 625) and 1 - 1 / kappa["min-max"] == Fraction(24, 49)
-assert Fraction(70, 25) == Fraction(14, 5)  # ranges of 2.8 and 2 standard deviations
+assert z_score(max(areas), areas) - z_score(min(areas), areas) == Fraction(14, 5)  # range of 2.8 standard deviations
+assert z_score(max(beds), beds) - z_score(min(beds), beds) == 2  # range of 2 standard deviations
 assert (Fraction(14, 5) / 2) ** 2 == Fraction(49, 25)
 # Correlated features (r = 3/5): curvatures 1 + r and 1 - r, so a condition number of 4.
 r = Fraction(3, 5)

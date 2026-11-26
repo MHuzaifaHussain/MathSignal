@@ -351,9 +351,9 @@ assert len(set(eleven)) == 9 and min(gaps) >= 3
 assert 140 - 134 == 150 - 144 == 6
 assert z(140, nine) == Fraction(3, 4) and z(150, eleven) == Fraction(1, 2)
 assert Fraction(3, 4) / Fraction(1, 2) == Fraction(3, 2)
-assert 150 > 140 and z(140, nine) > z(150, eleven)
-assert f"z = 6 / 8 = {float(Fraction(3, 4))}" == "z = 6 / 8 = 0.75"
-assert f"z = 6 / 12 = {float(Fraction(1, 2))}" == "z = 6 / 12 = 0.5"
+assert 140 in nine and 150 in eleven and 150 > 140 and z(140, nine) > z(150, eleven)
+assert f"z = {140 - mean(nine)} / {sigma(nine)} = {float(z(140, nine))}" == "z = 6 / 8 = 0.75"
+assert f"z = {150 - mean(eleven)} / {sigma(eleven)} = {float(z(150, eleven))}" == "z = 6 / 12 = 0.5"
 print("nine-year-old z =", z(140, nine), " eleven-year-old z =", z(150, eleven))
 
 # Whole classes: mean 0 and standard deviation 1.

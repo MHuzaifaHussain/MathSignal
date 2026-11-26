@@ -339,7 +339,7 @@ assert (box["low_fence"], box["high_fence"]) == (110, 158)
 assert (box["low_whisker"], box["high_whisker"], box["dots"]) == (122, 148, [])
 assert (in_line[2], in_line[4], in_line[6]) == (128, 133, 140)
 assert [heights.index(v) + 1 for v in (128, 133, 140)] == [4, 1, 3]
-assert 133 - 128 == 5 and 140 - 133 == 7
+assert box["median"] - box["q1"] == 5 and box["q3"] - box["median"] == 7
 assert (heights[2], heights[6], heights[6] - heights[2]) == (140, 137, -3)
 print("our class: Q1", box["q1"], " median", box["median"], " Q3", box["q3"], " IQR", box["iqr"],
       " fences", box["low_fence"], "and", box["high_fence"], " whiskers", box["low_whisker"], "and", box["high_whisker"])
@@ -399,7 +399,7 @@ hw = box_plot(homework)
 assert (hw["q1"], hw["median"], hw["q3"], hw["iqr"]) == (15, 22, 35, 20)
 assert (hw["low_fence"], hw["high_fence"], hw["dots"]) == (-15, 65, [90])
 assert (hw["low_whisker"], hw["high_whisker"]) == (5, 45)
-assert 22 - 15 == 7 and 35 - 22 == 13
+assert hw["median"] - hw["q1"] == 7 and hw["q3"] - hw["median"] == 13
 hw_mean = Fraction(sum(homework), len(homework))
 assert hw_mean == Fraction(370, 13) and abs(float(hw_mean) - 28.46) < 0.005
 assert sum(v <= hw["q1"] for v in homework) == 4
