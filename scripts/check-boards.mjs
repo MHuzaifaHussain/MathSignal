@@ -7398,6 +7398,28 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	assert.deepEqual(dens.areaBetween(heap, fraction(2, 1), fraction(2, 1)), fraction(0, 1));
 }
 
+// ---- Chart marks: a span's label stays on the board (chartMarkLayout.ts) ----
+// The binomial walk-through goes Fair coin → Right 9 in 10: the ghost σ ≈ 1.58 around μ = 9 runs past 10, so its
+// "Before: σ ≈ 1.58" lines up with the span's right end instead of hanging off the board at 320px.
+{
+	const { spanLabelAnchor, CENTERED_LABEL_MARGIN } = await import('../src/components/react/chartMarkLayout.ts');
+	assert.equal(CENTERED_LABEL_MARGIN, 20);
+	assert.equal(spanLabelAnchor(((9 - Math.sqrt(2.5)) / 10) * 100, ((9 + Math.sqrt(2.5)) / 10) * 100), 'end', 'ghost of a fair coin after Right 9 in 10');
+	assert.equal(spanLabelAnchor(74, 100), 'end');
+	assert.equal(spanLabelAnchor(-5, 26), 'start', 'mirror image at the left edge');
+	assert.equal(spanLabelAnchor(0, 30), 'start');
+	assert.equal(spanLabelAnchor(20, 80), 'center');
+	assert.equal(spanLabelAnchor(0, 100), 'center', 'a span across the row keeps a centered label');
+	assert.equal(spanLabelAnchor(-50, 150), 'center', 'ends past both edges clamp to the row first');
+	assert.equal(spanLabelAnchor(60, 100), 'center', 'middle exactly 80%: centered is still safe');
+	assert.equal(spanLabelAnchor(100, 100), 'end', 'a zero span at the right edge');
+	const { readFileSync } = await import('node:fs');
+	const marks = readFileSync('src/components/react/chartMarks.tsx', 'utf8');
+	assert.ok(marks.includes('const anchor = spanLabelAnchor(from, to);'), 'SigmaSpan places every label through spanLabelAnchor');
+	const css = readFileSync('src/styles/components.css', 'utf8');
+	assert.ok(/\.ms-span-label\.is-start\s*\{\s*left: 0;\s*transform: none;/.test(css) && /\.ms-span-label\.is-end\s*\{\s*left: auto;\s*right: 0;\s*transform: none;/.test(css), 'edge labels line up with the span end');
+}
+
 // ---- BayesTheorem: the readout breaks between its pairs, never inside one ----
 // The pages quote "P(A | B) = 0.774   P(B) = 0.310" as one line; at 320px it may wrap, but "P(B) =" keeps its number.
 {

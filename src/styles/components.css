@@ -956,6 +956,18 @@
 	transform: translateX(-50%);
 }
 
+/* Near the chart's edge the label lines up with the span's outer end (chartMarkLayout.ts). */
+.ms-span-label.is-start {
+	left: 0;
+	transform: none;
+}
+
+.ms-span-label.is-end {
+	left: auto;
+	right: 0;
+	transform: none;
+}
+
 .ms-span-sigma {
 	color: var(--ms-sigma);
 }

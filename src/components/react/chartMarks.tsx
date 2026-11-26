@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { spanLabelAnchor } from "./chartMarkLayout.ts";
 
 // The marks that carry a meaning color on HTML charts, shared so μ and σ look the same on every board.
 // Each mark is positioned in percent across its row; the row itself is the board's own element.
@@ -48,15 +49,19 @@ interface SigmaSpanProps {
   label: string;
 }
 
-/** A capped span for a spread around the mean. At zero width only one cap is left, a tick. */
+/**
+ * A capped span for a spread around the mean. At zero width only one cap is left, a tick. Near an edge the label
+ * lines up with the span's outer end instead of its middle, so it stays on the board.
+ */
 export function SigmaSpan({ kind, from, to, label }: SigmaSpanProps) {
   const zero = from === to;
+  const anchor = spanLabelAnchor(from, to);
   return (
     <span
       className={`ms-span ms-span-${kind}${zero ? " is-zero" : ""}`}
       style={{ "--from": percent(from), "--to": percent(to) } as Position}
     >
-      <span className="ms-span-label">{label}</span>
+      <span className={`ms-span-label${anchor === "center" ? "" : ` is-${anchor}`}`}>{label}</span>
     </span>
   );
 }
