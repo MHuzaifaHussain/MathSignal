@@ -23,6 +23,12 @@ interface TraySliderProps {
   describe?: (value: number) => string;
   /** Colors the label and thumb with a meaning color. */
   meaning?: "mu" | "sigma";
+  /**
+   * The label in words when it is written in symbols ("P of B given A" for "P(B | A)"), which screen readers at their
+   * default punctuation level would read as "P B A". The slider is then named "<label>, <spokenLabel>", so its name
+   * still starts with the visible label (WCAG 2.5.3).
+   */
+  spokenLabel?: string;
 }
 
 const defaultLargeStep = (min: number, max: number, step: number) =>
@@ -41,6 +47,7 @@ export default function TraySlider({
   format,
   describe,
   meaning,
+  spokenLabel,
 }: TraySliderProps) {
   const labelId = useId();
   const meaningClass = meaning ? `ms-${meaning}` : "";
@@ -78,7 +85,7 @@ export default function TraySlider({
                 heard the label twice ("Height grouping, Height slider"). */}
             <Slider.Thumb
               className="ms-slider-thumb"
-              aria-labelledby={labelId}
+              {...(spokenLabel ? { "aria-label": `${label}, ${spokenLabel}` } : { "aria-labelledby": labelId })}
               getAriaValueText={(_formatted, current) => (describe ? describe(current) : format(current))}
             />
           </Slider.Track>

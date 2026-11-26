@@ -3,6 +3,7 @@ import { Mafs, Polygon, Text } from "mafs";
 import type { vec } from "mafs";
 import Board from "./Board";
 import TraySlider from "./TraySlider";
+import SpokenText from "./guided/SpokenText.tsx";
 import PresetButtons from "./guided/PresetButtons.tsx";
 import TableFold from "./guided/TableFold.tsx";
 import { tableFoldAnnouncement } from "./guided/tableFold.ts";
@@ -26,6 +27,8 @@ const rectangle = (x0: number, x1: number, y0: number, y1: number): vec.Vector2[
 
 /** "0.083", or the reason there is no posterior when P(B) is 0. */
 const posteriorText = (posterior: number | null) => (posterior === null ? "undefined, because P(B) = 0" : formatNumber(posterior, 3));
+/** The same in words, for screen readers. */
+const posteriorSpoken = (posterior: number | null) => (posterior === null ? "undefined, because P of B is 0" : formatNumber(posterior, 3));
 
 interface BayesTheoremProps {
   /** The preset buttons, 2 to 4 ids from bayesTheorem/scenarios.ts in the page's order. Defaults to Any two events, Medical test and Wet lawn. */
@@ -64,7 +67,7 @@ export default function BayesTheorem({ scenarios, initialScenario }: BayesTheore
     (values: BayesValues, prefix = "", tableScenario: BayesScenarioId | null = null) => {
       const result = computePosterior(values);
       const table = tableScenario === null ? "" : ` ${tableSummary(values, BAYES_SCENARIOS[tableScenario])}`;
-      announce(`${prefix}Posterior P of A given B is ${posteriorText(result.posterior)}; P of B is ${formatNumber(result.evidence, 3)}.${table}`);
+      announce(`${prefix}Posterior P of A given B is ${posteriorSpoken(result.posterior)}; P of B is ${formatNumber(result.evidence, 3)}.${table}`);
     },
     [announce],
   );
@@ -103,15 +106,16 @@ export default function BayesTheorem({ scenarios, initialScenario }: BayesTheore
   // Inside each column, or beside a column too thin to hold them, never on the other event's fill.
   const labels = labelPositions({ prior, likelihood, falsePositive });
 
-  const probabilitySlider = (label: string, value: number, onChange: (value: number) => void, commit: (value: number) => void) => (
+  const probabilitySlider = (label: string, spokenLabel: string, value: number, onChange: (value: number) => void, commit: (value: number) => void) => (
     <TraySlider
       label={label}
+      spokenLabel={spokenLabel}
       value={value}
       min={PROBABILITY_RANGE[0]}
       max={PROBABILITY_RANGE[1]}
       step={PROBABILITY_STEP}
       format={(next) => formatNumber(next)}
-      describe={(next) => `${label} ${formatNumber(next)}`}
+      describe={(next) => `${spokenLabel} ${formatNumber(next)}`}
       onValueChange={onChange}
       onValueCommitted={commit}
     />
@@ -127,12 +131,17 @@ export default function BayesTheorem({ scenarios, initialScenario }: BayesTheore
         onPick={pickPreset}
       />
       <p className="ms-event-note-line">{scenario.meaning}</p>
-      {probabilitySlider("P(A)", prior, setPrior, (value) => announceValues({ prior: value, likelihood, falsePositive }, "", tableScenario))}
-      {probabilitySlider("P(B | A)", likelihood, setLikelihood, (value) => announceValues({ prior, likelihood: value, falsePositive }, "", tableScenario))}
-      {probabilitySlider("P(B | not A)", falsePositive, setFalsePositive, (value) => announceValues({ prior, likelihood, falsePositive: value }, "", tableScenario))}
+      {probabilitySlider("P(A)", "P of A", prior, setPrior, (value) => announceValues({ prior: value, likelihood, falsePositive }, "", tableScenario))}
+      {probabilitySlider("P(B | A)", "P of B given A", likelihood, setLikelihood, (value) => announceValues({ prior, likelihood: value, falsePositive }, "", tableScenario))}
+      {probabilitySlider("P(B | not A)", "P of B given not A", falsePositive, setFalsePositive, (value) => announceValues({ prior, likelihood, falsePositive: value }, "", tableScenario))}
       <p className="ms-board-readout">
-        <span className="ms-readout-pair">P(A | B) = {posteriorText(posterior)}</span> &nbsp;{" "}
-        <span className="ms-readout-pair">P(B) = {formatNumber(evidence, 3)}</span>
+        <span className="ms-readout-pair">
+          <SpokenText line={{ visible: `P(A | B) = ${posteriorText(posterior)}`, spoken: `P of A given B is ${posteriorSpoken(posterior)}.` }} />
+        </span>{" "}
+        &nbsp;{" "}
+        <span className="ms-readout-pair">
+          <SpokenText line={{ visible: `P(B) = ${formatNumber(evidence, 3)}`, spoken: `P of B is ${formatNumber(evidence, 3)}.` }} />
+        </span>
       </p>
       <TableFold open={tableShown} onToggle={toggleTable}>
         <CountTable values={{ prior, likelihood, falsePositive }} scenario={scenario} />

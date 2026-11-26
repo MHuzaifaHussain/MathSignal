@@ -7752,8 +7752,13 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 {
 	const { readFileSync } = await import('node:fs');
 	const board = readFileSync('src/components/react/BayesTheorem.tsx', 'utf8');
-	assert.ok(board.includes('<span className="ms-readout-pair">P(A | B) = {posteriorText(posterior)}</span> &nbsp;{" "}'), 'P(A | B) and its value stay together');
-	assert.ok(board.includes('<span className="ms-readout-pair">P(B) = {formatNumber(evidence, 3)}</span>'), 'P(B) and its value stay together');
+	// Each pair shows its symbols and gives screen readers the words ("P of A given B is 0.774.").
+	assert.ok(/<span className="ms-readout-pair">\s*<SpokenText line={{ visible: `P\(A \| B\) = \$\{posteriorText\(posterior\)\}`, spoken: `P of A given B is \$\{posteriorSpoken\(posterior\)\}\.` }} \/>\s*<\/span>\{" "\}\s*&nbsp;\{" "\}/.test(board), 'P(A | B) and its value stay together');
+	assert.ok(/<span className="ms-readout-pair">\s*<SpokenText line={{ visible: `P\(B\) = \$\{formatNumber\(evidence, 3\)\}`, spoken: `P of B is \$\{formatNumber\(evidence, 3\)\}\.` }} \/>\s*<\/span>/.test(board), 'P(B) and its value stay together');
+	// The sliders' names start with the visible label and add the words (WCAG 2.5.3).
+	for (const [label, words] of [['P(A)', 'P of A'], ['P(B | A)', 'P of B given A'], ['P(B | not A)', 'P of B given not A']]) {
+		assert.ok(board.includes(`probabilitySlider("${label}", "${words}",`), `${label} slider says "${words}"`);
+	}
 	assert.ok(/\.ms-readout-pair\s*\{\s*white-space: nowrap;/.test(readFileSync('src/styles/components.css', 'utf8')), 'a readout pair never wraps');
 }
 
