@@ -4501,6 +4501,25 @@ const labelsOverlap = (first, second, size) => {
 	assert.equal(vd.flagSentence(reachWith([3, 1], [1, 3])), "The flag is 7/8 × a + 11/8 × b, which the slider can't set: it moves in steps of 0.5 from −5 to 5.");
 	assert.equal(vd.flagSentence(reachWith([4, 2], [3, 2])), "The flag is −3.5 × a + 6 × b, which the slider can't set: it moves in steps of 0.5 from −5 to 5.");
 	assert.equal(vd.flagSentence(reachWith([4, 5], [0, 0])), 'The flag is on that line, so some c and d reach it.');
+	// "some c and d reach it" holds on the slider too: for every a and b on the ±5 grid whose span is a line through
+	// the flag, some c and d on the slider's steps land exactly on it.
+	{
+		const { scaleRange, target } = (await import('../src/components/react/vectorBoard/setups.ts')).getSetup('span-reach');
+		const weights = [];
+		for (let w = scaleRange.min; w <= scaleRange.max + 1e-9; w += scaleRange.step) weights.push(w);
+		const grid = [];
+		for (let x = -5; x <= 5; x += 1) for (let y = -5; y <= 5; y += 1) grid.push([x, y]);
+		let lineCases = 0;
+		for (const a of grid) {
+			for (const b of grid) {
+				if (vd.flagSentence({ ...reachDone, a, b }) !== 'The flag is on that line, so some c and d reach it.') continue;
+				lineCases += 1;
+				const reached = weights.some((c) => weights.some((d) => c * a[0] + d * b[0] === target[0] && c * a[1] + d * b[1] === target[1]));
+				assert.ok(reached, `span-reach: a = (${a}), b = (${b}) put the flag on their line, but no slider c and d reach it`);
+			}
+		}
+		assert.ok(lineCases > 0, 'span-reach: some a and b put the flag on their line');
+	}
 	assert.equal(vd.flagSentence(reachWith([0, 0], [0, 0])), 'The flag is not at the origin, so no c and d reach it.');
 	assert.equal(vd.flagSentence({ ...reachDone, a: [1, 2], b: [2, 1] }), 'The flag is 2 × a + 1 × b.');
 	assert.equal(vd.flagSentence({ ...reachDone, a: [1, 0], b: [0, -1] }), 'The flag is 4 × a + (−5) × b.');
