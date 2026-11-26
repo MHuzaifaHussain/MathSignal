@@ -109,7 +109,7 @@ The center of a list can be measured three common ways: the mean shares the tota
 
 ### The mean: share the total out equally
 
-The mean is the sum of the values divided by how many there are. For our class, 1,206 / 9 = 134 cm. Deisenroth, Faisal and Ong call this the empirical mean, the arithmetic average of the observations (§6.4.2, Definition 6.9) <Cite id="deisenroth2020" />.
+The mean is the sum of the values divided by how many there are. For our class, 1,206 / 9 = 134 cm. Deisenroth, Faisal and Ong call this the empirical mean, the arithmetic average of the observations (§6.4.2, Definition 6.9, p. 192) <Cite id="deisenroth2020" />.
 
 Why does it sit 1 cm above the median of 133 cm? Start every child at 133 cm. The 4 taller children bring 4 + 7 + 9 + 15 = 35 cm extra, and the 4 shorter ones are 2 + 5 + 8 + 11 = 26 cm short, so 35 − 26 = 9 cm is left over. Shared among 9 children, that lifts the mean by exactly 1 cm, to 134 cm. The mean is the balance point of the list: [the distances above and below it cancel](/statistics/variance-and-standard-deviation/#how-far-from-the-mean-on-average).
 
@@ -127,7 +127,7 @@ To find the median, sort the list, then take the middle value when n is odd, or 
 
 <GoDeeper label="why there is no single median of points in a plane" id="median-in-higher-dimensions">
 
-Beyond one dimension there is no single median, because there is no obvious way to sort points in a plane. One fix is the coordinate-wise median, which takes the median of each coordinate separately. How well such fixes resist bad data when there are many coordinates is the problem in the [research frontier](#research-frontier) below.
+Beyond one dimension there is no single median, because there is no obvious way to sort points in a plane (§6.4.1, p. 188) <Cite id="deisenroth2020" />. One fix is the coordinate-wise median, which takes the median of each coordinate separately. How well such fixes resist bad data when there are many coordinates is the problem in the [research frontier](#research-frontier) below.
 
 </GoDeeper>
 
@@ -181,7 +181,7 @@ scikit-learn's guide describes a histogram as a stack of blocks, one per data va
 
 ### Describing a list, not guessing beyond it
 
-Descriptive statistics describe the list you have. Using a list to say something about a bigger group it came from is inference, and it changes some formulas. Deisenroth and coauthors call a mean computed from a finite data set an empirical mean (§6.4.2) <Cite id="deisenroth2020" />. The difference first shows in the n − 1 of the [sample standard deviation](/statistics/variance-and-standard-deviation/#two-versions-the-whole-group-or-a-sample), where the sample mean is written x̄.
+Descriptive statistics describe the list you have. Using a list to say something about a bigger group it came from is inference, and it changes some formulas. Deisenroth and coauthors call a mean computed from a finite data set an empirical mean (§6.4.2, pp. 191–192) <Cite id="deisenroth2020" />. The difference first shows in the n − 1 of the [sample standard deviation](/statistics/variance-and-standard-deviation/#two-versions-the-whole-group-or-a-sample), where the sample mean is written x̄.
 
 ## Notation
 
