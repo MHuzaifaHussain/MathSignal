@@ -239,7 +239,7 @@ A classifier scored by accuracy does best by predicting, for each input, the mos
 
 ### Filling gaps and setting baselines
 
-`SimpleImputer` replaces missing values with a column's `"mean"`, `"median"` or `"most_frequent"` value. The first two need numbers, while `"most_frequent"` works for strings too and, on a tie, returns the smallest value <Cite id="sklearn-simpleimputer" />. `DummyRegressor` always predicts the training set's `"mean"` or `"median"` <Cite id="sklearn-dummyregressor" />. Match the baseline to the metric: for a model scored by mean absolute error, the median baseline is the fair one to beat. So two tools can fill the same tied column with different values.
+`SimpleImputer` replaces missing values with a column's `"mean"`, `"median"` or `"most_frequent"` value. The first two need numbers, while `"most_frequent"` works for strings too and, on a tie, returns the smallest value <Cite id="sklearn-simpleimputer" />, but `statistics.mode` keeps whichever comes first, so two tools can fill one tied column differently. `DummyRegressor` always predicts the training set's `"mean"` or `"median"` <Cite id="sklearn-dummyregressor" />. Match the baseline to the metric: for a model scored by mean absolute error, the median baseline is the fair one to beat.
 
 ## Check the three centers in code
 
