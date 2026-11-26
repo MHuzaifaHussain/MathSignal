@@ -2268,6 +2268,18 @@
 		color: HighlightText;
 	}
 
+	/* Forced colors drop the track's fill and leave the thumb floating, so the track and its filled part take system
+	 * colors. */
+	.ms-slider-track {
+		forced-color-adjust: none;
+		background-color: CanvasText;
+	}
+
+	.ms-slider-indicator {
+		forced-color-adjust: none;
+		background-color: Highlight;
+	}
+
 	.ms-event-cell:focus-visible,
 	.ms-choice-option:has(input:focus-visible),
 	.ms-dist-step:focus-visible,
