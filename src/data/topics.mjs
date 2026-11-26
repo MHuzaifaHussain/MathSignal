@@ -258,7 +258,7 @@ export const TOPICS = [
 	},
 	{
 		id: 'statistics/outlier-detection-z-score-vs-iqr',
-		title: 'Outlier detection: z-score vs IQR',
+		title: 'Outlier detection: z-score vs IQR rule',
 		description: 'Two rules for flagging unusual values, and how they disagree on the same list.',
 		recap: 'The z-score rule flags values more than 2 or 3 standard deviations from the mean; the IQR rule flags values more than 1.5 IQR beyond the quartiles. An outlier pulls the mean and inflates the standard deviation it is measured with, so it can hide from z-scores but not from the quartiles.',
 		status: 'planned',
