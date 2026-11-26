@@ -128,7 +128,7 @@ The span always contains the origin, because you can take every weight 0, so a s
 
 Two vectors in the plane reach either a line or the whole plane (or, if both are zero, only the origin), and the board below asks you to say which before it shows you.
 
-Before you look: **a** = (2, 1) and **b** = (−4, −2). What can c **a** + d **b** reach: only the origin, a line, or the whole plane? Going further: if you nudge **b** so the two arrows almost line up, do you need bigger or smaller weights to reach (1, 0)?
+Before you look: **a** = (2, 1) and **b** = (−4, −2). What can c **a** + d **b** reach: only the origin, a line, or the whole plane? Going further: if you nudge **b** so the two arrows almost line up, does the span shrink a little?
 
 Your task: under "Your guess: the span of a and b is", choose Only the origin, A line or The whole plane, then press Check. You get one guess, and **a** and **b** stay fixed until you check.
 
@@ -148,7 +148,7 @@ Vectors that each bring a new direction are called linearly independent, the sub
 
 <GoDeeper label="nearly lined up: still the whole plane, at a price" id="nearly-lined-up">
 
-With **a** = (4, 2) and **b** = (3, 2), the point (1, 0) is 1 × **a** − 1 × **b**, and (0, 1) is −1.5 × **a** + 2 × **b**. With the first board's **a** = (2, 1) and **b** = (1, 2), the point (0, 1) is −1/3 × **a** + 2/3 × **b**. Both pairs span the same plane, but the nearly lined-up pair needs weights up to 2 in size where the other needs at most 2/3, and its weights cancel each other. When two features of a dataset nearly line up, a model's weights for them can grow large and swing in opposite directions; the page on linear independence takes this up.
+With **a** = (4, 2) and **b** = (3, 2), the point (1, 0) is 1 × **a** − 1 × **b**, and (0, 1) is −1.5 × **a** + 2 × **b**. With the first board's **a** = (2, 1) and **b** = (1, 2), the point (1, 0) is 2/3 × **a** − 1/3 × **b**, and (0, 1) is −1/3 × **a** + 2/3 × **b**. Both pairs span the same plane, but the nearly lined-up pair needs weights up to 2 in size where the other needs at most 2/3, and its weights cancel each other. When two features of a dataset nearly line up, a model's weights for them can grow large and swing in opposite directions; the page on linear independence takes this up.
 
 </GoDeeper>
 
