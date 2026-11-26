@@ -7398,6 +7398,16 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	assert.deepEqual(dens.areaBetween(heap, fraction(2, 1), fraction(2, 1)), fraction(0, 1));
 }
 
+// ---- BayesTheorem: the readout breaks between its pairs, never inside one ----
+// The pages quote "P(A | B) = 0.774   P(B) = 0.310" as one line; at 320px it may wrap, but "P(B) =" keeps its number.
+{
+	const { readFileSync } = await import('node:fs');
+	const board = readFileSync('src/components/react/BayesTheorem.tsx', 'utf8');
+	assert.ok(board.includes('<span className="ms-readout-pair">P(A | B) = {posteriorText(posterior)}</span> &nbsp;{" "}'), 'P(A | B) and its value stay together');
+	assert.ok(board.includes('<span className="ms-readout-pair">P(B) = {formatNumber(evidence, 3)}</span>'), 'P(B) and its value stay together');
+	assert.ok(/\.ms-readout-pair\s*\{\s*white-space: nowrap;/.test(readFileSync('src/styles/components.css', 'utf8')), 'a readout pair never wraps');
+}
+
 // ---- EventSpace: the A and B tags are drawn, not text (WCAG 2.5.3) ----
 // A cell's visible text must be where its name starts ("opens 3. … In A and B."), so the corner letters come from
 // CSS (`content: attr(data-tag)`) and the button holds no letter of its own.

@@ -131,7 +131,8 @@ export default function BayesTheorem({ scenarios, initialScenario }: BayesTheore
       {probabilitySlider("P(B | A)", likelihood, setLikelihood, (value) => announceValues({ prior, likelihood: value, falsePositive }, "", tableScenario))}
       {probabilitySlider("P(B | not A)", falsePositive, setFalsePositive, (value) => announceValues({ prior, likelihood, falsePositive: value }, "", tableScenario))}
       <p className="ms-board-readout">
-        P(A | B) = {posteriorText(posterior)} &nbsp; P(B) = {formatNumber(evidence, 3)}
+        <span className="ms-readout-pair">P(A | B) = {posteriorText(posterior)}</span> &nbsp;{" "}
+        <span className="ms-readout-pair">P(B) = {formatNumber(evidence, 3)}</span>
       </p>
       <TableFold open={tableShown} onToggle={toggleTable}>
         <CountTable values={{ prior, likelihood, falsePositive }} scenario={scenario} />

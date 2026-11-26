@@ -55,6 +55,11 @@
 	font-variant-numeric: tabular-nums;
 }
 
+/* One "label = value" pair of a readout line: the line may break between pairs, never inside one. */
+.ms-readout-pair {
+	white-space: nowrap;
+}
+
 /* ── Chalk note: Kalam, 20px minimum, short text on narrow boards ── */
 .ms-chalk-note {
 	position: absolute;
