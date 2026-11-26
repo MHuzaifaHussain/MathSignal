@@ -3694,6 +3694,8 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	// The board's files never render KaTeX (decision 0007).
 	const files = ['src/components/react/DescriptiveStats.tsx', ...readdirSync('src/components/react/descriptiveStats').map((name) => `src/components/react/descriptiveStats/${name}`)];
 	for (const file of files) assert.ok(!readFileSync(file, 'utf8').includes('<LaTeX'), `${file} renders KaTeX`);
+	const descBoard = readFileSync('src/components/react/DescriptiveStats.tsx', 'utf8');
+	assert.ok(descBoard.includes('useCommittedSlider') && /const send = useCallback\(\s*\(action: Action\) => \{\s*sliderGuard\.interrupt\(\);/.test(descBoard), 'every non-slider action interrupts the shared slider guard first');
 }
 
 // ---- VectorBoard2D plane labels, shared by both VectorBoard2D sections ----

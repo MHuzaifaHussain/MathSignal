@@ -8,6 +8,7 @@ import TableFold from "./guided/TableFold.tsx";
 import { RefusalNote } from "./guided/refusal.tsx";
 import StageChoice from "./guided/StageChoice.tsx";
 import useAnnouncer from "./guided/useAnnouncer.ts";
+import useCommittedSlider from "./guided/useCommittedSlider.ts";
 import { usePointerScrub } from "./usePointerScrub.ts";
 import { chartRows } from "./descriptiveStats/chart.ts";
 import DotPlot from "./descriptiveStats/DotPlot.tsx";
@@ -74,8 +75,7 @@ export default function DescriptiveStats({ setup: setupId }: DescriptiveStatsPro
   const [announcement, announce] = useAnnouncer();
   const checkReasonId = useId();
   const lastAction = useRef<Action | null>(null);
-  /** True while the latest change is a slider or drag move, so a late commit can't talk over a button pressed since. */
-  const sliding = useRef(false);
+  const sliderGuard = useCommittedSlider<"value">();
   const stateRef = useRef(state);
   // A layout effect, so a commit that ends a drag (pointerup) reads the state of the drag's last move, whose passive
   // effects may still be pending.
@@ -86,7 +86,7 @@ export default function DescriptiveStats({ setup: setupId }: DescriptiveStatsPro
 
   const send = useCallback(
     (action: Action) => {
-      sliding.current = false;
+      sliderGuard.interrupt();
       const repeat = action.type === "preset" ? alreadyShowingLine(stateRef.current, action.id) : null;
       if (repeat) {
         lastAction.current = null;
@@ -96,24 +96,23 @@ export default function DescriptiveStats({ setup: setupId }: DescriptiveStatsPro
       lastAction.current = action;
       dispatch(action);
     },
-    [announce],
+    [announce, sliderGuard],
   );
 
   /** Slider and drag moves update the board silently; the commit below speaks once. */
   const slide = useCallback((value: number) => {
     lastAction.current = null;
-    sliding.current = true;
+    sliderGuard.moved("value");
     dispatch({ type: "set-value", value });
-  }, []);
+  }, [sliderGuard]);
 
   const commitSlide = useCallback(
     (value: number) => {
       const current = stateRef.current;
-      if (!sliding.current || sliderValue(current) !== value) return;
-      sliding.current = false;
+      if (!sliderGuard.take("value", sliderValue(current) === value)) return;
       announce(announcementFor(current, { type: "set-value", value }));
     },
-    [announce],
+    [announce, sliderGuard],
   );
 
   const scrub = usePointerScrub({
