@@ -595,8 +595,21 @@ function outlierLines(state: DescriptiveState): string[] {
 		lines.push(iqrText);
 		lines.push(`${meanText}, so its z-score is ${zText}: ${zFlagText}.`);
 	}
-	if (state.cutoff === 3 && giantTried(state)) lines.push(`With ${values.length} pumpkins no z-score can reach √${values.length - 1} ${approxNumber(Math.sqrt(values.length - 1))}, however heavy the giant, so |z| > 3 can never flag anything here.`);
+	if (state.cutoff === 3 && giantTried(state)) lines.push(ceilingLine(state));
 	return lines;
+}
+
+/**
+ * Why |z| > 3 can't fire. One value among n has |z| below √(n − 1); each of two equal giants shares the stretch and
+ * stays below the tighter √((n − 2)/2), the bound the outlier page states.
+ */
+function ceilingLine(state: DescriptiveState): string {
+	const count = state.values.length;
+	if (state.giants === 2) {
+		const square = (count - 2) / 2;
+		return `With ${count} pumpkins and two equal giants, neither giant's z-score can reach √${square} ${approxNumber(Math.sqrt(square))}, however heavy they are, so |z| > 3 can never flag anything here.`;
+	}
+	return `With ${count} pumpkins no z-score can reach √${count - 1} ${approxNumber(Math.sqrt(count - 1))}, however heavy the giant, so |z| > 3 can never flag anything here.`;
 }
 
 export function formatGiant(value: number): string {

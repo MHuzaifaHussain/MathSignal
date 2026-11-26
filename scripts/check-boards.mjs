@@ -2936,6 +2936,12 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	assert.equal(zText(dm.zScore(30, twoGiants)), '1.87');
 	assert.deepEqual(dm.zFlags(twoGiants, 2), twoGiants.map(() => false));
 	assert.deepEqual(dm.iqrFlags(twoGiants), [false, false, false, false, false, false, false, true, true]);
+	// Two equal giants among n share the stretch: each z stays below √((n − 2)/2) = √3.5 ≈ 1.871, however heavy.
+	for (let giant = 8; giant <= 60; giant += 1) {
+		const z = dm.zScore(giant, dd.pumpkins(giant, 2));
+		const value = z.exact ? toNumber(z.value) : z.value;
+		assert.ok(value < Math.sqrt(3.5), `two giants of ${giant} kg: z = ${value}`);
+	}
 	// No giant: nothing is flagged, and the largest |z| is ≈ 1.73.
 	const noGiant = dd.pumpkins(8, 1);
 	assert.deepEqual(dm.iqrFlags(noGiant), noGiant.map(() => false));
@@ -3537,8 +3543,11 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 		'Flagging when |z| is above 3. Q1 = 5 kg, Q3 = 7 kg, IQR = 2 kg, so the upper fence is 7 + 3 = 10 kg. Every pumpkin is inside the fences (2 kg to 10 kg) and every |z| is at most ≈ 1.73: nothing is flagged.',
 	);
 	const ceiling = 'With 9 pumpkins no z-score can reach √8 ≈ 2.83, however heavy the giant, so |z| > 3 can never flag anything here.';
+	const twoCeiling = "With 9 pumpkins and two equal giants, neither giant's z-score can reach √3.5 ≈ 1.87, however heavy they are, so |z| > 3 can never flag anything here.";
 	const saysCeiling = (state) => dsay.readoutLines(state).some((line) => line.includes('can never'));
-	for (const preset of ['one-giant', 'two-giants']) assert.equal(dsay.readoutLines(run('pumpkin-outliers', { type: 'preset', id: preset }, cutoff3)).at(-1), ceiling, preset);
+	assert.equal(dsay.readoutLines(run('pumpkin-outliers', { type: 'preset', id: 'one-giant' }, cutoff3)).at(-1), ceiling);
+	assert.equal(dsay.readoutLines(run('pumpkin-outliers', { type: 'preset', id: 'two-giants' }, cutoff3)).at(-1), twoCeiling, 'two giants get their own, tighter ceiling');
+	assert.equal(dsay.readoutLines(run('pumpkin-outliers', { type: 'preset', id: 'two-giants' }, cutoff3, { type: 'set-value', value: 60 })).at(-1), twoCeiling, 'the same at any weight');
 	assert.equal(dsay.readoutLines(run('pumpkin-outliers', cutoff3, { type: 'set-value', value: 9 })).at(-1), ceiling, 'a 9 kg giant counts as tried');
 	// No latch: moving back to 8 kg, or pressing No giant, is the opening view again, so the sentence goes with it.
 	assert.ok(!saysCeiling(run('pumpkin-outliers', cutoff3, { type: 'set-value', value: 9 }, { type: 'set-value', value: 8 })));
