@@ -81,9 +81,9 @@ Neural network weights are usually initialized by sampling from a normal distrib
 
 ## Move the bell yourself
 
-Before you touch anything: if <Var name="sigma" /> doubles, does the peak get taller, lower or stay the same? By what factor? Make a guess, then test it.
+Before you touch anything: if <Var name="sigma" /> doubles, does the peak get taller, lower or stay the same? Make a guess, then test it.
 
-Drag the pink point along the axis to move the mean <Var name="mu" />. Drag the blue point to change the standard deviation <Var name="sigma" />; it sits on the curve where the bell changes from bending down to bending up. The sliders under the plot do the same from the keyboard. As a goal, set <Var name="sigma" /> to 2 and compare the peak with its height at 1.
+Drag the pink point along the axis to move the mean <Var name="mu" />. Drag the blue point to change the standard deviation <Var name="sigma" />; it sits on the curve where the bell changes from bending down to bending up. The sliders under the plot do the same from the keyboard. As a goal, set <Var name="sigma" /> to 2 and see whether the peak looks about half as tall as it did when <Var name="sigma" /> = 1.
 
 <div class="not-content">
   <NormalDistribution client:visible />
@@ -111,7 +111,7 @@ The 68-95-99.7 rule says how much of a normal distribution lies within one, two 
 - about **95%** (95.45%) lies within 2σ
 - about **99.7%** (99.73%) lies within 3σ
 
-The exact band that holds 95% is ±1.96σ, which is why 1.96 appears in so many confidence intervals. A value more than 3σ from the mean happens about 3 times in 1,000, so it is either rare or a sign that something unusual is going on. On real data, flagging values this way has pitfalls, which the page on [outlier detection with z-scores and the IQR rule](/statistics/outlier-detection-z-score-vs-iqr/) covers.
+The exact band that holds 95% is ±1.96σ, which is why 1.96 appears in so many confidence intervals. A value more than 3σ from the mean happens about 3 times in 1,000, so seeing one is either a rare draw or a sign that something unusual is going on. On real data, flagging values this way has pitfalls, which the page on [outlier detection with z-scores and the IQR rule](/statistics/outlier-detection-z-score-vs-iqr/) covers.
 
 ### Reading the rule on heights
 
@@ -119,7 +119,7 @@ Take a group of adults whose heights follow a normal distribution with mean <Var
 
 Each step out adds another 7 cm on both sides but catches fewer extra people. The first step holds 68% of the group, the second adds about 27%, and the third adds less than 5%.
 
-The standard deviation does all the scaling. It is the square root of the average squared distance from the mean, worked out from a list of numbers on the page about [variance and standard deviation](/statistics/variance-and-standard-deviation/). Halve it to 3.5 cm and the 95% band shrinks to 158 to 172 cm, the range that used to hold only 68%.
+The standard deviation does all the scaling. It is the square root of the average squared distance from the mean. The page on [variance and standard deviation](/statistics/variance-and-standard-deviation/) works it out from a list of numbers. Halve it to 3.5 cm and the 95% band shrinks to 158 to 172 cm, the range that used to hold only 68%.
 
 A person's distance from the mean, counted in standard deviations, is their **z-score**, $z = (x - \vmu)/\vsigma$. Someone 179 cm tall has $z = 2$, right at the edge of the 95% band, so the rule says roughly 2.5% of the group is taller. The exact share is 2.3%, because 95% was itself rounded. The [z-scores worked example](/statistics/z-scores-worked-example/) uses the same idea to decide whether a 140 cm nine-year-old is taller for their age than a 150 cm eleven-year-old.
 
@@ -131,7 +131,7 @@ Let $\Phi$ be the cumulative distribution function of the standard normal. The s
 
 ### Why does it appear everywhere?
 
-The central limit theorem is the reason. Add up $n$ independent, identically distributed variables with mean $\vmu$ and finite variance $\vsigma^2$. As $n$ grows, the standardized sum $(S_n - n\vmu)/(\vsigma\sqrt{n})$ approaches the standard normal distribution. Equivalently, the average of $n$ draws is approximately normal, centered on $\vmu$ with spread $\vsigma/\sqrt{n}$.
+The central limit theorem is the reason. Add up $n$ independent, identically distributed variables with mean $\vmu$ and finite variance $\vsigma^2$, and call their total $S_n$. As $n$ grows, the standardized sum $(S_n - n\vmu)/(\vsigma\sqrt{n})$ approaches the standard normal distribution. Equivalently, the average of $n$ draws is approximately normal, centered on $\vmu$ with spread $\vsigma/\sqrt{n}$.
 
 <GoDeeper label="why the finite variance condition matters">
 
@@ -139,7 +139,7 @@ The theorem needs the variance to be finite. The Cauchy distribution has tails s
 
 </GoDeeper>
 
-None of this means all data is normal. Incomes, city sizes, earthquake magnitudes and post-ReLU activations are all far from it. The bell appears where effects **add up**; where they **multiply**, you tend to see log-normal or power-law shapes instead.
+None of this means all data is normal. Incomes and city sizes are far from it: the bell appears where effects **add up**, and where they **multiply**, you tend to see log-normal or power-law shapes instead. Post-ReLU activations miss the bell for a simpler reason, because ReLU sets every negative value to exactly 0.
 
 <SideNote>
 You will also see it called the Gaussian distribution, after Carl Friedrich Gauss, who used it to model errors in astronomical measurements.
@@ -185,7 +185,7 @@ This is the **z-score**, which the [z-scores worked example](/statistics/z-score
 1. By definition $M_X(t) = \mathbb{E}[e^{tX}] = \int e^{tx} f(x)\,dx$.
 2. Combine the exponents and complete the square in $x$: $tx - \frac{(x - \vmu)^2}{2\vsigma^2} = -\frac{(x - \vmu - \vsigma^2 t)^2}{2\vsigma^2} + \vmu t + \frac{\vsigma^2 t^2}{2}$.
 3. The first term is the exponent of a normal density centered at $\vmu + \vsigma^2 t$, which integrates to 1, leaving $M_X(t) = \exp\!\left(\vmu t + \tfrac{1}{2}\vsigma^2 t^2\right)$.
-4. Differentiating at $t = 0$ produces the moments. The $n$-th moment about the mean is zero for odd $n$, by symmetry, and $\vsigma^n (n-1)!!$ for even $n$.
+4. Differentiating $M_X$ at $t = 0$ gives the raw moments $\mathbb{E}[X^n]$. For the moments about the mean, use $X - \vmu$, whose MGF is $\exp\!\left(\tfrac{1}{2}\vsigma^2 t^2\right)$. The $n$-th moment about the mean is zero for odd $n$, by symmetry, and $\vsigma^n (n-1)!!$ for even $n$, where $(n-1)!! = (n-1)(n-3)\cdots 1$.
 
 </StepThrough>
 
@@ -197,7 +197,7 @@ This is the **z-score**, which the [z-scores worked example](/statistics/z-score
 
 <WorkedExample number={1} title="How unusual is a height?">
 
-Suppose adult heights in a group are normal with $\vmu = 165$ cm and $\vsigma = 7$ cm. A person 179 cm tall has $z = (179 - 165)/7 = 2$: two standard deviations above the mean. Only about 2.3% of the group is taller.
+Suppose adult heights in a group are normal with $\vmu = 165$ cm and $\vsigma = 7$ cm. A person 154.5 cm tall has $z = (154.5 - 165)/7 = -1.5$: one and a half standard deviations below the mean. Only about 6.7% of the group is shorter.
 
 </WorkedExample>
 
@@ -223,7 +223,7 @@ The second argument is the variance: $2/512 \approx 0.0039$. The standard deviat
 
 ### Weight initialization
 
-How weights start decides whether signals and gradients survive the trip through a deep network. **He initialization** <Cite id="he2015" /> draws weights from $\mathcal{N}(0,\, 2/n_{\text{in}})$, giving a standard deviation of $\sqrt{2/n_{\text{in}}}$, and was derived for ReLU layers. **Xavier (Glorot) initialization** <Cite id="glorot2010" /> uses $\mathcal{N}(0,\, 2/(n_{\text{in}} + n_{\text{out}}))$ and was derived for tanh, sigmoid and linear layers. Glorot and Bengio's paper used the uniform version $U(-a, a)$ with $a = \sqrt{6/(n_{\text{in}} + n_{\text{out}})}$, which has the same variance and is Keras's default. In both cases the second argument is the variance.
+How weights start decides whether signals and gradients survive the trip through a deep network. **He initialization** <Cite id="he2015" /> draws weights from $\mathcal{N}(0,\, 2/n_{\text{in}})$, giving a standard deviation of $\sqrt{2/n_{\text{in}}}$, and was derived for ReLU layers. **Xavier (Glorot) initialization** <Cite id="glorot2010" /> uses $\mathcal{N}(0,\, 2/(n_{\text{in}} + n_{\text{out}}))$ and was derived for layers that act roughly linearly near zero, such as tanh and linear layers. Glorot and Bengio's paper used the uniform version $U(-a, a)$ with $a = \sqrt{6/(n_{\text{in}} + n_{\text{out}})}$, which has the same variance and is Keras's default. In both cases the second argument is the variance.
 
 ### Batch normalization
 
@@ -307,6 +307,43 @@ top_5_start = height_mu + 1.645 * height_sigma
 print(f"top 5% starts at {top_5_start:.1f} cm")
 assert round(top_5_start, 1) == 176.5
 assert abs(share_above(1.645) - 0.05) < 0.0005
+
+# Worked example 1: a height below the mean
+z_short = (154.5 - height_mu) / height_sigma
+shorter = share_above(-z_short)
+print(f"z = {z_short}: {shorter:.1%} of the group is shorter")
+assert z_short == -1.5 and round(shorter, 3) == 0.067
+
+# The rest of the rule: 1.96 for 95%, the 3-sigma tail, the rule's 2.5%
+assert abs(share_within(1.96) - 0.95) < 0.0005
+assert round(1 - share_within(3), 4) == 0.0027
+assert round((1 - 0.95) / 2, 3) == 0.025
+
+# Peak height 1/(sigma * sqrt(2 pi)): doubling sigma halves it, tripling cuts it to a third
+from math import pi, isclose
+
+def peak(s):
+    return 1 / (s * sqrt(2 * pi))
+
+assert isclose(peak(2) / peak(1), 1 / 2) and isclose(peak(3) / peak(1), 1 / 3)
+
+# Between mu - sigma and mu + 2 sigma: 34.13% + 47.72% = 81.86%
+left_half, right_half = share_within(1) / 2, share_within(2) / 2
+assert abs(left_half - 0.3413) < 0.0001 and abs(right_half - 0.4772) < 0.0001
+assert round(left_half + right_half, 4) == 0.8186
+
+# He initialization with 512 inputs
+variance = 2 / 512
+assert round(variance, 4) == 0.0039 and sqrt(variance) == 0.0625
+
+# Dice: 7 is the commonest total of two dice, ten dice center on 35
+from itertools import product
+from collections import Counter
+
+two_dice = Counter(a + b for a, b in product(range(1, 7), repeat=2))
+assert two_dice[7] == 6 and max(two_dice, key=two_dice.get) == 7
+assert two_dice[2] == two_dice[12] == 1 and sum(two_dice.values()) == 36
+assert 10 * 3.5 == 35
 `}
 />
 
@@ -383,7 +420,7 @@ No. It sets each feature's batch mean to 0 and variance to 1 (before $\gamma$ an
 </CheckYourself>
 
 <CheckYourself level="proof" question="Show that the mean of X ~ 𝒩(μ, σ²) is μ, using only the symmetry of the density.">
-Write $\mathbb{E}[X] - \vmu = \int (x - \vmu) f(x)\,dx$ and substitute $y = x - \vmu$. The density is symmetric about $\vmu$, so in terms of $y$ it is an even function, while $y$ itself is odd. Their product is odd, and the integral of an odd function over the whole real line is 0, provided it converges, which it does here because the tails fall off like $e^{-y^2/2\vsigma^2}$. So $\mathbb{E}[X] = \vmu$.
+Write $\mathbb{E}[X] - \vmu = \int (x - \vmu) f(x)\,dx$ and substitute $y = x - \vmu$. The density is symmetric about $\vmu$, so in terms of $y$ it is an even function, while $y$ itself is odd. Their product is odd, and the integral of an odd function over the whole real line is 0, provided it converges, which it does here because the tails fall off like $e^{-y^2/(2\vsigma^2)}$. So $\mathbb{E}[X] = \vmu$.
 </CheckYourself>
 
 ## Common mistakes
