@@ -1,6 +1,6 @@
 ---
 title: "Variance and standard deviation"
-description: "Measure how far values spread from their mean, see why the distances are squared, and learn why NumPy divides by n while pandas divides by n − 1."
+description: "Measure how far values spread from their mean, see why the distances are squared, why the sample version divides by n − 1, and which one NumPy and pandas use."
 sidebar:
   order: 3
 topic: statistics/variance-and-standard-deviation
@@ -66,7 +66,7 @@ import DescriptiveStats from "../../../components/react/DescriptiveStats.tsx";
 
 <Analogy breaks="The side of the average tile is not the average string length: squaring weighs far children more, so σ is 8 cm while the strings average 62/9 ≈ 6.89 cm. And one child standing far away, perhaps a typo of 1,480 for 148, gets a gigantic tile that swamps everyone else's.">
 
-Nine children from one class stand along a measuring tape on the floor, each on the mark for their own height. A plank laid along the tape balances at one point: the class's average height, 134 cm. Each child stretches a string to that balance point.
+Nine children from one class stand on a long plank, each on the mark for their own height along a measuring tape. If they all weighed the same, the plank would balance at one point: the class's average height, 134 cm. Each child stretches a string to that balance point.
 
 Could the strings measure how spread out the class is? Not as they are: count the strings on the left as negative and those on the right as positive, and they cancel exactly. Instead, make each string the side of a square tile. Every tile has a positive area, and a long string makes a much bigger tile. The average tile area is the variance, 64 square centimeters. The side of a tile with that average area is the standard deviation, 8 cm, back in centimeters.
 
@@ -75,14 +75,14 @@ Now guess the spread of the whole school from a few of its children. You can onl
 </Analogy>
 
 <WhyThisMatters>
-Batch normalization and layer normalization divide every activation by a standard deviation computed on the fly, and feature scaling divides every input by one. A result reported as "accuracy 91.1 ± 0.3 over five seeds" is a mean and a standard deviation. The two versions of the standard deviation give different numbers on the same data, so copying a formula from one library to another can change a result without any error.
+Batch normalization and layer normalization divide every activation by a standard deviation computed on the fly, and feature scaling divides every input by its feature's standard deviation. A result reported as "accuracy 91.1 ± 0.3 over five seeds" is a mean and a standard deviation. The two versions of the standard deviation give different numbers on the same data, so copying a formula from one library to another can change a result without any error.
 </WhyThisMatters>
 
 ## Spread the class out, pull it in
 
-The board below opens on our class and already shows its standard deviation, 8 cm. Before you touch the presets: the **Tight class** has the same average height, 134 cm, but its children stand closer to it. Will its standard deviation be half of ours, a quarter of ours, or something else? Going further: by what factor does the variance shrink?
+The board below opens on our class and already shows its standard deviation, 8 cm. The board's presets load ready-made classes. One of them, the **Tight class**, has the same average height, 134 cm, and a standard deviation of 4 cm, half of ours. Before you press it: will its variance be half of ours, a quarter of ours, or something else?
 
-Pick a child under Child to move, then change their Height with the slider (arrow keys 1 cm, Page Up and Page Down 5 cm) or drag along the strip under the axis. The pink triangle marks the mean <Var name="mu" />, and the blue span one standard deviation <Var name="sigma" /> on each side. Show distances draws each child's distance to the mean. The presets Our class, Tight class and Everyone 134 cm load whole classes; after one, a dashed span keeps the previous class's σ. Show as switches between Numbers and Symbols, and Table view lists every child's height and place in line, then the summary.
+Pick a child under **Child to move**, then change their **Height** with the slider (arrow keys 1 cm, Page Up and Page Down 5 cm) or drag along the strip under the axis. The pink triangle marks the mean <Var name="mu" />, and the blue span covers one standard deviation <Var name="sigma" /> on each side. **Show distances** draws each child's distance to the mean. The presets **Our class**, **Tight class** and **Everyone 134 cm** load whole classes; after one, a dashed span keeps the previous class's σ. **Show as** switches between **Numbers** and **Symbols**, and **Table view** lists every child's height and place in line, then the summary.
 
 Your task, before you press any preset: using Child to move and Height, make <Var name="sigma" /> smaller than 8 cm without changing the mean. One move can't do it, because moving one child also moves the mean, so plan two.
 
@@ -105,7 +105,7 @@ The variance is the average of the squared distances from the mean, and the stan
 3. **Squares.** 144 + 81 + 36 + 9 + 1 + 9 + 36 + 64 + 196 = 576.
 4. **Average, then root.** The variance is 576 / 9 = 64 cm², and the standard deviation is √64 = 8 cm.
 
-Why square at all? The signed distances can't measure spread, because they always add up to 0: the children above the mean exactly balance those below it, which is what makes it the mean. Dropping the signs works too, and the absolute distances average 62/9 ≈ 6.89 cm. Squares are used instead because they lead to simple rules, such as the shifting and scaling rules and the n − 1 correction below, and because the mean is exactly the point that makes the total of the squared distances smallest.
+Why square at all? The signed distances can't measure spread, because they always add up to 0: the children above the mean exactly balance those below it, which is what makes it the mean. Dropping the signs works too, and the absolute distances average 62/9 ≈ 6.89 cm. Squares are used instead because they lead to simple rules, such as the n − 1 correction below, and because the mean is exactly the point that makes the total of the squared distances smallest.
 
 Squaring has a side effect: the variance comes out in squared units, cm² for heights. The square root at the end puts the standard deviation back in centimeters, on the same axis as the heights.
 
@@ -545,7 +545,7 @@ assert abs(by_n / trials - 32) < 0.5 and abs(by_n_minus_1 / trials - 64) < 1.0
 `}
 />
 
-Listing every sample is the proof: the ÷ (n − 1) averages are exactly 64. The simulation lands close to 32 and 64 without being exact, which is all random sampling can do.
+Listing every sample checks it exactly for our class: the ÷ (n − 1) averages are exactly 64. The simulation lands close to 32 and 64 without being exact, which is all random sampling can do.
 
 The second program checks the library table above with NumPy and pandas, then recomputes it from the formula. Every NumPy and pandas summary of a list is on the [descriptive statistics cheat sheet](/statistics/descriptive-statistics-cheat-sheet/).
 
