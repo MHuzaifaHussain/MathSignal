@@ -581,7 +581,20 @@ function loneGiantPassesTwo(giant: number): boolean {
 	return rootNumber(zScore(giant, pumpkins(giant, 1))) > 2;
 }
 
+/** The outlier readout in its parts: the fences, the IQR verdict (when it has a line of its own), the z verdict, and why |z| > 3 can't fire. */
+interface OutlierParts {
+	fences: string;
+	iqr: string | null;
+	z: string;
+	ceiling: string | null;
+}
+
 function outlierLines(state: DescriptiveState): string[] {
+	const parts = outlierParts(state);
+	return [parts.fences, parts.iqr, parts.z, parts.ceiling].filter((line): line is string => line !== null);
+}
+
+function outlierParts(state: DescriptiveState): OutlierParts {
 	const values = state.values;
 	const { q1, q3 } = quartiles(values);
 	const spreadQ = iqr(values);
@@ -597,24 +610,36 @@ function outlierLines(state: DescriptiveState): string[] {
 	const onFence = compareFractions(fraction(giant, 1), upper) === 0;
 	const meanText = `Mean ${amount(center)} kg, σ ${withEquals(rootAmount(sigma))} kg`;
 	const zFlagText = z > 3 ? 'flagged at |z| > 2 and at |z| > 3' : z > 2 ? 'flagged at |z| > 2, not at |z| > 3' : 'not flagged at |z| > 2 or at |z| > 3';
-	const lines = [fenceLine];
+	const ceiling = state.cutoff === 3 && giantTried(state) ? ceilingLine(state) : null;
 	if (state.giants === 2) {
 		const zVerdict = z > 2 ? `Both pass |z| > 2${z > 3 ? ' and |z| > 3' : ''}.` : `Neither passes |z| > 2${loneGiantPassesTwo(giant) ? ': the two giants hide each other' : ''}.`;
-		lines.push(`${meanText}, each z ${zText}. ${zVerdict} ${iqrFlagged ? 'The IQR rule still flags both.' : 'The IQR rule flags neither.'}`);
-	} else if (!iqrFlagged && z <= 2 && !onFence) {
-		const largest = Math.max(...values.map((value) => Math.abs(rootNumber(zScore(value, values)))));
-		lines.push(`Every pumpkin is inside the fences (${amount(lower)} kg to ${amount(upper)} kg) and every |z| is at most ${approxNumber(largest)}: nothing is flagged.`);
-	} else {
-		const iqrText = onFence
-			? `On the fence is not past it: the IQR rule doesn't flag ${giant} kg, ${z > 2 ? `but z ${zText} passes |z| > 2.` : 'and |z| > 2 doesn\'t either.'}`
-			: iqrFlagged
-				? `The ${giant} kg pumpkin is past it: the IQR rule flags it.`
-				: `The ${giant} kg pumpkin is inside it: the IQR rule doesn't flag it.`;
-		lines.push(iqrText);
-		lines.push(`${meanText}, so its z-score is ${zText}: ${zFlagText}.`);
+		return { fences: fenceLine, iqr: null, z: `${meanText}, each z ${zText}. ${zVerdict} ${iqrFlagged ? 'The IQR rule still flags both.' : 'The IQR rule flags neither.'}`, ceiling };
 	}
-	if (state.cutoff === 3 && giantTried(state)) lines.push(ceilingLine(state));
-	return lines;
+	if (!iqrFlagged && z <= 2 && !onFence) {
+		const largest = Math.max(...values.map((value) => Math.abs(rootNumber(zScore(value, values)))));
+		return { fences: fenceLine, iqr: null, z: `Every pumpkin is inside the fences (${amount(lower)} kg to ${amount(upper)} kg) and every |z| is at most ${approxNumber(largest)}: nothing is flagged.`, ceiling };
+	}
+	const iqrText = onFence
+		? `On the fence is not past it: the IQR rule doesn't flag ${giant} kg, ${z > 2 ? `but z ${zText} passes |z| > 2.` : 'and |z| > 2 doesn\'t either.'}`
+		: iqrFlagged
+			? `The ${giant} kg pumpkin is past it: the IQR rule flags it.`
+			: `The ${giant} kg pumpkin is inside it: the IQR rule doesn't flag it.`;
+	return { fences: fenceLine, iqr: iqrText, z: `${meanText}, so its z-score is ${zText}: ${zFlagText}.`, ceiling };
+}
+
+/** What a cutoff change says: the cutoff, the z verdict and, at 3, why it can't fire. The fences and IQR don't change with it. */
+function cutoffAnnouncement(state: DescriptiveState): string {
+	const parts = outlierParts(state);
+	return [`Flagging when |z| is above ${state.cutoff}.`, parts.z, parts.ceiling].filter((line): line is string => line !== null).join(' ');
+}
+
+/**
+ * What a spread preset says: the class, its mean and σ, how σ changed (the dashed ghost) and the goal. The working
+ * stays in the readouts and the table, where a reader can browse it at their own pace.
+ */
+function spreadPresetAnnouncement(state: DescriptiveState, label: string): string {
+	const summary = `Mean ${amount(mean(state.values))} cm, σ ${withEquals(sigmaText(state.values))} cm.`;
+	return [`${label}.`, summary, ghostLine(state), goalStatus(state)].filter((line): line is string => line !== null).join(' ');
 }
 
 /**
@@ -1019,7 +1044,7 @@ function announcementText(state: DescriptiveState, action: Action): string {
 			if (setup.kind === 'newcomer') return state.newcomer === null ? `${label}. ${readouts}` : `${label}. ${newcomerChange(state)}`;
 			// On Raw marks the change in scaled scores would answer the page before a scale is picked: say what shows.
 			if (setup.kind === 'scaling') return action.id === setup.presets[0]?.id || state.scale === 'raw' ? `${label}. ${readouts}` : lowMarkChange(state);
-			if (setup.kind === 'spread') return `${label}. ${readouts} ${goal ?? ''}`.trim();
+			if (setup.kind === 'spread') return spreadPresetAnnouncement(state, label);
 			// A new class arrives unsorted and covered, so it is introduced, not summarized.
 			if (setup.kind === 'lineup') return `${label}. ${statusLine(state)}`;
 			return `${label}. ${readouts}`;
@@ -1037,7 +1062,7 @@ function announcementText(state: DescriptiveState, action: Action): string {
 		case 'scale':
 			return `${SCALE_LABELS[state.scale]}. ${readouts}`;
 		case 'cutoff':
-			return `Flagging when |z| is above ${state.cutoff}. ${readouts}`;
+			return cutoffAnnouncement(state);
 		case 'table':
 			return tableFoldAnnouncement(action.open, tableFoldSentence(state));
 		case 'reset':

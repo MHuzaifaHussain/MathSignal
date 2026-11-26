@@ -3567,7 +3567,8 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	]);
 	assert.equal(
 		dsay.announcementFor(run('pumpkin-outliers', cutoff3), cutoff3),
-		'Flagging when the size of z is above 3. Q1 = 5 kg, Q3 = 7 kg, IQR = 2 kg, so the upper fence is 7 + 3 = 10 kg. Every pumpkin is inside the fences (2 kg to 10 kg) and every z, ignoring its sign, is at most ≈ 1.73: nothing is flagged.',
+		// The cutoff and the z verdict only: the fences and the IQR rule don't change with the cutoff.
+		'Flagging when the size of z is above 3. Every pumpkin is inside the fences (2 kg to 10 kg) and every z, ignoring its sign, is at most ≈ 1.73: nothing is flagged.',
 	);
 	const ceiling = 'With 9 pumpkins no z-score can reach √8 ≈ 2.83, however heavy the giant, so |z| > 3 can never flag anything here.';
 	const twoCeiling = "With 9 pumpkins and two equal giants, neither giant's z-score can reach √3.5 ≈ 1.87, however heavy they are, so |z| > 3 can never flag anything here.";
@@ -8001,6 +8002,24 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	// The z table's row headers (normalDistribution/ZTable.tsx).
 	assert.equal(spokenMath('z-score, (x − μ) / σ'), 'z-score, (x − mu) divided by sigma');
 	assert.equal(spokenMath('Share below, Φ(z)'), 'Share below, Phi of z');
+}
+
+// ---- DescriptiveStats: a preset or cutoff press says what changed, not the whole readout panel ----
+
+{
+	const descState = await import('../src/components/react/descriptiveStats/state.ts');
+	const descSay = await import('../src/components/react/descriptiveStats/describe.ts');
+	let spread = descState.initialState('class-spread');
+	for (const action of [{ type: 'distances', on: true }, { type: 'sample', on: true }, { type: 'stage', stage: 'symbols' }]) spread = descState.reducer(spread, action);
+	const tight = { type: 'preset', id: 'tight-class' };
+	assert.equal(
+		descSay.announcementFor(descState.reducer(spread, tight), tight),
+		'Tight class. Mean 134 cm, sigma = 4 cm. Dashed: sigma for Our class was 8 cm; now it is 4 cm. Done: the mean is still 134 cm and sigma = 4 cm is smaller than 8 cm.',
+	);
+	const giant = descState.reducer(descState.reducer(descState.initialState('pumpkin-outliers'), { type: 'preset', id: 'one-giant' }), { type: 'cutoff', cutoff: 3 });
+	const said = descSay.announcementFor(giant, { type: 'cutoff', cutoff: 3 });
+	assert.ok(said.startsWith('Flagging when the size of z is above 3. '), said);
+	assert.ok(!said.includes('Q1') && !said.includes('IQR rule flags it'), `the cutoff doesn't repeat the fences: ${said}`);
 }
 
 // ---- Page components: names of wide tables and formulas (decision 0024) ----
