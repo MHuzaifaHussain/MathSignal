@@ -62,7 +62,7 @@ import DescriptiveStats from "../../../components/react/DescriptiveStats.tsx";
 
 ## In everyday terms
 
-<Analogy breaks="The ruler hangs on just two children, so one bad day stretches it for everyone. The typical step uses every child, but one far-off child still lengthens it. A new child above the old top mark lands past the end of the ruler.">
+<Analogy breaks="The ruler's pins are the lowest and highest marks; the typical step comes from every mark. A new mark above the old top lands past the end of the ruler.">
 
 Ana's class sat two tests, one marked out of 50 and one out of 80. Her teacher wants to know which test went better for Ana, compared with the rest of the class.
 
@@ -70,7 +70,7 @@ The first picture is a stretchy ruler. Pin one end at the lowest mark in the cla
 
 The second picture is a typical step. Stand at the class average and count how far above it Ana is in steps, where one step is how far a typical classmate stands from the average on that test.
 
-The stretchy ruler is called min-max scaling; the typical-step count is a [z-score](/statistics/z-scores-worked-example/), and turning every value into one is called standardization. The two pictures can give different answers, and the board below shows when.
+The stretchy ruler is called min-max scaling; the typical-step count is a [z-score](/statistics/z-scores-worked-example/), and turning every value into its z-score is called standardization. The board below puts both pictures side by side.
 
 </Analogy>
 
@@ -92,7 +92,7 @@ Your task: switch Scale through all three views and note which test each one fav
 
 **It depends on the yardstick.** On Raw marks the board says "Ana scored 36 out of 50 on test A (72%) and 58 out of 80 on test B (72.5%)." Percentages compare her with the top possible mark, not with her classmates.
 
-On Min–max (0 to 1): "Test A: (36 − 21) / (39 − 21) = 15/18 = 5/6 ≈ 0.83. Test B: (58 − 38) / (64 − 38) = 20/26 = 10/13 ≈ 0.77. Min–max says test A." Min-max only asks where Ana sits between the lowest and highest mark: 3 below the top on A, 6 below it on B.
+On Min–max (0 to 1): "Test A: (36 − 21) / (39 − 21) = 15/18 = 5/6 ≈ 0.83. Test B: (58 − 38) / (64 − 38) = 20/26 = 10/13 ≈ 0.77. Min–max says test A." Min-max only asks where Ana sits between the lowest and highest mark: 3 below the top of an 18-mark range on A, 6 below the top of a 26-mark range on B.
 
 On z-scores: "Test A: (36 − 30) / 6 = 1. Test B: (58 − 50) / 8 = 1. Ana is exactly one standard deviation above the mean on both." So the two scales already disagree: min-max measures against the two extreme classmates, z-scores against the whole class.
 
@@ -125,7 +125,7 @@ scikit-learn's comparison of scalers on California housing data finds that "Both
 
 ### When neither fits: the median and the IQR
 
-A third scaler subtracts the median and divides by the interquartile range (IQR), so one extreme value can't move it. scikit-learn's `RobustScaler` does this, with the IQR running from the 25th to the 75th percentile by default <Cite id="sklearn-robustscaler" />. With NumPy's default quartiles (the [box plot page](/statistics/reading-box-plots-quartiles-iqr/) shows how they're found), test B has lower quartile 44, median 49 and upper quartile 56, so the IQR is 12 and Ana scores (58 − 49)/12 = 3/4, with the 38 or with the 10. On test A the quartiles are 24, 30 and 36, so she scores (36 − 30)/12 = 1/2. This third yardstick says test B. The extreme mark itself stays in the scaled data <Cite id="sklearn-scaler-outliers" />.
+A third scaler subtracts the median and divides by the interquartile range (IQR), so one extreme value barely moves it. scikit-learn's `RobustScaler` does this, with the IQR running from the 25th to the 75th percentile by default <Cite id="sklearn-robustscaler" />. With NumPy's default quartiles (the [box plot page](/statistics/reading-box-plots-quartiles-iqr/) shows how they're found), test B has lower quartile 44, median 49 and upper quartile 56, so the IQR is 12 and Ana scores (58 − 49)/12 = 3/4, with the 38 or with the 10. Nothing moves here because the 38 was already the lowest mark. On test A the quartiles are 24, 30 and 36, so she scores (36 − 30)/12 = 1/2. This third yardstick says test B. The extreme mark itself stays in the scaled data <Cite id="sklearn-scaler-outliers" />.
 
 ### When to use which
 
@@ -175,7 +175,7 @@ Boundary cases. If every value is the same, both formulas divide by 0. A new val
 1. Both maps are $x \mapsto (x - a)/b$ with $b > 0$: $a = \vmu$, $b = \vsigma$ for standardization; $a = x_{\min}$, $b = x_{\max} - x_{\min}$ for min-max.
 2. Change units by $y_i = c\,x_i + d$ with $c > 0$; percentages on test A use $c = 2$. Then $\vmu_y = c\,\vmu + d$ and $\vsigma_y = c\,\vsigma$ ([shifting and stretching](/statistics/variance-and-standard-deviation/#shifting-and-stretching-the-whole-class)), and $y_{\min} = c\,x_{\min} + d$, $y_{\max} = c\,x_{\max} + d$.
 3. In $(y_i - a_y)/b_y$ the $d$ cancels in the difference and the $c$ in the ratio, so both scores are unchanged.
-4. Because $b > 0$, the order is kept. Every gap between two values is divided by the same $b$, so a histogram keeps its shape and only slides and stretches; a one-to-one map that is not a shift and stretch, such as a log, keeps the order but changes the shape.
+4. Because $b > 0$, the order is kept. Every gap between two values is divided by the same $b$, so a histogram keeps its shape and only slides and stretches; an increasing map that is not a shift and stretch, such as a log, keeps the order but changes the shape.
 5. If $c < 0$, every $z$ flips sign and $x'$ becomes $1 - x'$.
 
 </StepThrough>
@@ -321,7 +321,7 @@ for xs in (A, B):
     zs = [z_score(x, xs) for x in xs]
     assert mean(zs) == 0 and variance(zs) == 1
     assert sorted(zs) == zs and sorted(xs) == xs  # the order is kept
-# With n values no |z| can pass the square root of n - 1, here 8: check it on every list.
+# With n values no |z| can pass the square root of n - 1 (here n - 1 = 8, so |z| <= sqrt(8)): check it on every list.
 for xs in (A, B, B_low):
     assert max((x - mean(xs)) ** 2 / variance(xs) for x in xs) <= len(xs) - 1
 
