@@ -4834,10 +4834,12 @@ const labelsOverlap = (first, second, size) => {
 
 	// ---- Every setup ----
 	const bannedWord = new RegExp(['pro', 'mpt'].join(''), 'i');
+	// The ochre element each setup opens with (null: nothing ochre yet). Every setup is listed, so a new one can't skip it.
+	const OPENING_OCHRE = { 'trips-add': 'guess', 'trips-scale': 'scaled', 'cart-push': null, align: null, 'span-reach': 'flag', 'span-shape': null, 'city-walk': 'route' };
+	assert.deepEqual(Object.keys(OPENING_OCHRE), Object.keys(vs.SETUPS));
 	for (const id of Object.keys(vs.SETUPS)) {
 		const open = vst.initialState(id);
-		// Exactly one ochre element at a time, and nothing pink or blue.
-		assert.ok([null, 'guess', 'sum', 'scaled', 'shadow', 'flag', 'span', 'route', 'ball'].includes(vd.ochreElement(open)));
+		assert.equal(vd.ochreElement(open), OPENING_OCHRE[id], id);
 		// Handles and steppers agree: every handle's point is in the table, and every label ends without a period.
 		for (const handle of vd.handlesFor(open)) assert.ok(!handle.label.endsWith('.'), handle.label);
 		// No em dash, and never the word the site's style bans for a question put to the reader (spelled in parts
