@@ -6,6 +6,15 @@
 @import './tokens.css';
 @import './components.css';
 
+/* ── Large screens (decision 0025) ──
+ * The root grows from 100% at 1920px to 150% at 3840px and stops, so 4K screens and TVs get the laptop layout one and
+ * a half times larger; everything sized in rem follows. Below 1920px it is exactly 100%. The slope is gentle so browser
+ * zoom still enlarges text (8z + 16 px at 3840px), and rem/% keep a reader's own default font size in the sum.
+ * Not CSS zoom: it breaks Mafs dragging. Unlayered, so it wins over Starlight's layers; check:boards pins the curve. */
+html {
+	font-size: clamp(100%, calc(100% + (100vw - 120rem) / 240), 150%);
+}
+
 /* ── Starlight mapping ──
  * Unlayered, so it wins over Starlight's layered defaults in both themes.
  * The variables reference tokens, which switch with [data-theme].

@@ -8203,4 +8203,35 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	assert.equal(new Set(named.slice(1, 3)).size, 2, 'tables with the same headers get different names');
 }
 
+// ---- Large screens: the root font-size curve (decision 0025) ----
+
+{
+	const css = readText('src/styles/global.css');
+	const rule = /\nhtml \{\n\tfont-size: clamp\((\d+(?:\.\d+)?)%, calc\((\d+(?:\.\d+)?)% \+ \(100vw - (\d+(?:\.\d+)?)rem\) \/ (\d+(?:\.\d+)?)\), (\d+(?:\.\d+)?)%\);\n\}/.exec(css);
+	assert.ok(rule, 'global.css sets html { font-size: clamp(min%, calc(base% + (100vw - threshold rem) / divisor), max%) }');
+	const [minPercent, basePercent, thresholdRem, divisor, maxPercent] = rule.slice(1).map(Number);
+	/** The root font size in CSS px for a viewport this many CSS px wide, as the browser evaluates the rule. */
+	const rootPx = (viewportPx, defaultPx = 16) => {
+		const preferred = (basePercent / 100) * defaultPx + (viewportPx - thresholdRem * defaultPx) / divisor;
+		return Math.min(Math.max(preferred, (minPercent / 100) * defaultPx), (maxPercent / 100) * defaultPx);
+	};
+	for (const width of [320, 375, 768, 1280, 1440, 1920]) assert.equal(rootPx(width), 16, `the root is 16px (100%) at ${width}px`);
+	assert.equal(rootPx(1921) > 16, true, 'scaling starts just above 1920px');
+	assert.equal(rootPx(2560), 16 + 640 / 240, 'the root at 2560px');
+	assert.equal(rootPx(3840), 24, 'the root is 24px (150%) at 3840px');
+	for (const width of [4000, 5120, 7680]) assert.equal(rootPx(width), 24, `the root is capped at 150% at ${width}px`);
+	for (let width = 200; width <= 8000; width += 40) {
+		assert.ok(rootPx(width) >= 16 && rootPx(width) <= 24, `the root stays within 100% and 150% at ${width}px`);
+		assert.ok(rootPx(width + 40) >= rootPx(width), `the root never shrinks as the screen widens (${width}px)`);
+	}
+	// Browser zoom z shrinks the viewport to 3840 / z CSS px and draws each CSS px z times larger: 8z + 16 px on screen.
+	const visualAt3840 = (zoom) => zoom * rootPx(3840 / zoom);
+	for (const zoom of [1, 1.5, 2]) assert.ok(Math.abs(visualAt3840(zoom) - (8 * zoom + 16)) < 1e-9, `text at 3840px and zoom ${zoom} is 8z + 16 px`);
+	assert.ok(visualAt3840(1) < visualAt3840(1.5) && visualAt3840(1.5) < visualAt3840(2), 'zoom 1, 1.5 and 2 give 24, 28 and 32px, strictly rising');
+	for (let zoom = 1; zoom < 4; zoom += 0.1) assert.ok(visualAt3840(zoom + 0.1) > visualAt3840(zoom), `zoom still enlarges text at ${zoom.toFixed(1)}`);
+	// A reader's larger default font adds on, and is never shrunk.
+	assert.equal(rootPx(1920, 20), 20);
+	assert.equal(rootPx(3840, 20), 20 + (3840 - 2400) / 240);
+}
+
 console.log('Board check passed.');
