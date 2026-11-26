@@ -5,13 +5,14 @@ import { toNumber } from "../boardMath";
 import { Segment } from "../planeLines";
 import { plotColors } from "../plotColors";
 import { evaluate, pieceCurve } from "./functions.ts";
-import { LABEL_DISTANCE, LABEL_SIZE, axisNumber, fitLabel, viewNumbers } from "./model.ts";
+import { axisLabels, numberedValues, planeLabels } from "./labelLayout.ts";
+import { LABEL_SIZE, viewNumbers } from "./model.ts";
 import { planeMarks, type Mark, type MarkColor, type MarkFill } from "./marks.ts";
 import { pointValue, viewOf } from "./setups.ts";
 import { curveFor, type CurveState } from "./state.ts";
 
 /** The only place mark colors become CSS: marks.ts decides which mark is ink, muted or ochre. */
-export const MARK_COLORS: Readonly<Record<MarkColor, string>> = { ink: plotColors.ink, muted: plotColors.inkMuted, ochre: plotColors.attention };
+export const MARK_COLORS: Readonly<Record<MarkColor, string>> = { ink: plotColors.ink, muted: plotColors.inkMuted, ochre: plotColors.attention, axis: plotColors.axis };
 /** The only place a dot's fill becomes CSS: marks.ts decides which dots are open. */
 export const MARK_FILLS: Readonly<Record<MarkFill, string>> = { board: "var(--ms-board)" };
 
@@ -46,6 +47,7 @@ function MarkShape({ mark, onMovePoint, constrain }: { mark: Mark; onMovePoint: 
     case "open-dot":
     case "value-dot":
     case "axis-name":
+    case "axis-number":
       return null;
   }
 }
@@ -72,9 +74,11 @@ export default function CurvePlane({ state, size, onMovePoint }: CurvePlaneProps
   );
   const handleMove = useCallback((point: vec.Vector2) => onMovePoint(Math.round(point[0] * 2)), [onMovePoint]);
   const slide = state.stage === "slide";
-  const xAxis = slide ? { lines: 1, labels: false as const } : { lines: curveView.xLines, labels: axisNumber };
-  const yAxis = slide ? { lines: 1, labels: false as const } : { lines: curveView.yLines, labels: axisNumber };
+  const numbered = numberedValues(curveView);
+  const xAxis = slide ? { lines: 1, labels: false as const } : { lines: curveView.xLines, labels: axisLabels(numbered.x) };
+  const yAxis = slide ? { lines: 1, labels: false as const } : { lines: curveView.yLines, labels: axisLabels(numbered.y) };
   const marks = planeMarks(state);
+  const labels = planeLabels(state, size);
 
   return (
     <Mafs height={size} viewBox={{ x: [x[0], x[1]], y: [y[0], y[1]], padding: 0 }} preserveAspectRatio={false} pan={false} zoom={false}>
@@ -83,23 +87,11 @@ export default function CurvePlane({ state, size, onMovePoint }: CurvePlaneProps
         // The point keeps one key, so a drag that swaps Slide for Ruler (and the marks before it) doesn't remount it.
         <MarkShape key={mark.kind === "point" ? "point" : `${mark.kind}-${index}`} mark={mark} onMovePoint={handleMove} constrain={constrain} />
       ))}
-      {marks.map((mark, index) => {
-        if (!mark.label) return null;
-        const fitted = fitLabel(curveView.view, mark.label.at, mark.label.attach, mark.label.text, size);
-        return (
-          <Text
-            key={`label-${index}`}
-            x={fitted.at[0]}
-            y={fitted.at[1]}
-            attach={fitted.attach}
-            attachDistance={LABEL_DISTANCE}
-            size={LABEL_SIZE}
-            color={MARK_COLORS[mark.label.color]}
-          >
-            {mark.label.text}
-          </Text>
-        );
-      })}
+      {labels.map((label, index) => (
+        <Text key={`label-${index}`} x={label.textAt[0]} y={label.textAt[1]} attach={label.attach} attachDistance={0} size={LABEL_SIZE} color={MARK_COLORS[label.color]}>
+          {label.text}
+        </Text>
+      ))}
     </Mafs>
   );
 }

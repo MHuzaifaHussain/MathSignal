@@ -6509,6 +6509,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	const fcState = await import('../src/components/react/functionCurve/state.ts');
 	const fcSay = await import('../src/components/react/functionCurve/describe.ts');
 	const fcMarks = await import('../src/components/react/functionCurve/marks.ts');
+	const fcLayout = await import('../src/components/react/functionCurve/labelLayout.ts');
 	const { reducer: fcReduce, initialState: fcInitial } = fcState;
 	const fcText = fcModel.numberText;
 	const R2T = 'ruler-to-tangent';
@@ -7227,7 +7228,8 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 			}
 		}
 		assert.ok(reachable.length > 2000, `enumerated ${reachable.length} states`);
-		const FC_PLANE_SIZES = [270, 400];
+		// The planes a 320px phone, a 375px phone and a desktop draw (the cap is 400px).
+		const FC_PLANE_SIZES = [270, 325, 400];
 		let fittedLabels = 0;
 		for (const state of reachable) {
 			const where = `${state.setupId} ${state.preset} x=${state.xIndex / 2} h#${state.hIndex} ${state.stage} lines=${state.linesOn}`;
@@ -7235,7 +7237,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 			assert.equal(marks.filter((mark) => mark.color === 'ochre').length, 1, `exactly one ochre mark: ${where}`);
 			assert.equal(marks.find((mark) => mark.color === 'ochre').kind, fcMarks.ochreElement(state), where);
 			for (const mark of [...marks, ...fcMarks.stripMarks(state)]) {
-				if (mark.label) assert.equal(mark.label.color, 'ink', `${mark.kind}'s label is ink: ${where}`);
+				if (mark.label) assert.equal(mark.label.color, mark.kind === 'axis-number' ? 'axis' : 'ink', `${mark.kind}'s label is ink (a strip number takes the axes' color): ${where}`);
 				const style = STYLE_BY_KIND[mark.kind];
 				if (style) assert.deepEqual([mark.lineStyle, mark.weight], style, `${mark.kind}: ${where}`);
 			}
@@ -7245,48 +7247,97 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 			assert.equal(marks.at(-1).kind, 'point', 'the point is drawn last, on top');
 			assert.equal(marks.find((mark) => mark.kind === 'point').color, 'ink', 'the point is ink');
 			assert.equal(marks.find((mark) => mark.kind === 'point').movable, state.checked, 'the point moves only after Check');
-			// Every plane label, fitted, clears every edge of the narrowest plane (about 270px on a 320px phone) and the widest (400px).
+			// Every plane label planeLabels keeps clears every edge, every axis number, every dot, every drawn line and every
+			// other label, on each plane size; it may leave out a label that repeats a readout, never "you" or an axis name.
 			const view = fcSetups.viewOf(state.preset).view;
 			const { x, y } = fcModel.viewNumbers(view);
-			for (const mark of marks.filter((entry) => entry.label)) {
-				for (const size of FC_PLANE_SIZES) {
-					const { text, at, attach } = mark.label;
-					const fitted = fcModel.fitLabel(view, at, attach, text, size);
-					assert.equal(fitted.attach, attach, `fitLabel keeps the attach side: ${where}`);
-					const box = fcModel.labelBox(view, fitted.at, fitted.attach, text, size);
+			const labeled = marks.filter((entry) => entry.label);
+			for (const size of FC_PLANE_SIZES) {
+				const placed = fcLayout.planeLabels(state, size);
+				const texts = labeled.map((mark) => mark.label.text);
+				const placedTexts = placed.map((label) => label.text);
+				assert.deepEqual(placedTexts, texts.filter((text) => placedTexts.includes(text)), `labels keep their marks' order: ${where}`);
+				const required = labeled.filter((mark) => mark.kind === 'axis-name' || (mark.kind === 'point' && state.stage === 'slide'));
+				for (const mark of required) assert.ok(placedTexts.includes(mark.label.text), `"${mark.label.text}" is never left out: ${where}`);
+				for (const label of placed) {
+					const { box } = label;
 					const marginX = (fcModel.LABEL_EDGE_MARGIN * (x[1] - x[0])) / size - 1e-9;
 					const marginY = (fcModel.LABEL_EDGE_MARGIN * (y[1] - y[0])) / size - 1e-9;
 					const inside = box.left >= x[0] + marginX && box.right <= x[1] - marginX && box.bottom >= y[0] + marginY && box.top <= y[1] - marginY;
-					assert.ok(inside, `"${text}" leaves a ${size}px plane: ${where}`);
+					assert.ok(inside, `"${label.text}" leaves a ${size}px plane: ${where}`);
+					assert.deepEqual(label.collisions, [], `"${label.text}" is clear on a ${size}px plane: ${where}`);
 					fittedLabels += 1;
 				}
 			}
 		}
 		assert.ok(fittedLabels > 10000, `fitted ${fittedLabels} labels`);
-		// labelBox follows Mafs' Text: 'e' starts 6px right of the anchor, 'n' puts the baseline 6px below it, 'se' moves
-		// 6/√2 px each way. On the 5 × 5 equal-scale view at 400px one pixel is 1/80 of a unit.
+		// labelBox puts a label's box 6px from its anchor on the attach side ('se' 6/√2 px each way), with the ink and halo
+		// measured in Chromium: 8.5px each way of a centered line, 17px from the baseline's 4.5px below to 12.5px above, and
+		// from a hanging line's 0.5px above to 16.5px below. The text is drawn at labelTextPoint with attachDistance 0,
+		// because Mafs' own attachDistance moves 'n' text down and 's' text up onto the anchor. "10" is 2 × 9.5px wide,
+		// times the 1.08 safety. On the 5 × 5 equal-scale view at 400px one pixel is 1/80 of a unit.
 		{
 			const view = fcSetups.CURVE_VIEWS.square.view;
-			const box = (attach) => fcModel.labelBox(view, [0, 2], attach, 'ab', 400);
+			const width = 19 * 1.08;
+			const box = (attach) => fcModel.labelBox(view, [0, 2], attach, '10', 400);
 			const close = (actual, expected, what) => assert.ok(Math.abs(actual - expected) < 1e-12, `${what}: ${actual} vs ${expected}`);
 			close(box('e').left, 6 / 80, "'e' left");
-			close(box('e').right, (6 + 17) / 80, "'e' right");
+			close(box('e').right, (6 + width) / 80, "'e' right");
+			close(box('e').top, 2 + 8.5 / 80, "'e' top");
 			close(box('w').right, -6 / 80, "'w' right");
-			close(box('n').bottom, 2 - 6 / 80, "'n' bottom");
-			close(box('n').top, 2 - 6 / 80 + 18 / 80, "'n' top");
-			close(box('s').top, 2 + 6 / 80, "'s' top");
+			close(box('n').bottom, 2 + 6 / 80, "'n' sits above its anchor");
+			close(box('n').top, 2 + (6 + 17) / 80, "'n' top");
+			close(box('s').top, 2 - 6 / 80, "'s' sits below its anchor");
+			close(box('s').bottom, 2 - (6 + 17) / 80, "'s' bottom");
 			close(box('se').left, (6 * Math.SQRT1_2) / 80, "'se' left");
-			close(box('se').top, 2 + (6 * Math.SQRT1_2) / 80, "'se' top");
+			close(box('se').top, 2 - (6 * Math.SQRT1_2) / 80, "'se' top");
+			const scale = fcModel.planeScale(view, 400);
+			close(fcModel.labelTextPoint(scale, [0, 2], 'n')[1], 2 + (6 + 4.5) / 80, "'n' baseline");
+			close(fcModel.labelTextPoint(scale, [0, 2], 's')[1], 2 - (6 + 0.5) / 80, "'s' hanging line");
 			// A label that already fits stays where marks.ts put it; one past an edge moves inward along that axis only.
-			assert.deepEqual(fcModel.fitLabel(view, [0, 2], 'e', 'ab', 400), { at: [0, 2], attach: 'e' });
-			const right = fcModel.fitLabel(view, [2.5, 2], 'e', 'ab', 400);
-			close(right.at[0], 2.5 - (6 + 17 + 4) / 80, 'pushed in from the right edge');
+			const stays = fcModel.fitLabel(view, [0, 2], 'e', '10', 400);
+			assert.deepEqual([stays.at, stays.attach, stays.textAt[1]], [[0, 2], 'e', 2]);
+			close(stays.textAt[0], 6 / 80, "'e' text starts 6px right");
+			const right = fcModel.fitLabel(view, [2.5, 2], 'e', '10', 400);
+			close(right.at[0], 2.5 - (6 + width + 4) / 80, 'pushed in from the right edge');
 			assert.equal(right.at[1], 2);
-			const bottom = fcModel.fitLabel(view, [0, -0.5], 's', 'ab', 400);
-			close(bottom.at[1], -0.5 + (18 - 6 + 4) / 80, 'pushed up from the bottom edge');
+			const bottom = fcModel.fitLabel(view, [0, -0.5], 's', '10', 400);
+			close(bottom.at[1], -0.5 + (6 + 17 + 4) / 80, 'pushed up from the bottom edge');
 			assert.throws(() => fcModel.fitLabel(view, [0, 0], 'e', 'x'.repeat(60), 400), /the label "x{60}" doesn't fit a 400px plane/);
 			assert.throws(() => fcModel.labelBox(view, [0, 0], 'e', 'a', 0), /wider than 0px/);
+			// labelWidth errs a little wide of the widths measured in Chromium, never narrow.
+			for (const [text, measured] of [['(1, 1)', 35.3], ['(−0.5, 0.5)', 69.6], ['slope 0.5 line', 90.4], ['tangent', 50.4], ['1 across', 56]]) {
+				const estimate = fcModel.labelWidth(text);
+				assert.ok(estimate >= measured && estimate <= measured * 1.15, `labelWidth("${text}") is ${estimate}, measured ${measured}`);
+			}
 		}
+		// The states the page walks through keep every label on every plane size, each clear (planeLabels may leave a
+		// label out only on a crowded plane). On phones the corner's "run 1" and "slope 0.5 line" give way: the run leg
+		// lies along the x-axis between the handle's ring and the number 1, and the readouts state both values.
+		{
+			const kept = (state, sizes = FC_PLANE_SIZES) => {
+				const texts = fcMarks.planeMarks(state).filter((mark) => mark.label).map((mark) => mark.label.text);
+				for (const size of sizes) assert.deepEqual(fcLayout.planeLabels(state, size).map((label) => label.text), texts, `every label kept on a ${size}px plane: ${JSON.stringify(state)}`);
+			};
+			kept(opening);
+			for (const h of [[1, 2], [-1, 2], [-1, 1], [1, 4]]) kept({ ...opening, hIndex: hAt(...h) });
+			kept(fcAfter(R2T, { stage: 'ruler' }));
+			kept(fcAfter(R2T, { stage: 'tangent', hIndex: hAt(1, 100) }));
+			kept(fcAfter(R2T, { stage: 'tangent', preset: 's-curve', xIndex: 2, hIndex: hAt(1, 100) }));
+			kept(fcAfter(R2T, { stage: 'tangent', preset: 'loss', xIndex: 0, hIndex: hAt(1, 100) }));
+			kept(fcAfter(R2T, { stage: 'slope-curve', preset: 's-curve', xIndex: -3, hIndex: hAt(-1, 1000) }));
+			kept(fcInitial('corner'), [400]);
+			kept(fcAfter('corner', { stage: 'tangent' }), [400]);
+			kept(fcAfter('corner', { stage: 'tangent', linesOn: true }), [400]);
+			const phone = fcLayout.planeLabels(fcAfter('corner', { stage: 'tangent', linesOn: true }), 270).map((label) => label.text);
+			assert.deepEqual(phone, ['rise 1', '(0, 0)']);
+			// "you" and the axis names are never left out: planeLabels keeps them even when crowded, and the loop above
+			// finds every kept label clear.
+			assert.ok(fcLayout.planeLabels({ ...opening, hIndex: hAt(-1, 1) }, 270).some((label) => label.text === 'you'));
+		}
+		// The strip draws its own numbers, starting right of an open dot on the y-axis (radius 6 plus half its ring) and
+		// of their own 1.5px halo.
+		assert.ok(fcMarks.STRIP_NUMBER_OFFSET - 1.5 > 6 + fcMarks.WEIGHTS.openDot / 2, 'strip numbers clear an open dot on the axis');
 		// The point's label: "you" on the slide, its coordinates elsewhere; leg labels only from |h| = 0.5.
 		const labels = (state) => fcMarks.planeMarks(state).flatMap((mark) => (mark.label ? [mark.label.text] : []));
 		assert.deepEqual(labels(opening), ['1 across', '3 up', 'you']);
@@ -7304,7 +7355,48 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		// The open dots' board fill and ring weight, and the strip's "slope" label hanging inside its top-left corner, are
 		// decided in marks.ts, so SlopeStrip only maps them.
 		assert.ok(fcMarks.stripMarks(hinge).filter((mark) => mark.kind === 'open-dot').every((mark) => mark.fill === 'board' && mark.weight === 2));
-		assert.deepEqual(fcMarks.stripMarks(hinge).find((mark) => mark.kind === 'axis-name').label, { text: 'slope', at: [-2.5, 1.5], attach: 'se', color: 'ink' });
+		assert.deepEqual(fcMarks.stripMarks(hinge).find((mark) => mark.kind === 'axis-name').label, { text: 'slope', at: [-2.5, 1.5], attach: 'se', color: 'ink', alsoAt: [] });
+		// The strip numbers its y-axis itself, 10px from the axis, so an open dot on the axis never covers a number; on
+		// Hinge and V the 1 sits left of the axis, where the slope curve isn't.
+		const stripNumbers = (state) => fcMarks.stripMarks(state).filter((mark) => mark.kind === 'axis-number').map((mark) => [mark.label.text, mark.label.at, mark.label.attach]);
+		assert.deepEqual(stripNumbers(hinge), [['−1', [0, -1], 'e'], ['1', [0, 1], 'w']]);
+		assert.deepEqual(stripNumbers(fcAfter(R2T, { stage: 'slope-curve', preset: 'loss', xIndex: 0 })), [['−2', [0, -2], 'e']]);
+		// Every strip number's ink (18px digits run 5.6px below their middle to 8.4px above) fits inside the strip on the
+		// strips a 320px phone, a 375px phone and a desktop draw (a quarter of the plane's width).
+		const fcCurves = await import('../src/components/react/functionCurve/functions.ts');
+		for (const [curve, curveView] of Object.entries(fcSetups.CURVE_VIEWS)) {
+			const [low, high] = curveView.strip.y;
+			for (const size of FC_PLANE_SIZES) {
+				const pixelsPerUnit = Math.round(size * 0.25) / (high - low);
+				for (const value of curveView.strip.labels.filter((entry) => entry !== 0)) {
+					assert.ok((value - low) * pixelsPerUnit >= 5.6 && (high - value) * pixelsPerUnit >= 8.4, `the strip number ${value} fits a ${size}px ${curve} strip`);
+					// Its box (11.5px a character, its ink and halo 7.1px below to 9.9px above, 2px of room) misses the slope
+					// curve and the name "slope" in the top-left corner.
+					const [left, right] = fcModel.viewNumbers(curveView.view).x;
+					const unitsAcross = (right - left) / size;
+					const width = fcModel.axisNumber(value).length * 11.5;
+					const fromAxis = fcMarks.STRIP_NUMBER_OFFSET - 2;
+					const onLeft = curveView.strip.leftNumbers.includes(value);
+					const box = {
+						left: (onLeft ? -(fromAxis + width + 4) : fromAxis) * unitsAcross,
+						right: (onLeft ? -fromAxis : fromAxis + width + 4) * unitsAcross,
+						bottom: value - 9.1 / pixelsPerUnit,
+						top: value + 11.9 / pixelsPerUnit,
+					};
+					const f = CATALOG[curve];
+					for (let step = 0; step <= 200; step += 1) {
+						const at = box.left + ((box.right - box.left) * step) / 200;
+						const pieces = f.pieces.filter((piece) => (piece.from === null || toNumber(piece.from) <= at) && (piece.to === null || at <= toNumber(piece.to)));
+						for (const piece of pieces) {
+							const slope = fcCurves.pieceCurve(fcCurves.derivativeCoefficients(piece.coefficients))(at);
+							assert.ok(slope < box.bottom || slope > box.top, `the strip number ${value} misses the ${curve} slope curve on a ${size}px strip (x = ${at})`);
+						}
+					}
+					const name = { right: left + ((4.2 + fcModel.labelWidth('slope') + 2) * unitsAcross), bottom: high - (4.2 + 17 + 2) / pixelsPerUnit };
+					assert.ok(box.left > name.right || box.top < name.bottom, `the strip number ${value} misses "slope" on a ${size}px ${curve} strip`);
+				}
+			}
+		}
 		assert.deepEqual(fcMarks.stripMarks(fcAfter('corner', { stage: 'slope-curve', xIndex: 2 })).find((mark) => mark.kind === 'value-dot').at, [1, 1]);
 		assert.deepEqual(fcMarks.stripMarks(fcAfter('corner', { stage: 'tangent' })), [], 'no strip outside Slope curve');
 	}
@@ -7347,7 +7439,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 	for (const [file, source] of Object.entries(sources).filter(([name]) => name.endsWith('.tsx'))) {
 		const uses = source.split('plotColors.').length - 1;
 		const mapsMarks = file.endsWith('CurvePlane.tsx');
-		assert.equal(uses, mapsMarks ? 3 : 0, `${file} picks plot colors itself`);
+		assert.equal(uses, mapsMarks ? 4 : 0, `${file} picks plot colors itself`);
 		assert.equal(source.split('var(--').length - 1, mapsMarks ? 1 : 0, `${file} picks a CSS color itself`);
 		assert.ok(!/attach="|strokeWidth: \d|weight=\{\d/.test(source), `${file} fixes a label side or a weight itself`);
 	}

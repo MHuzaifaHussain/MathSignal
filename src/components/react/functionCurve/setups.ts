@@ -32,8 +32,13 @@ export const pointValue = (xIndex: number): Fraction => f(xIndex, 2);
 
 export interface StripView {
 	y: readonly [number, number];
-	/** The only y values numbered on the strip: 0 and one value near each end of its range. */
+	/**
+	 * The y values the strip's grid lines step through, 0 included; every one but 0 is numbered. Each number sits clear
+	 * of the slope curve, of the open dots on the y-axis and of the strip's name, "slope" (checked by check-boards).
+	 */
 	labels: readonly number[];
+	/** Numbers drawn left of the y-axis, because the slope curve runs through their height on the right. */
+	leftNumbers: readonly number[];
 }
 
 export interface CurveView {
@@ -54,11 +59,15 @@ const range = (low: Fraction, high: Fraction) => [low, high] as const;
 const EQUAL_VIEW: View = { x: range(f(-5, 2), f(5, 2)), y: range(f(-1, 2), f(9, 2)) };
 
 export const CURVE_VIEWS: Readonly<Record<CurveId, CurveView>> = {
-	square: { view: EQUAL_VIEW, equalScale: true, xLines: 1, yLines: 1, axisNames: null, xIndexRange: [-4, 4], strip: { y: [-5, 5], labels: [-4, 0, 4] } },
-	relu: { view: EQUAL_VIEW, equalScale: true, xLines: 1, yLines: 1, axisNames: null, xIndexRange: [-4, 4], strip: { y: [-1.5, 1.5], labels: [-1, 0, 1] } },
-	abs: { view: EQUAL_VIEW, equalScale: true, xLines: 1, yLines: 1, axisNames: null, xIndexRange: [-4, 4], strip: { y: [-1.5, 1.5], labels: [-1, 0, 1] } },
-	// The strip's range follows the view, not the slider: 3x² reaches 12 at the view's edge, x = ±2.
-	cube: { view: { x: range(f(-2, 1), f(2, 1)), y: range(f(-4, 1), f(4, 1)) }, equalScale: false, xLines: 1, yLines: 2, axisNames: null, xIndexRange: [-3, 3], strip: { y: [-1, 13], labels: [0, 12] } },
+	// Numbered at ±2, not ±4: 4 sits too near the strip's edge for its number to fit on a phone; 2 is the slope at 1.
+	// The 2 goes left of the axis, where 2x is negative.
+	square: { view: EQUAL_VIEW, equalScale: true, xLines: 1, yLines: 1, axisNames: null, xIndexRange: [-4, 4], strip: { y: [-5, 5], labels: [-2, 0, 2], leftNumbers: [2] } },
+	// ReLU's and |x|'s slopes are 1 right of 0, so the 1 is numbered on the left, where they are 0 or −1.
+	relu: { view: EQUAL_VIEW, equalScale: true, xLines: 1, yLines: 1, axisNames: null, xIndexRange: [-4, 4], strip: { y: [-1.5, 1.5], labels: [-1, 0, 1], leftNumbers: [1] } },
+	abs: { view: EQUAL_VIEW, equalScale: true, xLines: 1, yLines: 1, axisNames: null, xIndexRange: [-4, 4], strip: { y: [-1.5, 1.5], labels: [-1, 0, 1], leftNumbers: [1] } },
+	// The strip's range follows the view, not the slider: 3x² reaches 12 at the view's edge, x = ±2. It is numbered at
+	// 10, not 12: 12 sits too near the top edge for its number to fit on a phone.
+	cube: { view: { x: range(f(-2, 1), f(2, 1)), y: range(f(-4, 1), f(4, 1)) }, equalScale: false, xLines: 1, yLines: 2, axisNames: null, xIndexRange: [-3, 3], strip: { y: [-1, 13], labels: [0, 10], leftNumbers: [] } },
 	loss: {
 		view: { x: range(f(-1, 2), f(13, 2)), y: range(f(-1, 2), f(21, 2)) },
 		equalScale: false,
@@ -66,7 +75,9 @@ export const CURVE_VIEWS: Readonly<Record<CurveId, CurveView>> = {
 		yLines: 2,
 		axisNames: { x: 'w', y: 'loss' },
 		xIndexRange: [0, 12],
-		strip: { y: [-7.5, 7.5], labels: [-6, 0, 6] },
+		// The y-axis sits 0.5 from the left edge, so the number goes right of it, at −2: a positive one would run into the
+		// strip's name, and the slope curve runs through −4 and −6 (the slope at w = 0) near the axis.
+		strip: { y: [-7.5, 7.5], labels: [-2, 0], leftNumbers: [] },
 	},
 };
 

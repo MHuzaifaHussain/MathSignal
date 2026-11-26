@@ -1,7 +1,7 @@
 import { Coordinates, Mafs, Plot, Point, Text } from "mafs";
 import { pieceCurve } from "./functions.ts";
-import { LABEL_DISTANCE, LABEL_SIZE, axisNumber, viewNumbers } from "./model.ts";
-import { stripMarks } from "./marks.ts";
+import { LABEL_DISTANCE, LABEL_SIZE, labelTextPoint, scaleOf, viewNumbers } from "./model.ts";
+import { STRIP_NUMBER_OFFSET, stripMarks } from "./marks.ts";
 import { viewOf } from "./setups.ts";
 import type { CurveState } from "./state.ts";
 import { MARK_COLORS, MARK_FILLS } from "./CurvePlane.tsx";
@@ -17,7 +17,8 @@ interface SlopeStripProps {
 
 /**
  * The slope curve under the plane, in the Slope curve stage: f′ on the same x range, with an ink dot at (a, f′(a)) and
- * open dots where f′ jumps. Its scales are unequal and its axis numbers say so: 0 and one value near each end.
+ * open dots where f′ jumps. Its scales are unequal and its axis numbers say so; they are drawn here rather than by
+ * Mafs, so they clear the open dots on the axis and the slope curve (setups.ts picks their values and sides).
  * Every mark comes from stripMarks (marks.ts).
  */
 export default function SlopeStrip({ state, width }: SlopeStripProps) {
@@ -25,10 +26,12 @@ export default function SlopeStrip({ state, width }: SlopeStripProps) {
   const { x } = viewNumbers(curveView.view);
   const { y, labels } = curveView.strip;
   const step = Math.min(...labels.slice(1).map((value, index) => value - labels[index]));
+  const height = Math.round(width * STRIP_HEIGHT_RATIO);
+  const scale = scaleOf(x, y, width, height);
   const marks = stripMarks(state);
   return (
-    <Mafs height={Math.round(width * STRIP_HEIGHT_RATIO)} viewBox={{ x: [x[0], x[1]], y: [y[0], y[1]], padding: 0 }} preserveAspectRatio={false} pan={false} zoom={false}>
-      <Coordinates.Cartesian xAxis={{ lines: curveView.xLines, labels: false }} yAxis={{ lines: step, labels: (value) => (labels.includes(value) ? axisNumber(value) : "") }} subdivisions={false} />
+    <Mafs height={height} viewBox={{ x: [x[0], x[1]], y: [y[0], y[1]], padding: 0 }} preserveAspectRatio={false} pan={false} zoom={false}>
+      <Coordinates.Cartesian xAxis={{ lines: curveView.xLines, labels: false }} yAxis={{ lines: step, labels: false }} subdivisions={false} />
       {marks.map((mark, index) => {
         const color = MARK_COLORS[mark.color];
         switch (mark.kind) {
@@ -39,13 +42,19 @@ export default function SlopeStrip({ state, width }: SlopeStripProps) {
           case "value-dot":
             return <Point key={index} x={mark.at[0]} y={mark.at[1]} color={color} />;
           case "axis-name":
+          case "axis-number": {
+            if (!mark.label) return null;
+            // attachDistance 0: labelTextPoint puts the name's box just inside the strip's top-left corner, and each
+            // number STRIP_NUMBER_OFFSET px from the y-axis. The numbers take the axes' own size, as on the plane.
+            const distance = mark.kind === "axis-number" ? STRIP_NUMBER_OFFSET : LABEL_DISTANCE;
+            const [textX, textY] = labelTextPoint(scale, mark.label.at, mark.label.attach, distance);
+            const fontSize = mark.kind === "axis-number" ? { fontSize: "inherit" } : {};
             return (
-              mark.label && (
-                <Text key={index} x={mark.label.at[0]} y={mark.label.at[1]} attach={mark.label.attach} attachDistance={LABEL_DISTANCE} size={LABEL_SIZE} color={MARK_COLORS[mark.label.color]}>
-                  {mark.label.text}
-                </Text>
-              )
+              <Text key={index} x={textX} y={textY} attach={mark.label.attach} attachDistance={0} size={LABEL_SIZE} color={MARK_COLORS[mark.label.color]} svgTextProps={fontSize}>
+                {mark.label.text}
+              </Text>
             );
+          }
           default:
             throw new Error(`SlopeStrip: no drawing for a "${mark.kind}" mark`);
         }

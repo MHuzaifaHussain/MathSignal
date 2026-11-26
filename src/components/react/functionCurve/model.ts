@@ -94,23 +94,44 @@ export const viewNumbers = (view: View) => ({
 	y: [toNumber(view.y[0]), toNumber(view.y[1])] as const,
 });
 
-/** Where a label hangs from its anchor, as in Mafs' Text: 'e' starts the text there, 'se' starts it below and right. */
+/** Which side of its anchor a label sits on: 'e' to the right, 'n' above, 'se' below and to the right, and so on. */
 export type Attach = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
 export interface FittedLabel {
 	at: readonly [number, number];
 	attach: Attach;
+	/** Where Mafs' Text draws the text with attachDistance 0: the text anchor and baseline that `attach` gives. */
+	textAt: readonly [number, number];
 }
 
 /** Label font size in pixels on the plane and the strip. */
 export const LABEL_SIZE = 15;
-/** Mafs' attachDistance for every label: how far, in pixels, the text sits from its anchor. */
+/** The gap, in pixels, between a label's box and its anchor, on the attach side. */
 export const LABEL_DISTANCE = 6;
-/** Rough width of one label character, in pixels, for keeping labels inside the plane. */
-const LABEL_CHARACTER_WIDTH = 8.5;
-/** Line height of a label, as a multiple of its size. */
-const LABEL_LINE_HEIGHT = 1.2;
-/** Room kept between a label's box and the plane's edge, in pixels: Mafs' 3px text halo plus a little air. */
+/**
+ * Advance widths of a 15px label's characters in pixels, in Atkinson Hyperlegible Next as measured in Chromium on
+ * 2026-11-26 (getComputedTextLength); a character not listed counts as LABEL_WIDEST_CHARACTER. Every label is
+ * measured with LABEL_WIDTH_SAFETY on top, so a fallback font that runs a little wider still fits.
+ */
+const LABEL_CHARACTER_WIDTHS: Readonly<Record<string, number>> = {
+	...Object.fromEntries(Array.from('0123456789', (digit) => [digit, 9.5])),
+	'(': 4.5, ')': 4.5, '.': 3.2, ',': 3.2, '−': 9.1, ' ': 4.3,
+	a: 7.9, c: 7.2, e: 8.1, g: 8.4, i: 3.8, l: 3.9, n: 8.3, o: 8.3, p: 8.5, r: 5.4, s: 7.1, t: 4.9, u: 8.1, w: 10.6, y: 7.1,
+};
+const LABEL_WIDEST_CHARACTER = 12.7;
+const LABEL_WIDTH_SAFETY = 1.08;
+
+/** A label's width in pixels at LABEL_SIZE. */
+export const labelWidth = (text: string): number =>
+	Array.from(text).reduce((sum, character) => sum + (LABEL_CHARACTER_WIDTHS[character] ?? LABEL_WIDEST_CHARACTER), 0) * LABEL_WIDTH_SAFETY;
+/**
+ * Where a 15px label's ink sits around the y it is drawn at, in pixels up from that y, for each dominant baseline
+ * Mafs' Text uses ('n' draws on the baseline, 's' hangs, 'e' and 'w' are centered), with Mafs' 3px text halo (1.5px
+ * each side) included. Measured in Chromium on 2026-11-26 (canvas measureText, Atkinson Hyperlegible Next): on the
+ * baseline the ink runs 3 below to 11 above, hanging 15 below to 1 below, centered 6.9 below to 7.1 above.
+ */
+const TEXT_EXTENT = { baseline: [-4.5, 12.5], hanging: [-16.5, 0.5], middle: [-8.5, 8.5] } as const;
+/** Room kept between a label's box (halo included) and the plane's edge, in pixels. */
 export const LABEL_EDGE_MARGIN = 4;
 
 /** An axis number with a real minus sign, on the plane and the strip. */
@@ -124,27 +145,59 @@ export interface LabelBox {
 	top: number;
 }
 
-/**
- * The box a label covers, in grid units, on a square plane `planeSize` pixels wide, placed the way Mafs' Text places
- * it: the text anchor from 'e' or 'w', the baseline from 'n' or 's', and LABEL_DISTANCE pixels along the attach
- * direction (shortened to a diagonal's share on 'ne', 'se' and the like). In SVG pixels y points down, so Mafs moves an
- * 'n' label's baseline down by that distance and an 's' label's top up by it.
- */
-export function labelBox(view: View, at: readonly [number, number], attach: Attach, text: string, planeSize: number): LabelBox {
-	if (!(planeSize > 0)) throw new Error(`FunctionCurve: the plane must be wider than 0px to place labels, got ${planeSize}`);
+/** Grid units per pixel across and up. */
+export interface Scale {
+	x: number;
+	y: number;
+}
+
+/** Grid units per pixel across and up, on a plane `width` by `height` pixels showing these ranges. */
+export function scaleOf(x: readonly [number, number], y: readonly [number, number], width: number, height: number): Scale {
+	if (!(width > 0) || !(height > 0)) throw new Error(`FunctionCurve: the plane must be wider than 0px to place labels, got ${width} by ${height}`);
+	return { x: (x[1] - x[0]) / width, y: (y[1] - y[0]) / height };
+}
+
+/** Grid units per pixel on a square plane `planeSize` pixels wide. */
+export function planeScale(view: View, planeSize: number): Scale {
 	const { x, y } = viewNumbers(view);
-	const unitsPerPixelX = (x[1] - x[0]) / planeSize;
-	const unitsPerPixelY = (y[1] - y[0]) / planeSize;
-	const width = Array.from(text).length * LABEL_CHARACTER_WIDTH * unitsPerPixelX;
-	const height = LABEL_SIZE * LABEL_LINE_HEIGHT * unitsPerPixelY;
-	const horizontal = attach.includes('e') ? 1 : attach.includes('w') ? -1 : 0;
-	const vertical = attach.includes('n') ? 1 : attach.includes('s') ? -1 : 0;
+	return scaleOf(x, y, planeSize, planeSize);
+}
+
+const sides = (attach: Attach) => ({
+	horizontal: attach.includes('e') ? 1 : attach.includes('w') ? -1 : 0,
+	vertical: attach.includes('n') ? 1 : attach.includes('s') ? -1 : 0,
+});
+
+/**
+ * Where to draw a label so its box sits `distance` pixels from the anchor on the attach side (a diagonal's share each
+ * way on 'ne', 'se' and the like): the point given to Mafs' Text with attachDistance 0, which takes its text anchor
+ * from 'e' or 'w' and its baseline from 'n' or 's'. Mafs' own attachDistance moves 'n' text down and 's' text up, onto
+ * the anchor, so it isn't used.
+ */
+export function labelTextPoint(scale: Scale, at: readonly [number, number], attach: Attach, distance = LABEL_DISTANCE): readonly [number, number] {
+	const { horizontal, vertical } = sides(attach);
 	const share = horizontal !== 0 && vertical !== 0 ? Math.SQRT1_2 : 1;
-	const shiftX = horizontal * LABEL_DISTANCE * share * unitsPerPixelX;
-	const shiftY = -vertical * LABEL_DISTANCE * share * unitsPerPixelY;
-	const left = at[0] + shiftX + (horizontal === 1 ? 0 : horizontal === -1 ? -width : -width / 2);
-	const bottom = at[1] + shiftY + (vertical === 1 ? 0 : vertical === -1 ? -height : -height / 2);
-	return { left, right: left + width, bottom, top: bottom + height };
+	const x = at[0] + horizontal * distance * share * scale.x;
+	if (vertical === 0) return [x, at[1]];
+	const gap = distance * share * scale.y;
+	// 'n': the box's bottom sits `gap` above the anchor; 's': its top sits `gap` below it.
+	if (vertical === 1) return [x, at[1] + gap - TEXT_EXTENT.baseline[0] * scale.y];
+	return [x, at[1] - gap - TEXT_EXTENT.hanging[1] * scale.y];
+}
+
+/** The box a label drawn at `textAt` covers, in grid units, from its text anchor and baseline. */
+export function textBox(scale: Scale, textAt: readonly [number, number], attach: Attach, text: string): LabelBox {
+	const { horizontal, vertical } = sides(attach);
+	const width = labelWidth(text) * scale.x;
+	const left = textAt[0] + (horizontal === 1 ? 0 : horizontal === -1 ? -width : -width / 2);
+	const [below, above] = vertical === 1 ? TEXT_EXTENT.baseline : vertical === -1 ? TEXT_EXTENT.hanging : TEXT_EXTENT.middle;
+	return { left, right: left + width, bottom: textAt[1] + below * scale.y, top: textAt[1] + above * scale.y };
+}
+
+/** The box a label covers, in grid units, on a square plane `planeSize` pixels wide (labelTextPoint, then textBox). */
+export function labelBox(view: View, at: readonly [number, number], attach: Attach, text: string, planeSize: number, distance = LABEL_DISTANCE): LabelBox {
+	const scale = planeScale(view, planeSize);
+	return textBox(scale, labelTextPoint(scale, at, attach, distance), attach, text);
 }
 
 /**
@@ -152,11 +205,12 @@ export function labelBox(view: View, at: readonly [number, number], attach: Atta
  * by LABEL_EDGE_MARGIN pixels, whichever side it hangs from. Throws when the label can't fit at all. Pure, so
  * scripts/check-boards.mjs checks every reachable label without a browser.
  */
-export function fitLabel(view: View, at: readonly [number, number], attach: Attach, text: string, planeSize: number): FittedLabel {
+export function fitLabel(view: View, at: readonly [number, number], attach: Attach, text: string, planeSize: number, distance = LABEL_DISTANCE): FittedLabel {
 	const { x, y } = viewNumbers(view);
-	const box = labelBox(view, at, attach, text, planeSize);
-	const marginX = LABEL_EDGE_MARGIN * ((x[1] - x[0]) / planeSize);
-	const marginY = LABEL_EDGE_MARGIN * ((y[1] - y[0]) / planeSize);
+	const box = labelBox(view, at, attach, text, planeSize, distance);
+	const scale = planeScale(view, planeSize);
+	const marginX = LABEL_EDGE_MARGIN * scale.x;
+	const marginY = LABEL_EDGE_MARGIN * scale.y;
 	if (box.right - box.left > x[1] - x[0] - 2 * marginX || box.top - box.bottom > y[1] - y[0] - 2 * marginY) {
 		throw new Error(`FunctionCurve: the label "${text}" doesn't fit a ${planeSize}px plane`);
 	}
@@ -164,5 +218,6 @@ export function fitLabel(view: View, at: readonly [number, number], attach: Atta
 	const nudge = (low: number, high: number, edgeLow: number, edgeHigh: number) => Math.max(edgeLow - low, 0) + Math.min(edgeHigh - high, 0);
 	const moveX = nudge(box.left, box.right, x[0] + marginX, x[1] - marginX);
 	const moveY = nudge(box.bottom, box.top, y[0] + marginY, y[1] - marginY);
-	return { at: [at[0] + moveX, at[1] + moveY], attach };
+	const fitted = [at[0] + moveX, at[1] + moveY] as const;
+	return { at: fitted, attach, textAt: labelTextPoint(scale, fitted, attach, distance) };
 }
