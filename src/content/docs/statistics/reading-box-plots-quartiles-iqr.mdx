@@ -84,7 +84,7 @@ Your task: say which places in line (1st to 9th) mark the three quartiles, then 
   <DescriptiveStats client:visible setup="class-box" />
 </div>
 
-**The first quarter.** The 3rd shortest child. On Quartiles the board says "Each quarter is 2 steps: Q1 is the 3rd in line (128 cm), the median the 5th (133 cm), Q3 the 7th (140 cm)." The 8 steps split into four stretches of 2, so the cuts sit 2, 4 and 6 steps in. In Table view those are Child 4, Child 1 and Child 3.
+**The first quarter.** The 3rd shortest child. On Quartiles the board says "Each quarter is 2 steps: Q1 is the 3rd in line (128 cm), the median the 5th (133 cm), Q3 the 7th (140 cm)." In Table view those are Child 4, Child 1 and Child 3.
 
 **The five numbers.** On Box plot: "IQR = 140 − 128 = 12 cm. The fences sit 1.5 × 12 = 18 cm beyond the box, at 110 cm and 158 cm. Every child is inside them, so the whiskers reach the shortest (122 cm) and the tallest (148 cm)." So the five numbers are 122, 128, 133, 140 and 148 cm.
 
@@ -115,7 +115,7 @@ Convention: NumPy's default linear method, Hyndman and Fan's type 7. Boundary ca
 Sort, find the quartiles, take the IQR, set the fences, then draw the whiskers. On our class:
 
 1. **Sort.** 122, 125, 128, 131, 133, 137, 140, 142, 148.
-2. **Quartiles.** 9 values have 8 steps, so the cuts are $h = (n-1)p$ = 2, 4 and 6 steps past the first value: the 3rd, 5th and 7th values. Q1 = 128, the median is 133 and Q3 = 140.
+2. **Quartiles.** 9 values have 8 steps, so the cuts sit $h = (n-1)p$ steps past the first value: 8 × 1/4 = 2, 8 × 1/2 = 4 and 8 × 3/4 = 6, the 3rd, 5th and 7th values. Q1 = 128, the median is 133 and Q3 = 140.
 3. **IQR.** 140 − 128 = 12 cm.
 4. **Fences.** 1.5 × 12 = 18, so 128 − 18 = 110 cm and 140 + 18 = 158 cm.
 5. **Whiskers.** Every value lies inside the fences, so the whiskers reach 122 and 148 cm and there are no dots.
@@ -124,7 +124,7 @@ NIST's handbook describes the same parts: a box over the middle 50% of the data,
 
 ### When the cut falls between two values
 
-When $(n - 1)p$ is not a whole number, go to the value just below the cut and add the same fraction of the gap to the next value. The 90th percentile is the value 90% of the way along the line. For our class $h = 8 \times 0.9 = 7.2$: 7 whole steps past the first value is the 8th value, 142; then add 0.2 of the 6 cm gap to 148, giving 143.2 cm. The 10th percentile has $h = 0.8$, so it is 122 + 0.8 × 3 = 124.4 cm.
+When $(n - 1)p$ is not a whole number, take the value just below the cut and move toward the next value by the leftover fraction of the gap. The 90th percentile is the value 90% of the way along the line. For our class $h = 8 \times 0.9 = 7.2$: 7 whole steps past the first value is the 8th value, 142; then move 0.2 of the 6 cm gap up from 142 toward 148: 142 + 1.2 = 143.2 cm. The 10th percentile has $h = 0.8$, so it is 122 + 0.8 × 3 = 124.4 cm.
 
 <Simpler label="the same idea on a ruler" id="between-two-values">
 
@@ -134,13 +134,13 @@ Lay 142 and 148 on a ruler: they are 6 cm apart, and 0.2 of 6 cm is 1.2 cm, so a
 
 ### Reading a box plot you didn't draw
 
-Each of the four parts, whisker, half-box, half-box, whisker, holds about a quarter of the values, so a longer part means more spread, not more values. In our class the median sits 5 cm above Q1 and 7 cm below Q3, so the upper half of the box is more spread out. With only 9 children the quarters are rough: the children at Q1, the median and Q3 each sit on a boundary, so counting them on both sides each part holds 3 and the box 5.
+Each of the four parts (lower whisker, lower half-box, upper half-box, upper whisker) holds about a quarter of the values, so a longer part means more spread, not more values. In our class the median sits 5 cm above Q1 and 7 cm below Q3, so the upper half of the box is more spread out. With only 9 children the quarters are rough: the children at Q1, the median and Q3 each sit on a boundary, counting each boundary child in both parts it touches, each part holds 3 children and the box 5.
 
 A dot is a value past a fence: drawn, not deleted, and not proven wrong. Wickham and Stryjewski trace the plot to Tukey and note that it suits comparing distributions across groups <Cite id="wickham2011" />.
 
 ### Which quartile? Tools disagree
 
-There is no single agreed formula for quartiles, so [two tools can report different values for the same list](/statistics/descriptive-statistics-cheat-sheet/#library-defaults-that-change-the-answer); this page uses NumPy's default. NIST's handbook says no interpolation is universally accepted, and its own default differs from NumPy's <Cite id="nist-percentiles" />. Hyndman and Fan found packages using one definition for a quantile and another for the box plot <Cite id="hyndman1996" />. NumPy numbers nine of its methods as Hyndman and Fan do, type 1 to type 9; its default, `linear`, is type 7 <Cite id="numpy-quantile" />. Tukey's hinges take Q1 and Q3 as the medians of the lower and upper halves of the sorted list, each half including the middle value when n is odd.
+There is no single agreed formula for quartiles, so two tools can report different values for the same list (see [library defaults in the descriptive statistics cheat sheet](/statistics/descriptive-statistics-cheat-sheet/#library-defaults-that-change-the-answer)); this page uses NumPy's default. NIST's handbook says no interpolation is universally accepted, and its own default differs from NumPy's <Cite id="nist-percentiles" />. Hyndman and Fan found packages using one definition for a quantile and another for the box plot <Cite id="hyndman1996" />. NumPy numbers nine of its methods as Hyndman and Fan do, type 1 to type 9; its default, `linear`, is type 7 <Cite id="numpy-quantile" />. Tukey's hinges take Q1 and Q3 as the medians of the lower and upper halves of the sorted list, each half including the middle value when n is odd.
 
 | Method | Q1 | Q3 | IQR | Upper fence | 162 cm drawn as a dot? |
 | --- | --- | --- | --- | --- | --- |
@@ -151,7 +151,7 @@ There is no single agreed formula for quartiles, so [two tools can report differ
 The same child is a dot under one method and not under another, so write the method down with the number. Type 7 is also R's default <Cite id="nist-percentiles" />. pandas' `describe()` does not name its method, but its documented example, a column 1, 2, 3 with 25% at 1.5 and 75% at 2.5, matches NumPy's default <Cite id="pandas-describe" />.
 
 <SideNote>
-Hyndman and Fan recommend a different estimator, the median-unbiased one <Cite id="hyndman1996" />, which NumPy lists as method 8, `median_unbiased` <Cite id="numpy-quantile" />. NumPy and R still default to type 7.
+Hyndman and Fan recommend a different estimator, the median-unbiased one <Cite id="hyndman1996" />, which NumPy lists as method 8, `median_unbiased` <Cite id="numpy-quantile" />.
 </SideNote>
 
 <GoDeeper label="when Tukey's hinges and NumPy agree" id="hinges-vs-linear">
@@ -205,7 +205,7 @@ Sorted: 122, 125, 128, 131, 133, 136, 137, 140, 142, 148, with $n - 1 = 9$ steps
 
 <div slot="solution">
 
-IQR = 10.5 cm, so the fences sit 15.75 cm beyond the box, at 113 and 155 cm. The whiskers reach 122 and 148 cm, with no dots. Tukey's hinges here are 128 and 140: with an even count, methods differ.
+IQR = 10.5 cm, so the fences sit 15.75 cm beyond the box, at 113 and 155 cm. The whiskers reach 122 and 148 cm, with no dots. Tukey's hinges here are 128 and 140: with an even count, methods can differ.
 
 </div>
 
@@ -213,7 +213,7 @@ IQR = 10.5 cm, so the fences sit 15.75 cm beyond the box, at 113 and 155 cm. The
 
 <WorkedExample number={3} title="Find the slip" faded>
 
-(a) A student takes Child 3 and Child 7 in the order Table view lists them, the order they arrived, 140 and 137 cm, as Q1 and Q3: an IQR of −3 cm.
+(a) A student reads Table view, which lists the children in the order they arrived, and takes Child 3 and Child 7 (140 and 137 cm) as Q1 and Q3: an IQR of −3 cm.
 
 (b) For One very tall child, a student draws the upper whisker to 162 cm.
 
@@ -235,7 +235,7 @@ A model server answers 13 requests in 40, 42, 45, 47, 50, 52, 55, 58, 60, 64, 70
 
 <div slot="solution">
 
-13 values have 12 steps, so each quarter is 3 steps: Q1 is 3 steps past the first value, the 4th, 47, the median the 7th, 55, and Q3 the 10th, 64. IQR 17, fences 21.5 and 89.5: 95 and 400 are dots, and the upper whisker stops at 70. The 90th percentile is $70 + 0.8 \times 25 = 90$ ms ($h = 10.8$), the 99th $95 + 0.88 \times 305 = 363.4$ ms ($h = 11.88$). One slow request lifts the mean, 1,078/13 ≈ 82.92 ms, above Q3. With only 13 values, p99 sits 88% of the way from the 2nd-slowest request to the slowest, so it mostly reports that one request.
+13 values have 12 steps, so each quarter is 3 steps: Q1 is 3 steps past the first value, so it is the 4th value (47); the median is the 7th (55) and Q3 the 10th (64). IQR 17, fences 21.5 and 89.5: 95 and 400 are dots, and the upper whisker stops at 70. The 90th percentile is $70 + 0.8 \times 25 = 90$ ms ($h = 10.8$), the 99th $95 + 0.88 \times 305 = 363.4$ ms ($h = 11.88$). One slow request lifts the mean, 1,078/13 ≈ 82.92 ms, above Q3. With only 13 values, p99 mostly reports the single slowest request.
 
 </div>
 
@@ -261,11 +261,11 @@ Model servers are monitored by percentiles such as p50 and p99 rather than by th
 
 ### Robust feature scaling with the IQR
 
-scikit-learn's `RobustScaler` subtracts the median and divides by a quantile range, by default from the 25th to the 75th percentile, the IQR. Its documentation gives the reason: outliers can often influence the sample mean and variance in a negative way <Cite id="sklearn-robustscaler" />. The linear quartiles reproduce its documented example exactly, and NIST's type 6 would not, as the code below checks. Comparing scalers gets [its own page](/statistics/standardization-vs-min-max-scaling/).
+scikit-learn's `RobustScaler` subtracts the median and divides by a quantile range, by default from the 25th to the 75th percentile, the IQR. Its documentation gives the reason: outliers can often influence the sample mean and variance in a negative way <Cite id="sklearn-robustscaler" />. The linear quartiles reproduce its documented example exactly, and NIST's type 6 would not, as the code below checks. [Standardization vs min-max scaling](/statistics/standardization-vs-min-max-scaling/) compares the scalers.
 
 ## Check every quartile in code
 
-This program uses exact fractions and stops with an error if any number on this page is off. Nothing in it is random.
+This program uses exact fractions and stops with an error if any number on this page is off.
 
 <PyRunner
   title="quartiles.py"
