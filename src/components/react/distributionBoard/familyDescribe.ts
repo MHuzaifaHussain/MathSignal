@@ -7,6 +7,7 @@
 import { fraction, toNumber, type Fraction } from '../boardMath.ts';
 import { amountText, decimalText, fractionText, groupThousands, joinWords, plural, terminatesWithin } from '../boardText.ts';
 import { tableFoldAnnouncement } from '../guided/tableFold.ts';
+import { spokenMath } from './spokenMath.ts';
 import { formatNumber } from '../plotColors.ts';
 import { chanceOf, chooseCount, tallestValues } from './families.ts';
 import type { FamilySetup, GuessId } from './familySetups.ts';
@@ -396,7 +397,12 @@ function presetSentence(previous: FamilyState, state: FamilyState, name: string)
  * What the live region says after `action` took `previous` to `state`. Picking a guess says nothing: the native
  * radio already speaks, and the guess is no answer yet.
  */
+/** What the live region says, with the notation in words (spokenMath.ts). */
 export function familyAnnouncement(previous: FamilyState, state: FamilyState, action: FamilyAction): string {
+	return spokenMath(familyAnnouncementText(previous, state, action));
+}
+
+function familyAnnouncementText(previous: FamilyState, state: FamilyState, action: FamilyAction): string {
 	if (state.refusal && (action.type === 'read' || action.type === 'check')) return refusalText(state, state.refusal);
 	switch (action.type) {
 		case 'n':

@@ -7,6 +7,7 @@ import { joinWords, plural, equalsDecimal, fractionText, terminatesWithin, decim
 import { probability, checkGoal, pour, intersect, union, complement, WEIGHT_TOTAL } from '../src/components/react/eventSpace/model.ts';
 import { SCENARIOS, hasWordedRowHeaders } from '../src/components/react/eventSpace/scenarios.ts';
 import { getSetup } from '../src/components/react/eventSpace/setups.ts';
+import { spokenMath } from '../src/components/react/distributionBoard/spokenMath.ts';
 import { distributionOf, distributionFromPmf, mean, variance, standardDeviation, torqueSign, classifyGuess } from '../src/components/react/distributionBoard/model.ts';
 
 // ---- Shared board helpers ----
@@ -1370,7 +1371,7 @@ assert.equal(distSay.refusalText(distSetups.getSetup('candy-spread'), { kind: 'n
 const stepAction = { type: 'step', id: '4', direction: 1 };
 assert.equal(distSay.announcementFor(dist.reducer(buildFresh, stepAction), stepAction), 'Face 4 wins 1 candy.');
 const uncoveredStep = dist.reducer({ ...cardMatched, values: faceValues([0, 0, 0, 0, 1, 5]) }, stepAction);
-assert.equal(distSay.announcementFor(uncoveredStep, stepAction), 'Face 4 wins 1 candy. The 1-candy bar now holds faces 4 and 5. P(X = 1) = 2/6 = 1/3.');
+assert.equal(distSay.announcementFor(uncoveredStep, stepAction), 'Face 4 wins 1 candy. The 1-candy bar now holds faces 4 and 5. The chance that X is 1 = 2/6 = 1/3.');
 const coinStep = { type: 'step', id: 'HT', direction: 1 };
 assert.equal(distSay.announcementFor(dist.reducer(coinsFresh, coinStep), coinStep), 'X = 1 for HT.');
 // A refused action says only why.
@@ -1383,9 +1384,9 @@ assert.equal(distSay.announcementFor(dist.reducer(buildFresh, { type: 'preset', 
 const twoWrong = distRun('candy-build', { type: 'check' }, { type: 'check' });
 assert.equal(distSay.announcementFor(twoWrong, { type: 'check' }), "Not yet. Faces 4, 5 and 6 don't match the card. You can now show the answer.");
 // A match moves focus to the verdict, which is read there; only the new goal, a paragraph of its own, is announced.
-assert.equal(distSay.announcementFor(cardMatched, { type: 'check' }), 'New goal: make P(X = 1) = 1/2.');
-assert.equal(distSay.announcementFor(goalMissed, { type: 'check-goal' }), distSay.goalLine(goalMissed));
-assert.equal(distSay.announcementFor(symbolsView, { type: 'stage', stage: 'symbols' }), distSay.symbolLines(symbolsView).join(' '));
+assert.equal(distSay.announcementFor(cardMatched, { type: 'check' }), 'New goal: make the chance that X is 1 = 1/2.');
+assert.equal(distSay.announcementFor(goalMissed, { type: 'check-goal' }), spokenMath(distSay.goalLine(goalMissed)));
+assert.equal(distSay.announcementFor(symbolsView, { type: 'stage', stage: 'symbols' }), spokenMath(distSay.symbolLines(symbolsView).join(' ')));
 assert.equal(distSay.announcementFor(dist.reducer(cardMatched, { type: 'stage', stage: 'pictures' }), { type: 'stage', stage: 'pictures' }), 'Showing pictures.');
 assert.equal(distSay.announcementFor(buildFresh, { type: 'reset' }), 'Board reset.');
 
@@ -1517,8 +1518,8 @@ assert.deepEqual(distSay.spreadLines(steadyOn), ['Every face wins 2 candies: not
 assert.equal(distSay.ghostLine(spreadOn), null);
 assert.equal(distSay.ghostLine(ghosted), 'Before: σ ≈ 0.82 (Many amounts). Now: σ = 2 (All or nothing).');
 assert.equal(distSay.ghostLine(dist.reducer(ghosted, { type: 'preset', name: 'Steady' })), 'Before: σ = 2 (All or nothing). Now: σ = 0 (Steady).');
-assert.equal(distSay.announcementFor(ghosted, { type: 'preset', name: 'All or nothing' }), distSay.ghostLine(ghosted));
-assert.equal(distSay.announcementFor(spreadOn, { type: 'spread', on: true }), distSay.spreadLines(spreadOn).join(' '));
+assert.equal(distSay.announcementFor(ghosted, { type: 'preset', name: 'All or nothing' }), spokenMath(distSay.ghostLine(ghosted)));
+assert.equal(distSay.announcementFor(spreadOn, { type: 'spread', on: true }), spokenMath(distSay.spreadLines(spreadOn).join(' ')));
 assert.equal(distSay.announcementFor(spreadFresh, { type: 'spread', on: false }), 'Spread hidden.');
 const notEditable = dist.reducer(spreadOn, { type: 'step', id: '1', direction: 1 });
 assert.equal(distSay.announcementFor(notEditable, { type: 'step', id: '1', direction: 1 }), 'These values are fixed. Switch presets to compare.');
@@ -2183,23 +2184,23 @@ const bigChoose = (n, k) => {
 	// Announcements.
 	const checked = famRun('coins-binomial', { type: 'guess', guess: 'one-in-five' }, { type: 'check' });
 	const say = (previous, action) => famSay.familyAnnouncement(previous, famState.familyReducer(previous, action), action);
-	assert.equal(say({ ...checked, read: 5 }, { type: 'n', n: 10 }), '10 coins. Reading the bar for 5 heads: P(X = 5) = 63/256, about 0.25.');
-	assert.equal(say(checked, { type: 'n', n: 10 }), '10 coins. Reading the bar for 6 heads: P(X = 6) = 105/512, about 0.21.');
-	assert.equal(say(checked, { type: 'n', n: 2 }), '2 coins. Reading the bar for 2 heads, the most 2 coins can show: P(X = 2) = 1/4 = 0.25.');
+	assert.equal(say({ ...checked, read: 5 }, { type: 'n', n: 10 }), '10 coins. Reading the bar for 5 heads: the chance that X is 5 = 63/256, about 0.25.');
+	assert.equal(say(checked, { type: 'n', n: 10 }), '10 coins. Reading the bar for 6 heads: the chance that X is 6 = 105/512, about 0.21.');
+	assert.equal(say(checked, { type: 'n', n: 2 }), '2 coins. Reading the bar for 2 heads, the most 2 coins can show: the chance that X is 2 = 1/4 = 0.25.');
 	// A read bar clamped inside a burst still says it moved, without claiming the most the final n can show.
-	assert.equal(famBurst(checked, 3, 10), '10 coins. Now reading the bar for 3 heads: P(X = 3) = 15/128, about 0.12.');
-	assert.equal(famBurst(checked, 2, 3), '3 coins. Now reading the bar for 2 heads: P(X = 2) = 3/8, about 0.38.');
-	assert.equal(famBurst(checked, 3, 2), '2 coins. Reading the bar for 2 heads, the most 2 coins can show: P(X = 2) = 1/4 = 0.25.');
-	assert.equal(say({ ...checked, read: 1 }, { type: 'n', n: 1 }), '1 coin. Reading the bar for 1 head: P(X = 1) = 1/2 = 0.50.');
-	assert.equal(say({ ...checked, read: 0 }, { type: 'n', n: 10 }), '10 coins. Reading the bar for 0 heads: P(X = 0) = 1/1024, under 0.01.');
+	assert.equal(famBurst(checked, 3, 10), '10 coins. Now reading the bar for 3 heads: the chance that X is 3 = 15/128, about 0.12.');
+	assert.equal(famBurst(checked, 2, 3), '3 coins. Now reading the bar for 2 heads: the chance that X is 2 = 3/8, about 0.38.');
+	assert.equal(famBurst(checked, 3, 2), '2 coins. Reading the bar for 2 heads, the most 2 coins can show: the chance that X is 2 = 1/4 = 0.25.');
+	assert.equal(say({ ...checked, read: 1 }, { type: 'n', n: 1 }), '1 coin. Reading the bar for 1 head: the chance that X is 1 = 1/2 = 0.50.');
+	assert.equal(say({ ...checked, read: 0 }, { type: 'n', n: 10 }), '10 coins. Reading the bar for 0 heads: the chance that X is 0 = 1/1024, under 0.01.');
 	assert.equal(say(open, { type: 'n', n: 4 }), '4 coins. The chart is covered until you lock in your guess.');
-	assert.equal(say(checked, { type: 'preset', name: '1 coin' }), '1 coin. Reading the bar for 1 head, the most 1 coin can show: P(X = 1) = 1/2 = 0.50.');
+	assert.equal(say(checked, { type: 'preset', name: '1 coin' }), '1 coin. Reading the bar for 1 head, the most 1 coin can show: the chance that X is 1 = 1/2 = 0.50.');
 	assert.equal(say(checked, { type: 'preset', name: '10 coins' }), '10 coins is already showing.');
 	assert.equal(say(open, { type: 'preset', name: '3 coins' }), 'Lock in your guess first.', 'refused before Check, even the preset showing');
 	assert.equal(say(open, { type: 'preset', name: '10 coins' }), 'Lock in your guess first.');
 	assert.equal(say(open, { type: 'check' }), 'Pick a guess first.');
 	assert.equal(say(open, { type: 'guess', guess: 'one-in-two' }), '', 'a radio pick says nothing beyond the native radio');
-	assert.equal(say(open, { type: 'read', direction: 1 }), famSay.readLine({ ...open, read: 3 }).spoken);
+	assert.equal(say(open, { type: 'read', direction: 1 }), spokenMath(famSay.readLine({ ...open, read: 3 }).spoken));
 	assert.equal(say({ ...open, read: 0 }, { type: 'read', direction: -1 }), "Can't read fewer than 0 heads.");
 	assert.equal(say({ ...checked, read: 10 }, { type: 'read', direction: 1 }), "10 coins can't show more than 10 heads.");
 	assert.equal(say(famRun('coins-binomial', { type: 'n', n: 5 }), { type: 'read', direction: 1 }), 'Lock in your guess first.');
@@ -2400,24 +2401,24 @@ const bigChoose = (n, k) => {
 	assert.equal(famSay.describeChance(10), 'chance of success 0.50');
 	// Announcements.
 	const say = (previous, action) => famSay.familyAnnouncement(previous, famState.familyReducer(previous, action), action);
-	assert.equal(say(open, { type: 'p', j: 7 }), '10 trials, each a success with chance 0.35. Mean: μ = np = 10 × 0.35 = 3.5 successes.');
+	assert.equal(say(open, { type: 'p', j: 7 }), '10 trials, each a success with chance 0.35. Mean: mu = n p = 10 times 0.35 = 3.5 successes.');
 	assert.equal(
 		say(fair, { type: 'n', n: 1 }),
-		'1 trial, a success with chance 0.5. Mean: μ = np = 1 × 0.5 = 0.5 successes. Variance: np(1 − p) = 1 × 0.5 × 0.5 = 0.25. Standard deviation: σ = √0.25 = 0.5 successes. Now reading the bar for 1 success, the most 1 trial can show.',
+		'1 trial, a success with chance 0.5. Mean: mu = n p = 1 times 0.5 = 0.5 successes. Variance: n p times 1 minus p = 1 times 0.5 times 0.5 = 0.25. Standard deviation: sigma = the square root of 0.25 = 0.5 successes. Now reading the bar for 1 success, the most 1 trial can show.',
 	);
-	assert.equal(famBurst(open, 3, 10), '10 trials, each a success with chance 0.5. Mean: μ = np = 10 × 0.5 = 5 successes. Now reading the bar for 3 successes.');
-	assert.equal(famBurst(open, 2, 3), '3 trials, each a success with chance 0.5. Mean: μ = np = 3 × 0.5 = 1.5 successes. Now reading the bar for 2 successes.');
-	assert.equal(famBurst(open, 3, 2), '2 trials, each a success with chance 0.5. Mean: μ = np = 2 × 0.5 = 1 success. Now reading the bar for 2 successes, the most 2 trials can show.');
-	assert.equal(say(fair, { type: 'preset', name: 'Right 9 in 10' }), 'Right 9 in 10. Mean: μ = np = 10 × 0.9 = 9 successes. Before: σ ≈ 1.58 (Fair coin). Now: σ ≈ 0.95 (Right 9 in 10).');
-	assert.equal(say(open, { type: 'preset', name: 'Right 9 in 10' }), 'Right 9 in 10. Mean: μ = np = 10 × 0.9 = 9 successes.');
+	assert.equal(famBurst(open, 3, 10), '10 trials, each a success with chance 0.5. Mean: mu = n p = 10 times 0.5 = 5 successes. Now reading the bar for 3 successes.');
+	assert.equal(famBurst(open, 2, 3), '3 trials, each a success with chance 0.5. Mean: mu = n p = 3 times 0.5 = 1.5 successes. Now reading the bar for 2 successes.');
+	assert.equal(famBurst(open, 3, 2), '2 trials, each a success with chance 0.5. Mean: mu = n p = 2 times 0.5 = 1 success. Now reading the bar for 2 successes, the most 2 trials can show.');
+	assert.equal(say(fair, { type: 'preset', name: 'Right 9 in 10' }), 'Right 9 in 10. Mean: mu = n p = 10 times 0.9 = 9 successes. Before: sigma ≈ 1.58 (Fair coin). Now: sigma ≈ 0.95 (Right 9 in 10).');
+	assert.equal(say(open, { type: 'preset', name: 'Right 9 in 10' }), 'Right 9 in 10. Mean: mu = n p = 10 times 0.9 = 9 successes.');
 	assert.equal(
 		say(famState.familyReducer(fair, { type: 'p', j: 12 }), { type: 'preset', name: 'Fair coin' }),
-		'Fair coin. Mean: μ = np = 10 × 0.5 = 5 successes. Variance: np(1 − p) = 10 × 0.5 × 0.5 = 2.5. Standard deviation: σ = √2.5 ≈ 1.58 successes.',
+		'Fair coin. Mean: mu = n p = 10 times 0.5 = 5 successes. Variance: n p times 1 minus p = 10 times 0.5 times 0.5 = 2.5. Standard deviation: sigma = the square root of 2.5 ≈ 1.58 successes.',
 	);
 	assert.equal(say(open, { type: 'preset', name: 'Fair coin' }), 'Fair coin is already showing.');
-	assert.equal(say(open, { type: 'spread', on: true }), spread['Fair coin']);
+	assert.equal(say(open, { type: 'spread', on: true }), spokenMath(spread['Fair coin']));
 	assert.equal(say(fair, { type: 'spread', on: false }), 'Spread hidden.');
-	assert.equal(say(open, { type: 'read', direction: 1 }), read(open, 6).spoken);
+	assert.equal(say(open, { type: 'read', direction: 1 }), spokenMath(read(open, 6).spoken));
 	assert.equal(say(open, { type: 'table', open: true }), 'Table shown under the switch. It lists the 11 numbers of successes 10 trials can show, each with its chance.');
 	assert.equal(say(named('One flip', { read: 1 }), { type: 'table', open: true }), 'Table shown under the switch. It lists the 2 numbers of successes 1 trial can show, each with its chance.');
 	assert.equal(say(open, { type: 'reset' }), 'Board reset.');
@@ -7850,6 +7851,100 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		spoken: 'Shadow of b along a: a dot b ÷ the length of a = −1 ÷ √17 ≈ −0.24.',
 	});
 	assert.equal(vecSay.spoken(vecSay.CONTROL_LABELS.signLegend), 'Your guess: a dot b is');
+}
+
+// ---- DistributionBoard: every line a screen reader can reach says its notation in words ----
+
+{
+	const outState = await import('../src/components/react/distributionBoard/state.ts');
+	const outSay = await import('../src/components/react/distributionBoard/describe.ts');
+	const outSetups = await import('../src/components/react/distributionBoard/setups.ts');
+	const famIds = await import('../src/components/react/distributionBoard/setupIds.ts');
+	const famStateModule = await import('../src/components/react/distributionBoard/familyState.ts');
+	const famDescribe = await import('../src/components/react/distributionBoard/familyDescribe.ts');
+	const famSetupModule = await import('../src/components/react/distributionBoard/familySetups.ts');
+	const denStateModule = await import('../src/components/react/distributionBoard/densityState.ts');
+	const denDescribe = await import('../src/components/react/distributionBoard/densityDescribe.ts');
+	const denSetupModule = await import('../src/components/react/distributionBoard/densitySetups.ts');
+	const { spokenMathLine, spokenMathTwin } = await import('../src/components/react/distributionBoard/spokenMath.ts');
+	// ≈ is left: screen readers say it ("almost equal to") at their default level.
+	const notation = /[|²³⁴⁵⁶⁷⁸⁹√σμ≤×{}]|P\(|C\(|X\(| \/ |\bnp\b/;
+	const spokenOf = (line) => (typeof line === 'string' ? spokenMathLine(line) : spokenMathTwin(line)).spoken;
+	const assertWords = (where, line) => {
+		if (!line) return;
+		const spoken = spokenOf(line);
+		assert.ok(!notation.test(spoken), `${where}: "${spoken}" still has notation a screen reader skips or misreads`);
+	};
+	for (const id of outSetups.OUTCOME_SETUP_IDS) {
+		const setup = outSetups.getSetup(id);
+		let state = outState.initialState(id);
+		const firstId = Object.keys(state.values)[0];
+		const actions = [
+			{ type: 'stage', stage: 'symbols' },
+			{ type: 'check' },
+			{ type: 'check' },
+			{ type: 'show-answer' },
+			{ type: 'stage', stage: 'symbols' },
+			{ type: 'check-goal' },
+			{ type: 'step', id: firstId, direction: 1 },
+			{ type: 'pencil', k: 3 },
+			{ type: 'balance' },
+			{ type: 'spread', on: true },
+			...setup.presets.map((name) => ({ type: 'preset', name })),
+		];
+		const states = [state];
+		for (const action of actions) {
+			state = outState.reducer(state, action);
+			states.push(state);
+			assertWords(`${id} ${action.type} announcement`, outSay.announcementFor(state, action));
+		}
+		for (const at of states) {
+			const lines = [outSay.statusLine(at), outSay.feedbackLine(at), outSay.goalLine(at), outSay.balanceLine(at), outSay.pencilLine(at), outSay.ghostLine(at), ...outSay.readoutLines(at), ...outSay.symbolLines(at), ...outSay.meanLines(at), ...outSay.spreadLines(at)];
+			for (const line of lines) assertWords(id, line);
+		}
+	}
+	for (const id of famIds.FAMILY_SETUP_IDS) {
+		const setup = famSetupModule.FAMILY_SETUPS[id];
+		let state = famStateModule.initialFamilyState(id);
+		const actions = setup.kind === 'guess'
+			? [{ type: 'n', n: 10 }, { type: 'read', direction: 1 }, { type: 'guess', guess: 'one-in-five' }, { type: 'check' }, { type: 'n', n: 3 }]
+			: [{ type: 'p', j: 5 }, { type: 'n', n: 9 }, { type: 'read', direction: 1 }, { type: 'spread', on: true }, ...setup.presets.map((preset) => ({ type: 'preset', name: preset.name }))];
+		const states = [state];
+		for (const action of actions) {
+			const previous = state;
+			state = famStateModule.familyReducer(state, action);
+			states.push(state);
+			assertWords(`${id} ${action.type} announcement`, famDescribe.familyAnnouncement(previous, state, action));
+		}
+		for (const at of states) {
+			for (const line of [famDescribe.statusLine(at), famDescribe.verdictLine(at), famDescribe.guessLine(at), ...famDescribe.readoutLines(at)]) assertWords(id, line);
+		}
+	}
+	for (const id of famIds.DENSITY_SETUP_IDS) {
+		const setup = denSetupModule.DENSITY_SETUPS[id];
+		let state = denStateModule.initialDensityState(id);
+		const presets = setup.shapes.map((shape) => ({ type: 'preset', name: denSetupModule.shapeOf(shape).name }));
+		const actions = [...presets];
+		if (setup.spreadSwitch) actions.push({ type: 'spread', on: true }, ...presets);
+		if (setup.openingInterval) actions.push({ type: 'from', quarters: 4 }, { type: 'to', quarters: 9 });
+		const states = [state];
+		for (const action of actions) {
+			const previous = state;
+			state = denStateModule.densityReducer(state, action);
+			states.push(state);
+			assertWords(`${id} ${action.type} announcement`, denDescribe.densityAnnouncement(previous, state, action));
+		}
+		for (const at of states) for (const line of [denDescribe.statusLine(at), ...denDescribe.readoutLines(at)]) assertWords(id, line);
+	}
+	// The words themselves, for the forms the pages teach.
+	assert.equal(spokenMath('6 heads: C(10, 6) = 210 of 1,024 sequences, so P(X = 6) = 210/1024.'), '6 heads: 10 choose 6 = 210 of 1,024 sequences, so the chance that X is 6 = 210/1024.');
+	assert.equal(spokenMath('X(1) = 0, X(2) = 1.'), 'X of 1 = 0, X of 2 = 1.');
+	assert.equal(spokenMath('The event X = 1 is the set {1, 4, 5}, so P(X = 1) = P({1, 4, 5}) = 3/6.'), 'The event X = 1 is the set 1, 4, 5, so the chance that X is 1 = the chance of the set 1, 4, 5 = 3/6.');
+	assert.equal(spokenMath('Variance: 4/3 ≈ 1.33 cm². Standard deviation: σ = √(4/3) ≈ 1.15 cm.'), 'Variance: 4/3 ≈ 1.33 square centimeters. Standard deviation: sigma = the square root of 4/3 ≈ 1.15 cm.');
+	assert.equal(spokenMath('Variance: np(1 − p) = 9 × 0.55 × 0.45 = 891/400.'), 'Variance: n p times 1 minus p = 9 times 0.55 times 0.45 = 891/400.');
+	assert.equal(spokenMath('5 successes: C(10, 5) × 0.5⁵ × 0.5⁵ ≈ 0.25.'), '5 successes: 10 choose 5 times 0.5 to the power 5 times 0.5 to the power 5 ≈ 0.25.');
+	assert.equal(spokenMath('Face 1 wins 1 candy. P(X = 1) = 3/6.'), 'Face 1 wins 1 candy. The chance that X is 1 = 3/6.');
+	assert.equal(spokenMath('Plain words stay as they are.'), 'Plain words stay as they are.');
 }
 
 // ---- Page components: names of wide tables and formulas (decision 0024) ----

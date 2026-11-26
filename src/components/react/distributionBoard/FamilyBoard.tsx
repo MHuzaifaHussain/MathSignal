@@ -12,6 +12,7 @@ import useCommittedSlider from "../guided/useCommittedSlider.ts";
 import ColumnChart from "./ColumnChart.tsx";
 import ReadPair from "./ReadPair.tsx";
 import SpokenText from "../guided/SpokenText.tsx";
+import { spokenMathLine, spokenMathTwin } from "./spokenMath.ts";
 import ValueTable from "./ValueTable.tsx";
 import { familyChart } from "./familyChart.ts";
 import {
@@ -198,12 +199,12 @@ export default function FamilyBoard({ setup: setupId }: { setup: FamilySetupId }
     <Board label={FAMILY_BOARD_LABELS[setup.kind]} tray={tray} onReset={() => send({ type: "reset" })} announcement={announcement}>
       <div className="ms-dist">
         <p className="ms-dist-status">
-          <SpokenText line={status} />
+          <SpokenText line={spokenMathTwin(status)} />
         </p>
         {guess && <p className="ms-dist-guess">{guess}</p>}
         {verdict && (
           <p ref={verdictRef} className="ms-dist-feedback ms-dist-verdict" tabIndex={-1}>
-            {verdict}
+            <SpokenText line={spokenMathLine(verdict)} />
           </p>
         )}
         {covered ? (
@@ -225,7 +226,7 @@ export default function FamilyBoard({ setup: setupId }: { setup: FamilySetupId }
         <div className="ms-dist-readouts">
           {readoutLines(state).map((line) => (
             <p key={line.visible} className="ms-board-readout">
-              <SpokenText line={line} />
+              <SpokenText line={spokenMathTwin(line)} />
             </p>
           ))}
         </div>

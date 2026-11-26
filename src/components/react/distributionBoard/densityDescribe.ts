@@ -3,6 +3,7 @@
 import { compareFractions, fraction, toNumber, type Fraction } from '../boardMath.ts';
 import { AMOUNT_DECIMAL_PLACES, amountText, decimalText, fractionText, terminatesWithin } from '../boardText.ts';
 import { tableFoldAnnouncement } from '../guided/tableFold.ts';
+import { spokenMath } from './spokenMath.ts';
 import { formatNumber } from '../plotColors.ts';
 import { areaBetween, bins, heightAt, meanOf, RULER_CM, supportOf, varianceOf, type Bin, type PiecewiseLinear } from './density.ts';
 import { CURVE_BINS_PER_CM, type BinsPerCm, type DensityStage } from './densitySetups.ts';
@@ -230,7 +231,12 @@ function pushSentence(previous: DensityState, state: DensityState, moved: 'from'
 }
 
 /** What the live region says after `action` took `previous` to `state`. */
+/** What the live region says, with the notation in words (spokenMath.ts). */
 export function densityAnnouncement(previous: DensityState, state: DensityState, action: DensityAction): string {
+	return spokenMath(densityAnnouncementText(previous, state, action));
+}
+
+function densityAnnouncementText(previous: DensityState, state: DensityState, action: DensityAction): string {
 	switch (action.type) {
 		case 'preset': {
 			if (previous.shape === state.shape) return `${sandOf(state).name} is already showing.`;

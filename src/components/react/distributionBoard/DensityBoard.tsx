@@ -10,6 +10,7 @@ import useCommittedSlider from "../guided/useCommittedSlider.ts";
 import ColumnChart from "./ColumnChart.tsx";
 import CurvePlot from "./CurvePlot.tsx";
 import SpokenText from "../guided/SpokenText.tsx";
+import { spokenMathLine, spokenMathTwin } from "./spokenMath.ts";
 import ValueTable from "./ValueTable.tsx";
 import { densityChart } from "./densityChart.ts";
 import {
@@ -155,7 +156,9 @@ export default function DensityBoard({ setup: setupId }: { setup: DensitySetupId
   return (
     <Board label={hasInterval ? DENSITY_BOARD_LABELS.interval : DENSITY_BOARD_LABELS.pour} tray={tray} onReset={() => send({ type: "reset" })} announcement={announcement}>
       <div className="ms-dist">
-        <p className="ms-dist-status">{statusLine(state)}</p>
+        <p className="ms-dist-status">
+          <SpokenText line={spokenMathLine(statusLine(state))} />
+        </p>
         <ColumnChart
           columns={chart.columns}
           ticks={chart.ticks}
@@ -169,7 +172,7 @@ export default function DensityBoard({ setup: setupId }: { setup: DensitySetupId
         <div className="ms-dist-readouts">
           {readoutLines(state).map((line) => (
             <p key={line.visible} className="ms-board-readout">
-              <SpokenText line={line} />
+              <SpokenText line={spokenMathTwin(line)} />
             </p>
           ))}
         </div>

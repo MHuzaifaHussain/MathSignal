@@ -14,6 +14,7 @@ import { capitalize, joinWords, plural } from '../boardText.ts';
 import type { OutcomeId } from '../eventSpace/model.ts';
 import { CHECKS_BEFORE_ANSWER } from '../guided/guided.ts';
 import { tableFoldAnnouncement } from '../guided/tableFold.ts';
+import { spokenMath } from './spokenMath.ts';
 import { amountChain, briefChance, fullChance, isRoundedValue, isWhole, plainDecimal, shortAmount, trimmedDecimal } from './numberFormat.ts';
 import { classifyGuess, mean, standardDeviation, torqueSign, variance, type Bar, type Distribution } from './model.ts';
 import { ALL_ZERO, presetValues, type Setup } from './setups.ts';
@@ -616,8 +617,12 @@ function checkAnnouncement(state: DistributionState): string {
 	return state.failedChecks === CHECKS_BEFORE_ANSWER ? `${line} You can now show the answer.` : line;
 }
 
-/** What the live region says after an action ends (− / + bursts are debounced by the component). */
+/** What the live region says after an action ends (− / + bursts are debounced by the component), notation in words. */
 export function announcementFor(state: DistributionState, action: Action): string {
+	return spokenMath(announcementText(state, action));
+}
+
+function announcementText(state: DistributionState, action: Action): string {
 	const setup = setupOf(state);
 	if (state.refusal && (action.type === 'step' || action.type === 'preset' || action.type === 'balance')) return refusalText(setup, state.refusal);
 	switch (action.type) {

@@ -27,10 +27,12 @@ import {
   tableRows,
 } from "./describe.ts";
 import { getSetup, type SetupId } from "./setups.ts";
+import { spokenMathLine } from "./spokenMath.ts";
 import { initialState, isCovered, parkedPencil, reducer, stageAllowed, type Action, type Stage } from "./state.ts";
 import CheckButtons from "../guided/CheckButtons.tsx";
 import PresetButtons from "../guided/PresetButtons.tsx";
 import { RefusalNote, refusedBy } from "../guided/refusal.tsx";
+import SpokenText from "../guided/SpokenText.tsx";
 import StageChoice from "../guided/StageChoice.tsx";
 import TableFold from "../guided/TableFold.tsx";
 import useAnnouncer from "../guided/useAnnouncer.ts";
@@ -197,12 +199,12 @@ export default function OutcomeBoard({ setup: setupId }: OutcomeBoardProps) {
     <Board label={boardLabel(setup)} tray={tray} onReset={() => send({ type: "reset" })} announcement={announcement}>
       <div className="ms-dist">
         <p id={statusId} className="ms-dist-status">
-          {statusLine(state)}
+          <SpokenText line={spokenMathLine(statusLine(state))} />
         </p>
         {goal && (
           <div className="ms-dist-goal">
             <p ref={goalRef} className="ms-dist-goal-line" tabIndex={-1}>
-              {goal}
+              <SpokenText line={spokenMathLine(goal)} />
             </p>
             {state.goal !== "passed" && (
               <button type="button" className="ms-board-button ms-board-button-primary" onClick={() => send({ type: "check-goal" })}>
@@ -224,7 +226,9 @@ export default function OutcomeBoard({ setup: setupId }: OutcomeBoardProps) {
             {symbols.length > 0 && (
               <div className="ms-dist-symbols">
                 {symbols.map((line) => (
-                  <p key={line}>{line}</p>
+                  <p key={line}>
+                    <SpokenText line={spokenMathLine(line)} />
+                  </p>
                 ))}
               </div>
             )}
@@ -234,14 +238,14 @@ export default function OutcomeBoard({ setup: setupId }: OutcomeBoardProps) {
           <div className="ms-dist-readouts">
             {readouts.map((line) => (
               <p key={line} className="ms-board-readout">
-                {line}
+                <SpokenText line={spokenMathLine(line)} />
               </p>
             ))}
           </div>
         )}
         {verdict && (
           <p ref={feedbackRef} className="ms-dist-feedback" tabIndex={-1}>
-            {verdict}
+            <SpokenText line={spokenMathLine(verdict)} />
           </p>
         )}
       </div>
