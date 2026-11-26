@@ -135,7 +135,7 @@ The quartiles resist a few outliers, not many, and assume a symmetric middle.
 
 **Too many outliers.** Make both 7 kg pumpkins giants too: 4, 5, 5, 6, 6, 6, 30, 30, 30. Now Q₃ = 30, IQR = 25 and the upper fence is 67.5 kg, so nothing is flagged. The board holds two giants at most; the code checks this case. Rousseeuw and Hubert give the IQR a breakdown value of 25%, the share of outliers that can carry it arbitrarily far <Cite id="rousseeuw2017" />: 2 giants of 9 (22%) are survived, 3 of 9 (33%) are not.
 
-**Skewed data.** The IQR rule is how a boxplot marks outliers, and the boxplot assumes symmetry, so on skewed data it flags many regular points; Rousseeuw and Hubert point to a boxplot adjusted for skewness <Cite id="rousseeuw2017" />. For exponential data, a common right-skewed shape for waiting times, about 4.81% of values are flagged, all past the upper fence (the lower fence is below 0), against 0.70% for normal data, 0.35% on each side.
+**Skewed data.** The IQR rule is how a box plot marks outliers, and the box plot assumes symmetry, so on skewed data it flags many regular points; Rousseeuw and Hubert point to a box plot adjusted for skewness <Cite id="rousseeuw2017" />. For exponential data, a common right-skewed shape for waiting times, about 4.81% of values are flagged, all past the upper fence (the lower fence is below 0), against 0.70% for normal data, 0.35% on each side.
 
 **The quartile method.** NumPy numbers nine quantile methods in Hyndman and Fan's order, with 'linear', number 7, as the default, and adds four variations of it <Cite id="numpy-percentile" />. With one giant the five methods the second program checks all give the pumpkins 5 and 7, but worked example 2 shows a list where the verdict changes.
 
@@ -163,7 +163,7 @@ A third rule, the modified z-score, keeps the z-score's shape with robust parts:
 | Largest possible \|z\| with 9 values | √8 ≈ 2.83 with σ, 8/3 ≈ 2.67 with s | No ceiling |
 | Share of normal data flagged | 0.27% at 3, 4.55% at 2 | About 0.70% (fence ≈ 2.70σ) |
 | Assumes | Roughly normal data, n large enough | A symmetric middle and a stated quartile method |
-| Robust upgrade | Median and MAD (the modified z-score) | A boxplot adjusted for skewness |
+| Robust upgrade | Median and MAD (the modified z-score) | A box plot adjusted for skewness |
 
 <GoDeeper id="median-and-mad" label="a third rule: the median and the MAD">
 
@@ -177,7 +177,7 @@ With one, two or three giants the pumpkins' median stays 6 and their MAD stays 1
 
 - **Large, roughly symmetric data, one suspect at most:** |z| > 3 is fine.
 - **Small samples or several suspects:** use the IQR rule or the modified z-score. The ceiling passes 3 only from 11 values on, so with 10 or fewer |z| > 3 never fires, with <Var name="sigma" /> or s.
-- **Skewed features such as latencies:** log-transform first, or use an adjusted boxplot.
+- **Skewed features such as latencies:** log-transform first, or use an adjusted box plot.
 - **Always:** a flag starts a check. Outliers may be errors, or "valuable nuggets of information" <Cite id="rousseeuw2017" />.
 
 ## Notation
