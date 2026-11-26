@@ -2081,7 +2081,8 @@
 .ms-vec-plane {
 	position: relative;
 	inline-size: 100%;
-	max-inline-size: 440px;
+	/* 440px at the base size; rem so the plane grows with the page (decision 0025). */
+	max-inline-size: 27.5rem;
 	aspect-ratio: 1;
 }
 
@@ -2579,13 +2580,14 @@
 .ms-fncurve-plane {
 	position: relative;
 	inline-size: 100%;
-	max-inline-size: 400px;
+	/* 400px at the base size; rem so the plane grows with the page (decision 0025). */
+	max-inline-size: 25rem;
 	aspect-ratio: 1;
 }
 
 .ms-fncurve-strip {
 	inline-size: 100%;
-	max-inline-size: 400px;
+	max-inline-size: 25rem;
 	margin-block-start: 0.5rem;
 }
 

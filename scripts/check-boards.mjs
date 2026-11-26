@@ -3772,6 +3772,104 @@ const fractions = (values) => values.map((value) => formatFraction(value));
 	assert.ok(descBoard.includes('useCommittedSlider') && /const send = useCallback\(\s*\(action: Action\) => \{\s*sliderGuard\.interrupt\(\);/.test(descBoard), 'every non-slider action interrupts the shared slider guard first');
 }
 
+// ---- Large screens: label layouts run at the plane's base size (decision 0025) ----
+// Above 1920px the planes sit at their caps (440px and 400px at the base size) times the board scale. The boards place
+// labels at layoutPlaneSize(drawn size, scale), so the layouts below must return exactly what they return at the base
+// size: every reachable state at the 3840px scale, and the states the pages walk through at two more scales.
+const { layoutPlaneSize } = await import('../src/components/react/boardScale.ts');
+const LARGE_SCREEN_SCALE = 1.5;
+const PAGE_WALK_SCALES = [1.25, 2];
+assert.equal(layoutPlaneSize(660, 1.5), 440);
+assert.equal(layoutPlaneSize(343, 1), 343);
+assert.throws(() => layoutPlaneSize(400, 0), /scale must be positive/);
+assert.throws(() => layoutPlaneSize(0, 1.5), /wider than 0px/);
+// The planes call the layouts through layoutPlaneSize, so the asserts below test the boards' own call.
+{
+	const curvePlane = readText('src/components/react/functionCurve/CurvePlane.tsx');
+	assert.ok(curvePlane.includes('const layoutSize = layoutPlaneSize(size, scale);'), 'CurvePlane lays labels out at the base size');
+	assert.ok(curvePlane.includes('numberedValues(state, layoutSize, marks)') && curvePlane.includes('planeLabels(state, layoutSize)'), 'CurvePlane numbers the axes and places labels at the base size');
+	assert.ok(!/(numberedValues|planeLabels)\(state, size\b/.test(curvePlane), 'CurvePlane never lays out at the drawn size');
+	const strip = readText('src/components/react/functionCurve/SlopeStrip.tsx');
+	assert.ok(strip.includes('scaleOf(x, y, layoutPlaneSize(width, boardScale), layoutPlaneSize(height, boardScale))'), 'SlopeStrip offsets its labels in base px');
+	const vectorPlane = readText('src/components/react/vectorBoard/VectorPlane.tsx');
+	assert.ok(vectorPlane.includes('placedLabels(state, layoutPlaneSize(size, boardScale))'), 'VectorPlane places labels at the base size');
+	assert.ok(!/placedLabels\(state, size\b/.test(vectorPlane), 'VectorPlane never places labels at the drawn size');
+	for (const [file, constant] of [['functionCurve/CurvePlane.tsx', 'LABEL_SIZE * scale'], ['functionCurve/SlopeStrip.tsx', 'LABEL_SIZE * boardScale'], ['vectorBoard/VectorPlane.tsx', 'LABEL_SIZE * boardScale']]) {
+		assert.ok(readText(`src/components/react/${file}`).includes(`size={${constant}}`), `${file} draws its labels at their base size times the scale`);
+	}
+	const css = readText('src/styles/components.css');
+	assert.ok(/\.ms-vec-plane \{[^}]*max-inline-size: 27\.5rem;/.test(css), "VectorBoard2D's plane cap is 440px at the base size, in rem");
+	assert.ok(/\.ms-fncurve-plane \{[^}]*max-inline-size: 25rem;/.test(css) && /\.ms-fncurve-strip \{[^}]*max-inline-size: 25rem;/.test(css), "FunctionCurve's plane and strip caps are 400px at the base size, in rem");
+}
+// Every Mafs board scales its px: it imports useBoardScale, and every height, Text size and line weight it hands to a
+// Mafs element (or the shared Segment) is scaled. A height may be a measured size, never a literal or a bare constant;
+// a size or weight must mention the scale. Local helpers (Arrow, Ball) take base px and scale where they draw.
+{
+	const { readdirSync } = await import('node:fs');
+	const MAFS_ELEMENTS = /^(Mafs|Text|Vector|Circle|Ellipse|Polygon|Polyline|Point|Segment|Plot\.\w+|Line\.\w+)$/;
+	/** Each JSX element's name and its attributes' source text, braces balanced, so arrow functions inside props don't end it. */
+	function* jsxElements(source) {
+		const opening = /<([A-Z][\w.]*)/g;
+		for (let match = opening.exec(source); match; match = opening.exec(source)) {
+			let depth = 0;
+			let index = opening.lastIndex;
+			for (; index < source.length; index++) {
+				const character = source[index];
+				if (character === '{') depth++;
+				else if (character === '}') depth--;
+				else if (character === '>' && depth === 0) break;
+			}
+			yield { name: match[1], attributes: source.slice(opening.lastIndex, index) };
+		}
+	}
+	/** The expression inside `name={...}` at the attributes' top level, or null. */
+	function attributeExpression(attributes, name) {
+		const start = new RegExp(`(?:^|\\s)${name}=\\{`).exec(attributes);
+		if (!start) return null;
+		let depth = 1;
+		let index = start.index + start[0].length;
+		const from = index;
+		for (; index < attributes.length && depth > 0; index++) {
+			if (attributes[index] === '{') depth++;
+			else if (attributes[index] === '}') depth--;
+		}
+		return attributes.slice(from, index - 1).trim();
+	}
+	const files = readdirSync('src/components/react', { recursive: true }).filter((file) => file.endsWith('.tsx')).map((file) => `src/components/react/${file.replaceAll('\\', '/')}`);
+	const mafsFiles = files.filter((file) => readText(file).includes('<Mafs'));
+	assert.deepEqual(mafsFiles.map((file) => file.replace('src/components/react/', '')).sort(), [
+		'BayesTheorem.tsx',
+		'LinearRegression.tsx',
+		'NormalDistribution.tsx',
+		'functionCurve/CurvePlane.tsx',
+		'functionCurve/SlopeStrip.tsx',
+		'normalDistribution/ZBoard.tsx',
+		'vectorBoard/VectorPlane.tsx',
+	]);
+	let checkedProps = 0;
+	for (const file of mafsFiles) {
+		const source = readText(file);
+		assert.ok(/^import useBoardScale from "\.\.?\/(?:\.\.\/)?useBoardScale\.ts";$/m.test(source), `${file} renders Mafs but doesn't import useBoardScale`);
+		for (const { name, attributes } of jsxElements(source)) {
+			if (!MAFS_ELEMENTS.test(name)) continue;
+			const props = [['weight', name], ...(name === 'Text' ? [['size', name]] : []), ...(name === 'Mafs' ? [['height', name]] : [])];
+			for (const [prop] of props) {
+				const expression = attributeExpression(attributes, prop);
+				if (expression === null) continue;
+				checkedProps++;
+				assert.ok(!/^-?\d+(\.\d+)?$/.test(expression), `${file}: <${name} ${prop}={${expression}}> is a px literal; name it and multiply by useBoardScale()`);
+				assert.ok(!/^[A-Z][A-Z0-9_]*$/.test(expression), `${file}: <${name} ${prop}={${expression}}> is unscaled; multiply it by useBoardScale()`);
+				if (prop !== 'height') assert.ok(/scale/i.test(expression), `${file}: <${name} ${prop}={${expression}}> doesn't scale with the board`);
+			}
+		}
+	}
+	assert.ok(checkedProps > 60, `found ${checkedProps} Mafs heights, sizes and weights`);
+	// The checker catches what it is meant to.
+	const sample = '<Mafs height={360}><Plot.OfX y={(x) => x > 0 ? x : 0} weight={2.5} /><Text size={LABEL_SIZE * scale}>a</Text></Mafs>';
+	const found = [...jsxElements(sample)].map(({ name, attributes }) => [name, attributeExpression(attributes, name === 'Mafs' ? 'height' : name === 'Text' ? 'size' : 'weight')]);
+	assert.deepEqual(found, [['Mafs', '360'], ['Plot.OfX', '2.5'], ['Text', 'LABEL_SIZE * scale']]);
+}
+
 // ---- VectorBoard2D plane labels, shared by both VectorBoard2D sections ----
 // Labels are checked at the narrowest plane (about 270px on a 320px phone) and the widest (440px), as fitLabel draws them.
 const PLANE_SIZES = [270, 440];
@@ -4462,16 +4560,34 @@ const labelsOverlap = (first, second, size) => {
 		const plain = [...vd.tableRows(state).flatMap((row) => [row.x, row.y, row.length, row.spoken]), ...vd.columnVectors(state).map((column) => column.spoken), ...vd.handlesFor(state).map((handle) => handle.label)];
 		for (const text of plain) assert.ok(!unsaid.test(text), `${id}: "${text}" is read as written and has a fraction or ÷`);
 	};
+	const vectorLayout = await import('../src/components/react/vectorBoard/labelLayout.ts');
 	for (const id of Object.keys(vs.SETUPS)) {
 		let count = 0;
+		// The span setups' crowded layouts are checked at scale where their overlaps are swept (below).
+		const crowded = ['combine', 'span-choice'].includes(vs.getSetup(id).kind);
+		const capSize = PLANE_SIZES.at(-1);
 		for (const state of reachableStates(id)) {
 			for (const label of vd.planeLabels(state)) {
 				for (const size of PLANE_SIZES) assert.ok(labelFits(label, size), `${id}: "${label.text}" leaves a ${size}px plane at a = (${state.a}), b = (${state.b}), guess = (${state.guess}), c = ${state.scalar}`);
+			}
+			if (!crowded) {
+				const scaledSize = layoutPlaneSize(capSize * LARGE_SCREEN_SCALE, LARGE_SCREEN_SCALE);
+				assert.deepEqual(vectorLayout.placedLabels(state, scaledSize), vectorLayout.placedLabels(state, capSize), `${id}: labels land on the same grid spots at scale ${LARGE_SCREEN_SCALE}`);
 			}
 			assertFractionsSaid(id, state);
 			count++;
 		}
 		assert.ok(count > 0, `${id}: no states swept`);
+		// The opening and each preset, as the pages walk through them, at the page-walk scales on both plane sizes.
+		if (crowded) continue;
+		const opening = vst.initialState(id);
+		const walked = [opening, ...(vs.getSetup(id).presets ?? []).map((preset) => vst.reducer({ ...opening, checked: true }, { type: 'preset', id: preset.id }))];
+		for (const state of walked) {
+			for (const size of PLANE_SIZES) {
+				const base = vectorLayout.placedLabels(state, size);
+				for (const scale of PAGE_WALK_SCALES) assert.deepEqual(vectorLayout.placedLabels(state, layoutPlaneSize(size * scale, scale)), base, `${id}: labels at scale ${scale} on a ${size}px plane`);
+			}
+		}
 	}
 	// labelAnchor is the arrow's middle plus labelAway's unit step.
 	assert.deepEqual(vm.labelAway([0, 0], [4, 0], 1), [0, 1]);
@@ -4707,6 +4823,18 @@ const labelsOverlap = (first, second, size) => {
 	{
 		const layout = await import('../src/components/react/vectorBoard/labelLayout.ts');
 		const SPAN_PLANE_SIZES = [270, 325, 440];
+		const VECTOR_PLANE_CAP = 440;
+		// The presets the span pages walk through, at the page-walk scales on every plane size.
+		for (const id of ['span-reach', 'span-shape']) {
+			const opening = vst.initialState(id);
+			const walked = [opening, { ...opening, checked: true }, ...vs.getSetup(id).presets.map((preset) => vst.reducer({ ...opening, checked: true }, { type: 'preset', id: preset.id }))];
+			for (const state of walked) {
+				for (const size of SPAN_PLANE_SIZES) {
+					const base = layout.placedLabels(state, size);
+					for (const scale of PAGE_WALK_SCALES) assert.deepEqual(layout.placedLabels(state, layoutPlaneSize(size * scale, scale)), base, `${id}: labels at scale ${scale} on a ${size}px plane`);
+				}
+			}
+		}
 		assert.equal(layout.segmentToBox([0, 0], [4, 0], { left: 1, right: 2, bottom: 1, top: 2 }), 1);
 		assert.equal(layout.segmentToBox([0, 0], [4, 4], { left: 1, right: 2, bottom: 1, top: 2 }), 0);
 		assert.equal(layout.segmentToBox([4, 5], [4, 5], { left: 1, right: 2, bottom: 1, top: 5 }), 2);
@@ -4732,6 +4860,9 @@ const labelsOverlap = (first, second, size) => {
 		/** Everything a placed label covers or strays from, as "text ~ what" strings; empty when the layout is clear. */
 		const crowding = (state, size) => {
 			const labels = layout.placedLabels(state, size);
+			if (size === VECTOR_PLANE_CAP) {
+				assert.deepEqual(layout.placedLabels(state, layoutPlaneSize(size * LARGE_SCREEN_SCALE, LARGE_SCREEN_SCALE)), labels, `labels land on the same grid spots at scale ${LARGE_SCREEN_SCALE}: ${JSON.stringify(state)}`);
+			}
 			const boxes = labels.map((label) => fittedLabelBox(label, label.text, size));
 			const obstacles = layout.planeObstacles(state, size);
 			const rows = layout.axisNumberRows(size);
@@ -7260,6 +7391,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		assert.ok(reachable.length > 2000, `enumerated ${reachable.length} states`);
 		// The planes a 320px phone, a 375px phone and a desktop draw (the cap is 400px).
 		const FC_PLANE_SIZES = [270, 325, 400];
+		const FC_PLANE_CAP = 400;
 		let fittedLabels = 0;
 		let drawnNumbers = 0;
 		let lineLabelsNearRulerEnds = 0;
@@ -7287,6 +7419,11 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 			const labeled = marks.filter((entry) => entry.label);
 			for (const size of FC_PLANE_SIZES) {
 				const placed = fcLayout.planeLabels(state, size);
+				if (size === FC_PLANE_CAP) {
+					const scaledSize = layoutPlaneSize(size * LARGE_SCREEN_SCALE, LARGE_SCREEN_SCALE);
+					assert.deepEqual(fcLayout.planeLabels(state, scaledSize), placed, `labels land on the same grid spots at scale ${LARGE_SCREEN_SCALE}: ${where}`);
+					assert.deepEqual(fcLayout.numberedValues(state, scaledSize), fcLayout.numberedValues(state, size), `the same axis numbers at scale ${LARGE_SCREEN_SCALE}: ${where}`);
+				}
 				const texts = labeled.map((mark) => mark.label.text);
 				const placedTexts = placed.map((label) => label.text);
 				assert.deepEqual(placedTexts, texts.filter((text) => placedTexts.includes(text)), `labels keep their marks' order: ${where}`);
@@ -7401,6 +7538,15 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 			const kept = (state, sizes = FC_PLANE_SIZES) => {
 				const texts = fcMarks.planeMarks(state).filter((mark) => mark.label).map((mark) => mark.label.text);
 				for (const size of sizes) assert.deepEqual(fcLayout.planeLabels(state, size).map((label) => label.text), texts, `every label kept on a ${size}px plane: ${JSON.stringify(state)}`);
+				// Scaled for a large screen, or a reader's larger default font, the labels and numbers land on the same spots.
+				for (const size of FC_PLANE_SIZES) {
+					const base = fcLayout.planeLabels(state, size);
+					const numbers = fcLayout.numberedValues(state, size);
+					for (const scale of PAGE_WALK_SCALES) {
+						assert.deepEqual(fcLayout.planeLabels(state, layoutPlaneSize(size * scale, scale)), base, `labels at scale ${scale} on a ${size}px plane: ${JSON.stringify(state)}`);
+						assert.deepEqual(fcLayout.numberedValues(state, layoutPlaneSize(size * scale, scale)), numbers, `axis numbers at scale ${scale} on a ${size}px plane: ${JSON.stringify(state)}`);
+					}
+				}
 			};
 			kept(opening);
 			for (const h of [[1, 2], [-1, 2], [-1, 1], [1, 4]]) kept({ ...opening, hIndex: hAt(...h) });

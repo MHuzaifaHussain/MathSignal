@@ -25,13 +25,19 @@ import {
 import { combinePieces, planeLabels, spanLine, sumDot, type PlaneLabel } from './describe.ts';
 import { handleIds, requireFlag, setupOf, type VectorState } from './state.ts';
 
-/** Stroke widths in pixels. The one ochre element is heavier, so it stands out by weight as well as hue. */
+/**
+ * Stroke widths in pixels at the base size (VectorPlane multiplies them by the board scale, decision 0025). The one
+ * ochre element is heavier, so it stands out by weight as well as hue.
+ */
 export const ARROW_WEIGHT = 2.5;
 export const OCHRE_WEIGHT = 3;
 /** a and b on span-reach: the muted references the scaled arrows are copied from. */
 export const MUTED_WEIGHT = 1.5;
 /** The span line on span-reach, muted and dotted. On span-shape it is the ochre element, at OCHRE_WEIGHT. */
 export const SPAN_LINE_WEIGHT = 2;
+/** A zero vector's ring, and the outline of the small filled dots (the sum dot, a shape's corner dots). */
+export const ZERO_RING_WEIGHT = 2;
+export const DOT_OUTLINE_WEIGHT = 1;
 /** Ring radii in grid units: a zero vector, the add guess, and the flag and origin ring (the guess ring's size). */
 export const ZERO_RING_RADIUS = 0.2;
 export const GUESS_RING_RADIUS = 0.32;
@@ -194,7 +200,7 @@ const disk = (id: string, center: Vec2, radius: number, weightPx: number, planeS
 
 /** An arrow from the origin, or the ring a zero vector is drawn as. */
 function arrowObstacles(id: string, tail: Vec2, tip: Vec2, weightPx: number, planeSize: number): Obstacle[] {
-	if (isZero(subtract(tip, tail))) return [disk(id, tail, ZERO_RING_RADIUS, 2, planeSize)];
+	if (isZero(subtract(tip, tail))) return [disk(id, tail, ZERO_RING_RADIUS, ZERO_RING_WEIGHT, planeSize)];
 	return [...lineObstacle(id, tail, tip, weightPx, planeSize), ...headObstacle(id, tail, tip, weightPx, planeSize)];
 }
 
@@ -248,7 +254,7 @@ export function planeObstacles(state: VectorState, planeSize: number): Obstacle[
 			if (piece.head) obstacles.push(...headObstacle(piece.id, piece.from, piece.to, ARROW_WEIGHT, planeSize));
 		}
 		const dot = sumDot(state);
-		if (dot) obstacles.push(disk('sum', dot, SUM_DOT_RADIUS, 1, planeSize));
+		if (dot) obstacles.push(disk('sum', dot, SUM_DOT_RADIUS, DOT_OUTLINE_WEIGHT, planeSize));
 		obstacles.push(disk('flag', requireFlag(setupOf(state)).target, TARGET_RING_RADIUS, OCHRE_WEIGHT, planeSize));
 	} else {
 		if (state.checked && isZero(state.a) && isZero(state.b)) obstacles.push(disk('origin', ORIGIN, TARGET_RING_RADIUS, OCHRE_WEIGHT, planeSize));

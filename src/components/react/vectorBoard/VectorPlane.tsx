@@ -1,13 +1,16 @@
 import { useMemo } from "react";
 import { Circle, Coordinates, Mafs, MovablePoint, Plot, Polygon, Polyline, Text, Vector } from "mafs";
 import type { vec } from "mafs";
+import { layoutPlaneSize } from "../boardScale.ts";
 import { DOTTED, Segment } from "../planeLines";
 import { plotColors } from "../plotColors";
+import useBoardScale from "../useBoardScale.ts";
 import { cornerDots, drawnMeasures } from "./normsDescribe.ts";
 import { ballOutline, type Measure } from "./norms.ts";
 import { ARC_RADIUS, cartShadow, combinePieces, handlesFor, ochreElement, showsArc, showsRightAngle, spanLine, sumDot, type TableRow } from "./describe.ts";
 import {
   ARROW_WEIGHT,
+  DOT_OUTLINE_WEIGHT,
   GUESS_RING_RADIUS,
   MUTED_WEIGHT,
   OCHRE_WEIGHT,
@@ -15,6 +18,7 @@ import {
   SUM_DOT_RADIUS,
   TARGET_RING_RADIUS,
   ZERO_RING_RADIUS,
+  ZERO_RING_WEIGHT,
   placedLabels,
 } from "./labelLayout.ts";
 import {
@@ -39,6 +43,12 @@ import { handleBox, handleIds, requireFlag, setupOf, type HandleId, type VectorS
 
 const VIEW: vec.Vector2 = [-(VIEW_LIMIT + VIEW_PADDING), VIEW_LIMIT + VIEW_PADDING];
 const RIGHT_ANGLE_SIZE = 0.3;
+/**
+ * Stroke widths in px at the base size, beside labelLayout.ts's: the right-angle mark, the angle arc and the dotted
+ * length circle, then the dotted component legs and rails. Every px passed to Mafs is multiplied by useBoardScale().
+ */
+const GUIDE_WEIGHT = 1.5;
+const LEG_WEIGHT = 2;
 
 interface VectorPlaneProps {
   state: VectorState;
@@ -51,14 +61,16 @@ interface VectorPlaneProps {
 
 const unit = (v: Vec2): Vec2 => scale(1 / Math.sqrt(lengthSquared(v)), v);
 
-/** An arrow, or a labeled ring for a zero vector: Mafs would point a zero-length arrow's head east. */
+/** An arrow, or a labeled ring for a zero vector: Mafs would point a zero-length arrow's head east. `weight` is base px. */
 function Arrow({ tail = [0, 0], tip, color = plotColors.ink, weight = ARROW_WEIGHT, dashed = false }: { tail?: Vec2; tip: Vec2; color?: string; weight?: number; dashed?: boolean }) {
-  if (isZero(subtract(tip, tail))) return <Circle center={[tail[0], tail[1]]} radius={ZERO_RING_RADIUS} color={color} fillOpacity={0} weight={2} />;
-  return <Vector tail={[tail[0], tail[1]]} tip={[tip[0], tip[1]]} color={color} weight={weight} style={dashed ? "dashed" : "solid"} />;
+  const boardScale = useBoardScale();
+  if (isZero(subtract(tip, tail))) return <Circle center={[tail[0], tail[1]]} radius={ZERO_RING_RADIUS} color={color} fillOpacity={0} weight={ZERO_RING_WEIGHT * boardScale} />;
+  return <Vector tail={[tail[0], tail[1]]} tip={[tip[0], tip[1]]} color={color} weight={weight * boardScale} style={dashed ? "dashed" : "solid"} />;
 }
 
 /** A small open square at `corner`, with sides along the two unit directions. */
 function RightAngle({ corner, first, second }: { corner: Vec2; first: Vec2; second: Vec2 }) {
+  const boardScale = useBoardScale();
   const one = add(corner, scale(RIGHT_ANGLE_SIZE, first));
   const both = add(one, scale(RIGHT_ANGLE_SIZE, second));
   const two = add(corner, scale(RIGHT_ANGLE_SIZE, second));
@@ -70,7 +82,7 @@ function RightAngle({ corner, first, second }: { corner: Vec2; first: Vec2; seco
         [two[0], two[1]],
       ]}
       color={plotColors.inkMuted}
-      weight={1.5}
+      weight={GUIDE_WEIGHT * boardScale}
       fillOpacity={0}
     />
   );
@@ -78,8 +90,9 @@ function RightAngle({ corner, first, second }: { corner: Vec2; first: Vec2; seco
 
 /** One dotted leg, cut at the board's edge (span-reach's arrows can run past it); nothing when no part is on the board. */
 function Leg({ from, to }: { from: Vec2; to: Vec2 }) {
+  const boardScale = useBoardScale();
   const piece = clipSegment(from, to);
-  return piece && <Segment from={piece.from} to={piece.to} color={plotColors.inkMuted} weight={2} lineStyle="dotted" />;
+  return piece && <Segment from={piece.from} to={piece.to} color={plotColors.inkMuted} weight={LEG_WEIGHT * boardScale} lineStyle="dotted" />;
 }
 
 /** Dotted legs from the tail east or west, then north or south, for the row the reader is pointing at. */
@@ -126,6 +139,7 @@ interface SceneProps {
 const ochreOr = (on: boolean) => (on ? plotColors.attention : plotColors.ink);
 
 function AddScene({ state, ochre }: SceneProps) {
+  const boardScale = useBoardScale();
   const sum = add(state.a, state.b);
   return (
     <>
@@ -140,7 +154,7 @@ function AddScene({ state, ochre }: SceneProps) {
       {state.checked ? (
         <Arrow tip={sum} color={ochreOr(ochre === "sum")} weight={OCHRE_WEIGHT} />
       ) : (
-        <Circle center={[state.guess[0], state.guess[1]]} radius={GUESS_RING_RADIUS} color={ochreOr(ochre === "guess")} fillOpacity={0} weight={OCHRE_WEIGHT} />
+        <Circle center={[state.guess[0], state.guess[1]]} radius={GUESS_RING_RADIUS} color={ochreOr(ochre === "guess")} fillOpacity={0} weight={OCHRE_WEIGHT * boardScale} />
       )}
     </>
   );
@@ -157,20 +171,21 @@ function ScaleScene({ state, ochre }: SceneProps) {
 }
 
 function CartScene({ state, ochre }: SceneProps) {
+  const boardScale = useBoardScale();
   const goal = setupOf(state).goal;
   const shadow = cartShadow(state);
   const railsShown = shadow !== null && shadow.onBoard && cross(state.b, state.a) !== 0;
   return (
     <>
       {goal && (
-        <Circle center={[0, 0]} radius={Math.sqrt(goal.targetLengthSquared)} color={plotColors.inkMuted} fillOpacity={0} weight={1.5} svgEllipseProps={{ style: DOTTED }} />
+        <Circle center={[0, 0]} radius={Math.sqrt(goal.targetLengthSquared)} color={plotColors.inkMuted} fillOpacity={0} weight={GUIDE_WEIGHT * boardScale} svgEllipseProps={{ style: DOTTED }} />
       )}
       <Arrow tip={state.b} dashed />
       <Arrow tip={state.a} />
       {shadow && (
         <>
-          {!isZero(shadow.tip) && <Segment from={[0, 0]} to={shadow.tip} color={ochreOr(ochre === "shadow")} weight={OCHRE_WEIGHT} />}
-          {railsShown && <Segment from={shadow.tip} to={state.a} color={plotColors.inkMuted} weight={2} lineStyle="dotted" />}
+          {!isZero(shadow.tip) && <Segment from={[0, 0]} to={shadow.tip} color={ochreOr(ochre === "shadow")} weight={OCHRE_WEIGHT * boardScale} />}
+          {railsShown && <Segment from={shadow.tip} to={state.a} color={plotColors.inkMuted} weight={LEG_WEIGHT * boardScale} lineStyle="dotted" />}
           {railsShown && !isZero(shadow.tip) && (
             <RightAngle corner={shadow.tip} first={unit(scale(-1, shadow.tip))} second={unit(subtract(state.a, shadow.tip))} />
           )}
@@ -181,6 +196,7 @@ function CartScene({ state, ochre }: SceneProps) {
 }
 
 function AlignScene({ state, ochre }: SceneProps) {
+  const boardScale = useBoardScale();
   const { a, b } = state;
   const tip = state.checked ? shadowTip(a, b) : null;
   const start = Math.atan2(a[1], a[0]);
@@ -192,8 +208,8 @@ function AlignScene({ state, ochre }: SceneProps) {
       <Arrow tip={b} dashed />
       {tip && !isZero(tip) && (
         <>
-          <Segment from={[0, 0]} to={tip} color={ochreOr(ochre === "shadow")} weight={OCHRE_WEIGHT} />
-          {cross(a, b) !== 0 && <Segment from={tip} to={b} color={plotColors.inkMuted} weight={2} lineStyle="dotted" />}
+          <Segment from={[0, 0]} to={tip} color={ochreOr(ochre === "shadow")} weight={OCHRE_WEIGHT * boardScale} />
+          {cross(a, b) !== 0 && <Segment from={tip} to={b} color={plotColors.inkMuted} weight={LEG_WEIGHT * boardScale} lineStyle="dotted" />}
         </>
       )}
       {showsArc(state) && (
@@ -201,7 +217,7 @@ function AlignScene({ state, ochre }: SceneProps) {
           xy={(t) => [ARC_RADIUS * Math.cos(start + turn * t), ARC_RADIUS * Math.sin(start + turn * t)]}
           domain={[0, angle]}
           color={plotColors.inkMuted}
-          weight={1.5}
+          weight={GUIDE_WEIGHT * boardScale}
         />
       )}
       {showsRightAngle(state) && <RightAngle corner={[0, 0]} first={unit(a)} second={unit(b)} />}
@@ -218,23 +234,24 @@ const referenceColor = (vector: Vec2) => (isZero(vector) ? plotColors.ink : plot
  * span line when a and b line up.
  */
 function CombineScene({ state, ochre }: SceneProps) {
+  const boardScale = useBoardScale();
   const target = requireFlag(setupOf(state)).target;
   const line = spanLine(state);
   const dot = sumDot(state);
   return (
     <>
-      {line && <Segment from={line[0]} to={line[1]} color={plotColors.inkMuted} weight={SPAN_LINE_WEIGHT} lineStyle="dotted" />}
+      {line && <Segment from={line[0]} to={line[1]} color={plotColors.inkMuted} weight={SPAN_LINE_WEIGHT * boardScale} lineStyle="dotted" />}
       <Arrow tip={state.a} color={referenceColor(state.a)} weight={MUTED_WEIGHT} />
       <Arrow tip={state.b} color={referenceColor(state.b)} weight={MUTED_WEIGHT} dashed />
       {combinePieces(state).map((piece) =>
         piece.head ? (
           <Arrow key={piece.id} tail={piece.from} tip={piece.to} dashed={piece.id === "scaledB"} />
         ) : (
-          <Segment key={piece.id} from={piece.from} to={piece.to} color={plotColors.ink} weight={ARROW_WEIGHT} lineStyle={piece.id === "scaledB" ? "dashed" : "solid"} />
+          <Segment key={piece.id} from={piece.from} to={piece.to} color={plotColors.ink} weight={ARROW_WEIGHT * boardScale} lineStyle={piece.id === "scaledB" ? "dashed" : "solid"} />
         ),
       )}
-      {dot && <Circle center={[dot[0], dot[1]]} radius={SUM_DOT_RADIUS} color={plotColors.ink} fillOpacity={1} weight={1} />}
-      <Circle center={[target[0], target[1]]} radius={TARGET_RING_RADIUS} color={ochreOr(ochre === "flag")} fillOpacity={0} weight={OCHRE_WEIGHT} />
+      {dot && <Circle center={[dot[0], dot[1]]} radius={SUM_DOT_RADIUS} color={plotColors.ink} fillOpacity={1} weight={DOT_OUTLINE_WEIGHT * boardScale} />}
+      <Circle center={[target[0], target[1]]} radius={TARGET_RING_RADIUS} color={ochreOr(ochre === "flag")} fillOpacity={0} weight={OCHRE_WEIGHT * boardScale} />
     </>
   );
 }
@@ -245,12 +262,13 @@ function CombineScene({ state, ochre }: SceneProps) {
  * first, so b's dashes stay on top of it.
  */
 function SpanScene({ state, ochre }: SceneProps) {
+  const boardScale = useBoardScale();
   const line = spanLine(state);
   const originRing = ochre === "span" && spanKind(state.a, state.b) === "origin";
   return (
     <>
-      {line && <Segment from={line[0]} to={line[1]} color={ochreOr(ochre === "span")} weight={OCHRE_WEIGHT} />}
-      {originRing && <Circle center={[0, 0]} radius={TARGET_RING_RADIUS} color={plotColors.attention} fillOpacity={0} weight={OCHRE_WEIGHT} />}
+      {line && <Segment from={line[0]} to={line[1]} color={ochreOr(ochre === "span")} weight={OCHRE_WEIGHT * boardScale} />}
+      {originRing && <Circle center={[0, 0]} radius={TARGET_RING_RADIUS} color={plotColors.attention} fillOpacity={0} weight={OCHRE_WEIGHT * boardScale} />}
       <Arrow tip={state.a} />
       <Arrow tip={state.b} dashed />
     </>
@@ -261,16 +279,17 @@ function SpanScene({ state, ochre }: SceneProps) {
 const CORNER_DOT_RADIUS = 0.1;
 const BALL_WEIGHT = 2;
 
-/** One ball outline. The dash pattern names the measure (diamond solid, circle dashed, square dotted) in every color. */
+/** One ball outline, `weight` in base px. The dash pattern names the measure (diamond solid, circle dashed, square dotted) in every color. */
 function Ball({ measure, radius, color, weight }: { measure: Measure; radius: number; color: string; weight: number }) {
+  const boardScale = useBoardScale();
   const outline = ballOutline(measure, radius);
-  if (outline.kind === "circle") return <Circle center={[0, 0]} radius={outline.radius} color={color} fillOpacity={0} weight={weight} strokeStyle="dashed" />;
+  if (outline.kind === "circle") return <Circle center={[0, 0]} radius={outline.radius} color={color} fillOpacity={0} weight={weight * boardScale} strokeStyle="dashed" />;
   return (
     <Polygon
       points={outline.points.map((point): vec.Vector2 => [point[0], point[1]])}
       color={color}
       fillOpacity={0}
-      weight={weight}
+      weight={weight * boardScale}
       svgPolygonProps={measure === "linf" ? { style: DOTTED } : undefined}
     />
   );
@@ -282,6 +301,7 @@ function Ball({ measure, radius, color, weight }: { measure: Measure; radius: nu
  * shape's whole-number corners as muted dots.
  */
 function NormsScene({ state, ochre }: SceneProps) {
+  const boardScale = useBoardScale();
   const pin = state.a;
   const corner: Vec2 = [pin[0], 0];
   const routeOchre = ochre === "route";
@@ -293,10 +313,10 @@ function NormsScene({ state, ochre }: SceneProps) {
         <Ball key={measure} measure={measure} radius={state.radius} color={ochreOr(ballOchre)} weight={ballOchre ? OCHRE_WEIGHT : BALL_WEIGHT} />
       ))}
       {cornerDots(state).map((dot) => (
-        <Circle key={`${dot[0]},${dot[1]}`} center={[dot[0], dot[1]]} radius={CORNER_DOT_RADIUS} color={plotColors.inkMuted} fillOpacity={1} weight={1} />
+        <Circle key={`${dot[0]},${dot[1]}`} center={[dot[0], dot[1]]} radius={CORNER_DOT_RADIUS} color={plotColors.inkMuted} fillOpacity={1} weight={DOT_OUTLINE_WEIGHT * boardScale} />
       ))}
-      {pin[0] !== 0 && <Segment from={[0, 0]} to={corner} color={route.color} weight={route.weight} lineStyle="dotted" />}
-      {pin[1] !== 0 && <Segment from={corner} to={pin} color={route.color} weight={route.weight} lineStyle="dotted" />}
+      {pin[0] !== 0 && <Segment from={[0, 0]} to={corner} color={route.color} weight={route.weight * boardScale} lineStyle="dotted" />}
+      {pin[1] !== 0 && <Segment from={corner} to={pin} color={route.color} weight={route.weight * boardScale} lineStyle="dotted" />}
       <Arrow tip={pin} />
     </>
   );
@@ -310,6 +330,7 @@ const SCENES = { add: AddScene, scale: ScaleScene, cart: CartScene, align: Align
  * is one grid unit. Mafs code only; every string comes from describe.ts.
  */
 export default function VectorPlane({ state, linkedId, size, onMove }: VectorPlaneProps) {
+  const boardScale = useBoardScale();
   const kind = setupOf(state).kind;
   const Scene = SCENES[kind];
   const trips = state.stage === "trips";
@@ -341,8 +362,9 @@ export default function VectorPlane({ state, linkedId, size, onMove }: VectorPla
         {linked && !isZero(subtract(linked.tip, linked.tail)) && <ComponentLegs tail={linked.tail} tip={linked.tip} />}
         <Scene state={state} ochre={ochreElement(state)} />
         {/* Kept inside the plane at this size, and on the span setups clear of each other, the arrows and the axis numbers (labelLayout.ts). */}
-        {placedLabels(state, size).map((label) => (
-          <Text key={label.id} x={label.at[0]} y={label.at[1]} size={LABEL_SIZE} color={plotColors.ink} attach={label.attach === "center" ? undefined : label.attach}>
+        {/* Placed at the plane's base size and drawn at LABEL_SIZE × scale, so they land on the same grid spots at every scale. */}
+        {placedLabels(state, layoutPlaneSize(size, boardScale)).map((label) => (
+          <Text key={label.id} x={label.at[0]} y={label.at[1]} size={LABEL_SIZE * boardScale} color={plotColors.ink} attach={label.attach === "center" ? undefined : label.attach}>
             {label.text}
           </Text>
         ))}
