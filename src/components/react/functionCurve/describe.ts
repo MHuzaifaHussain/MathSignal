@@ -233,7 +233,7 @@ export function feedbackLine(state: CurveState): SpokenLine | null {
 	const corner = slopeAt(f, a);
 	if (corner.kind !== 'corner') throw new Error(`FunctionCurve: setup "${setup.id}" asks about a point with no corner`);
 	const sides = line('Every ruler to the right gives ', num(corner.right), ' and every ruler to the left gives ', num(corner.left), ', however short');
-	if (state.choice === setup.answerChoice) return line('Yes. ', sides, '. ', f.name, ' has no single slope at ', at(f.variable, a), '.');
+	if (state.choice === setup.answerChoice) return line('Yes. ', sides, '. ', capitalized(f.name), ' has no single slope at ', at(f.variable, a), '.');
 	return line('Not quite. ', sides, ', so there is no single slope at ', at(f.variable, a), '.');
 }
 

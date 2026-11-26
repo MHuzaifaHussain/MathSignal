@@ -6499,7 +6499,7 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		const yes = fcRun('corner', { type: 'choice', choice: 'two' }, { type: 'check' });
 		assert.deepEqual(fcSay.feedbackLine(yes), {
 			visible: 'Yes. Every ruler to the right gives 1 and every ruler to the left gives 0, however short. ReLU has no single slope at x = 0.',
-			spoken: 'Yes. Every ruler to the right gives 1 and every ruler to the left gives 0, however short. relu has no single slope at x equals 0.',
+			spoken: 'Yes. Every ruler to the right gives 1 and every ruler to the left gives 0, however short. Relu has no single slope at x equals 0.',
 		});
 		assert.equal(fcReduce(yes, { type: 'show-answer' }), yes, 'corner has no Show the answer');
 		assert.equal(fcReduce(yes, { type: 'choice', choice: 'one' }), yes, 'the choice is gone after Check');
