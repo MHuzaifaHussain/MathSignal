@@ -3,10 +3,12 @@
 //   2. code colors stay perceptually far from the meaning colors (mu, sigma, attention),
 //      for normal vision and the three common color-vision deficiencies
 //   3. every file generated from the palette (tokens.css, favicon, logos) is up to date
+//   4. Expressive Code draws line numbers in the palette colors checked above, not a faded copy of them
 // Fails loudly with every violation listed, so nothing ships silently off-spec.
 import { contrastRules, meaningSeparation, palette } from '../src/design/palette.mjs';
 import { COLOR_VISION_TYPES, contrastRatio, perceptualDistance } from './lib/color.mjs';
 import { staleGeneratedFiles } from './build-tokens.mjs';
+import ecConfig from '../ec.config.mjs';
 
 const MINIMUM_CONTRAST = { text: 4.5, large: 3, graphic: 3, code: 5.5 };
 
@@ -40,6 +42,19 @@ function separationViolations(themeName, theme) {
 	);
 }
 
+/** Gutter styles Expressive Code would otherwise fade with alpha, and the palette token each must resolve to. */
+const GUTTER_STYLE_TOKENS = { gutterForeground: 'codeLineNumber', gutterHighlightForeground: 'codeInk' };
+
+/** @param {string} themeName @param {Record<string, string>} theme */
+function gutterColorViolations(themeName, theme) {
+	return Object.entries(GUTTER_STYLE_TOKENS).flatMap(([style, token]) => {
+		const resolve = ecConfig.styleOverrides?.[style];
+		if (typeof resolve !== 'function') return [`ec.config.mjs: styleOverrides.${style} must be set, or Expressive Code fades line numbers under 4.5:1`];
+		const color = resolve({ theme: { type: themeName } });
+		return color === theme[token] ? [] : [`ec.config.mjs: ${style} is ${color} in ${themeName}, must be the palette's ${token} (${theme[token]})`];
+	});
+}
+
 async function generatedFileViolations() {
 	const stale = await staleGeneratedFiles();
 	return stale.map((path) => `${path} is out of date: run \`npm run tokens\``);
@@ -47,7 +62,7 @@ async function generatedFileViolations() {
 
 async function main() {
 	const violations = [
-		...Object.entries(palette).flatMap(([name, theme]) => [...contrastViolations(name, theme), ...separationViolations(name, theme)]),
+		...Object.entries(palette).flatMap(([name, theme]) => [...contrastViolations(name, theme), ...separationViolations(name, theme), ...gutterColorViolations(name, theme)]),
 		...(await generatedFileViolations()),
 	];
 	if (violations.length > 0) {

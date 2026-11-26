@@ -239,6 +239,7 @@ Rules:
 - **Nothing in a code theme is bold.** Bold is reserved for the μ/σ markers.
 - **No blue and no pink in code themes.** Those hues belong to σ and μ.
 - **Every token color is at least 5.5:1** against the code background, so Expressive Code's automatic contrast fix never changes it. `npm run check:design` enforces this.
+- **Line numbers keep the palette colors.** `ec.config.mjs` sets `gutterForeground` and `gutterHighlightForeground` itself, because Expressive Code otherwise fades line numbers with alpha to about 3.6:1. `npm run check:design` asserts both.
 - Dark-mode code ink (`#f2f0ea`) is deliberately brighter than body ink: the body ink sits too close to μ for color-blind readers.
 
 ### μ and σ in code

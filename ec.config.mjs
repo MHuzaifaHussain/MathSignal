@@ -27,6 +27,10 @@ export default defineEcConfig({
 		uiFontFamily: 'var(--ms-font-ui)',
 		// No vertical rule between line numbers and code (decision 0006)
 		gutterBorderWidth: '0px',
+		// Line numbers in the palette's own colors. Left unset, Expressive Code adds alpha to keep them between 3.3 and
+		// 3.6:1, under the 4.5:1 text minimum; an explicit value skips that. `npm run check:design` asserts both.
+		gutterForeground: ({ theme }) => palette[theme.type].codeLineNumber,
+		gutterHighlightForeground: ({ theme }) => palette[theme.type].codeInk,
 		frames: {
 			shadowColor: 'transparent',
 			frameBoxShadowCssValue: 'none',
