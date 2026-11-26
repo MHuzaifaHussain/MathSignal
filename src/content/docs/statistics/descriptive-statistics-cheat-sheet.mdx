@@ -63,7 +63,7 @@ Find what your question asks for in the "Which summary do I need?" table, read t
 
 ## Notation
 
-<NotationKey symbols={["data-value", "sample-size", "order-statistic", "mu", "median", "mode", "sigma2", "sigma", "sample-variance", "sample-sd", "first-quartile", "third-quartile", "iqr", "mad", "z"]} />
+<NotationKey symbols={["data-value", "sample-size", "order-statistic", "mu", "sample-mean", "median", "sigma2", "sigma", "sample-variance", "sample-sd", "quantile-level", "quantile-position", "quantile", "first-quartile", "third-quartile", "iqr", "mad", "z"]} />
 
 ## The class every example uses
 
@@ -73,7 +73,7 @@ Every number on this page comes from one list: the heights of 9 children, in cen
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Height (cm) | 133 | 122 | 140 | 128 | 148 | 125 | 137 | 131 | 142 |
 
-Sorted, the list is 122, 125, 128, 131, 133, 137, 140, 142, 148, and the heights add up to 1,206 cm. A second list appears only in the section on bad values: the same class with child 5's 148 typed as 1,480, which this page calls the typo list. Its total is 2,538. These are the same children as on the [descriptive statistics](/statistics/descriptive-statistics/), [variance](/statistics/variance-and-standard-deviation/) and [box plot](/statistics/reading-box-plots-quartiles-iqr/) pages, so every number here can be checked there too.
+Sorted, the list is 122, 125, 128, 131, 133, 137, 140, 142, 148, and the heights add up to 1,206 cm. A second list appears only in the section on bad values: the same class with child 5's 148 typed as 1,480, which this page calls the typo list. Its total is 2,538. These are the same children as on the [descriptive statistics](/statistics/descriptive-statistics/), [variance](/statistics/variance-and-standard-deviation/) and [box plot](/statistics/reading-box-plots-quartiles-iqr/) pages, so the numbers those pages share can be checked there too.
 
 ## Which summary do I need?
 
@@ -92,19 +92,19 @@ Decide whether the question asks where the middle is, how spread out the values 
 
 ## Where the middle is: mean, median, mode
 
-The mean shares the total out equally, the median is the middle of the sorted list, and the mode is the most common value. In the code column, `x` is a NumPy array of the heights and `s` a pandas Series.
+The mean shares the total out equally, the median is the middle of the sorted list, and the mode is the most common value. In the code column, `x` is a NumPy array of the heights and `ser` a pandas Series.
 
 | Summary | Formula | Our class | NumPy / pandas | Explained on |
 | --- | --- | --- | --- | --- |
-| Mean | $\vmu = \tfrac{1}{n}\sum_{i=1}^{n} x_i$ | 1,206 / 9 = 134 cm | `np.mean(x)`, `s.mean()`: 134.0 | [share the total out equally](/statistics/descriptive-statistics/#the-mean-share-the-total-out-equally) |
-| Median | $x_{(5)}$ for $n = 9$; the average of the two middle values when $n$ is even | The 5th of 9: 133 cm. With a tenth child of 136 cm: (133 + 136) / 2 = 134.5 cm | `np.median(x)`, `s.median()`: 133.0 | [the middle of the line](/statistics/descriptive-statistics/#the-median-the-middle-of-the-line) |
-| Mode | The most common value | None: every height appears once | NumPy has none; `s.mode()` lists all 9 heights; `statistics.mode(x)` gives 133 | [the most common value](/statistics/descriptive-statistics/#the-mode-the-most-common-value) |
+| Mean | $\vmu = \tfrac{1}{n}\sum_{i=1}^{n} x_i$ | 1,206 / 9 = 134 cm | `np.mean(x)`, `ser.mean()`: 134.0 | [share the total out equally](/statistics/descriptive-statistics/#the-mean-share-the-total-out-equally) |
+| Median | $x_{(5)}$ for $n = 9$; the average of the two middle values when $n$ is even | The 5th of 9: 133 cm. With a tenth child of 150 cm: (133 + 137) / 2 = 135 cm | `np.median(x)`, `ser.median()`: 133.0 | [the middle of the line](/statistics/descriptive-statistics/#the-median-the-middle-of-the-line) |
+| Mode | The most common value | None: every height appears once | NumPy has none; `ser.mode()` lists all 9 heights; `statistics.mode(x)` gives 133 | [the most common value](/statistics/descriptive-statistics/#the-mode-the-most-common-value) |
 | 20% trimmed mean | Drop the same number of values from each end, average the rest | Drop 122 and 148: 936 / 7 ≈ 133.71 cm | `scipy.stats.trim_mean(x, 0.2)` | Only here |
 | Midrange | $(x_{(1)} + x_{(n)})/2$ | (122 + 148) / 2 = 135 cm | `(x.min() + x.max()) / 2` | Only here |
 
 NumPy's median takes the middle value of the sorted copy when the count is odd and averages the two middle values when it is even <Cite id="numpy-median" />. pandas' `mode()` always returns a Series, with every mode in sorted order <Cite id="pandas-mode" />, so a list with no repeats gets all of its values back. Python's `statistics.mode` returns the first mode it meets, and `statistics.multimode` returns them all <Cite id="python-statistics" />. SciPy's `trim_mean` cuts the given share from each end, rounded down to a whole number of values <Cite id="scipy-trim-mean" />: int(0.2 × 9) = 1 value from each end here. NIST's handbook lists the trimmed mean among the alternatives to the mean that the extremes in the tails don't unduly affect <Cite id="nist-location" />.
 
-For a symmetric list the mean and the median agree. Here they are 134 and 133 cm and there is no mode; [mean vs median vs mode](/statistics/mean-vs-median-vs-mode/#what-one-extreme-value-does) shows what pulls the three apart.
+For a symmetric list the mean and the median agree. Ours is not quite symmetric: the mean is 134 cm and the median 133 cm, 1 cm apart, and there is no mode. [Mean vs median vs mode](/statistics/mean-vs-median-vs-mode/#what-one-extreme-value-does) shows what pulls the three apart.
 
 ## How spread out: range, variance, standard deviation, IQR, MAD
 
@@ -113,14 +113,14 @@ Spread measures how far the values sit from each other, either through every val
 | Summary | Formula | Our class | NumPy / pandas | Explained on |
 | --- | --- | --- | --- | --- |
 | Range | $x_{(n)} - x_{(1)}$ | 148 − 122 = 26 cm | `x.max() - x.min()` | [tallest minus shortest](/statistics/descriptive-statistics/#the-range-tallest-minus-shortest) |
-| Variance, ÷ n | $\vsigma^2 = \tfrac{1}{n}\sum_{i=1}^{n} (x_i - \vmu)^2$ | 576 / 9 = 64 cm² | `np.var(x)`, `s.var(ddof=0)`: 64.0 | [how far from the mean, on average](/statistics/variance-and-standard-deviation/#how-far-from-the-mean-on-average) |
-| Sample variance, ÷ (n − 1) | $s^2 = \tfrac{1}{n-1}\sum_{i=1}^{n} (x_i - \bar{x})^2$ | 576 / 8 = 72 cm² | `np.var(x, ddof=1)`, `s.var()`: 72.0 | [the whole group or a sample](/statistics/variance-and-standard-deviation/#two-versions-the-whole-group-or-a-sample) |
-| Standard deviation | $\vsigma = \sqrt{\vsigma^2}$, $s = \sqrt{s^2}$ | $\vsigma$ = √64 = 8 cm; s = √72 ≈ 8.49 cm | `np.std(x)`: 8.0; `s.std()`: ≈ 8.485 | [the whole group or a sample](/statistics/variance-and-standard-deviation/#two-versions-the-whole-group-or-a-sample) |
+| Variance, ÷ n | $\vsigma^2 = \tfrac{1}{n}\sum_{i=1}^{n} (x_i - \vmu)^2$ | 576 / 9 = 64 cm² | `np.var(x)`, `ser.var(ddof=0)`: 64.0 | [how far from the mean, on average](/statistics/variance-and-standard-deviation/#how-far-from-the-mean-on-average) |
+| Sample variance, ÷ (n − 1) | $s^2 = \tfrac{1}{n-1}\sum_{i=1}^{n} (x_i - \bar{x})^2$ | 576 / 8 = 72 cm² | `np.var(x, ddof=1)`, `ser.var()`: 72.0 | [the whole group or a sample](/statistics/variance-and-standard-deviation/#two-versions-the-whole-group-or-a-sample) |
+| Standard deviation | $\vsigma = \sqrt{\vsigma^2}$, $s = \sqrt{s^2}$ | $\vsigma$ = √64 = 8 cm; s = √72 ≈ 8.49 cm | `np.std(x)`: 8.0; `ser.std()`: ≈ 8.485 | [the whole group or a sample](/statistics/variance-and-standard-deviation/#two-versions-the-whole-group-or-a-sample) |
 | IQR | $Q_3 - Q_1$ | 140 − 128 = 12 cm | `np.quantile(x, 0.75) - np.quantile(x, 0.25)` | [five steps to a box plot](/statistics/reading-box-plots-quartiles-iqr/#five-steps-from-a-list-to-its-box-plot) |
-| Median absolute deviation | $\operatorname{median}$ of $\lvert x_i - \operatorname{median} \rvert$ | Distances from 133, sorted: 0, 2, 4, 5, 7, 8, 9, 11, 15, so 7 cm. Times 1.4826: ≈ 10.38 cm | `scipy.stats.median_abs_deviation(x)`: 7.0 | [the median and the MAD](/statistics/outlier-detection-z-score-vs-iqr/#median-and-mad) |
+| Median absolute deviation | $\operatorname{median}$ of $\lvert x_i - \operatorname{median} \rvert$ | Distances from 133, sorted: 0, 2, 4, 5, 7, 8, 9, 11, 15, so 7 cm. Times 1.4826 (= 1 / 0.67449): ≈ 10.38 cm | `scipy.stats.median_abs_deviation(x)`: 7.0 | [the median and the MAD](/statistics/outlier-detection-z-score-vs-iqr/#median-and-mad) |
 | Mean absolute deviation | $\tfrac{1}{n}\sum_{i=1}^{n} \lvert x_i - \vmu \rvert$ | 62 / 9 ≈ 6.89 cm | `np.mean(np.abs(x - x.mean()))` | [why square at all](/statistics/variance-and-standard-deviation/#how-far-from-the-mean-on-average) |
 
-NumPy's `std` divides by n unless you pass `ddof` <Cite id="numpy-std" />, and pandas' `std` divides by n − 1 <Cite id="pandas-std" />. SciPy's `median_abs_deviation` reports the raw median absolute deviation by default, and `scale="normal"` divides it by about 0.67449, giving ≈ 10.38 for our class <Cite id="scipy-mad" />. That rescaled version matches <Var name="sigma" /> for normal data, and the [variance page's research frontier](/statistics/variance-and-standard-deviation/#research-frontier) explains why it exists.
+NumPy's `std` divides by n unless you pass `ddof` <Cite id="numpy-std" />, and pandas' `std` divides by n − 1 <Cite id="pandas-std" />. SciPy's `median_abs_deviation` reports the raw median absolute deviation by default, and `scale="normal"` divides it by about 0.67449, the same as multiplying by 1.4826, giving ≈ 10.38 for our class <Cite id="scipy-mad" />. That rescaled version matches <Var name="sigma" /> for data that follow the [normal distribution](/statistics/normal-distribution/), and the [variance page's research frontier](/statistics/variance-and-standard-deviation/#research-frontier) explains why it exists.
 
 <Var name="sigma" /> (8 cm) is bigger than the mean absolute deviation (≈ 6.89 cm), because squaring weighs the far children more.
 
@@ -130,46 +130,46 @@ A percentile says what share of the list sits below a value, and a z-score says 
 
 | Summary | Formula | Our class | NumPy / pandas | Explained on |
 | --- | --- | --- | --- | --- |
-| Quartiles | $Q_1$, median, $Q_3$ at $h = (n-1)p$ steps along the sorted list | h = 2, 4 and 6: 128, 133 and 140 cm | `np.quantile(x, [0.25, 0.5, 0.75])`, `s.quantile([0.25, 0.5, 0.75])` | [which quartile? tools disagree](/statistics/reading-box-plots-quartiles-iqr/#which-quartile-tools-disagree) |
+| Quartiles | $Q_1$, median, $Q_3$ at $h = (n-1)p$ steps up from the smallest value (h = 0 is the smallest, so h = 2 is the 3rd value) | h = 2, 4 and 6: 128, 133 and 140 cm | `np.quantile(x, [0.25, 0.5, 0.75])`, `ser.quantile([0.25, 0.5, 0.75])` | [which quartile? tools disagree](/statistics/reading-box-plots-quartiles-iqr/#which-quartile-tools-disagree) |
 | Percentile | The same rule with any $p$ | 90th: h = 7.2, so 142 + 0.2 × 6 = 143.2 cm. 10th: 122 + 0.8 × 3 = 124.4 cm | `np.percentile(x, 90)` | [when the cut falls between two values](/statistics/reading-box-plots-quartiles-iqr/#when-the-cut-falls-between-two-values) |
 | z-score, ÷ n | $z = (x - \vmu)/\vsigma$ | 148: 14 / 8 = 1.75. 122: −1.5. 142: 1 | `(x - x.mean()) / x.std()` | [three steps to a z-score](/statistics/z-scores-worked-example/#three-steps-to-a-z-score) |
-| z-score, ÷ (n − 1) | $(x - \bar{x})/s$ | 148: 14 / √72 ≈ 1.65 | `(s - s.mean()) / s.std()` | [three steps to a z-score](/statistics/z-scores-worked-example/#three-steps-to-a-z-score) |
+| z-score, ÷ (n − 1) | $(x - \bar{x})/s$ | 148: 14 / √72 ≈ 1.65 | `(ser - ser.mean()) / ser.std()` | [the whole group or a sample](/statistics/variance-and-standard-deviation/#two-versions-the-whole-group-or-a-sample) |
 | Min–max score | $(x - x_{(1)})/(x_{(n)} - x_{(1)})$ | 133: 11 / 26 ≈ 0.42. 148: 1 | `(x - x.min()) / (x.max() - x.min())` | [what each scale pins down](/statistics/standardization-vs-min-max-scaling/#what-each-scale-pins-down) |
 
-NumPy's `quantile` uses the `linear` method by default, number 7 in Hyndman and Fan's numbering <Cite id="numpy-quantile" />, and pandas' `quantile` also interpolates linearly by default <Cite id="pandas-quantile" />. scikit-learn's `StandardScaler` divides by n, like `np.std` <Cite id="sklearn-standardscaler" />, so it gives 1.75 for child 5, not 1.65. pandas' `describe()` prints the count, mean, standard deviation, minimum, the 25th, 50th and 75th percentiles and the maximum <Cite id="pandas-describe" />. For our class its percentile rows are 128, 133 and 140, the same as `np.quantile`, and its std row is ≈ 8.49, the ÷ (n − 1) version, not 8.
+NumPy's `quantile` uses the `linear` method by default, the 7th of nine standard quantile methods in Hyndman and Fan's numbering <Cite id="numpy-quantile" />, and pandas' `quantile` also interpolates linearly by default <Cite id="pandas-quantile" />. scikit-learn's `StandardScaler` divides by n, like `np.std` <Cite id="sklearn-standardscaler" />, so it gives 1.75 for child 5, not 1.65. pandas' `describe()` prints the count, mean, standard deviation, minimum, the 25th, 50th and 75th percentiles and the maximum <Cite id="pandas-describe" />. For our class its percentile rows are 128, 133 and 140, the same as `np.quantile`, and its std row is ≈ 8.49, the ÷ (n − 1) version, not 8.
 
 ## Shift and scale: what each summary does
 
 Adding the same amount to every value moves every center and quartile by that amount and leaves every spread alone; multiplying every value by $c > 0$ multiplies all of them by $c$, and the variance by $c^2$.
 
-| Summary | Our class | Everyone + 10 cm | In meters (× 1/100) |
+| Summary | Our class (cm) | Everyone + 10 cm (cm) | In meters (m) |
 | --- | --- | --- | --- |
 | Mean | 134 | 144 | 1.34 |
 | Median | 133 | 143 | 1.33 |
 | $Q_1$, $Q_3$ | 128, 140 | 138, 150 | 1.28, 1.40 |
 | $\vsigma$ | 8 | 8 | 0.08 |
-| Variance | 64 | 64 | 0.0064 |
+| Variance | 64 cm² | 64 cm² | 0.0064 m² |
 | IQR | 12 | 12 | 0.12 |
 | Median absolute deviation | 7 | 7 | 0.07 |
 | z-score of child 5 | 1.75 | 1.75 | 1.75 |
 
-The z-score doesn't change at all, because the shift cancels in the top and the scale cancels between the top and the bottom. For $c < 0$ the spreads take the size of $c$ without its sign, and $Q_1$ and $Q_3$ swap roles: multiplied by −1, our class has $Q_1 = -140$ and $Q_3 = -128$, and its IQR is still 12. The variance page proves the rule for <Var name="sigma" /> in [shifting and stretching the whole class](/statistics/variance-and-standard-deviation/#shifting-and-stretching-the-whole-class).
+The z-score doesn't change at all, because the shift cancels in the top and the scale cancels between the top and the bottom. For $c < 0$ the spreads are multiplied by the size of $c$ without its sign (the variance still by $c^2$), and $Q_1$ and $Q_3$ swap roles: multiplied by −1, our class has $Q_1 = -140$ and $Q_3 = -128$, and its IQR is still 12. The variance page proves the rule for <Var name="sigma" /> in [shifting and stretching the whole class](/statistics/variance-and-standard-deviation/#shifting-and-stretching-the-whole-class).
 
 ## One bad value: which summaries survive
 
-One bad value can move the mean, the standard deviation and the range as far as it likes, while the median, the IQR and the median absolute deviation don't move at all.
+One bad value can move the mean, the standard deviation and the range as far as it likes, while the median, the IQR and the median absolute deviation stay within limits set by the real children's heights; on the typo list they don't move at all.
 
 The breakdown value of a summary is the smallest share of the values that must be replaced to carry it arbitrarily far away. The column "Of our 9" counts this exactly for our 9 children, and the last column gives the share for large lists.
 
 | Summary | Our class | Typo list (148 → 1,480) | Of our 9, values to replace before it can be made as large as you like | Breakdown value in large lists |
 | --- | --- | --- | --- | --- |
-| Mean | 134 | 282 | 1 | 1/n, so 0% |
+| Mean | 134 | 282 | 1 | 1/n, which shrinks toward 0% as the list grows |
 | Standard deviation $\vsigma$ | 8 | ≈ 423.6 | 1 | 0% |
 | Range | 26 | 1,358 | 1 | 0%, by the same argument as the mean |
 | Midrange | 135 | 801 | 1 | 0%, by the same argument as the mean |
 | 20% trimmed mean | ≈ 133.71 | ≈ 133.71 | 2 | The share trimmed from each end, 20% |
 | IQR | 12 | 12 | 3 | 25% |
-| Median | 133 | 133 | 5 (see check 6) | About 50% |
+| Median | 133 | 133 | 5 | About 50% |
 | Median absolute deviation | 7 | 7 | 5 | 50% |
 
 Rousseeuw and Hubert give the mean's breakdown value as 1/n, the median's as about 50%, the best possible since the clean values must be the majority, and the standard deviation's as 0% (p. 3); on p. 4 they give 50% for the median absolute deviation and only 25% for the interquartile range <Cite id="rousseeuw2017" />. The [variance page's research frontier](/statistics/variance-and-standard-deviation/#research-frontier) works through their example and what robustness costs.
@@ -178,9 +178,9 @@ Three notes explain why the two columns differ:
 
 - **The IQR needs 3 of 9, not a quarter.** With 9 values the linear method's $Q_3$ is the 7th smallest. Replace the 3 tallest children with huge heights and the 7th smallest is huge; replace only 2 and it is still a real child. As the list grows, the share needed falls toward 25%.
 - **The median needs 5.** With 4 children changed, at least 5 real heights remain, so the 5th smallest stays between 122 and 148 cm. Change 5 to the same huge height and the median is that height.
-- **The count is only upward.** A spread can also break by collapsing to 0. Set 4 more children to 133 cm and five values sit at the median, so the median absolute deviation becomes 0 after 4 changes, one fewer than it takes to blow it up.
+- **The count is only upward.** A spread can also break by collapsing to 0. Set 4 other children to 133 cm; with the child already at 133, five values sit at the median, so the median absolute deviation becomes 0 after 4 changes, one fewer than it takes to blow it up.
 
-The mode has no row: it counts repeats, not distances. With many features at once, the obvious robust fixes such as the median of each column lose much of their protection, a problem the [descriptive statistics research frontier](/statistics/descriptive-statistics/#research-frontier) follows.
+The mode has no row: it counts repeats, not distances. With many measurements per child at once (many columns), the obvious robust fixes such as the median of each column lose much of their protection, a problem the [descriptive statistics research frontier](/statistics/descriptive-statistics/#research-frontier) follows.
 
 ## Library defaults that change the answer
 
@@ -191,19 +191,19 @@ Most surprises in code come from defaults: calls with the same name in NumPy, pa
 | `np.std(x)` vs `pd.Series(x).std()` | 8.0 vs ≈ 8.485 | `ddof` defaults to 0 in NumPy and 1 in pandas | Pass `ddof` |
 | `np.quantile(x, [0.25, 0.5, 0.75])` vs `statistics.quantiles(x)` | [128, 133, 140] vs [126.5, 133.0, 141.0] | `statistics.quantiles` defaults to `method='exclusive'` | `statistics.quantiles(x, method='inclusive')` gives [128.0, 133.0, 140.0] |
 | `pd.Series(x).mode()` vs `statistics.mode(x)` | All 9 heights vs 133; this site says "no mode" | pandas lists every tied value; `statistics.mode` returns the first one it meets | Use `statistics.multimode` and check its length |
-| `trim_mean(typo, 0.1)` | 282, the plain mean | int(0.1 × 9) = 0 values cut from each end | Choose a share that cuts at least one value per end: 0.2 gives ≈ 133.71 |
+| `trim_mean(typo, 0.1)` | 282 on the typo list, its plain mean | int(0.1 × 9) = 0 values cut from each end | Choose a share that cuts at least one value per end: 0.2 gives ≈ 133.71 |
 | `median_abs_deviation(x)` | 7.0 | The scale defaults to 1.0; `scale="normal"` gives ≈ 10.38 | Say which version you report |
-| `Series.mad()` | An error in pandas 2 | It was the mean absolute deviation (62 / 9 ≈ 6.89 here), and it is gone | `(s - s.mean()).abs().mean()`, or SciPy for the median version |
-| `np.mean` with a missing height | nan | NumPy's `mean` doesn't skip missing values; pandas does | Decide whether missing values should count |
+| `Series.mad()` | An error in pandas 2 | It was the mean absolute deviation (62 / 9 ≈ 6.89 here), and it is gone | `(ser - ser.mean()).abs().mean()`, or SciPy for the median version |
+| `np.mean` with a missing height | nan ("not a number", NumPy's marker for a missing value) | NumPy's `mean` doesn't skip missing values; pandas does | Decide whether missing values should count |
 
-Python's `statistics.quantiles` uses `method='exclusive'` unless told otherwise <Cite id="python-statistics" />; the sources for the ddof, mode, trimming and scale rows are cited under the tables above. pandas' `Series.mad` returned the mean absolute deviation, not the median one, and was deprecated in version 1.5.0 <Cite id="pandas-mad-1.5" />; version 2.0 removed it <Cite id="pandas-2-whatsnew" />. For the last row, lose child 9's 142 cm: `np.mean` returns nan, while `np.nanmean` ignores missing values <Cite id="numpy-nanmean" /> and pandas' `mean` skips them by default <Cite id="pandas-mean" />, so both give 1,064 / 8 = 133 cm.
+Python's `statistics.quantiles` uses `method='exclusive'` unless told otherwise <Cite id="python-statistics" />. pandas' `Series.mad` returned the mean absolute deviation, not the median one, and was deprecated in version 1.5.0 <Cite id="pandas-mad-1.5" />; version 2.0 removed it <Cite id="pandas-2-whatsnew" />. For the last row, lose child 9's 142 cm: `np.mean` returns nan, while `np.nanmean` ignores missing values <Cite id="numpy-nanmean" /> and pandas' `mean` skips them by default <Cite id="pandas-mean" />, so both give 1,064 / 8 = 133 cm.
 
 ## Which summary when
 
 Report a center with a spread from the same family: the mean with the standard deviation, the median with the IQR or the median absolute deviation.
 
 - **Mean and standard deviation:** when totals matter and the values are trustworthy, and as the inputs to z-scores, standardization and [batch normalization](/statistics/variance-and-standard-deviation/#spread-in-machine-learning).
-- **Median and IQR:** skewed values such as incomes or response times, and anything that may contain typos. scikit-learn's RobustScaler scales by them, as [standardization vs min–max scaling](/statistics/standardization-vs-min-max-scaling/#when-neither-fits-the-median-and-the-iqr) shows.
+- **Median and IQR:** skewed values such as incomes or response times, and anything that may contain typos. scikit-learn's RobustScaler subtracts the median and divides by the IQR by default, as [standardization vs min–max scaling](/statistics/standardization-vs-min-max-scaling/#when-neither-fits-the-median-and-the-iqr) shows.
 - **Mode:** categories, such as the most ordered drink.
 - **Both centers:** when the mean and the median disagree, report both. The gap itself says the list is lopsided ([when to use which](/statistics/mean-vs-median-vs-mode/#when-to-use-which)).
 
@@ -284,7 +284,8 @@ def spread(xs):
 # Our class, in arrival order, and the typo list: child 5's 148 typed as 1,480.
 heights = [133, 122, 140, 128, 148, 125, 137, 131, 142]
 typo = [1480 if h == 148 else h for h in heights]
-ten = heights + [136]
+ten = heights + [136]  # the first check's tenth child
+ten_table = heights + [150]  # the median row's tenth child
 assert sorted(heights) == [122, 125, 128, 131, 133, 137, 140, 142, 148]
 assert sum(heights) == 1206 and sum(typo) == 2538
 
@@ -296,6 +297,7 @@ assert int(0.2 * 9) == 1 and int(0.1 * 9) == 0
 assert midrange(heights) == 135
 assert median(ten) == Fraction(269, 2) and mean(ten) == Fraction(671, 5)  # 134.5 and 134.2
 assert sum(ten) == 1342
+assert sorted(ten_table)[4:6] == [133, 137] and median(ten_table) == 135
 
 # How spread out.
 assert spread(heights) == 26
@@ -315,6 +317,8 @@ assert [(n - 1) * p for n, p in [(9, Fraction(1, 4)), (9, Fraction(1, 2)), (9, F
 assert (9 - 1) * Fraction(9, 10) == Fraction(36, 5)  # h = 7.2
 assert q7(heights, Fraction(9, 10)) == Fraction(716, 5) == 142 + Fraction(1, 5) * 6  # 143.2
 assert q7(heights, Fraction(1, 10)) == Fraction(622, 5) == 122 + Fraction(4, 5) * 3  # 124.4
+assert (9 - 1) * Fraction(4, 5) == Fraction(32, 5)  # h = 6.4
+assert q7(heights, Fraction(4, 5)) == Fraction(704, 5) == 140 + Fraction(2, 5) * 2  # 140.8
 assert [Fraction(x - 134, 8) for x in (148, 122, 142)] == [Fraction(7, 4), Fraction(-3, 2), 1]
 assert abs(14 / math.sqrt(72) - 1.65) < 0.005
 assert Fraction(133 - 122, 26) == Fraction(11, 26) and abs(11 / 26 - 0.42) < 0.005
@@ -332,6 +336,8 @@ assert pvar(meters) == Fraction(4, 625) and Fraction(2, 25) ** 2 == Fraction(4, 
 assert (iqr(meters), mad(meters)) == (Fraction(3, 25), Fraction(7, 100))
 assert [float(v) for v in (Fraction(67, 50), Fraction(32, 25), Fraction(7, 5), Fraction(4, 625), Fraction(2, 25))] == [1.34, 1.28, 1.4, 0.0064, 0.08]
 assert (Fraction(148, 100) - mean(meters)) / Fraction(2, 25) == Fraction(7, 4)
+millimeters = [10 * x for x in heights]
+assert pvar(millimeters) == 6400 and math.isqrt(6400) == 80 and iqr(millimeters) == 120
 flipped = [-x for x in heights]  # c = -1: spreads keep their size, Q1 and Q3 swap roles
 assert q7(flipped, 0.25) == -140 and q7(flipped, 0.75) == -128 and iqr(flipped) == 12 and pvar(flipped) == 64
 
@@ -341,6 +347,11 @@ assert (spread(typo), midrange(typo)) == (1358, 801)
 assert pvar(typo) == 179440 and svar(typo) == 201870
 assert abs(math.sqrt(179440) - 423.6) < 0.005
 assert mad(typo) == 7 and trim(typo, 0.2) == Fraction(936, 7) and trim(typo, 0.1) == 282
+# A low typo: child 2's 122 typed as 12.
+low = [12 if h == 122 else h for h in heights]
+assert mean(low) == Fraction(1096, 9) and abs(1096 / 9 - 121.78) < 0.005
+assert pvar(low) == Fraction(125744, 81) and abs(math.sqrt(125744) / 9 - 39.40) < 0.005
+assert (median(low), iqr(low)) == (133, 12)
 
 # How many of the 9 must be replaced before each summary can be made as large as you like.
 # Breaking: replace the counted number of children with values that grow with t.
@@ -382,7 +393,7 @@ survives(median, 4, 122, 148)
 survives(mad, 4, 0, 26)
 assert Fraction(3, 9) == Fraction(1, 3)
 
-# Spreads can also collapse: set 4 more children to 133 and five values sit at the median.
+# Spreads can also collapse: set 4 other children to 133; with child 1 already at 133, five values sit at the median.
 assert mad(replaced([1, 2, 3, 4], [133] * 4)) == 0
 
 # A missing height: child 9's 142 is lost.
@@ -395,7 +406,7 @@ import pandas as pd
 from scipy import stats
 
 x = np.array(heights)
-s = pd.Series(heights)
+ser = pd.Series(heights)
 close = lambda a, b, tol=1e-9: abs(float(a) - float(b)) < tol
 
 assert np.mean(x) == 134.0 and np.median(x) == 133.0
@@ -403,14 +414,16 @@ assert np.median(ten) == 134.5 and np.mean(ten) == 134.2
 assert np.var(x) == 64.0 and np.var(x, ddof=1) == 72.0 and np.std(x) == 8.0
 assert np.quantile(x, [0.25, 0.5, 0.75]).tolist() == [128.0, 133.0, 140.0]
 assert close(np.percentile(x, 90), 143.2) and close(np.percentile(x, 10), 124.4)
-assert s.mean() == 134.0 and s.median() == 133.0
-assert s.var() == 72.0 and close(s.std(), math.sqrt(72)) and s.std(ddof=0) == 8.0
-assert s.var(ddof=0) == 64.0 and s.std() != np.std(x)
-assert s.quantile([0.25, 0.5, 0.75]).tolist() == [128.0, 133.0, 140.0]
-summary = s.describe()
+assert np.median(ten_table) == 135.0 and close(np.percentile(x, 80), 140.8)
+assert np.std(np.array(heights) * 10) == 80.0 and np.var(np.array(heights) * 10) == 6400.0
+assert ser.mean() == 134.0 and ser.median() == 133.0
+assert ser.var() == 72.0 and close(ser.std(), math.sqrt(72)) and ser.std(ddof=0) == 8.0
+assert ser.var(ddof=0) == 64.0 and ser.std() != np.std(x)
+assert ser.quantile([0.25, 0.5, 0.75]).tolist() == [128.0, 133.0, 140.0]
+summary = ser.describe()
 assert summary["count"] == 9 and summary["mean"] == 134.0 and close(summary["std"], math.sqrt(72))
 assert [summary[k] for k in ("min", "25%", "50%", "75%", "max")] == [122.0, 128.0, 133.0, 140.0, 148.0]
-assert s.mode().tolist() == sorted(heights)
+assert ser.mode().tolist() == sorted(heights)
 assert statistics.mode(heights) == 133 and len(statistics.multimode(heights)) == 9
 assert statistics.quantiles(heights) == [126.5, 133.0, 141.0]
 assert statistics.quantiles(heights, method="inclusive") == [128.0, 133.0, 140.0]
@@ -419,20 +432,23 @@ assert stats.trim_mean(typo, 0.1) == 282.0 and close(stats.trim_mean(typo, 0.2),
 assert stats.median_abs_deviation(heights) == 7.0
 assert close(stats.median_abs_deviation(heights, scale="normal"), 10.378, 1e-3)
 assert close(np.mean(np.abs(x - x.mean())), 62 / 9)
-assert close((s - s.mean()).abs().mean(), 62 / 9)
-assert not hasattr(s, "mad")  # Series.mad was removed in pandas 2.0
+assert close((ser - ser.mean()).abs().mean(), 62 / 9)
+assert not hasattr(ser, "mad")  # Series.mad was removed in pandas 2.0
 assert ((x - x.mean()) / x.std()).tolist()[4] == 1.75
-assert close(((s - s.mean()) / s.std())[4], 14 / math.sqrt(72))
+assert close(((ser - ser.mean()) / ser.std())[4], 14 / math.sqrt(72))
 assert close(((x - x.min()) / (x.max() - x.min()))[0], 11 / 26)
 
 t = np.array(typo)
 assert np.mean(t) == 282.0 and np.median(t) == 133.0 and close(np.std(t), math.sqrt(179440))
 assert (np.quantile(t, 0.75) - np.quantile(t, 0.25)) == 12.0 and stats.median_abs_deviation(typo) == 7.0
+lo = np.array(low)
+assert close(np.mean(lo), 1096 / 9) and close(np.std(lo), math.sqrt(125744) / 9)
+assert np.median(lo) == 133.0 and (np.quantile(lo, 0.75) - np.quantile(lo, 0.25)) == 12.0
 
 with_nan = heights[:8] + [np.nan]
 assert np.isnan(np.mean(with_nan))
 assert np.nanmean(with_nan) == 133.0 and pd.Series(with_nan).mean() == 133.0
-print("np.std:", np.std(x), " pandas std:", round(float(s.std()), 3))
+print("np.std:", np.std(x), " pandas std:", round(float(ser.std()), 3))
 print("statistics.quantiles:", statistics.quantiles(heights), " np.quantile:", np.quantile(x, [0.25, 0.5, 0.75]).tolist())
 print("libraries: every number checks out")
 `}
@@ -448,16 +464,16 @@ The questions mix the summaries on purpose, because choosing the summary is half
 The median is 134.5 cm, halfway between the two middle values 133 and 136, a height nobody in the class has. The mean is 1,342 / 10 = 134.2 cm. With an even count the median is an average of two values. See [the middle of the line](/statistics/descriptive-statistics/#the-median-the-middle-of-the-line).
 </CheckYourself>
 
-<CheckYourself level="intuition" question="Child 5's 148 is typed as 1,480. Which of the mean, the median, the IQR and σ change?">
-The mean (282 cm) and <Var name="sigma" /> (≈ 423.6 cm) change, because every value's size enters them. The median (133 cm) and the IQR (12 cm) don't, because the middle of the sorted list and the two quartile positions still hold real children. See [one bad value](#one-bad-value-which-summaries-survive).
+<CheckYourself level="intuition" question="Child 2's 122 is typed as 12. Which of the mean, the median, the IQR and σ change?">
+The mean (1,096 / 9 ≈ 121.78 cm) and <Var name="sigma" /> (≈ 39.40 cm) change, because every value's size enters them. The median (133 cm) and the IQR (12 cm) don't, because the 12 is still the smallest value, so the middle of the sorted list and the two quartile positions still hold real children. See [one bad value](#one-bad-value-which-summaries-survive).
 </CheckYourself>
 
 <CheckYourself level="standard" question="pandas' describe() reports a standard deviation of about 8.485 for our class. Why not 8?">
 pandas' `std` divides the 576 by n − 1 = 8, and √72 ≈ 8.485. `np.std` divides by n = 9 and gives 8. Both are correct answers to different questions; pass `ddof` to pick one. See [the whole group or a sample](/statistics/variance-and-standard-deviation/#two-versions-the-whole-group-or-a-sample).
 </CheckYourself>
 
-<CheckYourself level="standard" question="What is the 90th percentile of our class with NumPy's default method?">
-143.2 cm. The cut sits at h = 8 × 0.9 = 7.2 steps along the sorted list: the 8th value, 142, plus 0.2 of the gap to 148, so 142 + 0.2 × 6. See [when the cut falls between two values](/statistics/reading-box-plots-quartiles-iqr/#when-the-cut-falls-between-two-values).
+<CheckYourself level="standard" question="What is the 80th percentile of our class with NumPy's default method?">
+140.8 cm. The cut sits at h = 8 × 0.8 = 6.4 steps up from the smallest value: the 7th value, 140, plus 0.4 of the gap to 142, so 140 + 0.4 × 2. See [when the cut falls between two values](/statistics/reading-box-plots-quartiles-iqr/#when-the-cut-falls-between-two-values).
 </CheckYourself>
 
 <CheckYourself level="intuition" question="pandas' mode() returns all 9 heights. Is that a bug?">
@@ -468,8 +484,8 @@ No. Every height appears once, so all 9 tie for most common, and pandas returns 
 5. Replace any 4 and at least 5 real heights remain. At least 5 values are then at most 148, so the 5th smallest is at most 148; and at least 5 are at least 122, so the 5th smallest is at least 122. The median stays between 122 and 148 cm. Replace 5 with the same height $t$ and the 5th smallest is $t$, as large as you like.
 </CheckYourself>
 
-<CheckYourself level="standard" question="Write our class's heights in meters. What are σ, the variance and the IQR?">
-<Var name="sigma" /> = 0.08 m, the variance 0.0064 m² and the IQR 0.12 m. Every spread is multiplied by 1/100 and the variance by (1/100)², because it is built from squared distances. See [shifting and stretching the whole class](/statistics/variance-and-standard-deviation/#shifting-and-stretching-the-whole-class).
+<CheckYourself level="standard" question="Write our class's heights in millimeters. What are σ, the variance and the IQR?">
+<Var name="sigma" /> = 80 mm, the variance 6,400 mm² and the IQR 120 mm. Every spread is multiplied by 10 and the variance by 10² = 100, because it is built from squared distances. See [shifting and stretching the whole class](/statistics/variance-and-standard-deviation/#shifting-and-stretching-the-whole-class).
 </CheckYourself>
 
 <CheckYourself level="standard" question="SciPy gives a MAD of 7 for our class, and someone else reports a MAD of 6.89. What did they compute?">
