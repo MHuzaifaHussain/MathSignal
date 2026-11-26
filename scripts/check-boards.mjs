@@ -7266,8 +7266,9 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 			assert.equal(marks.at(-1).kind, 'point', 'the point is drawn last, on top');
 			assert.equal(marks.find((mark) => mark.kind === 'point').color, 'ink', 'the point is ink');
 			assert.equal(marks.find((mark) => mark.kind === 'point').movable, state.checked, 'the point moves only after Check');
-			// Every plane label planeLabels keeps clears every edge, every axis number, every dot, every drawn line and every
-			// other label, on each plane size; it may leave out a label that repeats a readout, never "you" or an axis name.
+			// Every plane label planeLabels keeps clears every edge, every drawn axis number, every dot, every drawn line, the
+			// axis lines (but for the axis names, which sit on them) and every other label, on each plane size; it may leave
+			// out a label that repeats a readout, never "you" or an axis name.
 			const view = fcSetups.viewOf(state.preset).view;
 			const { x, y } = fcModel.viewNumbers(view);
 			const labeled = marks.filter((entry) => entry.label);
@@ -7367,7 +7368,10 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		}
 		// The states the page walks through keep every label on every plane size, each clear (planeLabels may leave a
 		// label out only on a crowded plane). On phones the corner's "run 1" and "slope 0.5 line" give way: the run leg
-		// lies along the x-axis between the handle's ring and the number 1, and the readouts state both values.
+		// lies along the x-axis between the handle's ring and the number 1, and the readouts state both values. Labels keep
+		// clear of the axis lines too, so on a 320px phone the S-curve's point at x = −1.5 gives way: its coordinates are
+		// too wide for the room left of the y-axis, the tangent runs up through the space above, and the plane's bottom
+		// edge is too near to go below.
 		{
 			const kept = (state, sizes = FC_PLANE_SIZES) => {
 				const texts = fcMarks.planeMarks(state).filter((mark) => mark.label).map((mark) => mark.label.text);
@@ -7379,7 +7383,9 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 			kept(fcAfter(R2T, { stage: 'tangent', hIndex: hAt(1, 100) }));
 			kept(fcAfter(R2T, { stage: 'tangent', preset: 's-curve', xIndex: 2, hIndex: hAt(1, 100) }));
 			kept(fcAfter(R2T, { stage: 'tangent', preset: 'loss', xIndex: 0, hIndex: hAt(1, 100) }));
-			kept(fcAfter(R2T, { stage: 'slope-curve', preset: 's-curve', xIndex: -3, hIndex: hAt(-1, 1000) }));
+			const sCurveLeft = fcAfter(R2T, { stage: 'slope-curve', preset: 's-curve', xIndex: -3, hIndex: hAt(-1, 1000) });
+			kept(sCurveLeft, [325, 400]);
+			assert.deepEqual(fcLayout.planeLabels(sCurveLeft, 270).map((label) => label.text), ['tangent']);
 			kept(fcInitial('corner'), [400]);
 			kept(fcAfter('corner', { stage: 'tangent' }), [400]);
 			kept(fcAfter('corner', { stage: 'tangent', linesOn: true }), [400]);

@@ -1,8 +1,8 @@
 // Where FunctionCurve's plane labels go at a given plane size, and which axis values Mafs numbers there: a number
 // gives way where a dot or the ochre straight line covers it, and each label tries its sides in order and takes the
-// first spot whose box clears the plane's edges, the drawn axis numbers, the dots, every drawn line and the labels
-// placed before it. Pure, so scripts/check-boards.mjs places every label of every reachable state on the plane sizes phones and
-// desktops draw. Design and reasoning: decision 0020.
+// first spot whose box clears the plane's edges, the drawn axis numbers, the dots, every drawn line, the axis lines
+// and the labels placed before it. Pure, so scripts/check-boards.mjs places every label of every reachable state on
+// the plane sizes phones and desktops draw. Design and reasoning: decision 0020.
 import { pieceCurve } from './functions.ts';
 import { LABEL_DISTANCE, axisNumber, fitLabel, planeScale, textBox, viewNumbers, type Attach, type LabelBox, type Scale, type View } from './model.ts';
 import { WEIGHTS, planeMarks, type Mark, type MarkColor, type Vec } from './marks.ts';
@@ -135,6 +135,15 @@ function markLine(mark: Mark, view: View): Vec[] | null {
 		default:
 			return null;
 	}
+}
+
+/** The x- and y-axis lines, each where it lies inside the view. */
+function axisLines(view: View): Obstacles['lines'] {
+	const { x, y } = viewNumbers(view);
+	const lines: Obstacles['lines'] = [];
+	if (y[0] < 0 && 0 < y[1]) lines.push({ name: 'x-axis', points: [[x[0], 0], [x[1], 0]] });
+	if (x[0] < 0 && 0 < x[1]) lines.push({ name: 'y-axis', points: [[0, y[0]], [0, y[1]]] });
+	return lines;
 }
 
 /** The plane's dots: the point (its handle's ring while it moves) and the ruler's end. */
@@ -299,12 +308,14 @@ export function planeLabels(state: CurveState, planeSize: number): readonly Plac
 	const view = viewOf(state.preset).view;
 	const marks = planeMarks(state);
 	const obstacles = obstaclesFor(state, marks, planeSize);
+	// The axis names sit on their axes' ends; every other label keeps clear of the axis lines too.
+	const withAxes: Obstacles = { ...obstacles, lines: [...obstacles.lines, ...axisLines(view)] };
 	const labeled = marks.filter((mark) => mark.label);
 	const ordered = [...labeled].sort((one, two) => PLACING_ORDER.indexOf(one.kind) - PLACING_ORDER.indexOf(two.kind));
 	const placed: PlacedLabel[] = [];
 	const byMark = new Map<Mark, PlacedLabel>();
 	for (const mark of ordered) {
-		const spot = bestSpot(mark, view, planeSize, obstacles, placed);
+		const spot = bestSpot(mark, view, planeSize, mark.kind === 'axis-name' ? obstacles : withAxes, placed);
 		if (spot.collisions.length > 0 && isOptional(state, mark)) continue;
 		placed.push(spot);
 		byMark.set(mark, spot);
