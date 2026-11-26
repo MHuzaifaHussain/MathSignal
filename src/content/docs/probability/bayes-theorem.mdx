@@ -286,7 +286,7 @@ $$
 P(y = i \mid x) = \frac{p(x \mid y = i)\,P(y = i)}{\sum_{j} p(x \mid y = j)\,P(y = j)},
 $$
 
-where $p(x \mid y = i)$ is how likely an input like $x$ is within class $i$ (for continuous inputs, such as pixel values, it is a density), and $P(y = i)$ is how common class $i$ is. A model trained to output $P(y \mid x)$ directly folds both into one number, including how common each class was in its training data.
+where $p(x \mid y = i)$ is how likely an input like $x$ is within class $i$ (for continuous inputs, such as pixel values, it is a [density](/probability/probability-density-functions/)), and $P(y = i)$ is how common class $i$ is. A model trained to output $P(y \mid x)$ directly folds both into one number, including how common each class was in its training data.
 
 ### When the base rate shifts
 

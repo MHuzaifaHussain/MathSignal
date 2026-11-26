@@ -154,7 +154,7 @@ $$
 P(y \mid \mathbf{x}) = \frac{P(y) \prod_{k=1}^{n} P(x_k \mid y)}{\sum_{y'} P(y') \prod_{k=1}^{n} P(x_k \mid y')} \propto P(y) \prod_{k=1}^{n} P(x_k \mid y),
 $$
 
-and under 0-1 loss the best prediction is $\arg\max_y P(y) \prod_{k} P(x_k \mid y)$. Continuous features use densities $p(x_k \mid y)$, normal ones in Gaussian naive Bayes. Without the assumption the formula still defines a classifier, not the true posterior. Boundary cases, with rates estimated from data: if every class scores 0 the posterior is 0/0, undefined; a class with a 0 factor is never predicted; ties are broken arbitrarily.
+and under 0-1 loss the best prediction is $\arg\max_y P(y) \prod_{k} P(x_k \mid y)$. Continuous features use [densities](/probability/probability-density-functions/) $p(x_k \mid y)$, normal ones in Gaussian naive Bayes. Without the assumption the formula still defines a classifier, not the true posterior. Boundary cases, with rates estimated from data: if every class scores 0 the posterior is 0/0, undefined; a class with a 0 factor is never predicted; ties are broken arbitrarily.
 
 </PreciseStatement>
 

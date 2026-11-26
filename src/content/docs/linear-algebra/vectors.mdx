@@ -268,7 +268,7 @@ A model has three weights, $\mathbf{w} = (0.5, -1.0, 2.0)$. Training gives the g
 
 <div slot="solution">
 
-Scale first: $0.1\,\mathbf{g} = (0.2, -0.4, 0.1)$. Then subtract entry by entry: $\mathbf{w} - 0.1\,\mathbf{g} = (0.5 - 0.2, -1.0 + 0.4, 2.0 - 0.1) = (0.3, -0.6, 1.9)$. Here the step is only arithmetic: a scaled vector subtracted from another. Where the gradient comes from is the subject of the gradient pages (coming soon).
+Scale first: $0.1\,\mathbf{g} = (0.2, -0.4, 0.1)$. Then subtract entry by entry: $\mathbf{w} - 0.1\,\mathbf{g} = (0.5 - 0.2, -1.0 + 0.4, 2.0 - 0.1) = (0.3, -0.6, 1.9)$. Here the step is only arithmetic: a scaled vector subtracted from another. Where the gradient comes from starts with [derivatives](/calculus/derivatives/).
 
 </div>
 
@@ -304,7 +304,7 @@ The standard analogy code never returns one of the three words in the question. 
 
 ### A gradient step is a scaled sum
 
-Training moves the weight vector a little at a time. One step of gradient descent subtracts the gradient vector, scaled by the learning rate, from the weights, which is exactly Worked example 3: a scalar multiple and a sum, applied to vectors with millions of entries instead of three. Gradient descent gets its own page (coming soon).
+Training moves the weight vector a little at a time. One step of gradient descent subtracts the gradient vector, scaled by the learning rate, from the weights, which is exactly Worked example 3: a scalar multiple and a sum, applied to vectors with millions of entries instead of three. Gradient descent gets its own page (coming soon). The one-weight version is on the [derivatives page](/calculus/derivatives/#which-way-to-move-a-weight).
 
 ## Adding and scaling in code
 
