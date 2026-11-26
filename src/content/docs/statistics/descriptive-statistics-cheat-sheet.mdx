@@ -36,7 +36,7 @@ references:
   - numpy-nanmean
   - pandas-mean
 author: Muhammad Huzaifa Hussain
-reviewedAt: 2026-11-25
+reviewedAt: 2026-11-26
 aiAssisted: true
 primaryQuery: descriptive statistics cheat sheet
 searchIntent: reference
@@ -58,7 +58,7 @@ import Var from "../../../components/Var.astro";
   difficulty="beginner"
 />
 
-Find what your question asks for in the "Which summary do I need?" table, read the row for the summary it names, then check the library defaults before you trust a number from code. Every example uses the same 9 children, plus one copy of the list with a typo in it. Every summary another page explains links to that page, with the reasons and more examples, and the last table says where NumPy, pandas, SciPy and Python's statistics module give different answers for the same list.
+Find what your question asks for in the "Which summary do I need?" table, read the row for the summary it names, then check the library defaults before you trust a number from code. Every example uses the same 9 children, plus one copy of the list with a typo in it. When another page explains a summary, its row links there for the reasons and more examples. The last table lists where NumPy, pandas, SciPy and Python's statistics module disagree on the same list.
 
 ## Notation
 
@@ -97,7 +97,7 @@ The mean shares the total out equally, the median is the middle of the sorted li
 | --- | --- | --- | --- | --- |
 | Mean | $\vmu = \tfrac{1}{n}\sum_{i=1}^{n} x_i$ | 1,206 / 9 = 134 cm | `np.mean(x)`, `ser.mean()`: 134.0 | [share the total out equally](/statistics/descriptive-statistics/#the-mean-share-the-total-out-equally) |
 | Median | $x_{(5)}$ for $n = 9$; the average of the two middle values when $n$ is even | The 5th of 9: 133 cm. With a tenth child of 150 cm: (133 + 137) / 2 = 135 cm | `np.median(x)`, `ser.median()`: 133.0 | [the middle of the line](/statistics/descriptive-statistics/#the-median-the-middle-of-the-line) |
-| Mode | The most common value | None: every height appears once | NumPy has none; `ser.mode()` lists all 9 heights; `statistics.mode(x)` gives 133 | [the most common value](/statistics/descriptive-statistics/#the-mode-the-most-common-value) |
+| Mode | The most common value | None: every height appears once | NumPy has no mode function; `ser.mode()` lists all 9 heights; `statistics.mode(x)` gives 133 | [the most common value](/statistics/descriptive-statistics/#the-mode-the-most-common-value) |
 | 20% trimmed mean | Drop the same number of values from each end, average the rest | Drop 122 and 148: 936 / 7 ≈ 133.71 cm | `scipy.stats.trim_mean(x, 0.2)` | Only here |
 | Midrange | $(x_{(1)} + x_{(n)})/2$ | (122 + 148) / 2 = 135 cm | `(x.min() + x.max()) / 2` | Only here |
 
@@ -119,7 +119,7 @@ Spread measures how far the values sit from each other, either through every val
 | Median absolute deviation | $\operatorname{median}$ of $\lvert x_i - \operatorname{median} \rvert$ | Distances from 133, sorted: 0, 2, 4, 5, 7, 8, 9, 11, 15, so 7 cm. Times 1.4826 (= 1 / 0.67449): ≈ 10.38 cm | `scipy.stats.median_abs_deviation(x)`: 7.0 | [the median and the MAD](/statistics/outlier-detection-z-score-vs-iqr/#median-and-mad) |
 | Mean absolute deviation | $\tfrac{1}{n}\sum_{i=1}^{n} \lvert x_i - \vmu \rvert$ | 62 / 9 ≈ 6.89 cm | `np.mean(np.abs(x - x.mean()))` | [why square at all](/statistics/variance-and-standard-deviation/#how-far-from-the-mean-on-average) |
 
-NumPy's `std` divides by n unless you pass `ddof` <Cite id="numpy-std" />, and pandas' `std` divides by n − 1 <Cite id="pandas-std" />. SciPy's `median_abs_deviation` reports the raw median absolute deviation by default, and `scale="normal"` divides it by about 0.67449, the same as multiplying by 1.4826, giving ≈ 10.38 for our class <Cite id="scipy-mad" />. That rescaled version matches <Var name="sigma" /> for data that follow the [normal distribution](/statistics/normal-distribution/), and the [variance page's research frontier](/statistics/variance-and-standard-deviation/#research-frontier) explains why it exists.
+NumPy's `std` divides by n unless you pass `ddof` <Cite id="numpy-std" />, and pandas' `std` divides by n − 1 <Cite id="pandas-std" />. SciPy's `median_abs_deviation` reports the raw median absolute deviation by default, and `scale="normal"` divides it by about 0.67449, the same as multiplying by 1.4826, giving ≈ 10.38 for our class <Cite id="scipy-mad" />. That rescaled version estimates <Var name="sigma" /> when the data follow the [normal distribution](/statistics/normal-distribution/) (in large samples it lands close to <Var name="sigma" />), and the [variance page's research frontier](/statistics/variance-and-standard-deviation/#research-frontier) explains why it exists.
 
 <Var name="sigma" /> (8 cm) is bigger than the mean absolute deviation (≈ 6.89 cm), because squaring weighs the far children more.
 
@@ -162,10 +162,10 @@ The breakdown value of a summary is the smallest share of the values that must b
 
 | Summary | Our class | Typo list (148 → 1,480) | Of our 9, values to replace before it can be made as large as you like | Breakdown value in large lists |
 | --- | --- | --- | --- | --- |
-| Mean | 134 | 282 | 1 | 1/n, which shrinks toward 0% as the list grows |
-| Standard deviation $\vsigma$ | 8 | ≈ 423.6 | 1 | 0% |
-| Range | 26 | 1,358 | 1 | 0%, by the same argument as the mean |
-| Midrange | 135 | 801 | 1 | 0%, by the same argument as the mean |
+| Mean | 134 | 282 | 1 | 1/n, toward 0% |
+| Standard deviation $\vsigma$ | 8 | ≈ 423.6 | 1 | 1/n, toward 0% |
+| Range | 26 | 1,358 | 1 | 1/n, toward 0% |
+| Midrange | 135 | 801 | 1 | 1/n, toward 0% |
 | 20% trimmed mean | ≈ 133.71 | ≈ 133.71 | 2 | The share trimmed from each end, 20% |
 | IQR | 12 | 12 | 3 | 25% |
 | Median | 133 | 133 | 5 | About 50% |
@@ -177,7 +177,7 @@ Three notes explain why the two columns differ:
 
 - **The IQR needs 3 of 9, not a quarter.** With 9 values the linear method's $Q_3$ is the 7th smallest. Replace the 3 tallest children with huge heights and the 7th smallest is huge; replace only 2 and it is still a real child. As the list grows, the share needed falls toward 25%.
 - **The median needs 5.** With 4 children changed, at least 5 real heights remain, so the 5th smallest stays between 122 and 148 cm. Change 5 to the same huge height and the median is that height.
-- **The count is only upward.** A spread can also break by collapsing to 0. Set 4 other children to 133 cm; with the child already at 133, five values sit at the median, so the median absolute deviation becomes 0 after 4 changes, one fewer than it takes to blow it up.
+- **The count covers only blowing up.** A spread can also break by collapsing to 0. Child 1 is already at 133 cm; set 4 more children to 133 and five values sit at the median, so the median absolute deviation becomes 0 after 4 changes, one fewer than it takes to blow it up.
 
 The mode has no row: it counts repeats, not distances. With many measurements per child at once (many columns), the obvious robust fixes such as the median of each column lose much of their protection, a problem the [descriptive statistics research frontier](/statistics/descriptive-statistics/#research-frontier) follows.
 
@@ -376,7 +376,7 @@ assert grows(median, lambda t: replaced([0, 1, 2, 3, 4], [t] * 5))
 assert grows(mad, lambda t: replaced([0, 1, 2, 3, 4], [t, 2 * t, 3 * t, 4 * t, 5 * t]))
 
 # Surviving: replace one fewer, in every possible way, with very large or very negative values.
-# Only these two extreme replacement values are tried; the argument on the page covers the rest.
+# Only these two extreme replacement values are tried; the paragraph after the program argues the rest.
 def survives(summary, count, low, high):
     big = 10**12
     for positions in combinations(range(9), count):
@@ -452,7 +452,7 @@ print("libraries: every number checks out")
 `}
 />
 
-The survival check tries only two replacement values, one very large and one very negative, for every choice of children; the notes in the bad-value section give the argument for every other value.
+The survival check tries only two replacement values, one very large and one very negative, for every choice of children. Short arguments cover every other value. The notes in the bad-value section give them for $Q_3$ and the median, and $Q_1$ is the mirror image of $Q_3$, so the IQR stays between 0 and 26 cm. With one value replaced, the 20% trimmed mean drops the smallest and the largest value, so everything it keeps lies between the shortest and the tallest real child. With 4 replaced, the median stays between 122 and 148 cm and at least 5 real heights sit within 26 cm of it, so the median absolute deviation is at most 26 cm.
 
 ## Check yourself
 
