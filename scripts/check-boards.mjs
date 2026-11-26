@@ -1839,7 +1839,8 @@ const assertTableFoldSays = (where, announce) => {
 // holds the switch on. Reset closes it; every other control leaves it alone.
 {
 	const DIST_SETUP_IDS = ['candy-build', 'coins-heads', 'candy-balance', 'candy-spread'];
-	for (const id of DIST_SETUP_IDS) assert.equal(distSetups.getSetup(id).id, id);
+	// A new outcome setup fails here until it joins the sweeps below.
+	assert.deepEqual(DIST_SETUP_IDS, [...distSetups.OUTCOME_SETUP_IDS]);
 	const revealed = (id) => distRun(id, { type: 'check' }, { type: 'check' }, { type: 'show-answer' });
 	for (const id of ['candy-build', 'coins-heads']) {
 		const covered = dist.initialState(id);
