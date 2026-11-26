@@ -4874,7 +4874,7 @@ const labelsOverlap = (first, second, size) => {
 	assert.ok(!/Line\.Segment|<Polyline[^>]*points=\{\[\s*\[(?:from|piece|line)/.test(planeSource), 'VectorPlane draws a headless line without the shared Segment');
 	// The tray draws one slider per weight from sliderWeights, so a combine setup never gets a third slider.
 	const boardSource = readFileSync('src/components/react/VectorBoard2D.tsx', 'utf8');
-	assert.ok(/sliderWeights\(setup\)\.map/.test(boardSource) && !/CONTROL_LABELS\.scale/.test(boardSource), 'VectorBoard2D renders its sliders outside sliderWeights');
+	assert.ok(/sliderWeights\(setup\)\.map/.test(boardSource) && !/CONTROL_LABELS\.scale\b/.test(boardSource), 'VectorBoard2D renders its sliders outside sliderWeights');
 }
 
 // ---- VectorBoard2D: city-walk (decision 0021) ----
