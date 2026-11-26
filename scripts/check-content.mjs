@@ -372,7 +372,6 @@ export const WORD_COUNT_EXCEPTIONS = {
 	'probability/bayes-theorem': { measured: 3568 },
 	'probability/independence': { measured: 3402 },
 	'probability/naive-bayes-classifier': { measured: 2723 },
-	'statistics/normal-distribution': { measured: 1425 },
 };
 
 /** Attributes that are reader prose: the CheckYourself question, the Analogy's limit, the Mistake, the one-liner. */

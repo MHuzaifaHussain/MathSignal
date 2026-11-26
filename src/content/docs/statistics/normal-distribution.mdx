@@ -113,6 +113,16 @@ The 68-95-99.7 rule says how much of a normal distribution lies within one, two 
 
 The exact band that holds 95% is ±1.96σ, which is why 1.96 appears in so many confidence intervals. A value more than 3σ from the mean happens about 3 times in 1,000, so it is either rare or a sign that something unusual is going on. On real data, flagging values this way has pitfalls, which the page on [outlier detection with z-scores and the IQR rule](/statistics/outlier-detection-z-score-vs-iqr/) covers.
 
+### Reading the rule on heights
+
+Take a group of adults whose heights follow a normal distribution with mean <Var name="mu" /> = 165 cm and standard deviation <Var name="sigma" /> = 7 cm, the group in the worked examples below. About 68% of the group stands between 158 and 172 cm, one standard deviation either side of the mean. About 95% stands between 151 and 179 cm, and almost everyone, 99.7%, between 144 and 186 cm.
+
+Each step out adds another 7 cm on both sides but catches fewer extra people. The first step holds 68% of the group, the second adds about 27%, and the third adds less than 5%.
+
+The standard deviation does all the scaling. It is the square root of the average squared distance from the mean, worked out from a list of numbers on the page about [variance and standard deviation](/statistics/variance-and-standard-deviation/). Halve it to 3.5 cm and the 95% band shrinks to 158 to 172 cm, the range that used to hold only 68%.
+
+A person's distance from the mean, counted in standard deviations, is their **z-score**, $z = (x - \vmu)/\vsigma$. Someone 179 cm tall has $z = 2$, right at the edge of the 95% band, so the rule says roughly 2.5% of the group is taller. The exact share is 2.3%, because 95% was itself rounded. The [z-scores worked example](/statistics/z-scores-worked-example/) uses the same idea to decide whether a 140 cm nine-year-old is taller for their age than a 150 cm eleven-year-old.
+
 <GoDeeper label="where the three numbers come from">
 
 Let $\Phi$ be the cumulative distribution function of the standard normal. The share within $k$ standard deviations is $\Phi(k) - \Phi(-k) = 2\Phi(k) - 1 = \operatorname{erf}(k/\sqrt{2})$. For $k = 1, 2, 3$ this gives 0.6827, 0.9545 and 0.9973. The rule holds for every normal distribution because standardizing (see the derivations below) turns any of them into the standard one.
@@ -223,7 +233,7 @@ $$
 \hat{x} = \frac{x - \mu_B}{\sqrt{\sigma_B^2 + \epsilon}}, \qquad y = \gamma \hat{x} + \beta
 $$
 
-Here $\mu_B$ and $\sigma_B^2$ are the batch mean and variance. This is a z-score: it fixes the mean and variance, not the shape, so the activations are not made Gaussian. The learned $\gamma$ and $\beta$ can even undo the scaling. It still makes training more stable and tolerates higher learning rates.
+Here $\mu_B$ and $\sigma_B^2$ are the batch mean and variance. This is a z-score, the same rescaling that [standardization](/statistics/standardization-vs-min-max-scaling/) applies to input features before training, here done inside the network. It fixes the mean and variance, not the shape, so the activations are not made Gaussian. The learned $\gamma$ and $\beta$ can even undo the scaling. It still makes training more stable and tolerates higher learning rates.
 
 ### Gaussian naive Bayes
 
@@ -245,7 +255,7 @@ A Gaussian process is a distribution over functions <Cite id="rasmussen2006" />.
 
 ## Check the 68-95-99.7 rule in code
 
-This runs in your browser, uses the same standard normal as the board's starting position, and stops with an error if a result is off:
+This runs in your browser, uses the same standard normal as the board's starting position, then reads the rule on the adult heights. It stops with an error if a result is off:
 
 <PyRunner
   title="check_68_95_997.py"
@@ -265,6 +275,38 @@ for k in (1, 2, 3):
 print(f"sample mean {samples.mean():.3f}, sample std {samples.std():.3f}")
 assert abs(samples.mean() - mu) < 0.01 * sigma
 assert abs(samples.std() - sigma) < 0.01 * sigma
+
+# The adult heights: mean 165 cm, standard deviation 7 cm
+from math import erf, sqrt
+
+def share_within(k):
+    return erf(k / sqrt(2))
+
+def share_above(z):
+    return (1 - erf(z / sqrt(2))) / 2
+
+height_mu, height_sigma = 165, 7
+bands = {k: (height_mu - k * height_sigma, height_mu + k * height_sigma) for k in (1, 2, 3)}
+print(f"bands in cm: {bands}")
+assert bands == {1: (158, 172), 2: (151, 179), 3: (144, 186)}
+
+second_step = share_within(2) - share_within(1)
+third_step = share_within(3) - share_within(2)
+print(f"second step adds {second_step:.2%}, third step adds {third_step:.2%}")
+assert abs(second_step - 0.27) < 0.005 and third_step < 0.05
+
+half_sigma = height_sigma / 2
+assert (height_mu - 2 * half_sigma, height_mu + 2 * half_sigma) == (158, 172)
+
+z = (179 - height_mu) / height_sigma
+taller = share_above(z)
+print(f"z = {z:.0f}: rule says {(1 - 0.95) / 2:.1%} taller, exact {taller:.1%}")
+assert z == 2 and round(taller, 3) == 0.023
+
+top_5_start = height_mu + 1.645 * height_sigma
+print(f"top 5% starts at {top_5_start:.1f} cm")
+assert round(top_5_start, 1) == 176.5
+assert abs(share_above(1.645) - 0.05) < 0.0005
 `}
 />
 
