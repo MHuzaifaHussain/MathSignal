@@ -1,8 +1,10 @@
 // Every symbol MathSignal uses, with one meaning and one convention each (decision 0009).
 // <NotationKey symbols={['mu', 'sigma']} /> renders rows from here; an unknown key fails the build.
 // `tex` may use the page macros (\vmu, \vsigma) so meaning colors match the formulas.
+// `wraps: true` lets a long symbol break after its relations and operators, so NotationKey fits a phone; every other
+// symbol stays on one line (decision 0024).
 
-/** @typedef {{ key: string, tex: string, say: string, meaning: string, note?: string }} NotationEntry */
+/** @typedef {{ key: string, tex: string, say: string, meaning: string, note?: string, wraps?: true }} NotationEntry */
 
 /** @type {NotationEntry[]} */
 export const NOTATION = [
