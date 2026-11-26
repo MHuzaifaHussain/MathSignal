@@ -54,7 +54,8 @@ export default defineConfig({
 			logo: {
 				light: './src/assets/logo-light.svg',
 				dark: './src/assets/logo-dark.svg',
-				alt: 'MathSignal',
+				// Decorative: the site title sits next to the logo, so a spoken "MathSignal" would repeat it.
+				alt: '',
 			},
 			description: SITE_DESCRIPTION,
 			// Keep overrides few: each must be rechecked on every Starlight upgrade.
