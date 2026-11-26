@@ -6762,6 +6762,11 @@ const zModel = await import('../src/components/react/normalDistribution/model.ts
 		assert.deepEqual(fcSay.feedbackLine(passed), { visible: `Yes, 2. ${evidence}`, spoken: `Yes, 2. ${evidence}` });
 		assert.equal(fcSay.statusLine(passed), null);
 		assert.equal(fcSay.announcementFor(passed, { type: 'check' }), null, 'the verdict takes focus and is read there, not twice');
+		// Pressing the preset in view changes nothing, so no effect speaks; the board says this line instead.
+		const inView = fcState.activePresetOf(passed);
+		assert.ok(inView !== null);
+		assert.equal(fcState.reducer(passed, { type: 'preset', id: inView }), passed);
+		assert.equal(fcSay.alreadyShowingLine('bowl'), 'Bowl: x squared at 1 is already showing.');
 		// Every one of the 16 wrong guesses, its second miss, and the answer shown after two misses.
 		for (let index = 0; index <= 16; index += 1) {
 			if (index === 8) continue;

@@ -244,6 +244,11 @@ export function chalkNote(state: CurveState): { long: string; short: string } | 
 	return { long: "shorter ruler, closer to the curve's own tilt", short: 'shorter ruler, closer tilt' };
 }
 
+/** "Bowl: x squared at 1 is already showing.": said when a press of the preset in view changes nothing. */
+export function alreadyShowingLine(id: PresetId): string {
+	return `${PRESETS[id].label.spoken} is already showing.`;
+}
+
 export function presetsFor(state: CurveState): readonly { id: PresetId; label: SpokenLine }[] {
 	if (covered(state)) return [];
 	return setupOf(state).presets.map((id) => ({ id, label: PRESETS[id].label }));

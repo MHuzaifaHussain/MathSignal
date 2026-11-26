@@ -18,6 +18,7 @@ import {
   CHOICE_OPTIONS,
   CONTROL_LABELS,
   STAGE_LABELS,
+  alreadyShowingLine,
   announcementFor,
   boardLabel,
   chalkNote,
@@ -195,6 +196,14 @@ export default function FunctionCurve({ setup: setupId }: FunctionCurveProps) {
     send({ type: "check" });
   };
 
+  const pickPreset = (id: CurveState["preset"]) => {
+    // Picking the preset in view can change nothing, and then no effect runs: say so here, so the press is heard.
+    const current = stateRef.current;
+    const action: Action = { type: "preset", id };
+    if (reducer(current, action) === current) announce(alreadyShowingLine(id));
+    send(action);
+  };
+
   const isCovered = covered(state);
   const status = statusLine(state);
   const verdict = feedbackLine(state);
@@ -265,7 +274,7 @@ export default function FunctionCurve({ setup: setupId }: FunctionCurveProps) {
       />
       {checkReason && <RefusalNote id={checkReasonId}>{checkReason}</RefusalNote>}
       {presets.length > 0 && (
-        <PresetButtons label={CONTROL_LABELS.presets} caption={CONTROL_LABELS.presetsCaption} presets={presets} activeId={activePresetOf(state)} onPick={(id) => send({ type: "preset", id: id as CurveState["preset"] })} />
+        <PresetButtons label={CONTROL_LABELS.presets} caption={CONTROL_LABELS.presetsCaption} presets={presets} activeId={activePresetOf(state)} onPick={(id) => pickPreset(id as CurveState["preset"])} />
       )}
       {!isCovered && hasCornerLines(state.preset) && (
         <button type="button" role="switch" aria-checked={state.linesOn} className="ms-board-button ms-board-switch" onClick={() => send({ type: "lines", on: !state.linesOn })}>
